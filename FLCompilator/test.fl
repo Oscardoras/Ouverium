@@ -4,10 +4,28 @@ if 1=1 then test := 4
 else test2 := 4 ;
 while test >= 1 then test := test-1 ;
 
-euclide := (a,b) like (a,b in int*int) |-> (
+euclide := (a,b) like (a,b in int*int & b != 0) |-> (
     while (b != 0) then (
         a,b := a % b, b
     ) ;
     a
 ) ;
-print( euclide(15, 30) )
+print( euclide(15, 30) ) ;
+
+
+console.print("Quel est votre nom ?") ;
+nom := console.scan() ;
+print("Vous vous appellez " + nom ".") ;
+
+forall( a,b,c like a,b,c in float*float*float & a != 0. |-> (
+    forall( x like x in float |-> (
+        if (a*x*x + b*x + c = 0) then (
+            delta := b*b -4*a*c ;
+            if (delta > 0) then x = (-b-sqrt(delta))/(2*a) | x = (+b-sqrt(delta))/(2*a)
+            else if (delta = 0) then x = -b/(2*a)
+        )
+    ))
+)) ;
+
+x like 2*x*x + x -5 = 3 ;
+print(solution);

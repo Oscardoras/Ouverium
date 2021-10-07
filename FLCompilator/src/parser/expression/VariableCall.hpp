@@ -1,16 +1,16 @@
-#ifndef PARSER_EXPRESSION_VARIABLE_HPP_
-#define PARSER_EXPRESSION_VARIABLE_HPP_
+#ifndef PARSER_EXPRESSION_VARIABLECALL_HPP_
+#define PARSER_EXPRESSION_VARIABLECALL_HPP_
 
 #include "Expression.hpp"
 
-class Variable: public Expression {
+class VariableCall: public Expression {
 
 public:
 
     std::string variableName;
-    std::shared_ptr<Variable> next = nullptr;
+    std::shared_ptr<VariableCall> next = nullptr;
 
-    Variable getLastVariable() const {
+    VariableCall getLastVariable() const {
         if (next == nullptr) return *this;
         else return next->getLastVariable();
     }

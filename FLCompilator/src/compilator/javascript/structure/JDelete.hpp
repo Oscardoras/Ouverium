@@ -1,0 +1,21 @@
+#ifndef COMPILATOR_JAVASCRIPT_STRUCTURE_JDELETE_HPP_
+#define COMPILATOR_JAVASCRIPT_STRUCTURE_JDELETE_HPP_
+
+#include "JInstruction.hpp"
+#include "JVariable.hpp"
+
+
+class JDelete: public JInstruction {
+
+public:
+
+    std::shared_ptr<JVariable> variable;
+
+    virtual std::string getType() const {
+        return "Delete";
+    }
+
+};
+
+
+#endif

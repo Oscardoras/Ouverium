@@ -1,14 +1,14 @@
 #include <algorithm>
 
-#include "expression/Variable.hpp"
-#include "expression/Tuple.hpp"
-#include "expression/Definition.hpp"
-#include "expression/Deletion.hpp"
-#include "expression/FunctionCall.hpp"
 #include "expression/Condition.hpp"
-#include "expression/AlternativeCondition.hpp"
-#include "expression/LoopCondition.hpp"
+#include "expression/ConditionAlternative.hpp"
+#include "expression/ConditionRepeat.hpp"
+#include "expression/Expression.hpp"
+#include "expression/FunctionCall.hpp"
 #include "expression/FunctionDefinition.hpp"
+#include "expression/Record.hpp"
+#include "expression/Tuple.hpp"
+#include "expression/VariableCall.hpp"
 
 
 bool isalphanum(char const& c) {
@@ -50,8 +50,8 @@ std::vector<std::string> getWords(std::string const& code) {
     return words;
 }
 
-std::shared_ptr<Variable> getVariable(std::vector<std::string> const& words, int &i) {
-    std::shared_ptr<Variable> variable = std::make_shared<Variable>();
+std::shared_ptr<VariableCall> getVariable(std::vector<std::string> const& words, int &i) {
+    std::shared_ptr<VariableCall> variable = std::make_shared<VariableCall>();
     i -= 2;
     do {
         i += 2;
@@ -84,10 +84,6 @@ std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words,
     if (words[i] == "(") {
         i++;
         expression = getExpression(words, i, true);
-    } else if (words[i] == "del") {
-        std::shared_ptr<Deletion> deletion = std::make_shared<Deletion>();
-        deletion->variables = getVariables(words, i);
-        expression = deletion;
     } else if (words[i] == "if") {
         i++;
         std::shared_ptr<Expression> c = getExpression(words, i, false);
@@ -97,7 +93,7 @@ std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words,
             if (words[i] == "else") {
                 i++;
                 std::shared_ptr<Expression> a = getExpression(words, i, false);
-                std::shared_ptr<AlternativeCondition> condition = std::make_shared<AlternativeCondition>();
+                std::shared_ptr<ConditionAlternative> condition = std::make_shared<ConditionAlternative>();
                 condition->condition = c;
                 condition->object = o;
                 condition->alternative = a;
@@ -122,14 +118,7 @@ std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words,
         std::shared_ptr<Expression> variables = getVariables(words, i);
 
         std::string word2 = words[i];
-        if (word2 == ":=") {
-            std::shared_ptr<Definition> definition = std::make_shared<Definition>();
-            definition->implicit = false;
-            definition->variables = variables;
-            i++;
-            definition->object = getExpression(words, i, false);
-            expression = definition;
-        } else if (word2 == "like") {
+        if (word2 == "like") {
             i++;
             std::shared_ptr<Expression> like = getExpression(words, i, false);
             if (words[i] == "|->") {
@@ -139,15 +128,9 @@ std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words,
                 i++;
                 functionDefinition->object = getExpression(words, i, false);
                 expression = functionDefinition;
-            } else {
-                std::shared_ptr<Definition> definition = std::make_shared<Definition>();
-                definition->implicit = true;
-                definition->variables = variables;
-                definition->object = like;
-                expression = definition;
-            }
-        } else if (variables->getType() == "Variable") {
-            std::shared_ptr<Variable> variable = std::static_pointer_cast<Variable>(variables);
+            } else throw "Error";
+        } else if (variables->getType() == "VariableCall") {
+            std::shared_ptr<VariableCall> variable = std::static_pointer_cast<VariableCall>(variables);
 
             if (!isalphanum(variable->getLastVariable().variableName[0])) {
                 std::shared_ptr<FunctionCall> functioncall = std::make_shared<FunctionCall>();
