@@ -15,7 +15,7 @@ public:
     std::vector<std::shared_ptr<JInstruction>> instructions;
 
     virtual std::string getType() const {
-        return "While";
+        return "JWhile";
     }
 
 };

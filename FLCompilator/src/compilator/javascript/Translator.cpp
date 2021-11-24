@@ -13,10 +13,6 @@
 #include "structure/JWhile.hpp"
 
 
-bool contains(std::vector<std::string> v, std::string x) {
-    return std::find(v.begin(), v.end(), x) != v.end();
-}
-
 void append(std::vector<std::shared_ptr<JInstruction>> & vec, std::vector<std::shared_ptr<JInstruction>> const& add) {
     vec.insert(vec.end(), add.begin(), add.end());
 }
@@ -26,30 +22,53 @@ struct Expr {
     std::shared_ptr<JExpression> expression;
 };
 
-std::shared_ptr<JVariable> getJVariable(std::shared_ptr<Variable> variable) {
-    std::shared_ptr<JVariable> var = std::make_shared<JVariable>();
-    var->variableName = variable->variableName;
-    if (variable->next != nullptr) var->next = getJVariable(variable->next);
-    return var;
-}
+/*
+Expr translateFunction(std::shared_ptr<FunctionCall> functionCall) {
+    Expr expr;
+    Expr function = getExpression(functionCall->function);
+    //Expr parameters = getExpression(functionCall->object);
+    append(expr.instructions, function.instructions);
+    //append(expr.instructions, parameters.instructions);
+    std::string type = function.expression->getType();
+    
+    if (type == "JVariable") {
+        std::string variableName = std::static_pointer_cast<JVariable>(function.expression)->variableName;
 
-Expr getJFunction(std::shared_ptr<Expression> function) {
-    std::string type = function->getType();
+        if (variableName == ":=") {
+            std::shared_ptr<JAssignment> jAssignment = std::make_shared<JAssignment>();
+            if (functionCall->object->getType() == "Tuple") {
+                std::shared_ptr<JArray> jArray = std::make_shared<JArray>();
 
-    if (type == "Variable") {
-        Expr expr;
-        std::shared_ptr<Variable> variable = std::static_pointer_cast<Variable>(function);
+                jAssignment->value = parameters.expression;
+            }
+            
+            if (definition->variables->getType() == "Variable") {
+                assignment->variable = getJVariable(std::static_pointer_cast<Variable>(definition->variables));
+                instructions.push_back(assignment);
+            } else {
+                assignment->variable = std::make_shared<JVariable>();
+                assignment->variable->variableName = "temp";
+                instructions.push_back(assignment);
+
+                append(instructions, assign(std::static_pointer_cast<Tuple>(definition->variables), assignment->variable));
+            }
+        }
 
         if (variable->variableName == "console" && variable->next != nullptr && variable->next->variableName == "print") {
+            Expr expr;
             std::shared_ptr<JVariable> var1 = std::make_shared<JVariable>();
             var1->variableName = variable->variableName;
             std::shared_ptr<JVariable> var2 = std::make_shared<JVariable>();
             var2->variableName = "info";
             var1->next = var2;
             expr.expression = var1;
-            return expr;
         }
     }
+
+    std::shared_ptr<JFuncEval> jfunceval = std::make_shared<JFuncEval>();
+    Expr func = getExpression(functionCall->function);
+    jfunceval->function = func.expression;
+    append(instructions, func.instructions);
 
     return getExpression(function);
 }
@@ -60,9 +79,9 @@ std::vector<std::shared_ptr<JInstruction>> assign(std::shared_ptr<Tuple> variabl
     for (std::shared_ptr<Expression> expr : variables->objects) {
         std::shared_ptr<JVariable> tab = std::make_shared<JVariable>(*temp.get());
         tab->index.push_back(i);
-        if (expr->getType() == "Variable") {
+        if (expr->getType() == "VariableCall") {
             std::shared_ptr<JAssignment> assignment = std::make_shared<JAssignment>();
-            assignment->variable = getJVariable(std::static_pointer_cast<Variable>(expr));
+            assignment->variable = getJVariable(std::static_pointer_cast<VariableCall>(expr));
 
             assignments.push_back(assignment);
         } else {
@@ -87,6 +106,29 @@ std::vector<std::shared_ptr<JInstruction>> del(std::shared_ptr<Expression> varia
 
     return instructions;
 }
+*/
+
+std::string charConvertor(char c) {
+    if (c == '!') return "a65";
+    else if (c == '#') return "__a67";
+    else if (c == '$') return "__a68";
+    else if (c == '%') return "__a69";
+    else if (c == '&') return "__a70";
+    else if (c == '*') return "__a74";
+    else if (c == '+') return "__a75";
+    else if (c == '-') return "__a77";
+    else if (c == '.') return "__a78";
+    else if (c == '/') return "__a79";
+    else if (c == ':') return "__a90";
+    else if (c == ';') return "__a91";
+    else if (c == '<') return "__a92";
+    else if (c == '=') return "__a93";
+    else if (c == '>') return "__a94";
+    else if (c == '?') return "__a95";
+    else if (c == '@') return "__a96";
+    else if (c == '~') return "__a158";
+    else return ""+c;
+}
 
 Expr getExpression(std::shared_ptr<Expression> expression) {
     Expr expr;
@@ -105,8 +147,8 @@ Expr getExpression(std::shared_ptr<Expression> expression) {
         ternary->alternative = std::make_shared<JUndefined>();
 
         expr.expression = ternary;
-    } else if (type == "AlternativeCondition") {
-        std::shared_ptr<AlternativeCondition> alternativeCondition = std::static_pointer_cast<AlternativeCondition>(expression);
+    } else if (type == "ConditionAlternative") {
+        std::shared_ptr<ConditionAlternative> alternativeCondition = std::static_pointer_cast<ConditionAlternative>(expression);
 
         std::shared_ptr<JTernary> ternary = std::make_shared<JTernary>();
         Expr co = getExpression(alternativeCondition->condition);
@@ -120,18 +162,29 @@ Expr getExpression(std::shared_ptr<Expression> expression) {
         append(expr.instructions, al.instructions);
 
         expr.expression = ternary;
-    } else if (type == "LoopCondition") {
-        std::shared_ptr<LoopCondition> loopCondition = std::static_pointer_cast<LoopCondition>(expression);
+    } else if (type == "ConditionRepeat") {
+        std::shared_ptr<ConditionRepeat> conditionRepeat = std::static_pointer_cast<ConditionRepeat>(expression);
 
         std::shared_ptr<JWhile> jWhile = std::make_shared<JWhile>();
-        Expr co = getExpression(loopCondition->condition);
+        Expr co = getExpression(conditionRepeat->condition);
         jWhile->condition = co.expression;
         append(expr.instructions, co.instructions);
-        jWhile->instructions = getInstructions(loopCondition->object);
+        jWhile->instructions = getInstructions(conditionRepeat->object);
 
         expr.instructions.push_back(jWhile);
-    } else if (type == "Variable") {
-        expr.expression = getJVariable(std::static_pointer_cast<Variable>(expression));
+        expr.expression = nullptr;
+    } else if (type == "FunctionCall") {
+        std::shared_ptr<FunctionCall> functionCall = std::static_pointer_cast<FunctionCall>(expression);
+
+        std::shared_ptr<JFuncEval> jFuncEval = std::make_shared<JFuncEval>();
+        Expr func = getExpression(functionCall->function);
+        append(expr.instructions, func.instructions);
+        jFuncEval->function = func.expression;
+        Expr param = getExpression(functionCall->object);
+        append(expr.instructions, param.instructions);
+        jFuncEval->parameters.push_back(param.expression);
+        
+        expr.expression = jFuncEval;
     } else if (type == "Tuple") {
         std::shared_ptr<Tuple> tuple = std::static_pointer_cast<Tuple>(expression);
 
@@ -143,16 +196,15 @@ Expr getExpression(std::shared_ptr<Expression> expression) {
         }
         
         expr.expression = array;
-    } else if (type == "FunctionCall") {
-        std::shared_ptr<FunctionCall> functionCall = std::static_pointer_cast<FunctionCall>(expression);
-
-        std::shared_ptr<JFuncEval> funcEval = std::make_shared<JFuncEval>();
-        Expr fu = getExpression(functionCall->function);
-        funcEval->function = fu.expression;
-        append(expr.instructions, fu.instructions);
+    } else if (type == "Variable") {
+        std::shared_ptr<Variable> variable = std::static_pointer_cast<Variable>(expression);
         
-    } else if (type == "Definition" || type == "Deletion") {
-        append(expr.instructions, getInstructions(expression));
+        std::shared_ptr<JVariable> jvariable = std::make_shared<JVariable>();
+        jvariable->variableName = "";
+        for (int i = 0; i < variable->variableName.length(); i++)
+            jvariable->variableName += charConvertor(variable->variableName[i]);
+
+        expr.expression = jvariable;
     }
 
     return expr;
@@ -163,78 +215,40 @@ std::vector<std::shared_ptr<JInstruction>> getInstructions(std::shared_ptr<Expre
 
     std::string type = expression->getType();
     if (type == "Condition") {
-        
-    } else if (type == "AlternativeCondition") {
-        
-    } else if (type == "Variable") {
-        
-    } else if (type == "FunctionCall") {
+        std::shared_ptr<Condition> condition = std::static_pointer_cast<Condition>(expression);
 
-    } else if (type == "Definition") {
-        std::shared_ptr<Definition> definition = std::static_pointer_cast<Definition>(expression);
+        std::shared_ptr<JIf> jif = std::make_shared<JIf>();
+        Expr co = getExpression(condition->condition);
+        jif->condition = co.expression;
+        append(instructions, co.instructions);
+        jif->instructions = getInstructions(condition->object);
+    } else if (type == "ConditionAlternative") {
+        std::shared_ptr<ConditionAlternative> conditionAlternative = std::static_pointer_cast<ConditionAlternative>(expression);
 
-        std::shared_ptr<JAssignment> assignment = std::make_shared<JAssignment>();
-        Expr va = getExpression(definition->object);
-        assignment->value = va.expression;
-        append(instructions, va.instructions);
-        
-        if (definition->variables->getType() == "Variable") {
-            assignment->variable = getJVariable(std::static_pointer_cast<Variable>(definition->variables));
-            instructions.push_back(assignment);
-        } else {
-            assignment->variable = std::make_shared<JVariable>();
-            assignment->variable->variableName = "temp";
-            instructions.push_back(assignment);
+        std::shared_ptr<JIfElse> jifelse = std::make_shared<JIfElse>();
+        Expr co = getExpression(conditionAlternative->condition);
+        jifelse->condition = co.expression;
+        append(instructions, co.instructions);
+        jifelse->instructions = getInstructions(conditionAlternative->object);
+        jifelse->alternative = getInstructions(conditionAlternative->alternative);
+    } else if (type == "ConditionRepeat") {
+        std::shared_ptr<ConditionRepeat> conditionRepeat = std::static_pointer_cast<ConditionRepeat>(expression);
 
-            append(instructions, assign(std::static_pointer_cast<Tuple>(definition->variables), assignment->variable));
-        }
-    } else if (type == "Deletion") {
-        append(instructions, del(std::static_pointer_cast<Deletion>(expression)->variables));
+        std::shared_ptr<JWhile> jwhile = std::make_shared<JWhile>();
+        Expr co = getExpression(conditionRepeat->condition);
+        jwhile->condition = co.expression;
+        append(instructions, co.instructions);
+        jwhile->instructions = getInstructions(conditionRepeat->object);
+    } else {
+        Expr expr = getExpression(expression);
+        append(instructions, expr.instructions);
+        instructions.push_back(expr.expression);
     }
 
     return instructions;
 }
 
-
-
-
-
-
-
-
-
-
-struct JCode {
-    std::string code;
-    std::string result;
-};
-
-std::string getVariable(std::shared_ptr<Variable> variable) {
-    std::string code = variable->variableName;
-    variable = variable->next;
-    while (variable != nullptr) {
-        code += "." + variable->variableName;
-        variable = variable->next;
-    }
-    return code;
-}
-
-std::string getFunction(std::shared_ptr<Expression> function) {
-    std::string functionType = function->getType();
-
-    if (functionType == "Variable") {
-        std::shared_ptr<Variable> variable = std::static_pointer_cast<Variable>(function);
-
-        if (variable->variableName == "console" && variable->next != nullptr && variable->next->variableName == "print") {
-            return "console.info";
-        }
-
-        return getVariable(variable);
-    }
-}
-
-JCode toJavaScript(std::shared_ptr<Expression> tree, std::vector<std::string> variables = {}) {
-    JCode jcode;
+std::string toJavaScript(std::shared_ptr<JInstruction> tree, std::vector<std::string> variables = {}) {
     std::string type = tree->getType();
 
     if (type == "Definition") {

@@ -8,7 +8,7 @@ class JUndefined: public JExpression {
 public:
 
     virtual std::string getType() const {
-        return "Undefined";
+        return "JUndefined";
     }
 
 };

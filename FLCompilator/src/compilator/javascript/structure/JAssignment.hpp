@@ -14,7 +14,7 @@ public:
     std::shared_ptr<JExpression> value;
 
     virtual std::string getType() const {
-        return "Assignment";
+        return "JAssignment";
     }
 
 };

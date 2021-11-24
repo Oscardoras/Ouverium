@@ -13,7 +13,7 @@ public:
     std::vector<std::shared_ptr<JExpression>> objects;
 
     virtual std::string getType() const {
-        return "Array";
+        return "JArray";
     }
 
 };

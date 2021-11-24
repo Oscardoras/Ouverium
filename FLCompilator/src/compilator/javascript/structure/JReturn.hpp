@@ -12,7 +12,7 @@ public:
     std::shared_ptr<JExpression> value;
 
     virtual std::string getType() const {
-        return "Return";
+        return "JReturn";
     }
 
 };

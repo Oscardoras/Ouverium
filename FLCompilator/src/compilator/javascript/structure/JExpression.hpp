@@ -1,11 +1,10 @@
 #ifndef COMPILATOR_JAVASCRIPT_STRUCTURE_JEXPRESSION_HPP_
 #define COMPILATOR_JAVASCRIPT_STRUCTURE_JEXPRESSION_HPP_
 
-#include <string>
-#include <memory>
+#include "JInstruction.hpp"
 
 
-class JExpression {
+class JExpression: public JInstruction {
 
 public:
 

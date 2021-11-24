@@ -11,7 +11,7 @@ public:
     std::vector<std::shared_ptr<JInstruction>> alternative;
 
     virtual std::string getType() const {
-        return "IfElse";
+        return "JIfElse";
     }
 
 };

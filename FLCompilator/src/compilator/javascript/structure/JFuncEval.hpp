@@ -15,7 +15,7 @@ public:
     std::vector<std::shared_ptr<JExpression>> parameters;
 
     virtual std::string getType() const {
-        return "FuncEval";
+        return "JFuncEval";
     }
 
 };

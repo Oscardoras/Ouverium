@@ -15,7 +15,7 @@ public:
     std::shared_ptr<JExpression> alternative;
 
     virtual std::string getType() const {
-        return "Ternary";
+        return "JTernary";
     }
 
 };

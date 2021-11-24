@@ -12,7 +12,7 @@ public:
     std::shared_ptr<JVariable> variable;
 
     virtual std::string getType() const {
-        return "Delete";
+        return "JDelete";
     }
 
 };
