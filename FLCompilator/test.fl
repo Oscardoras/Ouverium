@@ -4,7 +4,7 @@ if 1=1 test := 4
 else test2 := 4 ;
 while test >= 1 repeat test := test-1 ;
 
-euclide : (a,b) like (a,b in int*int & b != 0) |-> (
+euclide : (a,b) like (a,b ? int*int & b != 0) |-> (
     while (b != 0) then (
         a,b := a % b, b
     ) ;

@@ -3,15 +3,15 @@
         {
             "type": "cppbuild",
             "label": "C/C++: gcc générer le fichier actif",
-            "command": "/usr/bin/gcc",
+            "command": "/usr/bin/g++",
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
                 "-Wall",
                 "-Wextra",
-                "main.c",
+                "FLCompilator/src/main.cpp",
                 "-o",
-                "main"
+                "prog"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"

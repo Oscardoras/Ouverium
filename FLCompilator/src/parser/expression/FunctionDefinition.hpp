@@ -10,7 +10,7 @@ class FunctionDefinition: public Expression {
 
 public:
 
-    std::shared_ptr<Expression> variables;
+    std::shared_ptr<Expression> parameters;
     std::shared_ptr<Expression> filter;
     std::shared_ptr<Expression> object;
 
