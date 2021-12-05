@@ -1,9 +1,9 @@
-(euclide : ((a,b) like ((a,b ? (int*int)) & (b != 0)) |-> (
-    (while (b != 0) repeat (
+euclide : (a,b) like (a,b ? int*int) & b != 0 |-> (
+    while b != 0 repeat (
         (a,b) := ((a % b), b)
-    )) ;
+    ) ;
     a
-))) ;
+) ;
 print( euclide(15, 30) ) ;
 
-(a + b * c)
+(a + b + c)

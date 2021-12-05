@@ -126,11 +126,13 @@ Expr getExpression(std::shared_ptr<Expression> expression) {
 
         if (functionCall->function->getType() == "Variable" && std::static_pointer_cast<Variable>(functionCall->function)->variableName == ";" && functionCall->object->getType() == "Tuple") {
             std::shared_ptr<Tuple> tuple = std::static_pointer_cast<Tuple>(functionCall->object);
-            expr.append(getInstructions(tuple->objects[0]));
-            Expr second = getExpression(tuple->objects[1]);
-            expr.append(second);
+            for (int i = 0; i < (int) tuple->objects.size()-1; i++)
+                expr.append(getInstructions(tuple->objects[i]));
 
-            expr.expression = second.expression;
+            Expr last = getExpression(tuple->objects[tuple->objects.size()-1]);
+            expr.append(last);
+
+            expr.expression = last.expression;
         } else {
             std::shared_ptr<JFuncEval> jFuncEval = std::make_shared<JFuncEval>();
             Expr func = getExpression(functionCall->function);
