@@ -10,7 +10,7 @@ class JPropertyCall: public JExpression {
 public:
 
     std::shared_ptr<JExpression> object;
-    std::shared_ptr<JExpression> property;
+    std::string propertyName;
 
     virtual std::string getType() const {
         return "JPropertyCall";

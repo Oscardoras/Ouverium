@@ -6,6 +6,7 @@
 #include "structure/JFunction.hpp"
 #include "structure/JIf.hpp"
 #include "structure/JIfElse.hpp"
+#include "structure/JPropertyCall.hpp"
 #include "structure/JReturn.hpp"
 #include "structure/JTernary.hpp"
 #include "structure/JUndefined.hpp"
@@ -175,6 +176,18 @@ Expr getExpression(std::shared_ptr<Expression> expression) {
         }
         
         expr.expression = jFunction;
+    } else if (type == "PropertyCall") {
+        std::shared_ptr<PropertyCall> propertyCall = std::static_pointer_cast<PropertyCall>(expression);
+        
+        std::shared_ptr<JPropertyCall> jPropertyCall = std::make_shared<JPropertyCall>();
+        Expr exp = getExpression(propertyCall->object);
+        expr.append(exp);
+        jPropertyCall->object = exp.expression;
+        jPropertyCall->propertyName = "";
+        for (size_t i = 0; i < propertyCall->propertyName.length(); i++)
+            jPropertyCall->propertyName += charConvertor(propertyCall->propertyName[i]);
+
+        expr.expression = jPropertyCall;
     } else if (type == "Tuple") {
         std::shared_ptr<Tuple> tuple = std::static_pointer_cast<Tuple>(expression);
 
@@ -189,14 +202,14 @@ Expr getExpression(std::shared_ptr<Expression> expression) {
     } else if (type == "Variable") {
         std::shared_ptr<Variable> variable = std::static_pointer_cast<Variable>(expression);
         
-        std::shared_ptr<JVariable> jvariable = std::make_shared<JVariable>();
-        jvariable->variableName = "";
+        std::shared_ptr<JVariable> jVariable = std::make_shared<JVariable>();
+        jVariable->variableName = "";
         for (size_t i = 0; i < variable->variableName.length(); i++)
-            jvariable->variableName += charConvertor(variable->variableName[i]);
+            jVariable->variableName += charConvertor(variable->variableName[i]);
 
-        expr.expression = jvariable;
+        expr.expression = jVariable;
 
-        expr.addVariable(jvariable->variableName);
+        expr.addVariable(jVariable->variableName);
     }
 
     return expr;
@@ -309,6 +322,9 @@ std::string toJavaScript(std::shared_ptr<JInstruction> tree) {
         for (std::shared_ptr<JInstruction> instruction : jIfElse->alternative)
             code += toJavaScript(instruction) + ";\n";
         code += "}\n";
+    } else if (type == "JPropertyCall") {
+        std::shared_ptr<JPropertyCall> jPropertyCall = std::static_pointer_cast<JPropertyCall>(tree);
+        code += toJavaScript(jPropertyCall->object) + ".value." + jPropertyCall->propertyName;
     } else if (type == "JReturn") {
         std::shared_ptr<JReturn> jReturn = std::static_pointer_cast<JReturn>(tree);
         code += "return ";
@@ -324,7 +340,7 @@ std::string toJavaScript(std::shared_ptr<JInstruction> tree) {
         code += "undefined";
     } else if (type == "JVariable") {
         std::shared_ptr<JVariable> jVariable = std::static_pointer_cast<JVariable>(tree);
-        code +=  jVariable->variableName;
+        code += jVariable->variableName;
     } else if (type == "JWhile") {
         std::shared_ptr<JWhile> jWhile = std::static_pointer_cast<JWhile>(tree);
         code += "while (";

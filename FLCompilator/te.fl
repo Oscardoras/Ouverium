@@ -1,6 +1,6 @@
-euclide : (a,b) like (a,b ? int*int) & b != 0 |-> (
-    while b != 0 repeat (
-        (a,b) := ((a % b), b)
+euclide : (a,b) like ((a,b) @ int*int & b != 0) |-> (
+    while (b != 0) repeat (
+        (a,b) := (a % b, b)
     ) ;
     a
 ) ;

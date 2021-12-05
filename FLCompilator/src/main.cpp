@@ -5,8 +5,8 @@
 
 
 int main(int argc, char ** argv) {
-    if (true || (argc == 2 && argv[1])) {
-        std::ifstream src("FLCompilator/te.fl");
+    if (true || (argc == 2)) {
+        std::ifstream src(argv[1]);
         std::string code = "";
         std::string line = "";
         while (std::getline(src, line)) code += line + " ";

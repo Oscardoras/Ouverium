@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/prog",
-            "args": [],
+            "args": ["FLCompilator/test.fl"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

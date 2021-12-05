@@ -8,7 +8,7 @@ class PropertyCall: public Expression {
 public:
 
     std::shared_ptr<Expression> object;
-    std::string variableName;
+    std::string propertyName;
 
     virtual std::string getType() const {
         return "PropertyCall";

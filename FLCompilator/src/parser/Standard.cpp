@@ -41,7 +41,7 @@ bool comparator(std::vector<std::string> const& a, std::vector<std::string> cons
     return compareOperators(a[0], b[0]) >= 0;
 }
 
-std::vector<std::string> systemChars = {"\"", "(", ")", ",", ".", "[", "]", "\\", "{", "}", "like", "->", "|->", "if", "then", "else", "while", "repeat"};
+std::vector<std::string> systemChars = {"\"", "\\", "->", ".", ",", "(", ")", "[", "]", "{", "}", "like", "|->", "if", "then", "else", "while", "repeat"};
 
 bool issys(std::string const& w) {
     return std::find(systemChars.begin(), systemChars.end(), w) != systemChars.end();
@@ -104,17 +104,6 @@ std::shared_ptr<Expression> expressionsToExpression(std::vector<std::shared_ptr<
                 if (std::find(op.begin(), op.end(), variable->variableName) != op.end()) {
                     std::shared_ptr<FunctionCall> functioncall = std::make_shared<FunctionCall>();
                     functioncall->function = variable;
-
-                    if ((*(it-1))->getType() == "FunctionCall") {
-                        std::shared_ptr<FunctionCall> previousFunctionCall = std::static_pointer_cast<FunctionCall>(*(it-1));
-                        if (previousFunctionCall->function->getType() == "Variable" && std::static_pointer_cast<Variable>(previousFunctionCall->function)->variableName == variable->variableName) {
-                            std::shared_ptr<Tuple> tuple = std::static_pointer_cast<Tuple>(previousFunctionCall->object);
-                            tuple->objects.push_back(*(it+1));
-                            it = expressions.erase(it);
-                            it = expressions.erase(it);
-                            continue;
-                        }
-                    }
                     std::shared_ptr<Tuple> tuple = std::make_shared<Tuple>();
                     tuple->objects.push_back(*(it-1));
                     tuple->objects.push_back(*(it+1));
@@ -131,25 +120,25 @@ std::shared_ptr<Expression> expressionsToExpression(std::vector<std::shared_ptr<
     return expressions[0];
 }
 
-std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words, int &i, bool const& isTuple, bool const& hasLike, bool const& priority) {
+std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words, int &i, bool const& isTuple, bool const& priority) {
     std::shared_ptr<Expression> expression = nullptr;
 
     if (words[i] == "(") {
         i++;
-        expression = getExpression(words, i, false, false, true);
+        expression = getExpression(words, i, false, true);
         if (words[i] == ")") i++;
     } else if (words[i] == ")") {
         if (words[i-1] == "(") expression = std::make_shared<Tuple>();
         else throw "Error";
     } else if (words[i] == "if") {
         i++;
-        std::shared_ptr<Expression> c = getExpression(words, i, false, false, true);
+        std::shared_ptr<Expression> c = getExpression(words, i, false, false);
         if (words[i] == "then") {
             i++;
-            std::shared_ptr<Expression> o = getExpression(words, i, false, false, false);
+            std::shared_ptr<Expression> o = getExpression(words, i, isTuple, false);
             if (words[i] == "else") {
                 i++;
-                std::shared_ptr<Expression> a = getExpression(words, i, false, false, false);
+                std::shared_ptr<Expression> a = getExpression(words, i, isTuple, false);
                 std::shared_ptr<ConditionAlternative> condition = std::make_shared<ConditionAlternative>();
                 condition->condition = c;
                 condition->object = o;
@@ -165,10 +154,10 @@ std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words,
     } else if (words[i] == "while") {
         i++;
         std::shared_ptr<ConditionRepeat> conditionRepeat = std::make_shared<ConditionRepeat>();
-        conditionRepeat->condition = getExpression(words, i, false, false, true);
+        conditionRepeat->condition = getExpression(words, i, false, false);
         if (words[i] == "repeat") {
             i++;
-            conditionRepeat->object = getExpression(words, i, false, false, false);
+            conditionRepeat->object = getExpression(words, i, isTuple, false);
             expression = conditionRepeat;
         } else throw "Error";
     } else if (!issys(words[i])) {
@@ -188,9 +177,10 @@ std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words,
             i++;
             std::shared_ptr<FunctionCall> functioncall = std::make_shared<FunctionCall>();
             functioncall->function = expression;
-            functioncall->object = getExpression(words, i, false, false, true);
+            functioncall->object = getExpression(words, i, false, true);
             if (words[i] == ")") i++;
             expression = functioncall;
+            continue;
         }
         if (words[i] == ")") {
             return expressionsToExpression(expressions, expression);
@@ -201,43 +191,48 @@ std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words,
                 if (!issys(words[i])) {
                     std::shared_ptr<PropertyCall> propertyCall = std::make_shared<PropertyCall>();
                     propertyCall->object = expression;
-                    propertyCall->variableName = words[i];
+                    propertyCall->propertyName = words[i];
                     expression = propertyCall;
                     i++;
                 } else throw "Variable name " + words[i] + " is not allowed";
             }
+            continue;
         }
         if (words[i] == ",") {
-            if (!isTuple) {
+            if (!isTuple && priority) {
                 std::shared_ptr<Tuple> tuple = std::make_shared<Tuple>();
                 tuple->objects.push_back(expressionsToExpression(expressions, expression));
                 while (words[i] == ",") {
                     i++;
-                    tuple->objects.push_back(getExpression(words, i, true, hasLike, true));
+                    tuple->objects.push_back(getExpression(words, i, true, true));
                 }
+                expressions.clear();
                 expression = tuple;
+                continue;
             } else return expressionsToExpression(expressions, expression);
         }
         if (words[i] == "like") {
             i++;
-            std::shared_ptr<Expression> like = getExpression(words, i, false, true, true);
+            std::shared_ptr<Expression> like = getExpression(words, i, false, false);
             if (words[i] == "|->") {
                 i++;
                 std::shared_ptr<FunctionDefinition> functionDefinition = std::make_shared<FunctionDefinition>();
                 functionDefinition->parameters = expression;
                 functionDefinition->filter = like;
-                functionDefinition->object = getExpression(words, i, isTuple, false, false);
+                functionDefinition->object = getExpression(words, i, isTuple, false);
                 expression = functionDefinition;
+                continue;
             } else throw "Error";
         }
         if (words[i] == "|->") {
-            if (!hasLike) {
+            if (priority) {
                 i++;
                 std::shared_ptr<FunctionDefinition> functionDefinition = std::make_shared<FunctionDefinition>();
                 functionDefinition->parameters = expression;
                 functionDefinition->filter = nullptr;
-                functionDefinition->object = getExpression(words, i, isTuple, false, false);
+                functionDefinition->object = getExpression(words, i, isTuple, false);
                 expression = functionDefinition;
+                continue;
             } else return expressionsToExpression(expressions, expression);
         }
         if (expression->getType() == "Variable") {
@@ -246,8 +241,9 @@ std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words,
             if (!isalphanum(variable->variableName[0])) {
                 std::shared_ptr<FunctionCall> functioncall = std::make_shared<FunctionCall>();
                 functioncall->function = variable;
-                functioncall->object = getExpression(words, i, isTuple, hasLike, false);
+                functioncall->object = getExpression(words, i, isTuple, false);
                 if (functioncall->object != nullptr) expression = functioncall;
+                continue;
             }
         }
         if (!isalphanum(words[i][0]) && !issys(words[i])) {
@@ -257,7 +253,8 @@ std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words,
                 variable->variableName = words[i];
                 i++;
                 expressions.push_back(variable);
-                expression = getExpression(words, i, isTuple, hasLike, false);
+                expression = getExpression(words, i, isTuple, false);
+                continue;
             } else return expressionsToExpression(expressions, expression);
         }
 
@@ -270,7 +267,7 @@ std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words,
 std::shared_ptr<Expression> getTree(std::string code) {
     std::vector<std::string> words = getWords(code);
     int i = 0;
-    return getExpression(words, i, false, false, true);
+    return getExpression(words, i, false, true);
 }
 
 
