@@ -127,8 +127,25 @@ std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words,
         i++;
         expression = getExpression(words, i, false, true);
         if (words[i] == ")") i++;
+        else throw "Error";
     } else if (words[i] == ")") {
         if (words[i-1] == "(") expression = std::make_shared<Tuple>();
+        else throw "Error";
+    } else if (words[i] == "[") {
+        i++;
+        expression = getExpression(words, i, false, true);
+        if (words[i] == "]") i++;
+        else throw "Error";
+    } else if (words[i] == "]") {
+        if (words[i-1] == "[") expression = std::make_shared<Tuple>();
+        else throw "Error";
+    } else if (words[i] == "{") {
+        i++;
+        expression = getExpression(words, i, false, true);
+        if (words[i] == "}") i++;
+        else throw "Error";
+    } else if (words[i] == "}") {
+        if (words[i-1] == "{") expression = std::make_shared<Tuple>();
         else throw "Error";
     } else if (words[i] == "if") {
         i++;
@@ -179,10 +196,37 @@ std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words,
             functioncall->function = expression;
             functioncall->object = getExpression(words, i, false, true);
             if (words[i] == ")") i++;
+            else throw "Error";
+            expression = functioncall;
+            continue;
+        }
+        if (words[i] == "[") {
+            i++;
+            std::shared_ptr<FunctionCall> functioncall = std::make_shared<FunctionCall>();
+            functioncall->function = expression;
+            functioncall->object = getExpression(words, i, false, true);
+            if (words[i] == "]") i++;
+            else throw "Error";
+            expression = functioncall;
+            continue;
+        }
+        if (words[i] == "{") {
+            i++;
+            std::shared_ptr<FunctionCall> functioncall = std::make_shared<FunctionCall>();
+            functioncall->function = expression;
+            functioncall->object = getExpression(words, i, false, true);
+            if (words[i] == "}") i++;
+            else throw "Error";
             expression = functioncall;
             continue;
         }
         if (words[i] == ")") {
+            return expressionsToExpression(expressions, expression);
+        }
+        if (words[i] == "]") {
+            return expressionsToExpression(expressions, expression);
+        }
+        if (words[i] == "}") {
             return expressionsToExpression(expressions, expression);
         }
         if (words[i] == "->") {
