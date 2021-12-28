@@ -9,7 +9,7 @@ class JVariable: public JExpression {
 
 public:
 
-    std::string variableName;
+    std::string name;
 
     virtual std::string getType() const {
         return "JVariable";

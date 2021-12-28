@@ -3,13 +3,21 @@
 
 #include <string>
 #include <memory>
+#include <vector>
 
 
 class Expression {
 
 public:
 
-    virtual std::string getType() const = 0;
+    std::vector<std::string> usedSymbols;
+    std::vector<std::string> newSymbols;
+
+    virtual std::string getType() const {
+        return "Expression";
+    }
+
+    std::string toString() const;
 
 };
 

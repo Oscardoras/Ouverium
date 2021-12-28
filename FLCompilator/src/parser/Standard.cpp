@@ -6,11 +6,18 @@
 #include "expression/Expression.hpp"
 #include "expression/FunctionCall.hpp"
 #include "expression/FunctionDefinition.hpp"
-#include "expression/PropertyCall.hpp"
-#include "expression/Record.hpp"
+#include "expression/Property.hpp"
+#include "expression/Symbol.hpp"
 #include "expression/Tuple.hpp"
-#include "expression/Variable.hpp"
 
+#include "Standard.hpp"
+
+
+std::vector<std::string> systemChars = {"\"", "\\", "->", ".", ",", "(", ")", "[", "]", "{", "}", "like", "|->", "if", "then", "else", "while", "repeat"};
+
+bool issys(std::string const& w) {
+    return std::find(systemChars.begin(), systemChars.end(), w) != systemChars.end();
+}
 
 bool isalphanum(char const& c) {
     return std::isalnum(c) || c == '_' || c == '\'' || c == '`';
@@ -39,12 +46,6 @@ int compareOperators(std::string const& a, std::string const& b) {
 
 bool comparator(std::vector<std::string> const& a, std::vector<std::string> const& b) {
     return compareOperators(a[0], b[0]) >= 0;
-}
-
-std::vector<std::string> systemChars = {"\"", "\\", "->", ".", ",", "(", ")", "[", "]", "{", "}", "like", "|->", "if", "then", "else", "while", "repeat"};
-
-bool issys(std::string const& w) {
-    return std::find(systemChars.begin(), systemChars.end(), w) != systemChars.end();
 }
 
 std::vector<std::string> getWords(std::string const& code) {
@@ -82,14 +83,14 @@ std::shared_ptr<Expression> expressionsToExpression(std::vector<std::shared_ptr<
 
     std::vector<std::vector<std::string>> operators;
     for (std::shared_ptr<Expression> expr : expressions) {
-        if (expr->getType() == "Variable") {
-            std::shared_ptr<Variable> variable = std::static_pointer_cast<Variable>(expr);
-            if (!isalphanum(variable->variableName[0])) {
+        if (expr->getType() == "Symbol") {
+            std::shared_ptr<Symbol> symbol = std::static_pointer_cast<Symbol>(expr);
+            if (!isalphanum(symbol->name[0])) {
                 for (std::vector<std::string> & op : operators)
-                    if (compareOperators(variable->variableName, op[0]) == 0)
-                        op.push_back(variable->variableName);
+                    if (compareOperators(symbol->name, op[0]) == 0)
+                        op.push_back(symbol->name);
                 std::vector<std::string> op;
-                op.push_back(variable->variableName);
+                op.push_back(symbol->name);
                 operators.push_back(op);
             }
         }
@@ -99,11 +100,11 @@ std::shared_ptr<Expression> expressionsToExpression(std::vector<std::shared_ptr<
 
     for (std::vector<std::string> op : operators) {
         for (std::vector<std::shared_ptr<Expression>>::iterator it = expressions.begin(); it != expressions.end();) {
-            if ((*it)->getType() == "Variable") {
-                std::shared_ptr<Variable> variable = std::static_pointer_cast<Variable>(*it);
-                if (std::find(op.begin(), op.end(), variable->variableName) != op.end()) {
+            if ((*it)->getType() == "Symbol") {
+                std::shared_ptr<Symbol> symbol = std::static_pointer_cast<Symbol>(*it);
+                if (std::find(op.begin(), op.end(), symbol->name) != op.end()) {
                     std::shared_ptr<FunctionCall> functioncall = std::make_shared<FunctionCall>();
-                    functioncall->function = variable;
+                    functioncall->function = symbol;
                     std::shared_ptr<Tuple> tuple = std::make_shared<Tuple>();
                     tuple->objects.push_back(*(it-1));
                     tuple->objects.push_back(*(it+1));
@@ -178,9 +179,9 @@ std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words,
             expression = conditionRepeat;
         } else throw "Error";
     } else if (!issys(words[i])) {
-        std::shared_ptr<Variable> variable = std::make_shared<Variable>();
-        variable->variableName = words[i];
-        expression = variable;
+        std::shared_ptr<Symbol> symbol = std::make_shared<Symbol>();
+        symbol->name = words[i];
+        expression = symbol;
         i++;
     } else throw "Error";
 
@@ -233,12 +234,12 @@ std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words,
             while (words[i] == "->") {
                 i++;
                 if (!issys(words[i])) {
-                    std::shared_ptr<PropertyCall> propertyCall = std::make_shared<PropertyCall>();
-                    propertyCall->object = expression;
-                    propertyCall->propertyName = words[i];
-                    expression = propertyCall;
+                    std::shared_ptr<Property> property = std::make_shared<Property>();
+                    property->object = expression;
+                    property->name = words[i];
+                    expression = property;
                     i++;
-                } else throw "Variable name " + words[i] + " is not allowed";
+                } else throw "Symbol name " + words[i] + " is not allowed";
             }
             continue;
         }
@@ -279,24 +280,25 @@ std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words,
                 continue;
             } else return expressionsToExpression(expressions, expression);
         }
-        if (expression->getType() == "Variable") {
-            std::shared_ptr<Variable> variable = std::static_pointer_cast<Variable>(expression);
+        if (expression->getType() == "Symbol") {
+            std::shared_ptr<Symbol> symbol = std::static_pointer_cast<Symbol>(expression);
 
-            if (!isalphanum(variable->variableName[0])) {
+            if (!isalphanum(symbol->name[0])) {
                 std::shared_ptr<FunctionCall> functioncall = std::make_shared<FunctionCall>();
-                functioncall->function = variable;
+                functioncall->function = symbol;
                 functioncall->object = getExpression(words, i, isTuple, false);
-                if (functioncall->object != nullptr) expression = functioncall;
+                if (functioncall->object != nullptr)
+                    expression = functioncall;
                 continue;
             }
         }
         if (!isalphanum(words[i][0]) && !issys(words[i])) {
             if (priority) {
                 expressions.push_back(expression);
-                std::shared_ptr<Variable> variable = std::make_shared<Variable>();
-                variable->variableName = words[i];
+                std::shared_ptr<Symbol> symbol = std::make_shared<Symbol>();
+                symbol->name = words[i];
                 i++;
-                expressions.push_back(variable);
+                expressions.push_back(symbol);
                 expression = getExpression(words, i, isTuple, false);
                 continue;
             } else return expressionsToExpression(expressions, expression);
@@ -307,74 +309,67 @@ std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words,
     return expressionsToExpression(expressions, expression);
 }
 
-
-std::shared_ptr<Expression> getTree(std::string code) {
-    std::vector<std::string> words = getWords(code);
-    int i = 0;
-    return getExpression(words, i, false, true);
-}
-
-
-std::string tabu(int n) {
-    std::string s = "";
-    for (int i = 0; i < n; i++) s+= "    ";
-    return s;
-}
-
-std::string printTree(std::shared_ptr<Expression> const expression, int n = 0) {
-    std::string s = "";
-
-    if (expression == nullptr) return "NULL\n";
+void findSymbols(std::shared_ptr<Expression> & expression, std::shared_ptr<Expression> & parent, std::vector<std::string> & symbols, bool newScope) {
+    if (expression == nullptr) return;
 
     std::string type = expression->getType();
     if (type == "Condition") {
         std::shared_ptr<Condition> condition = std::static_pointer_cast<Condition>(expression);
 
-        s += "Condition :\n";
-        n++;
-        s += tabu(n) + "condition : " + printTree(condition->condition, n);
-        s += tabu(n) + "object : " + printTree(condition->object, n);
+        findSymbols(condition->condition, expression, symbols, false);
+        findSymbols(condition->object, expression, symbols, false);
     } else if (type == "ConditionAlternative") {
         std::shared_ptr<ConditionAlternative> alternativeCondition = std::static_pointer_cast<ConditionAlternative>(expression);
 
-        s += "ConditionAlternative :\n";
-        n++;
-        s += tabu(n) + "condition : " + printTree(alternativeCondition->condition, n);
-        s += tabu(n) + "object : " + printTree(alternativeCondition->object, n);
-        s += tabu(n) + "alternative : " + printTree(alternativeCondition->alternative, n);
+        findSymbols(alternativeCondition->condition, expression, symbols, false);
+        findSymbols(alternativeCondition->object, expression, symbols, false);
+        findSymbols(alternativeCondition->alternative, expression, symbols, false);
     } else if (type == "ConditionRepeat") {
         std::shared_ptr<ConditionRepeat> conditionRepeat = std::static_pointer_cast<ConditionRepeat>(expression);
 
-        s += "ConditionRepeat :\n";
-        n++;
-        s += tabu(n) + "condition : " + printTree(conditionRepeat->condition, n);
-        s += tabu(n) + "object : " + printTree(conditionRepeat->object, n);
+        findSymbols(conditionRepeat->condition, expression, symbols, false);
+        findSymbols(conditionRepeat->object, expression, symbols, false);
     } else if (type == "FunctionCall") {
         std::shared_ptr<FunctionCall> functionCall = std::static_pointer_cast<FunctionCall>(expression);
 
-        s += "FunctionCall :\n";
-        n++;
-        s += tabu(n) + "function : " + printTree(functionCall->function, n);
-        s += tabu(n) + "object : " + printTree(functionCall->object, n);
+        findSymbols(functionCall->function, expression, symbols, false);
+        findSymbols(functionCall->object, expression, symbols, false);
     } else if (type == "FunctionDefinition") {
         std::shared_ptr<FunctionDefinition> functionDefinition = std::static_pointer_cast<FunctionDefinition>(expression);
 
-        s += "FunctionDefinition :\n";
-        n++;
-        s += tabu(n) + "parameters : " + printTree(functionDefinition->parameters, n);
-        s += tabu(n) + "filter : " + printTree(functionDefinition->filter, n);
-        s += tabu(n) + "object : " + printTree(functionDefinition->object, n);
+        std::shared_ptr<Expression> expr = std::make_shared<Expression>();
+        std::vector<std::string> symbolsCopy = symbols;
+        findSymbols(functionDefinition->parameters, expr, symbolsCopy, false);
+        findSymbols(functionDefinition->filter, expr, symbolsCopy, false);
+        findSymbols(functionDefinition->object, expr, symbolsCopy, true);
+    } else if (type == "Symbol") {
+        std::shared_ptr<Symbol> symbol = std::static_pointer_cast<Symbol>(expression);
+
+        expression->usedSymbols = {symbol->name};
     } else if (type == "Tuple") {
         std::shared_ptr<Tuple> tuple = std::static_pointer_cast<Tuple>(expression);
 
-        s += "Tuple :\n";
-        n++;
-        for (std::shared_ptr<Expression> ex : tuple->objects) s += tabu(n) + printTree(ex, n);
-    } else if (type == "Variable") {
-        std::shared_ptr<Variable> variable = std::static_pointer_cast<Variable>(expression);
-        
-        s += "Variable : " + variable->variableName + "\n";
+        for (std::shared_ptr<Expression> ex : tuple->objects)
+            findSymbols(ex, expression, symbols, false);
     }
 
-    return s;
+    if (newScope)
+        for (std::string name : expression->usedSymbols)
+            if (std::find(symbols.begin(), symbols.end(), name) == symbols.end()) {
+                expression->newSymbols.push_back(name);
+                symbols.push_back(name);
+            }
+
+    for (std::string name : expression->usedSymbols)
+        if (std::find(parent->usedSymbols.begin(), parent->usedSymbols.end(), name) == parent->usedSymbols.end())
+            parent->usedSymbols.push_back(name);
+}
+
+std::shared_ptr<Expression> StandardParser::getTree(std::string code, std::vector<std::string> symbols) {
+    std::vector<std::string> words = getWords(code);
+    int i = 0;
+    std::shared_ptr<Expression> expression = getExpression(words, i, false, true);
+    std::shared_ptr<Expression> expr = std::make_shared<Expression>();
+    findSymbols(expression, expr, symbols, true);
+    return expression;
 }

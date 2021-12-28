@@ -9,12 +9,15 @@
                 "-g",
                 "-Wall",
                 "-Wextra",
-                "FLCompilator/src/main.cpp",
+                "${fileDirname}/main.cpp",
+                "${fileDirname}/parser/expression/Expression.cpp",
+                "${fileDirname}/parser/Standard.cpp",
+                "${fileDirname}/compilator/javascript/Translator.cpp",
                 "-o",
-                "prog"
+                "${fileDirname}/${fileBasenameNoExtension}"
             ],
             "options": {
-                "cwd": "${workspaceFolder}"
+                "cwd": "${fileDirname}"
             },
             "problemMatcher": [
                 "$gcc"

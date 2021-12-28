@@ -1,4 +1,15 @@
-#include "../../parser/Standard.cpp"
+#include <fstream>
+
+#include "../../parser/expression/Condition.hpp"
+#include "../../parser/expression/ConditionAlternative.hpp"
+#include "../../parser/expression/ConditionRepeat.hpp"
+#include "../../parser/expression/Expression.hpp"
+#include "../../parser/expression/FunctionCall.hpp"
+#include "../../parser/expression/FunctionDefinition.hpp"
+#include "../../parser/expression/Property.hpp"
+#include "../../parser/expression/Symbol.hpp"
+#include "../../parser/expression/Tuple.hpp"
+
 #include "structure/JArray.hpp"
 #include "structure/JAssignment.hpp"
 #include "structure/JDelete.hpp"
@@ -6,28 +17,21 @@
 #include "structure/JFunction.hpp"
 #include "structure/JIf.hpp"
 #include "structure/JIfElse.hpp"
-#include "structure/JPropertyCall.hpp"
+#include "structure/JProperty.hpp"
 #include "structure/JReturn.hpp"
 #include "structure/JTernary.hpp"
 #include "structure/JUndefined.hpp"
 #include "structure/JVariable.hpp"
 #include "structure/JWhile.hpp"
 
+#include "Translator.hpp"
 
-void append(std::vector<std::shared_ptr<JInstruction>> & vec, std::vector<std::shared_ptr<JInstruction>> const& add) {
-    vec.insert(vec.end(), add.begin(), add.end());
-}
 
 class Instr {
 
 public:
 
-    std::vector<std::string> variables;
     std::vector<std::shared_ptr<JInstruction>> instructions;
-
-    void addVariable(std::string variable) {
-        variables.push_back(variable);
-    }
 
     void addInstruction(std::shared_ptr<JInstruction> instruction) {
         instructions.push_back(instruction);
@@ -35,7 +39,6 @@ public:
 
     void append(Instr const& instr) {
         this->instructions.insert(this->instructions.end(), instr.instructions.begin(), instr.instructions.end());
-        this->variables.insert(this->variables.end(), instr.variables.begin(), instr.variables.end());
     }
 
     void appendInstructionsTo(std::vector<std::shared_ptr<JInstruction>> & instructions) {
@@ -75,6 +78,18 @@ std::string charConvertor(char c) {
         std::string s(1, c);
         return s;
     }
+}
+
+std::string stringConvertor(std::string name) {
+    std::string jname = "";
+    for (size_t i = 0; i < name.length(); i++)
+        jname += charConvertor(name[i]);
+    return jname;
+}
+
+bool isConstant(std::string name) {
+    if (std::isdigit(name[0])) return true;
+    return false;
 }
 
 Instr getInstructions(std::shared_ptr<Expression>);
@@ -125,7 +140,7 @@ Expr getExpression(std::shared_ptr<Expression> expression) {
     } else if (type == "FunctionCall") {
         std::shared_ptr<FunctionCall> functionCall = std::static_pointer_cast<FunctionCall>(expression);
 
-        if (functionCall->function->getType() == "Variable" && std::static_pointer_cast<Variable>(functionCall->function)->variableName == ";" && functionCall->object->getType() == "Tuple") {
+        if (functionCall->function->getType() == "Symbol" && std::static_pointer_cast<Symbol>(functionCall->function)->name == ";" && functionCall->object->getType() == "Tuple") {
             std::shared_ptr<Tuple> tuple = std::static_pointer_cast<Tuple>(functionCall->object);
             for (int i = 0; i < (int) tuple->objects.size()-1; i++)
                 expr.append(getInstructions(tuple->objects[i]));
@@ -150,21 +165,30 @@ Expr getExpression(std::shared_ptr<Expression> expression) {
 
         std::shared_ptr<JFunction> jFunction = std::make_shared<JFunction>();
 
+        for (std::string name : functionDefinition->object->newSymbols) if (!isConstant(name)) {
+            std::shared_ptr<JAssignment> jAssignment = std::make_shared<JAssignment>();
+            jAssignment->initialization = true;
+            std::shared_ptr<JVariable> jVariable = std::make_shared<JVariable>();
+            jVariable->name = stringConvertor(name);
+            jAssignment->variable = jVariable;
+            jAssignment->value = nullptr;
+            jFunction->instructions.push_back(jAssignment);
+        }
+
         std::shared_ptr<JVariable> parameter = std::make_shared<JVariable>();
-        parameter->variableName = "__parameters";
+        parameter->name = "__parameters";
         jFunction->parameters.push_back(parameter);
         std::shared_ptr<FunctionCall> assignation = std::make_shared<FunctionCall>();
-        std::shared_ptr<Variable> function = std::make_shared<Variable>();
-        function->variableName = ":=";
+        std::shared_ptr<Symbol> function = std::make_shared<Symbol>();
+        function->name = ":=";
         assignation->function = function;
         std::shared_ptr<Tuple> tuple = std::make_shared<Tuple>();
         tuple->objects.push_back(functionDefinition->parameters);
-        std::shared_ptr<Variable> variable = std::make_shared<Variable>();
-        variable->variableName = "__parameters";
-        tuple->objects.push_back(functionDefinition->parameters);
-        tuple->objects.push_back(variable);
+        std::shared_ptr<Symbol> symbol = std::make_shared<Symbol>();
+        symbol->name = "__parameters";
+        tuple->objects.push_back(symbol);
         assignation->object = tuple;
-        getExpression(assignation).appendInstructionsTo(jFunction->instructions);
+        getInstructions(assignation).appendInstructionsTo(jFunction->instructions);
 
         Expr body = getExpression(functionDefinition->object);
         body.appendInstructionsTo(jFunction->instructions);
@@ -176,18 +200,23 @@ Expr getExpression(std::shared_ptr<Expression> expression) {
         }
         
         expr.expression = jFunction;
-    } else if (type == "PropertyCall") {
-        std::shared_ptr<PropertyCall> propertyCall = std::static_pointer_cast<PropertyCall>(expression);
+    } else if (type == "Property") {
+        std::shared_ptr<Property> property = std::static_pointer_cast<Property>(expression);
         
-        std::shared_ptr<JPropertyCall> jPropertyCall = std::make_shared<JPropertyCall>();
-        Expr exp = getExpression(propertyCall->object);
+        std::shared_ptr<JProperty> jProperty = std::make_shared<JProperty>();
+        Expr exp = getExpression(property->object);
         expr.append(exp);
-        jPropertyCall->object = exp.expression;
-        jPropertyCall->propertyName = "";
-        for (size_t i = 0; i < propertyCall->propertyName.length(); i++)
-            jPropertyCall->propertyName += charConvertor(propertyCall->propertyName[i]);
+        jProperty->object = exp.expression;
+        jProperty->name = stringConvertor(property->name);
 
-        expr.expression = jPropertyCall;
+        expr.expression = jProperty;
+    } else if (type == "Symbol") {
+        std::shared_ptr<Symbol> symbol = std::static_pointer_cast<Symbol>(expression);
+        
+        std::shared_ptr<JVariable> jVariable = std::make_shared<JVariable>();
+        jVariable->name = stringConvertor(symbol->name);
+
+        expr.expression = jVariable;
     } else if (type == "Tuple") {
         std::shared_ptr<Tuple> tuple = std::static_pointer_cast<Tuple>(expression);
 
@@ -199,17 +228,6 @@ Expr getExpression(std::shared_ptr<Expression> expression) {
         }
         
         expr.expression = array;
-    } else if (type == "Variable") {
-        std::shared_ptr<Variable> variable = std::static_pointer_cast<Variable>(expression);
-        
-        std::shared_ptr<JVariable> jVariable = std::make_shared<JVariable>();
-        jVariable->variableName = "";
-        for (size_t i = 0; i < variable->variableName.length(); i++)
-            jVariable->variableName += charConvertor(variable->variableName[i]);
-
-        expr.expression = jVariable;
-
-        expr.addVariable(jVariable->variableName);
     }
 
     return expr;
@@ -273,9 +291,11 @@ std::string toJavaScript(std::shared_ptr<JInstruction> tree) {
     } else if (type == "JAssignment") {
         std::shared_ptr<JAssignment> jAssignment = std::static_pointer_cast<JAssignment>(tree);
         if (jAssignment) code += "var ";
-        code += jAssignment->variable->variableName;
-        code += " = ";
-        code += toJavaScript(jAssignment->value);
+        code += jAssignment->variable->name;
+        if (jAssignment->value != nullptr) {
+            code += " = ";
+            code += toJavaScript(jAssignment->value);
+        } else code += " = new Pointer()";
     } else if (type == "JFuncEval") {
         std::shared_ptr<JFuncEval> jFuncEval = std::static_pointer_cast<JFuncEval>(tree);
         code += "(";
@@ -290,7 +310,7 @@ std::string toJavaScript(std::shared_ptr<JInstruction> tree) {
         code += ")";
     } else if (type == "JFunction") {
         std::shared_ptr<JFunction> jFunction = std::static_pointer_cast<JFunction>(tree);
-        code += "function(";
+        code += "new Pointer(function(";
         bool first = true;
         for (std::shared_ptr<JExpression> expression : jFunction->parameters) {
             if (!first) {
@@ -302,11 +322,11 @@ std::string toJavaScript(std::shared_ptr<JInstruction> tree) {
         code += ") {\n";
         for (std::shared_ptr<JInstruction> instruction : jFunction->instructions)
             code += toJavaScript(instruction) + ";\n";
-        code += "}\n";
+        code += "})\n";
     } else if (type == "JIf") {
         std::shared_ptr<JIf> jIf = std::static_pointer_cast<JIf>(tree);
         code += "if (";
-        code += toJavaScript(jIf->condition);
+        code += toJavaScript(jIf->condition) + ".value";
         code += ") {\n";
         for (std::shared_ptr<JInstruction> instruction : jIf->instructions)
             code += toJavaScript(instruction) + ";\n";
@@ -314,7 +334,7 @@ std::string toJavaScript(std::shared_ptr<JInstruction> tree) {
     } else if (type == "JIfElse") {
         std::shared_ptr<JIfElse> jIfElse = std::static_pointer_cast<JIfElse>(tree);
         code += "if (";
-        code += toJavaScript(jIfElse->condition);
+        code += toJavaScript(jIfElse->condition) + ".value";
         code += ") {\n";
         for (std::shared_ptr<JInstruction> instruction : jIfElse->instructions)
             code += toJavaScript(instruction) + ";\n";
@@ -322,9 +342,9 @@ std::string toJavaScript(std::shared_ptr<JInstruction> tree) {
         for (std::shared_ptr<JInstruction> instruction : jIfElse->alternative)
             code += toJavaScript(instruction) + ";\n";
         code += "}\n";
-    } else if (type == "JPropertyCall") {
-        std::shared_ptr<JPropertyCall> jPropertyCall = std::static_pointer_cast<JPropertyCall>(tree);
-        code += toJavaScript(jPropertyCall->object) + ".value." + jPropertyCall->propertyName;
+    } else if (type == "JProperty") {
+        std::shared_ptr<JProperty> jProperty = std::static_pointer_cast<JProperty>(tree);
+        code += toJavaScript(jProperty->object) + ".value." + jProperty->name;
     } else if (type == "JReturn") {
         std::shared_ptr<JReturn> jReturn = std::static_pointer_cast<JReturn>(tree);
         code += "return ";
@@ -340,11 +360,12 @@ std::string toJavaScript(std::shared_ptr<JInstruction> tree) {
         code += "undefined";
     } else if (type == "JVariable") {
         std::shared_ptr<JVariable> jVariable = std::static_pointer_cast<JVariable>(tree);
-        code += jVariable->variableName;
+        if (isConstant(jVariable->name)) code += "new Pointer(" + jVariable->name + ")";
+        else code += jVariable->name;
     } else if (type == "JWhile") {
         std::shared_ptr<JWhile> jWhile = std::static_pointer_cast<JWhile>(tree);
         code += "while (";
-        code += toJavaScript(jWhile->condition);
+        code += toJavaScript(jWhile->condition) + ".value";
         code += ") {\n";
         for (std::shared_ptr<JInstruction> instruction : jWhile->instructions)
             code += toJavaScript(instruction) + ";\n";
@@ -354,10 +375,28 @@ std::string toJavaScript(std::shared_ptr<JInstruction> tree) {
     return code;
 }
 
-std::string getJavaScript(std::shared_ptr<Expression> expression) {
+std::string JavascriptTranslator::getJavaScript(std::shared_ptr<Expression> expression) {
     std::string code = "";
+
+    std::ifstream framework("compilator/javascript/functions.js");
+    std::string line = "";
+    while (std::getline(framework, line)) code += line + "\n";
+
+    std::vector<std::shared_ptr<JInstruction>> instructions;
+
+    for (std::string name : expression->newSymbols) if (!isConstant(name)) {
+        std::shared_ptr<JAssignment> jAssignment = std::make_shared<JAssignment>();
+        jAssignment->initialization = true;
+        std::shared_ptr<JVariable> jVariable = std::make_shared<JVariable>();
+        jVariable->name = stringConvertor(name);
+        jAssignment->variable = jVariable;
+        jAssignment->value = nullptr;
+        instructions.push_back(jAssignment);
+    }
+    
     Instr instr = getInstructions(expression);
-    for (std::shared_ptr<JInstruction> instruction : instr.instructions)
+    instructions.insert(instructions.end(), instr.instructions.begin(), instr.instructions.end());
+    for (std::shared_ptr<JInstruction> instruction : instructions)
         code += toJavaScript(instruction) + ";\n";
     return code;
 }

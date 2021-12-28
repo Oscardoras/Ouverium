@@ -1,0 +1,35 @@
+test := 3 ;
+test2 := solve( x |-> (x + 1 = 4) ) ;
+if (1=1) then (test := 4)
+else (test2 := 4) ;
+while (test >= 1) repeat (test := test-1) ;
+
+euclide : (a,b) like ((a,b) ? int*int & b != 0) |-> {
+    while (b != 0) repeat {
+        (a,b) := (a % b, b)
+    } ;
+    a
+} ;
+print( euclide(15, 30) ) ;
+
+
+forall( [a,b,c] like ((a,b,c) ? float*float*float & a != 0) |-> (
+    forall( x like (x ? float) |-> (
+        if (a*x*x + b*x + c = 0) then (
+            delta := b*b -4*a*c ;
+            if (delta > 0) then (
+                x = (-b-sqrt(delta))/(2*a) | x = (+b-sqrt(delta))/(2*a)
+            ) else if (delta = 0) then (
+                x = -b/(2*a)
+            )
+        )
+    ))
+)) ;
+
+solution := solve( x |-> (2*x*x + x -5 = 3) ) ;
+print(solution) ;
+
+list->foreach(x |-> print(x)) ;
+for(i |->
+    print(i*i)
+, 0, 10, 1)
