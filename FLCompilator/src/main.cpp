@@ -2,7 +2,7 @@
 #include <fstream>
 
 #include "parser/Standard.hpp"
-#include "compilator/javascript/Translator.hpp"
+#include "compiler/javascript/Translator.hpp"
 
 
 int main(int argc, char ** argv) {

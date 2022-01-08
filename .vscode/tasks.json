@@ -12,7 +12,7 @@
                 "${fileDirname}/main.cpp",
                 "${fileDirname}/parser/expression/Expression.cpp",
                 "${fileDirname}/parser/Standard.cpp",
-                "${fileDirname}/compilator/javascript/Translator.cpp",
+                "${fileDirname}/compiler/javascript/Translator.cpp",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}"
             ],

@@ -378,7 +378,7 @@ std::string toJavaScript(std::shared_ptr<JInstruction> tree) {
 std::string JavascriptTranslator::getJavaScript(std::shared_ptr<Expression> expression) {
     std::string code = "";
 
-    std::ifstream framework("compilator/javascript/functions.js");
+    std::ifstream framework("compiler/javascript/functions.js");
     std::string line = "";
     while (std::getline(framework, line)) code += line + "\n";
 

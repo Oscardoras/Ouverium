@@ -1,5 +1,5 @@
-#ifndef COMPILATOR_JAVASCRIPT_HPP_
-#define COMPILATOR_JAVASCRIPT_HPP_
+#ifndef COMPILER_JAVASCRIPT_HPP_
+#define COMPILER_JAVASCRIPT_HPP_
 
 #include "../../parser/expression/Expression.hpp"
 
