@@ -14,10 +14,10 @@ int main(int argc, char ** argv) {
             while (std::getline(src, line)) code += line + " ";
             std::vector<std::string> symbols = {";", ":", ":=", "%", "+", "*", "print", "int", "!="};
             std::shared_ptr<Expression> tree = StandardParser::getTree(code, symbols);
-            std::cout << tree->toString() << std::endl;
+            //std::cout << tree->toString() << std::endl;
             std::string js = JavascriptTranslator::getJavaScript(tree);
 
-            //std::cout << js << std::endl;
+            std::cout << js << std::endl;
         } else std::cerr << "Error: unable to load the source file " << argv[1] << "." << std::endl;
     } else std::cerr << "Error: please give the name of the source and the name of the destination." << std::endl;
 	

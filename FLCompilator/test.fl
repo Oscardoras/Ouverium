@@ -6,4 +6,5 @@ euclide : (a,b) like ((a,b) ? int*int & b != 0) |-> (
     ) ;
     a
 ) ;
-print( euclide(20, 30) )
+print( euclide(20, 30) ) ;
+print( "Message de \"test\"" )
