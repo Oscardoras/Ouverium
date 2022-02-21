@@ -1,10 +1,9 @@
-euclide : (a,b) like ((a,b) ? int*int & b != 0) |-> (
-    while (b != 0) repeat (
-        tmp := b;
-        b := a % b;
-        a := tmp
-    ) ;
+euclide : (a,b) |-> {
+    while (b != 0) repeat {
+        t := b ;
+        b := a % b ;
+        a := t
+    } ;
     a
-) ;
-print( euclide(20, 30) ) ;
-print( "Message de \"test\"" )
+} ;
+print(euclide(40, 48))

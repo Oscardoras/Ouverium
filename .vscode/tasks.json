@@ -13,6 +13,11 @@
                 "${fileDirname}/parser/expression/Expression.cpp",
                 "${fileDirname}/parser/Standard.cpp",
                 "${fileDirname}/compiler/javascript/Translator.cpp",
+                "${fileDirname}/interpreter/Context.cpp",
+                "${fileDirname}/interpreter/Function.cpp",
+                "${fileDirname}/interpreter/Interpreter.cpp",
+                "${fileDirname}/interpreter/Object.cpp",
+                "${fileDirname}/interpreter/Reference.cpp",
                 "-o",
                 "${fileDirname}/${fileBasenameNoExtension}"
             ],

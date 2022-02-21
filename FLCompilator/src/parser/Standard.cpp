@@ -359,6 +359,10 @@ void findSymbols(std::shared_ptr<Expression> & expression, std::shared_ptr<Expre
         findSymbols(functionDefinition->parameters, expr, symbolsCopy, false);
         findSymbols(functionDefinition->filter, expr, symbolsCopy, false);
         findSymbols(functionDefinition->object, expr, symbolsCopy, true);
+    } else if (type == "Property") {
+        std::shared_ptr<Property> property = std::static_pointer_cast<Property>(expression);
+
+        findSymbols(property->object, expression, symbols, false);
     } else if (type == "Symbol") {
         std::shared_ptr<Symbol> symbol = std::static_pointer_cast<Symbol>(expression);
 

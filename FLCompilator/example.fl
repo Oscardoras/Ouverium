@@ -4,13 +4,15 @@ if (1=1) then (test := 4)
 else (test2 := 4) ;
 while (test >= 1) repeat (test := test-1) ;
 
-euclide : (a,b) like ((a,b) ? int*int & b != 0) |-> {
+euclide : (a,b) |-> {
     while (b != 0) repeat {
-        (a,b) := (a % b, b)
+        t := b ;
+        b := a % b ;
+        a := t
     } ;
     a
 } ;
-print( euclide(15, 30) ) ;
+print(euclide(40, 48)) ;
 
 
 forall( [a,b,c] like ((a,b,c) ? float*float*float & a != 0) |-> (
@@ -32,4 +34,14 @@ print(solution) ;
 list->foreach(x |-> print(x)) ;
 for(i |->
     print(i*i)
-, 0, 10, 1)
+, 0, 10, 1) ;
+
+Constructor : a |-> {
+    this->member := a ;
+    this->method : () |-> {
+        this->member
+    } ;
+    this
+} ;
+obj := Constructor( 4 ) ;
+print( obj->method() )

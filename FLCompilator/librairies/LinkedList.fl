@@ -1,0 +1,38 @@
+LinkedList : array |-> {
+
+    first := () ;
+    last := () ;
+
+    this->isEmpty : () |-> {
+        first == ()
+    } ;
+
+    this->getFirst : () like first != () |-> {
+        first->object
+    } ;
+
+    this->getLast : () like last != () |-> {
+        last->object
+    } ;
+
+    this->addLast : a |-> {
+        tmp->object := a ;
+        tmp->previous := last ;
+        tmp->next := () ;
+        if (last != ()) then { last->next := tmp }
+        else { first := tmp } ;
+        last := tmp ;
+        ()
+    } ;
+
+    this->removeLast : () like last != () |-> {
+        last := last->previous ;
+        if (last != ()) then { last->next := () }
+        else {
+            last->previous := () ;
+            first := ()
+        } ;
+    } ;
+
+    this
+}

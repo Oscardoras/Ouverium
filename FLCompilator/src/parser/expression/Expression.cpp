@@ -65,6 +65,13 @@ std::string expressionToString(Expression const * const expression, int n) {
         s += tabu(n) + "localSymbols :\n";
         n++;
         for (std::string name : functionDefinition->object->usedSymbols) s += tabu(n) + " " + name + "\n";
+    } else if (type == "Property") {
+        Property * property = (Property *) expression;
+        
+        s += "Property :\n";
+        n++;
+        s += tabu(n) + "object : " + expressionToString(property->object.get(), n);
+        s += tabu(n) + "name : " + property->name + "\n";
     } else if (type == "Symbol") {
         Symbol * symbol = (Symbol *) expression;
         
