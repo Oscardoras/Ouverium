@@ -16,21 +16,23 @@ struct Object {
     Function* function;
 
     enum ObjectType {
-        Deleting = -4,
-        Float,
+        Float = -3,
         Integer,
         Boolean,
         None = 0
-        //Tuple > 0
+        //Array > 0
     };
     
-    int type;
+    long type;
 
     union Data {
         double f;
         long i;
         bool b;
-        Object* * tuple;
+        union ArrayElement {
+            size_t c;
+            Object* o;
+        } * a;
     } data;
 
     int references;

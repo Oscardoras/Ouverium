@@ -32,27 +32,12 @@ void setReferences(Context & context, std::shared_ptr<Expression> expression, Re
         } else {
             auto object = reference.toObject();
             if (object->type >= 0) {
-                for (size_t i = 0; i < tuple->objects.size(); i++)
-                    setReferences(context, tuple->objects[i], Reference(&object->data.tuple[i]));
+                for (unsigned long i = 1; i <= tuple->objects.size(); i++)
+                    setReferences(context, tuple->objects[i], Reference(&object->data.a[i].o));
             } else throw InterpreterError();
         }
 
     }
-}
-
-void freeContext(Context & context, Reference & result) {
-    for (auto & symbol : context.symbols)
-        if (symbol.second.isCopy()) {
-            int r = checkObject(symbol.second.ptrCopy, result);
-            if (r == 2) freeContext(symbol.second.ptrCopy, result);
-            else if (r == 1) symbol.second.ptrCopy->references--;
-        }
-}
-
-void freeContext(Context & context) {
-    for (auto & symbol : context.symbols)
-        if (symbol.second.isCopy())
-            symbol.second.ptrCopy->removeReference();
 }
 
 
@@ -129,21 +114,26 @@ Reference execute(Context & context, std::shared_ptr<Expression> expression) {
                 if (((CustomFunction*) func->function)->pointer->filter != nullptr)
                     filter = execute(funcContext, ((CustomFunction*) func->function)->pointer->filter).toObject();
                 else filter = new Object(true);
+
                 if (filter->type == Object::Boolean && filter->data.b) {
                     auto result = execute(funcContext, ((CustomFunction*) func->function)->pointer->object);
-                    freeContext(funcContext, result);
+                    funcContext.free(result);
                     if (func->references == 0) delete func;
                     if (filter->references == 0) delete filter;
                     return result;
                 } else {
-                    freeContext(funcContext);
+                    funcContext.free();
                     if (func->references == 0) delete func;
                     if (filter->references == 0) delete filter;
                     throw InterpreterError();
                 }
             } else if (func->function->type == Function::System) {
+                FunctionContext funcContext(context);
                 auto arguments = execute(context, functionCall->object);
-                auto result = ((SystemFunction*) func->function)->pointer(arguments);
+                funcContext.addSymbol("reference", arguments);
+
+                auto result = ((SystemFunction*) func->function)->pointer(arguments, funcContext);
+                funcContext.free(result);
                 if (func->references == 0) delete func;
                 return result;
             } else {
@@ -180,7 +170,7 @@ Reference execute(Context & context, std::shared_ptr<Expression> expression) {
 
         if (object->references == 0) {
             auto ref = Reference(field);
-            field = nullptr;
+            field = new Object();
             delete object;
             return ref;
         } else return Reference(&field);
@@ -208,7 +198,7 @@ Reference execute(Context & context, std::shared_ptr<Expression> expression) {
     } else return Reference();
 }
 
-void addFunction(Context & context, std::string symbol, Reference (*function)(Reference)) {
+void addFunction(Context & context, std::string symbol, Reference (*function)(Reference, FunctionContext&)) {
     Object * object = new Object();
     object->function = new SystemFunction(function);
     context.addSymbol(symbol, Reference(object));
@@ -234,6 +224,10 @@ void Interpreter::run(std::shared_ptr<Expression> expression) {
     addFunction(context, "%", SystemFunctions::modulo);
     addFunction(context, "print", SystemFunctions::print);
 
-    auto ref = execute(context, expression);
-    SystemFunctions::print(ref).unuse();
+    auto result = execute(context, expression);
+    
+    FunctionContext funcContext(context);
+    funcContext.addSymbol("arguments", result);
+    SystemFunctions::print(result, funcContext).unuse();
+    funcContext.free();
 }

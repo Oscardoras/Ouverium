@@ -14,7 +14,7 @@ Reference::Reference(Reference const& reference) {
     else {
         auto n = getTupleSize();
         tuple = new Reference[n];
-        for (int i = 0; i < (int) n; i++)
+        for (unsigned long i = 0; i < n; i++)
             tuple[i] = reference.tuple[i];
     }
 }
@@ -29,13 +29,13 @@ Reference::Reference(Object** const& reference) {
     ptrRef = reference;
 }
 
-Reference::Reference(Object** const& reference, int const& i) {
+Reference::Reference(Object** const& reference, unsigned long const& i) {
     type = i;
     ptrRef = reference;
 }
 
 Reference::Reference(size_t const& tuple_size) {
-    type = -3 -tuple_size;
+    type = -3-tuple_size;
     tuple = new Reference[tuple_size];
 }
 
@@ -44,15 +44,19 @@ Reference::~Reference() {
         delete[] tuple;
 }
 
-bool Reference::isCopy() const {
-    return type == PointerCopy;
-}
-
 bool Reference::isTuple() const {
     return type <= -3;
 }
 
+bool Reference::isPointerCopy() const {
+    return type == PointerCopy;
+}
+
 bool Reference::isReference() const {
+    return type >= PointerReference;
+}
+
+bool Reference::isPointerReference() const {
     return type == PointerReference;
 }
 
@@ -65,19 +69,19 @@ int Reference::getArrayIndex() const {
 }
 
 size_t Reference::getTupleSize() const {
-    return -3 -type;
+    return -3-type;
 }
 
 Object** Reference::getArrayReference() const {
-    return &(*ptrRef)->data.tuple[type];
+    return &(*ptrRef)->data.a[type+1].o;
 }
 
 Reference Reference::toSymbolReference() const {
     if (isTuple()) {
         auto n = getTupleSize();
         auto reference = Reference(new Object(n));
-        for (auto i = 0; i < (int) n; i++)
-            reference.ptrCopy->data.tuple[i] = tuple[i].toObject();
+        for (unsigned long i = 0; i < n; i++)
+            reference.ptrCopy->data.a[i+1].o = tuple[i].toObject();
         return reference;
     } else return *this;
 }
@@ -89,8 +93,8 @@ Object* Reference::toObject() const {
     else {
         auto n = getTupleSize();
         auto object = new Object(n);
-        for (auto i = 0; i < (int) n; i++)
-            object->data.tuple[i] = tuple[i].toObject();
+        for (unsigned long i = 0; i < n; i++)
+            object->data.a[i+1].o = tuple[i].toObject();
         return object;
     }
 }
@@ -106,7 +110,7 @@ Reference& Reference::operator=(Reference const& reference) {
     else {
         auto n = getTupleSize();
         tuple = new Reference[n];
-        for (auto i = 0; i < (int) n; i++)
+        for (unsigned long i = 0; i < n; i++)
             tuple[i] = reference.tuple[i];
     }
     
@@ -114,11 +118,11 @@ Reference& Reference::operator=(Reference const& reference) {
 }
 
 void Reference::unuse() {
-    if (isCopy() && ptrCopy->references == 0)
+    if (isPointerCopy() && ptrCopy->references == 0)
         delete ptrCopy;
     else if (isTuple()) {
         auto n = getTupleSize();
-        for (auto i = 0; i < (int) n; i++)
+        for (unsigned long i = 0; i < n; i++)
             tuple[i].unuse();
     }
 }

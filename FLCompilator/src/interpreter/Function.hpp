@@ -9,6 +9,7 @@
 
 class Object;
 class Reference;
+class FunctionContext;
 
 
 struct Function {
@@ -29,9 +30,9 @@ struct CustomFunction: public Function {
 };
 
 struct SystemFunction: public Function {
-    Reference (*pointer)(Reference);
+    Reference (*pointer)(Reference, FunctionContext&);
 
-    SystemFunction(Reference (*pointer)(Reference));
+    SystemFunction(Reference (*pointer)(Reference, FunctionContext&));
     virtual ~SystemFunction() = default;
 };
 

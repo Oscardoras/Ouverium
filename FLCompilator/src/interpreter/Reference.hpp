@@ -10,10 +10,10 @@ struct Reference {
         //Tuple <= -3
         PointerCopy = -2,
         PointerReference = -1,
-        //ArrayReference >= 0
+        //ArrayPointerReference >= 0
     };
     
-    int type;
+    long type;
 
     union {
         Object* ptrCopy;
@@ -29,15 +29,16 @@ struct Reference {
 
     Reference(Object** const& reference);
 
-    Reference(Object** const& reference, int const& i);
+    Reference(Object** const& reference, unsigned long const& i);
 
     Reference(size_t const& tuple_size);
 
     ~Reference();
 
-    bool isCopy() const;
     bool isTuple() const;
+    bool isPointerCopy() const;
     bool isReference() const;
+    bool isPointerReference() const;
     bool isArrayReference() const;
 
     int getArrayIndex() const;
@@ -45,7 +46,6 @@ struct Reference {
     Object** getArrayReference() const;
 
     Reference toSymbolReference() const;
-
     Object* toObject() const;
 
     Reference& operator=(Reference const& reference);

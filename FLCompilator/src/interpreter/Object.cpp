@@ -12,7 +12,9 @@ Object::Object(Object const& object) {
         if (object.function->type == Function::Custom) {
             function = new CustomFunction(((CustomFunction*) object.function)->pointer);
             ((CustomFunction*) function)->objects = ((CustomFunction*) object.function)->objects;
-        } else function = new SystemFunction(((SystemFunction*) object.function)->pointer);
+        } else {
+            function = new SystemFunction(((SystemFunction*) object.function)->pointer);
+        }
     } else function = nullptr;
 
     fields = object.fields;
@@ -21,10 +23,11 @@ Object::Object(Object const& object) {
     if (type == Float) data.f = object.data.f;
     else if (type == Integer) data.i = object.data.i;
     else if (type == Boolean) data.b = object.data.b;
-    else if (type >= 0) {
-        data.tuple = new Object*[type];
-        for (auto i = 0; i < type; i++)
-            data.tuple[i] = object.data.tuple[i];
+    else if (type > 0) {
+        data.a = new Object::Data::ArrayElement[type+1];
+        data.a[0].c = (long) object.data.a[0].c;
+        for (long i = 1; i <= type; i++)
+            data.a[i].o = object.data.a[i].o;
     }
 
     references = 0;
@@ -53,43 +56,42 @@ Object::Object(double const& f) {
 
 Object::Object(size_t const& tuple_size) {
     function = nullptr;
-    type = (int) tuple_size;
-    data.tuple = new Object*[tuple_size];
+    type = (long) tuple_size;
+    data.a = new Object::Data::ArrayElement[type+1];
+    data.a[0].c = type;
     references = 0;
 }
 
 Object::~Object() {
-    if (type != Deleting) {
-        if (references == 0) {
-            for (auto & element : fields)
-                if (element.second != nullptr && element.second->references == 0) delete element.second;
-            if (function != nullptr) {
-                if (function->type == Function::Custom) {
-                    for (auto & element : ((CustomFunction*) function)->objects)
-                        if (element.second != nullptr && element.second->references == 0) delete element.second;
-                }
-                delete function;
+    if (references == 0) {
+        for (auto & element : fields)
+            if (element.second->references == 0) delete element.second;
+        if (function != nullptr) {
+            if (function->type == Function::Custom) {
+                for (auto & element : ((CustomFunction*) function)->objects)
+                    if (element.second->references == 0) delete element.second;
             }
-            if (type > 0) {
-                for (auto i = 0; i < type; i++)
-                    if (data.tuple[i] != nullptr && data.tuple[i]->references == 0) delete data.tuple[i];
-                delete[] data.tuple;
+            delete function;
+        }
+        if (type > 0) {
+            for (long i = 1; i <= type; i++)
+                if (data.a[i].o->references == 0) delete data.a[i].o;
+            delete[] data.a;
+        }
+    } else {
+        for (auto & element : fields)
+            element.second->removeReference();
+        if (function != nullptr) {
+            if (function->type == Function::Custom) {
+                for (auto & element : ((CustomFunction*) function)->objects)
+                    element.second->removeReference();
             }
-        } else {
-            for (auto & element : fields)
-                element.second->removeReference();
-            if (function != nullptr) {
-                if (function->type == Function::Custom) {
-                    for (auto & element : ((CustomFunction*) function)->objects)
-                        element.second->removeReference();
-                }
-                delete function;
-            }
-            if (type > 0) {
-                for (auto i = 0; i < type; i++)
-                    data.tuple[i]->removeReference();
-                delete[] data.tuple;
-            }
+            delete function;
+        }
+        if (type > 0) {
+            for (long i = 1; i <= type; i++)
+                data.a[i].o->removeReference();
+            delete[] data.a;
         }
     }
 }
@@ -102,8 +104,8 @@ void Object::addReference() {
             for (auto & element : ((CustomFunction*) function)->objects)
                 element.second->addReference();
         if (type > 0)
-            for (auto i = 0; i < type; i++)
-                data.tuple[i]->addReference();
+            for (long i = 1; i <= type; i++)
+                data.a[i].o->addReference();
     }
     references++;
 }

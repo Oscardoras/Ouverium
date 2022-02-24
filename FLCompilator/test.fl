@@ -6,4 +6,4 @@ euclide : (a,b) |-> {
     } ;
     a
 } ;
-print(euclide(40, 48))
+print(euclide(40, 40))

@@ -4,100 +4,31 @@
 #include "InterpreterError.hpp"
 
 
-int checkObject(Object* & object, Reference & result) {
-    if (result.isReference()) {
-        if (result.ptrRef == &object) {
-            result.type = Reference::PointerCopy;
-            result.ptrCopy = object;
-            return 1;
-        } else return 2;
-    } else if (result.isArrayReference()) {
-        if (result.getArrayReference() == &object) {
-            result.type = Reference::PointerCopy;
-            result.ptrCopy = object;
-            return 1;
-        } else return 2;
-    } else if (result.isCopy()) {
-        return result.ptrCopy == object && object->references == 1 ? 1 : 2;
-    } else {
-        int r = 2;
-        for (auto i = 0; i < result.type; i++) {
-            int t = checkObject(object, result.tuple[i]);
-            if (t == 0 && r > 0) r = 0;
-            else if (t == 1 && r > 1) r = 1;
-        }
-        return r;
-    }
-}
-
-void freeContext(Object* object, Reference & result) {
-    if (object->references <= 0) throw "Negative references";
-
-    object->references--;
-    if (object->references == 0) {
-        for (auto & element : object->fields) {
-            int r = checkObject(element.second, result);
-            if (r == 2) freeContext(element.second, result);
-            else if (r == 1) element.second->references--;
-        }
-        if (object->function != nullptr) {
-            if (object->function->type == Function::Custom)
-                for (auto & element : ((CustomFunction*) object->function)->objects) {
-                    int r = checkObject(element.second, result);
-                    if (r == 2) freeContext(element.second, result);
-                    else if (r == 1) element.second->references--;
-                }
-            delete object->function;
-        }
-
-        if (object->type >= 0)
-            for (auto i = 0; i < object->type; i++) {
-                int r = checkObject(object->data.tuple[i], result);
-                if (r == 2) freeContext(object->data.tuple[i], result);
-                else if (r == 1) object->data.tuple[i]->references--;
-            }
-
-        object->type = Object::Deleting;
-        delete object;
-    }
-}
-
-
 namespace SystemFunctions {
 
-    Reference separator(Reference reference) {
-        if (reference.getTupleSize() == 2) {
-            reference.tuple[0].unuse();
-            return reference.tuple[1];
-        } else {
+    Reference separator(Reference reference, FunctionContext & context) {
+        if (reference.isTuple()) return reference.tuple[reference.getTupleSize()-1];
+        else {
             auto object = reference.toObject();
-            if (object->type == 2) {
-                auto last = object->data.tuple[1];
-                if (object->references == 0) {
-                    object->data.tuple[1] = nullptr;
-                    delete object;
-                }
-                return Reference(last);
-            } else {
-                if (object->references == 0) delete object;
-                throw InterpreterError();
-            }
+            context.addSymbol("object", Reference(object));
+            if (object->type > 0) return Reference(&object->data.a[object->type].o);
+            else return reference;
         }
     }
 
-    Reference copy(Reference reference) {
+    Reference copy(Reference reference, FunctionContext & context) {
         auto object = reference.toObject();
-        auto obj = new Object(*object);
-        if (object->references == 0) delete object;
-        return Reference(obj);
+        context.addSymbol("object", Reference(object));
+        return Reference(new Object(*object));
     }
 
-    Reference assign(Reference reference) {
+    Reference assign(Reference reference, FunctionContext & context) {
         if (reference.getTupleSize() == 2) {
             auto var = reference.tuple[0];
             auto object = reference.tuple[1].toObject();
+            context.addSymbol("object", Reference(object));
 
-            if (var.isReference()) {
+            if (var.isPointerReference()) {
                 (*var.ptrRef)->removeReference();
                 *var.ptrRef = object;
                 (*var.ptrRef)->addReference();
@@ -110,45 +41,38 @@ namespace SystemFunctions {
                 return var;
             } else if (var.isTuple()) {
                 auto n = var.getTupleSize();
-                if ((int) n == object->type) {
-                    for (auto i = 0; i < (int) n; i++) {
-                        Reference t(2);
-                        t.tuple[0] = var.tuple[i];
-                        t.tuple[1] = object->data.tuple[i];
-                        assign(t);
+                if ((long) n == object->type) {
+                    for (unsigned long i = 0; i < n; i++) {
+                        FunctionContext funcContext(context);
+                        Reference arguments(2);
+                        arguments.tuple[0] = var.tuple[i];
+                        arguments.tuple[1] = object->data.a[i+1].o;
+                        funcContext.addSymbol("arguments", arguments);
+
+                        assign(arguments, context);
+
+                        funcContext.free();
                     }
 
-                    if (object->references == 0) delete object;
                     return var;
-                } else {
-                    if (object->references == 0) delete object;
-                    throw InterpreterError();
-                }
-            } else {
-                var.unuse();
-                return Reference(object);
-            }
+                } else throw InterpreterError();
+            } else return Reference(object);
         } else {
             auto tuple = reference.toObject();
-            if (tuple->type == 2) {
-                auto r = tuple->data.tuple[1];
-                if (tuple->references == 0) {
-                    tuple->data.tuple[1] = nullptr;
-                    delete tuple;
-                } else tuple->data.tuple[0] = r;
-                return Reference(r);
-            } else {
-                if (tuple->references == 0) delete tuple;
-                throw InterpreterError();
-            }
+            context.addSymbol("tuple", Reference(tuple));
+
+            if (tuple->type == 2) return Reference(&tuple->data.a[2].o);
+            else throw InterpreterError();
         }
     }
 
-    Reference function_definition(Reference reference) {
+    Reference function_definition(Reference reference, FunctionContext & context) {
         auto tuple = reference.toObject();
+        context.addSymbol("tuple", tuple);
+
         if (tuple->type == 2) {
-            auto var = tuple->data.tuple[0];
-            auto object = tuple->data.tuple[1];
+            auto var = tuple->data.a[1].o;
+            auto object = tuple->data.a[2].o;
 
             if (var->function != nullptr) {
                 if (var->function->type == Function::Custom) {
@@ -172,147 +96,108 @@ namespace SystemFunctions {
                 } else var->function = new SystemFunction(((SystemFunction*) object->function)->pointer);
             } else var->function = nullptr;
 
-            if (reference.getTupleSize() == 2) {
-                tuple->data.tuple[0] = nullptr;
-                delete tuple;
-                return reference.tuple[0];
-            } else {
-                auto r = tuple->data.tuple[0];
-                if (tuple->references == 0) {
-                    tuple->data.tuple[0] = nullptr;
-                    delete tuple;
-                }
-                return Reference(r);
-            }
-        } else {
-            if (tuple->references == 0) delete tuple;
-            throw InterpreterError();
-        }
+            if (reference.getTupleSize() == 2) return reference.tuple[0];
+            else return Reference(tuple->data.a[1].o);
+        } else throw InterpreterError();
     }
 
-    Reference equals(Reference reference) {
+    Reference equals(Reference reference, FunctionContext & context) {
         auto tuple = reference.toObject();
+        context.addSymbol("tuple", tuple);
+
         if (tuple->type == 2) {
-            auto object1 = tuple->data.tuple[0];
-            auto object2 = tuple->data.tuple[1];
+            auto object1 = tuple->data.a[1].o;
+            auto object2 = tuple->data.a[2].o;
             
             if (object1->type == object2->type) {
                 for (auto const& element : object1->fields) {
                     auto it = object2->fields.find(element.first);
                     if (it != object2->fields.end()) {
-                        Reference t(2);
-                        t.tuple[0] = Reference(element.second);
-                        t.tuple[1] = Reference(it->second);
-                        auto obj = equals(t).toObject();
-                        if (!obj->data.b) {
-                            if (obj->references == 0) delete obj;
-                            if (tuple->references == 0) delete tuple;
+                        FunctionContext funcContext(context);
+                        Reference arguments(2);
+                        arguments.tuple[0] = Reference(element.second);
+                        arguments.tuple[1] = Reference(it->second);
+                        funcContext.addSymbol("arguments", arguments);
+
+                        auto result = equals(arguments, context).toObject();
+
+                        if (!result->data.b) {
+                            funcContext.free();
                             return Reference(new Object(false));
-                        }
-                        if (obj->references == 0) delete obj;
-                    } else {
-                        if (tuple->references == 0) delete tuple;
-                        return Reference(new Object(false));
-                    }
+                        } else funcContext.free();
+                    } else  return Reference(new Object(false));
                 }
 
                 if (object1->function != nullptr && object2->function != nullptr) {
                     if (object1->function->type == object2->function->type) {
                         if (object1->function->type == Function::Custom) {
-                            if (((CustomFunction*) object1->function)->pointer != ((CustomFunction*) object2->function)->pointer) {
-                                if (tuple->references == 0) delete tuple;
+                            if (((CustomFunction*) object1->function)->pointer != ((CustomFunction*) object2->function)->pointer)
                                 return Reference(new Object(false));
-                            }
-                            if (((CustomFunction*) object1->function)->objects != ((CustomFunction*) object2->function)->objects) {
-                                if (tuple->references == 0) delete tuple;
+                            if (((CustomFunction*) object1->function)->objects != ((CustomFunction*) object2->function)->objects)
                                 return Reference(new Object(false));
-                            }
-                        } else if (((SystemFunction*) object1->function)->pointer != ((SystemFunction*) object2->function)->pointer) {
-                            if (tuple->references == 0) delete tuple;
+                        } else if (((SystemFunction*) object1->function)->pointer != ((SystemFunction*) object2->function)->pointer)
                             return Reference(new Object(false));
-                        }
-                    } else {
-                        if (tuple->references == 0) delete tuple;
+                    } else
                         return Reference(new Object(false));
-                    }
-                } else if (object1->function != object2->function) {
-                    if (tuple->references == 0) delete tuple;
+                } else if (object1->function != object2->function)
                     return Reference(new Object(false));
-                }
 
                 if (object1->type >= 0) {
-                    for (auto i = 0; i < object1->type; i++) {
-                        Reference t(2);
-                        t.tuple[0] = Reference(object1->data.tuple[i]);
-                        t.tuple[1] = Reference(object2->data.tuple[i]);
-                        auto obj = equals(t).toObject();
-                        if (!obj->data.b) {
-                            if (obj->references == 0) delete obj;
-                            if (tuple->references == 0) delete tuple;
+                    for (long i = 1; i <= object1->type; i++) {
+                        FunctionContext funcContext(context);
+                        Reference arguments(2);
+                        arguments.tuple[0] = Reference(object1->data.a[i].o);
+                        arguments.tuple[1] = Reference(object2->data.a[i].o);
+                        funcContext.addSymbol("arguments", arguments);
+
+                        auto result = equals(arguments, context).toObject();
+
+                        if (!result->data.b) {
+                            funcContext.free();
                             return Reference(new Object(false));
-                        }
-                        if (obj->references == 0) delete obj;
+                        } else funcContext.free();
                     }
-                } else if (object1->type == Object::Boolean) {
-                    auto r = new Object(object1->data.b == object2->data.b);
-                    if (tuple->references == 0) delete tuple;
-                    return Reference(r);
-                } else if (object1->type == Object::Integer) {
-                    auto r = new Object(object1->data.i == object2->data.i);
-                    if (tuple->references == 0) delete tuple;
-                    return Reference(r);
-                } else if (object1->type == Object::Float) {
-                    auto r = new Object(object1->data.f == object2->data.f);
-                    if (tuple->references == 0) delete tuple;
-                    return Reference(r);
-                }
-                if (tuple->references == 0) delete tuple;
-                return Reference(new Object(true));
-            } else {
-                if (tuple->references == 0) delete tuple;
-                return Reference(new Object(false));
-            }
-        } else {
-            if (tuple->references == 0) delete tuple;
-            throw InterpreterError();
-        }
+                    return Reference(new Object(true));
+                } else if (object1->type == Object::Boolean)
+                    return Reference(new Object(object1->data.b == object2->data.b));
+                else if (object1->type == Object::Integer)
+                    return Reference(new Object(object1->data.i == object2->data.i));
+                else if (object1->type == Object::Float)
+                    return Reference(new Object(object1->data.f == object2->data.f));
+                else return Reference(new Object(true));
+            } else return Reference(new Object(false));
+        } else throw InterpreterError();
     }
 
-    Reference not_equals(Reference reference) {
-        auto r = equals(reference);
+    Reference not_equals(Reference reference, FunctionContext & context) {
+        auto r = equals(reference, context);
         r.ptrCopy->data.b = !r.ptrCopy->data.b;
         return r;
     }
 
-    Reference checkPointers(Reference reference) {
+    Reference checkPointers(Reference reference, FunctionContext & context) {
         auto tuple = reference.toObject();
-        if (tuple->type == 2) {
-            auto r = new Object(tuple->data.tuple[0] == tuple->data.tuple[1]);
-            if (tuple->references == 0) delete tuple;
-            return Reference(r);
-        } else {
-            if (tuple->references == 0) delete tuple;
-            throw InterpreterError();
-        }
+        context.addSymbol("tuple", tuple);
+
+        if (tuple->type == 2) return Reference(new Object(tuple->data.a[1].o == tuple->data.a[2].o));
+        else throw InterpreterError();
     }
 
-    Reference logicalNot(Reference reference) {
+    Reference logicalNot(Reference reference, FunctionContext & context) {
         auto object = reference.toObject();
-        if (object->type == Object::Boolean) {
-            auto r = new Object(!object->data.b);
-            if (object->references == 0) delete object;
-            return Reference(r);
-        } else {
-            if (object->references == 0) delete object;
-            throw InterpreterError();
-        }
+        context.addSymbol("object", object);
+        
+        if (object->type == Object::Boolean) return Reference(new Object(!object->data.b));
+        else throw InterpreterError();
     }
 
-    Reference logicalAnd(Reference reference) {
+    Reference logicalAnd(Reference reference, FunctionContext & context) {
         auto tuple = reference.toObject();
+        context.addSymbol("tuple", tuple);
+
         if (tuple->type == 2) {
-            auto object1 = tuple->data.tuple[0];
-            auto object2 = tuple->data.tuple[1];
+            auto object1 = tuple->data.a[1].o;
+            auto object2 = tuple->data.a[2].o;
             
             if (object1->type == Object::Boolean && object2->type == Object::Boolean)
                 return Reference(new Object(object1->data.b && object2->data.b));
@@ -320,11 +205,13 @@ namespace SystemFunctions {
         } else throw InterpreterError();
     }
 
-    Reference logicalOr(Reference reference) {
+    Reference logicalOr(Reference reference, FunctionContext & context) {
         auto tuple = reference.toObject();
+        context.addSymbol("tuple", tuple);
+
         if (tuple->type == 2) {
-            auto object1 = tuple->data.tuple[0];
-            auto object2 = tuple->data.tuple[1];
+            auto object1 = tuple->data.a[1].o;
+            auto object2 = tuple->data.a[2].o;
             
             if (object1->type == Object::Boolean && object2->type == Object::Boolean)
                 return Reference(new Object(object1->data.b || object2->data.b));
@@ -332,165 +219,132 @@ namespace SystemFunctions {
         } else throw InterpreterError();
     }
 
-    Reference print(Reference reference) {
+    Reference print(Reference reference, FunctionContext & context) {
         auto object = reference.toObject();
+        context.addSymbol("object", object);
 
         if (object->type == Object::Boolean) std::cout << object->data.b << std::endl;
         else if (object->type == Object::Integer) std::cout << object->data.i << std::endl;
         else if (object->type == Object::Float) std::cout << object->data.f << std::endl;
         else if (object->type >= 0)
-            for (auto i = 0; i < object->type; i++)
-                print(Reference(object->data.tuple[i]));
+            for (long i = 1; i <= object->type; i++) {
+                FunctionContext funcContext(context);
+                auto arguments = Reference(object->data.a[i].o);
+                funcContext.addSymbol("arguments", arguments);
 
-        if (object->references == 0) delete object;
+                print(arguments, funcContext);
+
+                funcContext.free();
+            }
+
         return Reference(new Object());
     }
 
-    Reference addition(Reference reference) {
+    Reference addition(Reference reference, FunctionContext & context) {
         auto tuple = reference.toObject();
+        context.addSymbol("tuple", tuple);
+
         if (tuple->type == 2) {
-            auto object1 = tuple->data.tuple[0];
-            auto object2 = tuple->data.tuple[1];
+            auto object1 = tuple->data.a[1].o;
+            auto object2 = tuple->data.a[2].o;
             
-            if (object1->type == Object::Integer && object2->type == Object::Integer) {
-                if (tuple->references == 0) delete tuple;
+            if (object1->type == Object::Integer && object2->type == Object::Integer)
                 return Reference(new Object(object1->data.i + object2->data.i));
-            } else if (object1->type == Object::Float && object2->type == Object::Float) {
-                if (tuple->references == 0) delete tuple;
+            else if (object1->type == Object::Float && object2->type == Object::Float)
                 return Reference(new Object(object1->data.f + object2->data.f));
-            } else {
-                if (tuple->references == 0) delete tuple;
-                throw InterpreterError();
-            }
-        } else {
-            if (tuple->references == 0) delete tuple;
-            throw InterpreterError();
-        }
+            else throw InterpreterError();
+        } else throw InterpreterError();
     }
 
-    Reference substraction(Reference reference) {
+    Reference substraction(Reference reference, FunctionContext & context) {
         auto tuple = reference.toObject();
-        if (tuple->type == 2) {
-            auto object1 = tuple->data.tuple[0];
-            auto object2 = tuple->data.tuple[1];
+        context.addSymbol("tuple", tuple);
+
+        if (tuple->type == Object::Integer) return Reference(new Object(-tuple->data.i));
+        else if (tuple->type == Object::Float) return Reference(new Object(-tuple->data.f));
+        else if (tuple->type == 2) {
+            auto object1 = tuple->data.a[1].o;
+            auto object2 = tuple->data.a[2].o;
             
-            if (object1->type == Object::Integer && object2->type == Object::Integer) {
-                if (tuple->references == 0) delete tuple;
+            if (object1->type == Object::Integer && object2->type == Object::Integer)
                 return Reference(new Object(object1->data.i - object2->data.i));
-            } else if (object1->type == Object::Float && object2->type == Object::Float) {
-                if (tuple->references == 0) delete tuple;
+            else if (object1->type == Object::Float && object2->type == Object::Float)
                 return Reference(new Object(object1->data.f - object2->data.f));
-            } else {
-                if (tuple->references == 0) delete tuple;
-                throw InterpreterError();
-            }
-        } else {
-            if (tuple->references == 0) delete tuple;
-            throw InterpreterError();
-        }
+            else throw InterpreterError();
+        } else throw InterpreterError();
     }
 
-    Reference multiplication(Reference reference) {
+    Reference multiplication(Reference reference, FunctionContext & context) {
         auto tuple = reference.toObject();
+        context.addSymbol("tuple", tuple);
+
         if (tuple->type == 2) {
-            auto object1 = tuple->data.tuple[0];
-            auto object2 = tuple->data.tuple[1];
+            auto object1 = tuple->data.a[1].o;
+            auto object2 = tuple->data.a[2].o;
             
-            if (object1->type == Object::Integer && object2->type == Object::Integer) {
-                if (tuple->references == 0) delete tuple;
+            if (object1->type == Object::Integer && object2->type == Object::Integer)
                 return Reference(new Object(object1->data.i * object2->data.i));
-            } else if (object1->type == Object::Float && object2->type == Object::Float) {
-                if (tuple->references == 0) delete tuple;
+            else if (object1->type == Object::Float && object2->type == Object::Float)
                 return Reference(new Object(object1->data.f * object2->data.f));
-            } else {
-                if (tuple->references == 0) delete tuple;
-                throw InterpreterError();
-            }
-        } else {
-            if (tuple->references == 0) delete tuple;
-            throw InterpreterError();
-        }
+            else throw InterpreterError();
+        } else throw InterpreterError();
     }
 
-    Reference division(Reference reference) {
+    Reference division(Reference reference, FunctionContext & context) {
         auto tuple = reference.toObject();
+        context.addSymbol("tuple", tuple);
+
         if (tuple->type == 2) {
-            auto object1 = tuple->data.tuple[0];
-            auto object2 = tuple->data.tuple[1];
+            auto object1 = tuple->data.a[1].o;
+            auto object2 = tuple->data.a[2].o;
             
-            if (object1->type == Object::Integer && object2->type == Object::Integer) {
-                if (tuple->references == 0) delete tuple;
+            if (object1->type == Object::Integer && object2->type == Object::Integer)
                 return Reference(new Object(object1->data.i / object2->data.i));
-            } else if (object1->type == Object::Float && object2->type == Object::Float) {
-                if (tuple->references == 0) delete tuple;
+            else if (object1->type == Object::Float && object2->type == Object::Float)
                 return Reference(new Object(object1->data.f / object2->data.f));
-            } else {
-                if (tuple->references == 0) delete tuple;
-                throw InterpreterError();
-            }
-        } else {
-            if (tuple->references == 0) delete tuple;
-            throw InterpreterError();
-        }
+            else throw InterpreterError();
+        } else throw InterpreterError();
     }
 
-    Reference modulo(Reference reference) {
+    Reference modulo(Reference reference, FunctionContext & context) {
         auto tuple = reference.toObject();
+        context.addSymbol("tuple", tuple);
+
         if (tuple->type == 2) {
-            auto object1 = tuple->data.tuple[0];
-            auto object2 = tuple->data.tuple[1];
+            auto object1 = tuple->data.a[1].o;
+            auto object2 = tuple->data.a[2].o;
             
-            if (object1->type == Object::Integer && object2->type == Object::Integer) {
-                auto r = new Object(object1->data.i % object2->data.i);
-                if (tuple->references == 0) delete tuple;
-                return Reference(r);
-            } else {
-                if (tuple->references == 0) delete tuple;
-                throw InterpreterError();
-            }
-        } else {
-            if (tuple->references == 0) delete tuple;
-            throw InterpreterError();
-        }
+            if (object1->type == Object::Integer && object2->type == Object::Integer)
+                return Reference(new Object(object1->data.i % object2->data.i));
+            else throw InterpreterError();
+        } else throw InterpreterError();
     }
 
-    Reference getTupleSize(Reference reference) {
-        if (reference.isTuple()) {
-            auto r = new Object((long) reference.getTupleSize());
-            reference.unuse();
-            return Reference(r);
-        } else {
+    Reference getTupleSize(Reference reference, FunctionContext & context) {
+        if (reference.isTuple())
+            return Reference(new Object((long) reference.getTupleSize()));
+        else {
             auto object = reference.toObject();
+            context.addSymbol("object", object);
             
-            if (object->type >= 0) {
-                auto r = new Object((long) object->type);
-                if (object->references == 0) delete object;
-                return Reference(r);
-            } else {
-                if (object->references == 0) delete object;
-                throw InterpreterError();
-            }
+            if (object->type >= 0)
+                return Reference(new Object((long) object->type));
+            else throw InterpreterError();
         }
     }
 
-    Reference getTupleElement(Reference reference) {
+    Reference getTupleElement(Reference reference, FunctionContext & context) {
         auto tuple = reference.toObject();
+        context.addSymbol("tuple", tuple);
+
         if (tuple->type == 2) {
-            auto array = tuple->data.tuple[0];
-            auto index = tuple->data.tuple[1];
+            auto array = tuple->data.a[1].o;
+            auto index = tuple->data.a[2].o;
             
-            if (array->type >= 0 && index->type == Object::Integer) {
-                Reference r = Reference(&array->data.tuple[index->data.i]);
-                freeContext(tuple, r);
-                return r;
-            } else {
-                if (tuple->references == 0) delete tuple;
-                throw InterpreterError();
-            }
-        } else {
-            if (tuple->references == 0) delete tuple;
-            throw InterpreterError();
-        }
+            if (array->type > 0 && index->type == Object::Integer)
+                return Reference(&array->data.a[index->data.i].o);
+            else throw InterpreterError();
+        } else throw InterpreterError();
     }
 
 }

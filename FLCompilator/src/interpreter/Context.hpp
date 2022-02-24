@@ -19,7 +19,7 @@ struct Context {
 
     virtual void addSymbol(std::string const& symbol, Reference const& reference) = 0;
 
-    bool hasSymbol(std::string const& symbol);
+    virtual bool hasSymbol(std::string const& symbol);
 
 };
 
@@ -42,6 +42,10 @@ struct FunctionContext: public Context {
     virtual Reference getSymbol(std::string const& symbol, bool const& create = true);
 
     virtual void addSymbol(std::string const& symbol, Reference const& reference);
+
+    void free();
+
+    void free(Reference & result);
 
 };
 
