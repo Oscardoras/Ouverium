@@ -1,9 +1,2 @@
-euclide : (a,b) |-> {
-    while (b != 0) repeat {
-        t := b ;
-        b := a % b ;
-        a := t
-    } ;
-    a
-} ;
-print(euclide(40, 40))
+print("test\n");
+print(3)

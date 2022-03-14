@@ -7,10 +7,10 @@
 struct Reference {
     
     enum ReferenceType {
-        //Tuple <= -3
-        PointerCopy = -2,
-        PointerReference = -1,
-        //ArrayPointerReference >= 0
+        //Tuple <= -2
+        PointerCopy = -1,
+        PointerReference = 0,
+        //ArrayPointerReference > 0
     };
     
     long type;
@@ -29,7 +29,7 @@ struct Reference {
 
     Reference(Object** const& reference);
 
-    Reference(Object** const& reference, unsigned long const& i);
+    Reference(Object* const& reference, unsigned long const& i);
 
     Reference(size_t const& tuple_size);
 
@@ -37,20 +37,17 @@ struct Reference {
 
     bool isTuple() const;
     bool isPointerCopy() const;
-    bool isReference() const;
     bool isPointerReference() const;
     bool isArrayReference() const;
 
-    int getArrayIndex() const;
-    size_t getTupleSize() const;
+    long getArrayIndex() const;
+    long getTupleSize() const;
     Object** getArrayReference() const;
 
     Reference toSymbolReference() const;
     Object* toObject() const;
 
     Reference& operator=(Reference const& reference);
-
-    void unuse();
 
 };
 

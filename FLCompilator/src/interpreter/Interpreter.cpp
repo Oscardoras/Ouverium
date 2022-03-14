@@ -87,7 +87,7 @@ Reference execute(Context & context, std::shared_ptr<Expression> expression) {
         }
         while (condition_val->data.b) {
             if (condition_val->references == 0) delete condition_val;
-            tmp.unuse();
+            context.unuse(tmp);
             tmp = execute(context, conditionRepeat->object);
             condition_val = execute(context, conditionRepeat->condition).toObject();
             if (condition_val->type != Object::Boolean) {
@@ -102,8 +102,8 @@ Reference execute(Context & context, std::shared_ptr<Expression> expression) {
 
         auto func = execute(context, functionCall->function).toObject();
         if (func->function != nullptr) {
+            FunctionContext funcContext(context);
             if (func->function->type == Function::Custom) {
-                FunctionContext funcContext(context);
                 auto parameters = ((CustomFunction*) func->function)->pointer->parameters;
                 auto arguments = execute(context, functionCall->object);
                 for (auto & symbol : ((CustomFunction*) func->function)->objects)
@@ -117,31 +117,36 @@ Reference execute(Context & context, std::shared_ptr<Expression> expression) {
 
                 if (filter->type == Object::Boolean && filter->data.b) {
                     auto result = execute(funcContext, ((CustomFunction*) func->function)->pointer->object);
-                    funcContext.free(result);
-                    if (func->references == 0) delete func;
-                    if (filter->references == 0) delete filter;
+                    funcContext.freeContext(result);
+                    if (func->references == 0) context.free(func);
+                    if (filter->references == 0) context.free(filter);
                     return result;
                 } else {
-                    funcContext.free();
-                    if (func->references == 0) delete func;
-                    if (filter->references == 0) delete filter;
+                    funcContext.freeContext();
+                    if (func->references == 0) context.free(func);
+                    if (filter->references == 0) context.free(filter);
                     throw InterpreterError();
                 }
             } else if (func->function->type == Function::System) {
-                FunctionContext funcContext(context);
                 auto arguments = execute(context, functionCall->object);
-                funcContext.addSymbol("reference", arguments);
+                funcContext.addSymbol("arguments", arguments);
 
-                auto result = ((SystemFunction*) func->function)->pointer(arguments, funcContext);
-                funcContext.free(result);
-                if (func->references == 0) delete func;
-                return result;
+                try {
+                    auto result = ((SystemFunction*) func->function)->pointer(arguments, funcContext);
+                    funcContext.freeContext(result);
+                    if (func->references == 0) context.free(func);
+                    return result;
+                } catch (InterpreterError & ex) {
+                    funcContext.freeContext();
+                    if (func->references == 0) context.free(func);
+                    throw ex;
+                }
             } else {
-                if (func->references == 0) delete func;
+                if (func->references == 0) context.free(func);
                 throw InterpreterError();
             }
         } else {
-            if (func->references == 0) delete func;
+            if (func->references == 0) context.free(func);
             throw InterpreterError();
         }
     } else if (type == "FunctionDefinition") {
@@ -151,11 +156,8 @@ Reference execute(Context & context, std::shared_ptr<Expression> expression) {
         object->function = new CustomFunction(functionDefinition);
         if (context.global != &context)
             for (auto symbol : functionDefinition->object->usedSymbols)
-                if (context.hasSymbol(symbol)) {
-                    auto obj = context.getSymbol(symbol).toObject();
-                    ((CustomFunction*) object->function)->objects[symbol] = obj;
-                    obj->addReference();
-                }
+                if (context.hasSymbol(symbol))
+                    ((CustomFunction*) object->function)->objects[symbol] = context.getSymbol(symbol).toObject();
         
         return Reference(object);
     } else if (type == "Property") {
@@ -176,6 +178,38 @@ Reference execute(Context & context, std::shared_ptr<Expression> expression) {
         } else return Reference(&field);
     } else if (type == "Symbol") {
         auto symbol = std::static_pointer_cast<Symbol>(expression)->name;
+        if (symbol[0] == '\"') {
+            std::string str;
+
+            bool escape = false;
+            bool first = true;
+            for (char c : symbol) if (!first) {
+                if (!escape) {
+                    if (c == '\"') break;
+                    else if (c == '\\') escape = true;
+                    else str += c;
+                } else {
+                    escape = false;
+                    if (c == 'b') str += '\b';
+                    if (c == 'e') str += '\e';
+                    if (c == 'f') str += '\f';
+                    if (c == 'n') str += '\n';
+                    if (c == 'r') str += '\r';
+                    if (c == 't') str += '\t';
+                    if (c == 'v') str += '\v';
+                    if (c == '\\') str += '\\';
+                    if (c == '\'') str += '\'';
+                    if (c == '\"') str += '\"';
+                    if (c == '?') str += '\?';
+                }
+            } else first = false;
+
+            long l = str.length();
+            Object* obj = new Object((size_t) l);
+            for (long i = 0; i < l; i++)
+                obj->data.a[i+1].o = new Object(str[i]);
+            return obj;
+        }
         if (symbol == "true") return Reference(new Object(true));
         if (symbol == "false") return Reference(new Object(false));
         try {
@@ -223,11 +257,20 @@ void Interpreter::run(std::shared_ptr<Expression> expression) {
     addFunction(context, "/", SystemFunctions::division);
     addFunction(context, "%", SystemFunctions::modulo);
     addFunction(context, "print", SystemFunctions::print);
+    addFunction(context, "lenght", SystemFunctions::get_array_size);
+    addFunction(context, "get_capacity", SystemFunctions::get_array_capacity);
+    addFunction(context, "set_capacity", SystemFunctions::set_array_capacity);
+    addFunction(context, "get", SystemFunctions::get_array_element);
+    addFunction(context, "add", SystemFunctions::add_array_element);
+    addFunction(context, "remove", SystemFunctions::add_array_element);
 
     auto result = execute(context, expression);
     
     FunctionContext funcContext(context);
     funcContext.addSymbol("arguments", result);
-    SystemFunctions::print(result, funcContext).unuse();
-    funcContext.free();
+    
+    auto ref = SystemFunctions::print(result, funcContext);
+    context.unuse(ref);
+
+    funcContext.freeContext();
 }

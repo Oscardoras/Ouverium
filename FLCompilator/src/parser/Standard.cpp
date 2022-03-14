@@ -20,7 +20,7 @@ bool issys(std::string const& w) {
 }
 
 bool isalphanum(char const& c) {
-    return std::isalnum(c) || c == '_' || c == '\'' || c == '`';
+    return std::isalnum(c) || c == '_' || c == '\'' || c == '\"' || c == '`';
 }
 
 int getCharPriority(char const& c) {
@@ -62,24 +62,25 @@ std::vector<std::string> getWords(std::string const& code) {
             if (std::isspace(c)) {
                 if (b < i) words.push_back(code.substr(b, i-b));
                 b = i+1;
+            } else if (c == '\"') {
+                if (b < i) words.push_back(code.substr(b, i-b));
+                b = i;
+                is_str = true;
+            } else if (c == ',' || c == '(' || c == ')' || c == '[' || c == ']' || c == '{' || c == '}') {
+                if (b < i) words.push_back(code.substr(b, i-b));
+                std::string s(1,c);
+                words.push_back(s);
+                b = i+1;
             } else if (!isalphanum(last) && isalphanum(c) && !(std::isdigit(last) && c == '.') && b < i) {
                 words.push_back(code.substr(b, i-b));
                 b = i;
             } else if (isalphanum(last) && !isalphanum(c) && !(last == '.' && std::isdigit(c)) && b < i) {
                 words.push_back(code.substr(b, i-b));
                 b = i;
-            } else if (c == ',' || c == '(' || c == ')' || c == '[' || c == ']' || c == '{' || c == '}' || c == '\\') {
-                if (b < i) words.push_back(code.substr(b, i-b));
-                std::string s(1,c);
-                words.push_back(s);
-                b = i+1;
-            } else if (c == '"') {
-                is_str = true;
-                b = i;
             }
         } else {
             if (!escape) {
-                if (c == '"') {
+                if (c == '\"') {
                     words.push_back(code.substr(b, i-b+1));
                     b = i+1;
                     is_str = false;
@@ -195,7 +196,7 @@ std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words,
             conditionRepeat->object = getExpression(words, i, isTuple, false);
             expression = conditionRepeat;
         } else throw "Error";
-    } else if (!issys(words[i]) || words[i][0] == '.' || words[i][0] == '"') {
+    } else if (!issys(words[i]) || words[i][0] == '.' || words[i][0] == '\"') {
         std::shared_ptr<Symbol> symbol = std::make_shared<Symbol>();
         symbol->name = words[i];
         expression = symbol;

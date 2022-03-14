@@ -1,38 +1,52 @@
 LinkedList : array |-> {
+    array :~ LinkedList;
 
-    first := () ;
-    last := () ;
+    private->first := ();
+    private->last := ();
 
-    this->isEmpty : () |-> {
-        first == ()
-    } ;
-
-    this->getFirst : () like first != () |-> {
-        first->object
-    } ;
-
-    this->getLast : () like last != () |-> {
-        last->object
-    } ;
-
-    this->addLast : a |-> {
-        tmp->object := a ;
-        tmp->previous := last ;
-        tmp->next := () ;
-        if (last != ()) then { last->next := tmp }
-        else { first := tmp } ;
-        last := tmp ;
+    this->foreach : function |-> {
+        it := private->first;
+        while (it != ()) repeat {
+            function(it->object);
+            it := it->next
+        };
         ()
-    } ;
+    };
 
-    this->removeLast : () like last != () |-> {
-        last := last->previous ;
-        if (last != ()) then { last->next := () }
-        else {
-            last->previous := () ;
-            first := ()
-        } ;
-    } ;
+    this->is_empty : () |-> {
+        private->first = ()
+    };
+
+    this->get_first : () like private->first != () |-> {
+        private->first->object
+    };
+
+    this->get_last : () like private->last != () |-> {
+        private->last->object
+    };
+
+    this->add_last : a |-> {
+        tmp->object := a;
+        tmp->previous := private->last;
+        tmp->next := ();
+        if (private->last != ()) then {
+            private->last->next := tmp
+        } else {
+            private->first := tmp
+        };
+        private->last := tmp;
+        ()
+    };
+
+    this->remove_last : () like private->last != () |-> {
+        private->last := private->last->previous;
+        if (private->last != ()) then {
+            private->last->next := ()
+        } else {
+            private->last->previous := ();
+            private->first := ()
+        };
+    };
 
     this
 }

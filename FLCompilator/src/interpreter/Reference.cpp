@@ -1,3 +1,4 @@
+#include "Context.hpp"
 #include "Reference.hpp"
 
 
@@ -9,12 +10,12 @@ Reference::Reference() {
 Reference::Reference(Reference const& reference) {
     type = reference.type;
     
-    if (type == PointerCopy) ptrCopy = reference.ptrCopy;
-    else if (type >= PointerReference) ptrRef = reference.ptrRef;
+    if (type == PointerCopy || type >= 1) ptrCopy = reference.ptrCopy;
+    else if (type == PointerReference) ptrRef = reference.ptrRef;
     else {
         auto n = getTupleSize();
         tuple = new Reference[n];
-        for (unsigned long i = 0; i < n; i++)
+        for (long i = 0; i < n; i++)
             tuple[i] = reference.tuple[i];
     }
 }
@@ -29,13 +30,13 @@ Reference::Reference(Object** const& reference) {
     ptrRef = reference;
 }
 
-Reference::Reference(Object** const& reference, unsigned long const& i) {
+Reference::Reference(Object* const& reference, unsigned long const& i) {
     type = i;
-    ptrRef = reference;
+    ptrCopy = reference;
 }
 
 Reference::Reference(size_t const& tuple_size) {
-    type = -3-tuple_size;
+    type = -tuple_size;
     tuple = new Reference[tuple_size];
 }
 
@@ -45,15 +46,11 @@ Reference::~Reference() {
 }
 
 bool Reference::isTuple() const {
-    return type <= -3;
+    return type <= -2;
 }
 
 bool Reference::isPointerCopy() const {
     return type == PointerCopy;
-}
-
-bool Reference::isReference() const {
-    return type >= PointerReference;
 }
 
 bool Reference::isPointerReference() const {
@@ -61,26 +58,26 @@ bool Reference::isPointerReference() const {
 }
 
 bool Reference::isArrayReference() const {
-    return type >= 0;
+    return type > 0;
 }
 
-int Reference::getArrayIndex() const {
+long Reference::getArrayIndex() const {
     return type;
 }
 
-size_t Reference::getTupleSize() const {
-    return -3-type;
+long Reference::getTupleSize() const {
+    return -type;
 }
 
 Object** Reference::getArrayReference() const {
-    return &(*ptrRef)->data.a[type+1].o;
+    return &ptrCopy->data.a[type].o;
 }
 
 Reference Reference::toSymbolReference() const {
     if (isTuple()) {
         auto n = getTupleSize();
-        auto reference = Reference(new Object(n));
-        for (unsigned long i = 0; i < n; i++)
+        auto reference = Reference(new Object((size_t) n));
+        for (long i = 0; i < n; i++)
             reference.ptrCopy->data.a[i+1].o = tuple[i].toObject();
         return reference;
     } else return *this;
@@ -89,11 +86,11 @@ Reference Reference::toSymbolReference() const {
 Object* Reference::toObject() const {
     if (type == PointerCopy) return ptrCopy;
     else if (type == PointerReference) return *ptrRef;
-    else if (type > PointerReference) return *getArrayReference();
+    else if (type > 0) return *getArrayReference();
     else {
         auto n = getTupleSize();
-        auto object = new Object(n);
-        for (unsigned long i = 0; i < n; i++)
+        auto object = new Object((size_t) n);
+        for (long i = 0; i < n; i++)
             object->data.a[i+1].o = tuple[i].toObject();
         return object;
     }
@@ -105,24 +102,14 @@ Reference& Reference::operator=(Reference const& reference) {
 
     type = reference.type;
     
-    if (type == PointerCopy) ptrCopy = reference.ptrCopy;
-    else if (type >= PointerReference) ptrRef = reference.ptrRef;
+    if (type == PointerCopy || type >= 1) ptrCopy = reference.ptrCopy;
+    else if (type == PointerReference) ptrRef = reference.ptrRef;
     else {
         auto n = getTupleSize();
         tuple = new Reference[n];
-        for (unsigned long i = 0; i < n; i++)
+        for (long i = 0; i < n; i++)
             tuple[i] = reference.tuple[i];
     }
     
     return *this;
-}
-
-void Reference::unuse() {
-    if (isPointerCopy() && ptrCopy->references == 0)
-        delete ptrCopy;
-    else if (isTuple()) {
-        auto n = getTupleSize();
-        for (unsigned long i = 0; i < n; i++)
-            tuple[i].unuse();
-    }
 }

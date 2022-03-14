@@ -1,0 +1,8 @@
+:~ : (object, type) |-> {
+    add(object->_types, type);
+    object
+};
+
+~ : (object, type) |-> {
+    type @ object->_types
+}

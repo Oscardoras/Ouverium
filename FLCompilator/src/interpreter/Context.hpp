@@ -21,6 +21,16 @@ struct Context {
 
     virtual bool hasSymbol(std::string const& symbol);
 
+    void addReference(Object* object);
+
+    void removeReference(Object* object);
+
+    void finalize(Object * object);
+
+    void free(Object* object);
+
+    void unuse(Reference & reference);
+
 };
 
 struct GlobalContext: public Context {
@@ -37,15 +47,21 @@ struct GlobalContext: public Context {
 
 struct FunctionContext: public Context {
 
-    FunctionContext(Context & parent);
+    FunctionContext(Context const& parent);
 
     virtual Reference getSymbol(std::string const& symbol, bool const& create = true);
 
     virtual void addSymbol(std::string const& symbol, Reference const& reference);
 
-    void free();
+    void freeContext();
 
-    void free(Reference & result);
+    void freeContext(Reference & result);
+
+private:
+
+    int checkObject(Object* & object, Reference & result);
+
+    void freeContext(Object* object, Reference & result);
 
 };
 

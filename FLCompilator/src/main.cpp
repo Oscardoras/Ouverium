@@ -7,9 +7,13 @@
 
 
 int main(int argc, char ** argv) {
-    std::vector<std::string> symbols = {";", "$", ":=", ":", "=", "!=", "===", "!", "&", "|", "+", "-", "*", "/", "%", "print"};
-
-    //std::cout << sizeof(int) << " " << sizeof(void*) << std::endl;
+    std::vector<std::string> symbols = {
+        ";", "$", ":=", ":", "=", "!=", "===",
+        "!", "&", "|",
+        "+", "-", "*", "/", "%",
+        "print",
+        "get_capacity", "set_capacity", "lenght", "get", "add", "remove"
+    };
 
     if (argc == 1) {
         std::string line = "";

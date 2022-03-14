@@ -16,7 +16,8 @@ struct Object {
     Function* function;
 
     enum ObjectType {
-        Float = -3,
+        Char = -4,
+        Float,
         Integer,
         Boolean,
         None = 0
@@ -26,6 +27,7 @@ struct Object {
     long type;
 
     union Data {
+        char c;
         double f;
         long i;
         bool b;
@@ -44,13 +46,8 @@ struct Object {
     Object(bool const& b);
     Object(long const& i);
     Object(double const& f);
+    Object(char const& c);
     Object(size_t const& tuple_size);
-
-    ~Object();
-
-    void addReference();
-
-    void removeReference();
 
 };
 

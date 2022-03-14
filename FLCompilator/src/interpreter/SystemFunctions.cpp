@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 
 #include "Context.hpp"
@@ -9,17 +10,41 @@ namespace SystemFunctions {
     Reference separator(Reference reference, FunctionContext & context) {
         if (reference.isTuple()) return reference.tuple[reference.getTupleSize()-1];
         else {
-            auto object = reference.toObject();
-            context.addSymbol("object", Reference(object));
+            auto object = context.getSymbol("arguments").toObject();
             if (object->type > 0) return Reference(&object->data.a[object->type].o);
             else return reference;
         }
     }
 
-    Reference copy(Reference reference, FunctionContext & context) {
-        auto object = reference.toObject();
-        context.addSymbol("object", Reference(object));
+    Reference copy(__attribute__((unused)) Reference reference, FunctionContext & context) {
+        auto object = context.getSymbol("arguments").toObject();
         return Reference(new Object(*object));
+    }
+
+    void assign1(std::vector<Object*> & cache, Reference const& var, Object* const& object) {
+        if (var.type >= 0) cache.push_back(object);
+        else if (var.isTuple()) {
+            auto n = var.getTupleSize();
+            if ((long) n == object->type)
+                for (long i = 0; i < n; i++) assign1(cache, var.tuple[i], object->data.a[i+1].o);
+            else throw InterpreterError();
+        }
+    }
+
+    void assign2(Context & context, std::vector<Object*>::iterator & it, Reference const& var) {
+        if (var.isPointerReference()) {
+            context.removeReference(*var.ptrRef);
+            *var.ptrRef = *it++;
+            context.addReference(*var.ptrRef);
+        } else if (var.isArrayReference()) {
+            auto ref = var.getArrayReference();
+            context.removeReference(*ref);
+            *ref = *it++;
+            context.addReference(*ref);
+        } else if (var.isTuple()) {
+            auto n = var.getTupleSize();
+            for (long i = 0; i < n; i++) assign2(context, it, var.tuple[i]);
+        }
     }
 
     Reference assign(Reference reference, FunctionContext & context) {
@@ -28,38 +53,14 @@ namespace SystemFunctions {
             auto object = reference.tuple[1].toObject();
             context.addSymbol("object", Reference(object));
 
-            if (var.isPointerReference()) {
-                (*var.ptrRef)->removeReference();
-                *var.ptrRef = object;
-                (*var.ptrRef)->addReference();
-                return var;
-            } else if (var.isArrayReference()) {
-                auto ref = var.getArrayReference();
-                (*ref)->removeReference();
-                *ref = object;
-                (*ref)->addReference();
-                return var;
-            } else if (var.isTuple()) {
-                auto n = var.getTupleSize();
-                if ((long) n == object->type) {
-                    for (unsigned long i = 0; i < n; i++) {
-                        FunctionContext funcContext(context);
-                        Reference arguments(2);
-                        arguments.tuple[0] = var.tuple[i];
-                        arguments.tuple[1] = object->data.a[i+1].o;
-                        funcContext.addSymbol("arguments", arguments);
+            std::vector<Object*> cache;
+            assign1(cache, var, object);
+            auto it = cache.begin();
+            assign2(context, it, var);
 
-                        assign(arguments, context);
-
-                        funcContext.free();
-                    }
-
-                    return var;
-                } else throw InterpreterError();
-            } else return Reference(object);
+            return var;
         } else {
-            auto tuple = reference.toObject();
-            context.addSymbol("tuple", Reference(tuple));
+            auto tuple = context.getSymbol("arguments").toObject();
 
             if (tuple->type == 2) return Reference(&tuple->data.a[2].o);
             else throw InterpreterError();
@@ -67,8 +68,7 @@ namespace SystemFunctions {
     }
 
     Reference function_definition(Reference reference, FunctionContext & context) {
-        auto tuple = reference.toObject();
-        context.addSymbol("tuple", tuple);
+        auto tuple = context.getSymbol("arguments").toObject();
 
         if (tuple->type == 2) {
             auto var = tuple->data.a[1].o;
@@ -81,7 +81,7 @@ namespace SystemFunctions {
                             if (element.second->references == 0) delete element.second;
                     } else {
                         for (auto & element : ((CustomFunction*) var->function)->objects)
-                            element.second->removeReference();
+                            context.removeReference(element.second);
                     }
                 }
                 delete var->function;
@@ -91,7 +91,7 @@ namespace SystemFunctions {
                     var->function = new CustomFunction(((CustomFunction*) object->function)->pointer);
                     for (auto & element : ((CustomFunction*) object->function)->objects) {
                         ((CustomFunction*) var->function)->objects[element.first] = element.second;
-                        if (var->references > 0) element.second->addReference();
+                        if (var->references > 0) context.removeReference(element.second);
                     }
                 } else var->function = new SystemFunction(((SystemFunction*) object->function)->pointer);
             } else var->function = nullptr;
@@ -101,9 +101,8 @@ namespace SystemFunctions {
         } else throw InterpreterError();
     }
 
-    Reference equals(Reference reference, FunctionContext & context) {
-        auto tuple = reference.toObject();
-        context.addSymbol("tuple", tuple);
+    Reference equals(__attribute__((unused)) Reference reference, FunctionContext & context) {
+        auto tuple = context.getSymbol("arguments").toObject();
 
         if (tuple->type == 2) {
             auto object1 = tuple->data.a[1].o;
@@ -122,9 +121,9 @@ namespace SystemFunctions {
                         auto result = equals(arguments, context).toObject();
 
                         if (!result->data.b) {
-                            funcContext.free();
+                            funcContext.freeContext();
                             return Reference(new Object(false));
-                        } else funcContext.free();
+                        } else funcContext.freeContext();
                     } else  return Reference(new Object(false));
                 }
 
@@ -153,9 +152,9 @@ namespace SystemFunctions {
                         auto result = equals(arguments, context).toObject();
 
                         if (!result->data.b) {
-                            funcContext.free();
+                            funcContext.freeContext();
                             return Reference(new Object(false));
-                        } else funcContext.free();
+                        } else funcContext.freeContext();
                     }
                     return Reference(new Object(true));
                 } else if (object1->type == Object::Boolean)
@@ -164,6 +163,8 @@ namespace SystemFunctions {
                     return Reference(new Object(object1->data.i == object2->data.i));
                 else if (object1->type == Object::Float)
                     return Reference(new Object(object1->data.f == object2->data.f));
+                else if (object1->type == Object::Char)
+                    return Reference(new Object(object1->data.c == object2->data.c));
                 else return Reference(new Object(true));
             } else return Reference(new Object(false));
         } else throw InterpreterError();
@@ -175,25 +176,22 @@ namespace SystemFunctions {
         return r;
     }
 
-    Reference checkPointers(Reference reference, FunctionContext & context) {
-        auto tuple = reference.toObject();
-        context.addSymbol("tuple", tuple);
+    Reference checkPointers(__attribute__((unused)) Reference reference, FunctionContext & context) {
+        auto tuple = context.getSymbol("arguments").toObject();
 
         if (tuple->type == 2) return Reference(new Object(tuple->data.a[1].o == tuple->data.a[2].o));
         else throw InterpreterError();
     }
 
-    Reference logicalNot(Reference reference, FunctionContext & context) {
-        auto object = reference.toObject();
-        context.addSymbol("object", object);
+    Reference logicalNot(__attribute__((unused)) Reference reference, FunctionContext & context) {
+        auto object = context.getSymbol("arguments").toObject();
         
         if (object->type == Object::Boolean) return Reference(new Object(!object->data.b));
         else throw InterpreterError();
     }
 
-    Reference logicalAnd(Reference reference, FunctionContext & context) {
-        auto tuple = reference.toObject();
-        context.addSymbol("tuple", tuple);
+    Reference logicalAnd(__attribute__((unused)) Reference reference, FunctionContext & context) {
+        auto tuple = context.getSymbol("arguments").toObject();
 
         if (tuple->type == 2) {
             auto object1 = tuple->data.a[1].o;
@@ -205,9 +203,8 @@ namespace SystemFunctions {
         } else throw InterpreterError();
     }
 
-    Reference logicalOr(Reference reference, FunctionContext & context) {
-        auto tuple = reference.toObject();
-        context.addSymbol("tuple", tuple);
+    Reference logicalOr(__attribute__((unused)) Reference reference, FunctionContext & context) {
+        auto tuple = context.getSymbol("arguments").toObject();
 
         if (tuple->type == 2) {
             auto object1 = tuple->data.a[1].o;
@@ -219,30 +216,28 @@ namespace SystemFunctions {
         } else throw InterpreterError();
     }
 
-    Reference print(Reference reference, FunctionContext & context) {
-        auto object = reference.toObject();
-        context.addSymbol("object", object);
+    Reference print(__attribute__((unused)) Reference reference, FunctionContext & context) {
+        auto object = context.getSymbol("arguments").toObject();
 
-        if (object->type == Object::Boolean) std::cout << object->data.b << std::endl;
-        else if (object->type == Object::Integer) std::cout << object->data.i << std::endl;
-        else if (object->type == Object::Float) std::cout << object->data.f << std::endl;
-        else if (object->type >= 0)
+        if (object->type == Object::Boolean) std::cout << object->data.b;
+        else if (object->type == Object::Integer) std::cout << object->data.i;
+        else if (object->type == Object::Float) std::cout << object->data.f;
+        else if (object->type == Object::Char) std::cout << object->data.c;
+        else if (object->type > 0)
             for (long i = 1; i <= object->type; i++) {
-                FunctionContext funcContext(context);
-                auto arguments = Reference(object->data.a[i].o);
+                FunctionContext funcContext((Context&) context);
+                auto arguments = Reference(&object->data.a[i].o);
                 funcContext.addSymbol("arguments", arguments);
 
-                print(arguments, funcContext);
-
-                funcContext.free();
+                auto ref = print(arguments, funcContext);
+                context.unuse(ref);
             }
 
         return Reference(new Object());
     }
 
-    Reference addition(Reference reference, FunctionContext & context) {
-        auto tuple = reference.toObject();
-        context.addSymbol("tuple", tuple);
+    Reference addition(__attribute__((unused)) Reference reference, FunctionContext & context) {
+        auto tuple = context.getSymbol("arguments").toObject();
 
         if (tuple->type == 2) {
             auto object1 = tuple->data.a[1].o;
@@ -256,9 +251,8 @@ namespace SystemFunctions {
         } else throw InterpreterError();
     }
 
-    Reference substraction(Reference reference, FunctionContext & context) {
-        auto tuple = reference.toObject();
-        context.addSymbol("tuple", tuple);
+    Reference substraction(__attribute__((unused)) Reference reference, FunctionContext & context) {
+        auto tuple = context.getSymbol("arguments").toObject();
 
         if (tuple->type == Object::Integer) return Reference(new Object(-tuple->data.i));
         else if (tuple->type == Object::Float) return Reference(new Object(-tuple->data.f));
@@ -274,9 +268,8 @@ namespace SystemFunctions {
         } else throw InterpreterError();
     }
 
-    Reference multiplication(Reference reference, FunctionContext & context) {
-        auto tuple = reference.toObject();
-        context.addSymbol("tuple", tuple);
+    Reference multiplication(__attribute__((unused)) Reference reference, FunctionContext & context) {
+        auto tuple = context.getSymbol("arguments").toObject();
 
         if (tuple->type == 2) {
             auto object1 = tuple->data.a[1].o;
@@ -290,9 +283,8 @@ namespace SystemFunctions {
         } else throw InterpreterError();
     }
 
-    Reference division(Reference reference, FunctionContext & context) {
-        auto tuple = reference.toObject();
-        context.addSymbol("tuple", tuple);
+    Reference division(__attribute__((unused)) Reference reference, FunctionContext & context) {
+        auto tuple = context.getSymbol("arguments").toObject();
 
         if (tuple->type == 2) {
             auto object1 = tuple->data.a[1].o;
@@ -306,9 +298,8 @@ namespace SystemFunctions {
         } else throw InterpreterError();
     }
 
-    Reference modulo(Reference reference, FunctionContext & context) {
-        auto tuple = reference.toObject();
-        context.addSymbol("tuple", tuple);
+    Reference modulo(__attribute__((unused)) Reference reference, FunctionContext & context) {
+        auto tuple = context.getSymbol("arguments").toObject();
 
         if (tuple->type == 2) {
             auto object1 = tuple->data.a[1].o;
@@ -320,30 +311,91 @@ namespace SystemFunctions {
         } else throw InterpreterError();
     }
 
-    Reference getTupleSize(Reference reference, FunctionContext & context) {
-        if (reference.isTuple())
-            return Reference(new Object((long) reference.getTupleSize()));
-        else {
-            auto object = reference.toObject();
-            context.addSymbol("object", object);
-            
-            if (object->type >= 0)
-                return Reference(new Object((long) object->type));
-            else throw InterpreterError();
-        }
+    Reference get_array_size(__attribute__((unused)) Reference reference, FunctionContext & context) {
+        auto object = context.getSymbol("arguments").toObject();
+        
+        if (object->type >= 0)
+            return Reference(new Object((long) object->type));
+        else throw InterpreterError();
     }
 
-    Reference getTupleElement(Reference reference, FunctionContext & context) {
-        auto tuple = reference.toObject();
-        context.addSymbol("tuple", tuple);
+    Reference get_array_element(__attribute__((unused)) Reference reference, FunctionContext & context) {
+        auto tuple = context.getSymbol("arguments").toObject();
 
         if (tuple->type == 2) {
             auto array = tuple->data.a[1].o;
             auto index = tuple->data.a[2].o;
             
             if (array->type > 0 && index->type == Object::Integer)
-                return Reference(&array->data.a[index->data.i].o);
+                return Reference(array, index->data.i);
             else throw InterpreterError();
+        } else throw InterpreterError();
+    }
+
+    Reference get_array_capacity(__attribute__((unused)) Reference reference, FunctionContext & context) {
+        auto array = context.getSymbol("arguments").toObject();
+
+        if (array->type == 0) return new Object((long) 0);
+        else if (array->type > 0) return new Object((long) array->data.a[0].c);
+        else throw InterpreterError();
+    }
+
+    Reference set_array_capacity(__attribute__((unused)) Reference reference, FunctionContext & context) {
+        auto tuple = context.getSymbol("arguments").toObject();
+
+        if (tuple->type == 3) {
+            auto array = tuple->data.a[1].o;
+            auto capacity = tuple->data.a[2].o;
+            
+            if (capacity->type == Object::Integer && capacity->data.i >= 0) {
+                if (array->type <= 0) {
+                    if (capacity->data.i > 0) {
+                        array->data.a = (Object::Data::ArrayElement *) malloc(sizeof(Object::Data::ArrayElement) * (capacity->data.i+1));
+                        array->data.a[0].c = capacity->data.i;
+                    }
+                    array->type = 0;
+                } else if (capacity->data.i != (long) array->data.a[0].c) {
+                    if (capacity->data.i < array->type && array->references > 0)
+                        for (int i = capacity->data.i; i <= array->type; i++)
+                            context.addReference(capacity->data.a[i].o);
+                    array->data.a[0].c = capacity->data.i;
+                    array->data.a = (Object::Data::ArrayElement *) realloc(array->data.a, sizeof(Object::Data::ArrayElement) * (1 + array->data.a[0].c));
+                }
+
+                return new Object();
+            } else throw InterpreterError();
+        } else throw InterpreterError();
+    }
+
+    Reference add_array_element(__attribute__((unused)) Reference reference, FunctionContext & context) {
+        auto tuple = context.getSymbol("arguments").toObject();
+
+        if (tuple->type == 2) {
+            auto array = tuple->data.a[1].o;
+            auto element = tuple->data.a[2].o;
+            
+            if (array->type <= 0) {
+                array->data.a = (Object::Data::ArrayElement *) malloc(sizeof(Object::Data::ArrayElement) * 2);
+                array->data.a[0].c = 1;
+            } else if ((long) array->data.a[0].c <= array->type) {
+                array->data.a[0].c *= 2;
+                array->data.a = (Object::Data::ArrayElement *) realloc(array->data.a, sizeof(Object::Data::ArrayElement) * (1 + array->data.a[0].c));
+            }
+
+            array->type++;
+            array->data.a[array->type].o = element;
+            if (array->references > 0) context.addReference(element);
+
+            return Reference(array, array->type);
+        } else throw InterpreterError();
+    }
+
+    Reference remove_array_element(__attribute__((unused)) Reference reference, FunctionContext & context) {
+        auto array = context.getSymbol("arguments").toObject();
+
+        if (array->type > 0) {
+            if (array->references > 0) context.removeReference(array->data.a[array->type].o);
+            array->type--;
         } else throw InterpreterError();
     }
 
