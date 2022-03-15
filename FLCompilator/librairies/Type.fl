@@ -1,8 +1,8 @@
-:~ : (object, type) |-> {
+(:~) : (object, type) |-> {
     add(object->_types, type);
     object
 };
 
-~ : (object, type) |-> {
+(~) : (object, type) |-> {
     type @ object->_types
 }

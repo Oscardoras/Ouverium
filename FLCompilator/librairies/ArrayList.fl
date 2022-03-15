@@ -1,4 +1,4 @@
-@ : (element, list) |-> {
+(@) : (element, list) |-> {
     found := false;
     l := lenght(list);
     i := 1;
@@ -12,7 +12,7 @@
     found
 };
 
-@== : (element, list) |-> {
+(@==) : (element, list) |-> {
     found := false;
     l := lenght(list);
     i := 1;
