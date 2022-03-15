@@ -27,14 +27,14 @@
 };
 
 
-ArrayList : array |-> {
-    array :~ ArrayList;
+ArrayList : this |-> {
+    this :~ ArrayList;
 
-    array : i |-> {
-        get(array, i-1)
+    this : i |-> {
+        get(this, i-1)
     };
 
-    array->foreach : function |-> {
+    this->foreach : function |-> {
         l := lenght(list);
         i := 1;
         while (i <= l) repeat {
@@ -43,13 +43,13 @@ ArrayList : array |-> {
         ()
     };
 
-    array->add : element |-> {
-        add(array, element)
+    this->add : element |-> {
+        add(this, element)
     };
 
-    array->remove : () |-> {
-        remove(array)
+    this->remove : () |-> {
+        remove(this)
     };
 
-    array
+    this
 }

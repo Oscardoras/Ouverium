@@ -1,0 +1,12 @@
+include("../Type.fl");
+
+
+Iterator : this |-> {
+    this :~ Iterator;
+
+    this->has_next : () |-> {};
+
+    this->next : () |-> {};
+
+    this
+}

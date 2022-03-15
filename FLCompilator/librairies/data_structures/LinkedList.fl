@@ -1,14 +1,17 @@
-LinkedList : array |-> {
-    array :~ LinkedList;
+include("Iterator.fl");
+
+
+LinkedList : this |-> {
+    this :~ LinkedList;
 
     private->first := ();
     private->last := ();
 
     this->foreach : function |-> {
-        it := private->first;
-        while (it != ()) repeat {
-            function(it->object);
-            it := it->next
+        cell := private->first;
+        while (cell != ()) repeat {
+            function(cell->object);
+            cell := cell->next
         };
         ()
     };
@@ -48,5 +51,39 @@ LinkedList : array |-> {
         };
     };
 
+    this->iterator : () |-> {
+        LinkedList->Iterator((), private->first)
+    };
+
     this
+};
+
+LinkedList->Iterator : (this, first) |-> {
+    this :~ Iterator;
+    this :~ LinkedList->Iterator;
+
+    this->cell := first;
+
+    this->has_next : () |-> {
+        this->cell != ()
+    };
+
+    this->next : () like this->has_next() |-> {
+        tmp := this->cell;
+        this->cell := this->cell->next;
+        tmp;
+    };
+
+    this
+}
+
+(@) : (element, list) |-> {
+    found := false;
+    it := list->iterator();
+    while (!found & it->has_next()) repeat {
+        if (it->next() = element) then {
+            found := true
+        }
+    };
+    found
 }
