@@ -1,3 +1,146 @@
+include("List.fl");
+
+
+ArrayList : this |-> {
+    List(this);
+    this :~ ArrayList;
+
+    this : index |-> {
+        get(this, index-1)
+    };
+
+    this->foreach : function |-> {
+        l := lenght(list);
+        i := 1;
+        while (i <= l) repeat {
+            function(get(list, index))
+        };
+        ()
+    };
+
+    this->lenght : () |-> {
+        lenght(this)
+    };
+
+    this->is_empty : () |-> {
+        lenght(this) = 0
+    };
+
+    this->get_capacity : () |-> {
+        get_capacity(this)
+    };
+
+    this->set_capacity : capacity |-> {
+        set_capacity(capacity)
+    };
+
+    this->get_first : () like lenght(this) > 0 |-> {
+        get(this, 1)
+    };
+
+    this->get_last : () like lenght(this) > 0 |-> {
+        get(this, lenght(this))
+    };
+
+    this->add_first : element |-> {
+        l := lenght(this);
+        if (l > 0) {
+            add(this, get(this, l));
+            i := l;
+            while (i > 0) {
+                get(this, i-1) := get(this, i);
+                --i
+            };
+            get(this, 0) := element
+        } else {
+            add(this, element)
+        }
+    };
+
+    this->add_last : element |-> {
+        add(this, element)
+    };
+
+    this->remove_first : () like lenght(this) > 0 |-> {
+        l := lenght(this);
+        i := 1;
+        while (i < l) {
+            get(this, i) := get(this, i+1);
+            ++i
+        };
+        remove(this)
+    };
+
+    this->remove_last : () like lenght(this) > 0 |-> {
+        remove(this)
+    };
+
+    this->insert : (index, object) like 0 <= index & index < lenght(this) |-> {
+        l := lenght(this);
+        add(this, get(this, l));
+        i := l;
+        while (i > index+1) {
+            get(this, i-1) := get(this, i);
+            --i
+        };
+        get(this, index+1) := element
+    };
+
+    this->remove : index like 0 <= index & index < lenght(this) |-> {
+        l := lenght(this);
+        i := index+1;
+        tmp := get(this, i);
+        while (i < l) {
+            get(this, i) := get(this, i+1);
+            ++i
+        };
+        remove(this);
+        get(this, i)
+    };
+
+    this
+};
+
+ArrayList->Iterator : (this, list, index) |-> {
+    List->Iterator(this, list);
+    this :~ ArrayList->Iterator;
+
+    this->_index := index;
+
+    this->has_previous : () |-> {
+        this->_index > 0
+    };
+
+    this->previous : () like this->has_previous() |-> {
+        --this->_index;
+        this->iterable[this->_index]
+    };
+
+    this->has_next : () |-> {
+        this->_index < lenght(this->iterable)-1
+    };
+
+    this->next : () like this->has_next() |-> {
+        ++this->_index;
+        this->iterable[this->_index]
+    };
+
+    this->get : () |-> {
+        this->iterable[this->_index]
+    };
+
+    this->remove : () |-> {
+        this->iterable->remove(index)
+    };
+
+    this->insert : object |-> {
+        iterable->insert(object, index)
+    };
+
+    this
+}
+
+
 (@) : (element, list) |-> {
     found := false;
     l := lenght(list);
@@ -24,32 +167,4 @@
         }
     };
     found
-};
-
-
-ArrayList : this |-> {
-    this :~ ArrayList;
-
-    this : index |-> {
-        get(this, index-1)
-    };
-
-    this->foreach : function |-> {
-        l := lenght(list);
-        i := 1;
-        while (i <= l) repeat {
-            function(get(list, index))
-        };
-        ()
-    };
-
-    this->add_last : element |-> {
-        add(this, element)
-    };
-
-    this->remove_last : () |-> {
-        remove(this)
-    };
-
-    this
 }

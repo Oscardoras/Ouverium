@@ -1,12 +1,11 @@
-include("../Type.fl");
+include("../Iterable.fl");
 
 
 List : this |-> {
+    Iterable(this);
     this :~ List;
 
     this : index |-> {};
-
-    this->foreach : function |-> {};
 
     this->lenght : () |-> {};
     this->is_empty : () |-> {};
@@ -23,30 +22,21 @@ List : this |-> {
     this->insert : (index, object) |-> {};
     this->remove : index |-> {};
 
-    this->iterator_first : () |-> {};
     this->iterator : index |-> {};
+    this->iterator_first : () |-> {};
     this->iterator_last : () |-> {};
 
     this
 };
 
-List->Iterator : this |-> {
-    this :~ Iterator;
-
-    this->list;
-
-    this->has_next : () |-> {};
-    this->next : () |-> {};
+List->Iterator : (this, list) |-> {
+    Iterable->Iterator(this, list);
+    this :~ List->Iterator;
 
     this->has_previous : () |-> {};
     this->previous : () |-> {};
 
-    this->get : () |-> {};
-
-    this->remove : () |-> {};
-
-    this->insert_before : object |-> {};
-    this->insert_after : object |-> {};
+    this->insert : object |-> {};
 
     this
 }

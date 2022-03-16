@@ -1,0 +1,28 @@
+include("../Type.fl");
+
+
+Iterable : this |-> {
+    this :~ List;
+
+    this->foreach : function |-> {};
+
+    this->iterator : () |-> {};
+
+    this
+};
+
+Iterable->Iterator : (this, iterable) |-> {
+    this :~ Iterable->Iterator;
+
+    this->iterable := iterable;
+
+    this->has_next : () |-> {};
+
+    this->next : () |-> {};
+
+    this->get : () |-> {};
+
+    this->remove : () |-> {};
+
+    this
+}
