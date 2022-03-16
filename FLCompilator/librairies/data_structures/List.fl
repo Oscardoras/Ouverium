@@ -1,0 +1,52 @@
+include("../Type.fl");
+
+
+List : this |-> {
+    this :~ List;
+
+    this : index |-> {};
+
+    this->foreach : function |-> {};
+
+    this->lenght : () |-> {};
+    this->is_empty : () |-> {};
+
+    this->get_first : () |-> {};
+    this->get_last : () |-> {};
+
+    this->add_first : () |-> {};
+    this->add_last : () |-> {};
+    
+    this->remove_first : () |-> {};
+    this->remove_last : () |-> {};
+
+    this->insert : (index, object) |-> {};
+    this->remove : index |-> {};
+
+    this->iterator_first : () |-> {};
+    this->iterator : index |-> {};
+    this->iterator_last : () |-> {};
+
+    this
+};
+
+List->Iterator : this |-> {
+    this :~ Iterator;
+
+    this->list;
+
+    this->has_next : () |-> {};
+    this->next : () |-> {};
+
+    this->has_previous : () |-> {};
+    this->previous : () |-> {};
+
+    this->get : () |-> {};
+
+    this->remove : () |-> {};
+
+    this->insert_before : object |-> {};
+    this->insert_after : object |-> {};
+
+    this
+}
