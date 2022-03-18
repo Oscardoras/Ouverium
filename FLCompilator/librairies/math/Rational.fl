@@ -1,0 +1,68 @@
+include("../Type.fl");
+include("Arithmetic.fl");
+
+
+Rational : this |-> {
+    this :~ Rational;
+
+    this->numerator;
+    this->denominator;
+
+    this->simplify : () |-> {
+        tmp := gcd(this->numerator, this->denominator);
+        this->numerator :=/ tmp;
+        denominator->numerator :=/ tmp;
+        this
+    };
+
+    this
+};
+
+(+) : (a, b) |-> {
+    c := Rational(0);
+
+    c->denominator := a->denominator * b->denominator;
+    c->numerator := a->numerator*b->denominator + b->numerator*a->denominator;
+
+    c
+};
+
+(+) : a |-> {
+    b := Rational(0);
+
+    c->numerator := a->numerator;
+    c->denominator := a->denominator;
+
+    c
+};
+
+(-) : a |-> {
+    b := Rational(0);
+
+    c->numerator := -a->numerator;
+    c->denominator := a->denominator;
+
+    c
+};
+
+(-) : (a, b) |-> {
+    a + (-b)
+};
+
+(*) : (a, b) |-> {
+    c := Rational(0);
+
+    c->numerator := a->numerator * b->numerator;
+    c->denominator := a->denominator * b->denominator;
+
+    c
+};
+
+(/) : (a, b) |-> {
+    c := Rational(0);
+
+    c->numerator := a->numerator * b->denominator;
+    c->denominator := a->denominator * b->numerator;
+
+    c
+};

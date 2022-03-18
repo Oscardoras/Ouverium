@@ -1,0 +1,11 @@
+gcd : (a, b) |-> {
+    (a', b') := (a, b);
+    while (b' != 0) repeat {
+        (a', b') := (b', a' % b')
+    };
+    a'
+};
+
+lcm : (a, b) |-> {
+    a*b/pgcd(a, b)
+}

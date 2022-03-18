@@ -1,0 +1,15 @@
+include("../Type.fl");
+
+
+Integer : this |-> {
+    this :~ Integer;
+
+    add(this->_array, int(this));
+    set_capacity(this, 0);
+
+    this
+};
+
+(+) : (a, b) |-> {
+    
+}
