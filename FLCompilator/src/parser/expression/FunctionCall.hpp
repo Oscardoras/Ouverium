@@ -4,16 +4,12 @@
 #include "Expression.hpp"
 
 
-class FunctionCall: public Expression {
+struct FunctionCall: public Expression {
 
-public:
+    const Type type = Expression::FunctionCall;
 
     std::shared_ptr<Expression> function;
     std::shared_ptr<Expression> object;
-
-    virtual std::string getType() const {
-        return "FunctionCall";
-    }
 
 };
 

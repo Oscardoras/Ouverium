@@ -5,9 +5,6 @@
 #include "InterpreterError.hpp"
 #include "SystemFunctions.cpp"
 
-#include "../parser/expression/Condition.hpp"
-#include "../parser/expression/ConditionAlternative.hpp"
-#include "../parser/expression/ConditionRepeat.hpp"
 #include "../parser/expression/Expression.hpp"
 #include "../parser/expression/FunctionCall.hpp"
 #include "../parser/expression/FunctionDefinition.hpp"
@@ -16,167 +13,55 @@
 #include "../parser/expression/Tuple.hpp"
 
 
-void setReferences(Context & context, std::shared_ptr<Expression> expression, Reference reference) {
-    auto type = expression->getType();
+Reference Interpreter::callFunction(Context & context, Function* function, std::shared_ptr<Expression> arguments) {
+    if (function->type == Function::Custom) {
+        FunctionContext function_context(context, ((CustomFunction*) function)->pointer->parameters, arguments);
 
-    if (type == "Symbol") {
-        auto symbol = std::static_pointer_cast<Symbol>(expression);
+        for (auto & symbol : ((CustomFunction*) function)->objects)
+            function_context.addSymbol(symbol.first, Reference(symbol.second));
 
-        context.addSymbol(symbol->name, reference);
-    } else if (type == "Tuple") {
-        auto tuple = std::static_pointer_cast<Tuple>(expression);
+        Object* filter;
+        if (((CustomFunction*) function)->pointer->filter != nullptr)
+            filter = execute(function_context, ((CustomFunction*) function)->pointer->filter).toObject();
+        else filter = context.addObject(new Object(true));
 
-        if (reference.isTuple()) {
-            for (size_t i = 0; i < tuple->objects.size(); i++)
-                setReferences(context, tuple->objects[i], reference.tuple[i]);
-        } else {
-            auto object = reference.toObject();
-            if (object->type >= 0) {
-                for (unsigned long i = 1; i <= tuple->objects.size(); i++)
-                    setReferences(context, tuple->objects[i], Reference(&object->data.a[i].o));
-            } else throw InterpreterError();
-        }
-
+        if (filter->type == Object::Boolean && filter->data.b)
+            return execute(function_context, ((CustomFunction*) function)->pointer->object);
+        else throw InterpreterError();
+    } else {
+        FunctionContext function_context(context, ((SystemFunction*) function)->pointer->parameters, arguments);
+        
+        return ((SystemFunction*) function)->pointer(function_context);
     }
 }
 
 
-Reference execute(Context & context, std::shared_ptr<Expression> expression) {
-    auto type = expression->getType();
+Reference Interpreter::execute(Context & context, std::shared_ptr<Expression> expression) {
+    if (expression->type == Expression::FunctionCall) {
+        auto function_call = std::static_pointer_cast<FunctionCall>(expression);
 
-    if (type == "Condition") {
-        auto condition = std::static_pointer_cast<Condition>(expression);
+        auto func = execute(context, function_call->function).toObject();
+        if (func->function != nullptr)
+            return callFunction(context, func->function, function_call->object);
+    } else if (expression->type == Expression::FunctionDefinition) {
+        auto function_definition = std::static_pointer_cast<FunctionDefinition>(expression);
 
-        auto condition_val = execute(context, condition->condition).toObject();
-        if (condition_val->type == Object::Boolean) {
-            if (condition_val->data.b) {
-                if (condition_val->references == 0) delete condition_val;
-                return execute(context, condition->object);
-            } else {
-                if (condition_val->references == 0) delete condition_val;
-                return Reference(new Object());
-            }
-        } else {
-            if (condition_val->references == 0) delete condition_val;
-            throw InterpreterError();
-        }
-    } else if (type == "ConditionAlternative") {
-        auto conditionAlternative = std::static_pointer_cast<ConditionAlternative>(expression);
-
-        auto condition_val = execute(context, conditionAlternative->condition).toObject();
-        if (condition_val->type == Object::Boolean) {
-            if (condition_val->data.b) {
-                if (condition_val->references == 0) delete condition_val;
-                return execute(context, conditionAlternative->object);
-            } else {
-                if (condition_val->references == 0) delete condition_val;
-                return execute(context, conditionAlternative->alternative);
-            }
-        } else {
-            if (condition_val->references == 0) delete condition_val;
-            throw InterpreterError();
-        }
-    } else if (type == "ConditionRepeat") {
-        auto conditionRepeat = std::static_pointer_cast<ConditionRepeat>(expression);
-
-        Reference tmp(new Object());
-        auto condition_val = execute(context, conditionRepeat->condition).toObject();
-        if (condition_val->type != Object::Boolean) {
-            if (condition_val->references == 0) delete condition_val;
-            throw InterpreterError();
-        }
-        while (condition_val->data.b) {
-            if (condition_val->references == 0) delete condition_val;
-            context.unuse(tmp);
-            tmp = execute(context, conditionRepeat->object);
-            condition_val = execute(context, conditionRepeat->condition).toObject();
-            if (condition_val->type != Object::Boolean) {
-                if (condition_val->references == 0) delete condition_val;
-                throw InterpreterError();
-            }
-        }
-        if (condition_val->references == 0) delete condition_val;
-        return tmp;
-    } else if (type == "FunctionCall") {
-        auto functionCall = std::static_pointer_cast<FunctionCall>(expression);
-
-        auto func = execute(context, functionCall->function).toObject();
-        if (func->function != nullptr) {
-            FunctionContext funcContext(context);
-            if (func->function->type == Function::Custom) {
-                auto parameters = ((CustomFunction*) func->function)->pointer->parameters;
-                auto arguments = execute(context, functionCall->object);
-                for (auto & symbol : ((CustomFunction*) func->function)->objects)
-                    funcContext.addSymbol(symbol.first, Reference(symbol.second));
-                setReferences(funcContext, parameters, arguments);
-
-                Object* filter;
-                if (((CustomFunction*) func->function)->pointer->filter != nullptr)
-                    filter = execute(funcContext, ((CustomFunction*) func->function)->pointer->filter).toObject();
-                else filter = new Object(true);
-
-                if (filter->type == Object::Boolean && filter->data.b) {
-                    auto result = execute(funcContext, ((CustomFunction*) func->function)->pointer->object);
-                    funcContext.freeContext(result);
-                    if (func->references == 0) context.free(func);
-                    if (filter->references == 0) context.free(filter);
-                    return result;
-                } else {
-                    funcContext.freeContext();
-                    if (func->references == 0) context.free(func);
-                    if (filter->references == 0) context.free(filter);
-                    throw InterpreterError();
-                }
-            } else if (func->function->type == Function::System) {
-                auto arguments = execute(context, functionCall->object);
-                funcContext.addSymbol("arguments", arguments);
-
-                try {
-                    auto result = ((SystemFunction*) func->function)->pointer(arguments, funcContext);
-                    funcContext.freeContext(result);
-                    if (func->references == 0) context.free(func);
-                    return result;
-                } catch (InterpreterError & ex) {
-                    funcContext.freeContext();
-                    if (func->references == 0) context.free(func);
-                    throw ex;
-                }
-            } else {
-                if (func->references == 0) context.free(func);
-                throw InterpreterError();
-            }
-        } else {
-            if (func->references == 0) context.free(func);
-            throw InterpreterError();
-        }
-    } else if (type == "FunctionDefinition") {
-        auto functionDefinition = std::static_pointer_cast<FunctionDefinition>(expression);
-
-        auto object = new Object();
-        object->function = new CustomFunction(functionDefinition);
-        if (context.global != &context)
-            for (auto symbol : functionDefinition->object->usedSymbols)
+        auto object = context.addObject(new Object());
+        object->function = new CustomFunction(function_definition);
+        if (context.getGlobal() != &context)
+            for (auto symbol : function_definition->object->usedSymbols)
                 if (context.hasSymbol(symbol))
                     ((CustomFunction*) object->function)->objects[symbol] = context.getSymbol(symbol).toObject();
         
         return Reference(object);
-    } else if (type == "Property") {
+    } else if (expression->type == Expression::Property) {
         auto property = std::static_pointer_cast<Property>(expression);
         
         auto object = execute(context, property->object).toObject();
         auto & field = object->fields[property->name];
-        if (field == nullptr) {
-            field = new Object();
-            if (object->references > 0) field->references++;
-        }
-
-        if (object->references == 0) {
-            auto ref = Reference(field);
-            field = new Object();
-            delete object;
-            return ref;
-        } else return Reference(&field);
-    } else if (type == "Symbol") {
+        if (field == nullptr) field = context.addObject(new Object());
+        return Reference(&field);
+    } else if (expression->type == Expression::Symbol) {
         auto symbol = std::static_pointer_cast<Symbol>(expression)->name;
         if (symbol[0] == '\"') {
             std::string str;
@@ -205,23 +90,23 @@ Reference execute(Context & context, std::shared_ptr<Expression> expression) {
             } else first = false;
 
             long l = str.length();
-            Object* obj = new Object((size_t) l);
+            Object* obj = context.addObject(new Object((size_t) l));
             for (long i = 0; i < l; i++)
-                obj->data.a[i+1].o = new Object(str[i]);
+                obj->data.a[i+1].o = context.addObject(new Object(str[i]));
             return obj;
         }
-        if (symbol == "true") return Reference(new Object(true));
-        if (symbol == "false") return Reference(new Object(false));
+        if (symbol == "true") return Reference(context.addObject(new Object(true)));
+        if (symbol == "false") return Reference(context.addObject(new Object(false)));
         try {
-            return Reference(new Object(std::stol(symbol)));
+            return Reference(context.addObject(new Object(std::stol(symbol))));
         } catch (std::invalid_argument const& ex1) {
             try {
-                return Reference(new Object(std::stod(symbol)));
+                return Reference(context.addObject(new Object(std::stod(symbol))));
             } catch (std::invalid_argument const& ex2) {
                 return context.getSymbol(std::static_pointer_cast<Symbol>(expression)->name);
             }
         }
-    } else if (type == "Tuple") {
+    } else if (expression->type == Expression::Tuple) {
         auto tuple = std::static_pointer_cast<Tuple>(expression);
 
         auto n = tuple->objects.size();
@@ -232,12 +117,12 @@ Reference execute(Context & context, std::shared_ptr<Expression> expression) {
     } else return Reference();
 }
 
+
 void addFunction(Context & context, std::string symbol, Reference (*function)(Reference, FunctionContext&)) {
     Object * object = new Object();
     object->function = new SystemFunction(function);
     context.addSymbol(symbol, Reference(object));
 }
-
 
 void Interpreter::run(std::shared_ptr<Expression> expression) {
     GlobalContext context;
@@ -265,12 +150,6 @@ void Interpreter::run(std::shared_ptr<Expression> expression) {
     addFunction(context, "remove", SystemFunctions::add_array_element);
 
     auto result = execute(context, expression);
-    
-    FunctionContext funcContext(context);
-    funcContext.addSymbol("arguments", result);
-    
-    auto ref = SystemFunctions::print(result, funcContext);
-    context.unuse(ref);
-
-    funcContext.freeContext();
+    SystemFunction print(SystemFunctions::print);
+    callFunction(context, &print, std::shared_ptr<Expression> arguments);
 }

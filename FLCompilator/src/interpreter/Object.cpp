@@ -4,7 +4,7 @@
 Object::Object() {
     function = nullptr;
     type = None;
-    references = 0;
+    referenced = false;
 }
 
 Object::Object(Object const& object) {
@@ -31,35 +31,35 @@ Object::Object(Object const& object) {
             data.a[i].o = object.data.a[i].o;
     }
 
-    references = 0;
+    referenced = false;
 }
 
 Object::Object(bool const& b) {
     function = nullptr;
     type = Boolean;
     data.b = b;
-    references = 0;
+    referenced = false;
 }
 
 Object::Object(long const& i) {
     function = nullptr;
     type = Integer;
     data.i = i;
-    references = 0;
+    referenced = false;
 }
 
 Object::Object(double const& f) {
     function = nullptr;
     type = Float;
     data.f = f;
-    references = 0;
+    referenced = false;
 }
 
 Object::Object(char const& c) {
     function = nullptr;
     type = Char;
     data.c = c;
-    references = 0;
+    referenced = false;
 }
 
 Object::Object(size_t const& tuple_size) {
@@ -67,5 +67,5 @@ Object::Object(size_t const& tuple_size) {
     type = (long) tuple_size;
     data.a = (Object::Data::ArrayElement *) std::malloc(sizeof(Object::Data::ArrayElement) * (type+1));
     data.a[0].c = type;
-    references = 0;
+    referenced = false;
 }

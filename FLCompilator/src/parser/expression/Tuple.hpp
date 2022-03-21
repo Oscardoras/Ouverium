@@ -6,15 +6,11 @@
 #include "Expression.hpp"
 
 
-class Tuple: public Expression {
+struct Tuple: public Expression {
 
-public:
+    const Type type = Expression::Tuple;
 
     std::vector<std::shared_ptr<Expression>> objects;
-
-    virtual std::string getType() const {
-        return "Tuple";
-    }
 
 };
 

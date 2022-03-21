@@ -6,16 +6,20 @@
 #include <vector>
 
 
-class Expression {
+struct Expression {
 
-public:
+    enum Type {
+        FunctionCall,
+        FunctionDefinition,
+        Property,
+        Symbol,
+        Tuple
+    };
+
+    const Type type;
 
     std::vector<std::string> usedSymbols;
     std::vector<std::string> newSymbols;
-
-    virtual std::string getType() const {
-        return "Expression";
-    }
 
     std::string toString() const;
 

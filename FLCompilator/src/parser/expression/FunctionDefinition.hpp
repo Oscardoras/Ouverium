@@ -6,17 +6,13 @@
 #include "Expression.hpp"
 
 
-class FunctionDefinition: public Expression {
+struct FunctionDefinition: public Expression {
 
-public:
+    const Type type = Expression::FunctionDefinition;
 
     std::shared_ptr<Expression> parameters;
     std::shared_ptr<Expression> filter;
     std::shared_ptr<Expression> object;
-
-    virtual std::string getType() const {
-        return "FunctionDefinition";
-    }
 
 };
 

@@ -3,15 +3,11 @@
 
 #include "Expression.hpp"
 
-class Symbol: public Expression {
+struct Symbol: public Expression {
 
-public:
+    const Type type = Expression::Symbol;
 
     std::string name;
-    
-    virtual std::string getType() const {
-        return "Symbol";
-    }
 
 };
 

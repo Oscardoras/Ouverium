@@ -37,7 +37,7 @@ struct Object {
         } * a;
     } data;
 
-    int references;
+    bool referenced;
 
     Object();
 

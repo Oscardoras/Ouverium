@@ -2,6 +2,7 @@
 #define INTERPRETER_CONTEXT_HPP_
 
 #include <map>
+#include <list>
 #include <string>
 
 #include "Reference.hpp"
@@ -11,35 +12,28 @@ struct GlobalContext;
 
 struct Context {
 
-    GlobalContext* global;
-
     std::map<std::string, Reference> symbols;
 
+    virtual GlobalContext* getGlobal() = 0;
+    virtual Context* getParent() = 0;
+
+    Object* addObject(Object* object);
+    void collect(Object* current);
+
+    void addSymbol(std::string const& symbol, Reference const& reference);
     virtual Reference getSymbol(std::string const& symbol, bool const& create = true) = 0;
-
-    virtual void addSymbol(std::string const& symbol, Reference const& reference) = 0;
-
-    virtual bool hasSymbol(std::string const& symbol);
-
-    void addReference(Object* object);
-
-    void removeReference(Object* object);
-
-    void finalize(Object * object);
-
-    void free(Object* object);
-
-    void unuse(Reference & reference);
+    bool hasSymbol(std::string const& symbol) const;
 
 };
 
 struct GlobalContext: public Context {
 
-    GlobalContext();
+    std::list<Object*> objects;
+
+    virtual GlobalContext* getGlobal();
+    virtual Context* getParent();
 
     virtual Reference getSymbol(std::string const& symbol, bool const& create = true);
-
-    virtual void addSymbol(std::string const& symbol, Reference const& reference);
 
     ~GlobalContext();
 
@@ -47,21 +41,18 @@ struct GlobalContext: public Context {
 
 struct FunctionContext: public Context {
 
+    Context* parent;
+
+    std::shared_ptr<Expression> parameters;
+    std::shared_ptr<Expression> arguments;
+
     FunctionContext(Context const& parent);
+    FunctionContext(Context const& parent, std::shared_ptr<Expression> parameters, std::shared_ptr<Expression> arguments);
+
+    virtual GlobalContext* getGlobal();
+    virtual Context* getParent();
 
     virtual Reference getSymbol(std::string const& symbol, bool const& create = true);
-
-    virtual void addSymbol(std::string const& symbol, Reference const& reference);
-
-    void freeContext();
-
-    void freeContext(Reference & result);
-
-private:
-
-    int checkObject(Object* & object, Reference & result);
-
-    void freeContext(Object* object, Reference & result);
 
 };
 

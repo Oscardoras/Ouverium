@@ -3,16 +3,12 @@
 
 #include "Expression.hpp"
 
-class Property: public Expression {
+struct Property: public Expression {
 
-public:
+    const Type type = Expression::Property;
 
     std::shared_ptr<Expression> object;
     std::string name;
-
-    virtual std::string getType() const {
-        return "Property";
-    }
 
 };
 
