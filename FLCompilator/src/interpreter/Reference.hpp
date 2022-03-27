@@ -44,8 +44,8 @@ struct Reference {
     long getTupleSize() const;
     Object** getArrayReference() const;
 
-    Reference toSymbolReference() const;
-    Object* toObject() const;
+    Reference toSymbolReference(Context & context) const;
+    Object* toObject(Context & context) const;
 
     Reference& operator=(Reference const& reference);
 

@@ -6,7 +6,8 @@ CustomFunction::CustomFunction(std::shared_ptr<FunctionDefinition> pointer) {
     this->pointer = pointer;
 }
 
-SystemFunction::SystemFunction(Reference (*pointer)(Reference, FunctionContext&)) {
+SystemFunction::SystemFunction(std::shared_ptr<Expression> parameters, Reference (*pointer)(FunctionContext&)) {
     type = System;
+    this->parameters = parameters;
     this->pointer = pointer;
 }

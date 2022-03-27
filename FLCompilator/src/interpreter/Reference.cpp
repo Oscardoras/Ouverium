@@ -73,17 +73,18 @@ Object** Reference::getArrayReference() const {
     return &ptrCopy->data.a[type].o;
 }
 
-Reference Reference::toSymbolReference() const {
+Reference Reference::toSymbolReference(Context & context) const {
     if (isTuple()) {
         auto n = getTupleSize();
         auto reference = Reference(new Object((size_t) n));
         for (long i = 0; i < n; i++)
-            reference.ptrCopy->data.a[i+1].o = tuple[i].toObject();
+            reference.ptrCopy->data.a[i+1].o = tuple[i].toObject(context);
+        context.addObject(reference.ptrCopy);
         return reference;
     } else return *this;
 }
 
-Object* Reference::toObject() const {
+Object* Reference::toObject(Context & context) const {
     if (type == PointerCopy) return ptrCopy;
     else if (type == PointerReference) return *ptrRef;
     else if (type > 0) return *getArrayReference();
@@ -91,7 +92,8 @@ Object* Reference::toObject() const {
         auto n = getTupleSize();
         auto object = new Object((size_t) n);
         for (long i = 0; i < n; i++)
-            object->data.a[i+1].o = tuple[i].toObject();
+            object->data.a[i+1].o = tuple[i].toObject(context);
+        context.addObject(object);
         return object;
     }
 }

@@ -2,8 +2,6 @@
 #include "Interpreter.hpp"
 #include "InterpreterError.hpp"
 
-#include "../parser/expression/Property.hpp"
-#include "../parser/expression/Symbol.hpp"
 #include "../parser/expression/Tuple.hpp"
 
 
@@ -58,7 +56,7 @@ void Context::collect(Object* current) {
 }
 
 void Context::addSymbol(std::string const& symbol, Reference const& reference) {
-    symbols[symbol] = reference.toSymbolReference();
+    symbols[symbol] = reference.toSymbolReference(*this);
 }
 
 bool Context::hasSymbol(std::string const& symbol) const {
@@ -90,12 +88,6 @@ GlobalContext::~GlobalContext() {
     collect(nullptr);
 }
 
-
-FunctionContext::FunctionContext(Context const& parent, std::shared_ptr<Expression> parameters, std::shared_ptr<Expression> arguments) {
-    this->parameters = parameters;
-    this->arguments = arguments;
-}
-
 GlobalContext* FunctionContext::getGlobal() {
     return parent->getGlobal();
 }
@@ -104,78 +96,8 @@ Context* FunctionContext::getParent() {
     return parent;
 }
 
-void setReferences(FunctionContext & function_context, std::shared_ptr<Expression> expression, Reference reference) {
-    if (expression->type == Expression::Symbol) {
-        auto symbol = std::static_pointer_cast<Symbol>(expression);
-
-        function_context.addSymbol(symbol->name, reference);
-    } else if (expression->type == Expression::Tuple) {
-        auto tuple = std::static_pointer_cast<Tuple>(expression);
-
-        if (reference.isTuple()) {
-            if (reference.getTupleSize() == tuple->objects.size()) {
-                for (size_t i = 0; i < tuple->objects.size(); i++)
-                    setReferences(function_context, tuple->objects[i], reference.tuple[i]);
-            } else throw InterpreterError();
-        } else {
-            auto object = reference.toObject();
-            if (object->type == tuple->objects.size()) {
-                for (unsigned long i = 1; i <= tuple->objects.size(); i++)
-                    setReferences(function_context, tuple->objects[i], Reference(&object->data.a[i].o));
-            } else throw InterpreterError();
-        }
-    }
-}
-
-enum FindStatus {
-    NotFound,
-    Found,
-    Set
-};
-
-FindStatus findSymbol(Context & context, FunctionContext & function_context, std::string symbol, std::shared_ptr<Expression> parameters, std::shared_ptr<Expression> arguments) {
-    if (arguments != nullptr) {
-        if (parameters->type == Expression::Symbol) {
-            if (std::static_pointer_cast<Symbol>(parameters)->name == symbol) {
-                setReferences(function_context, parameters, Interpreter::execute(context, arguments));
-                return Set;
-            } else
-                return NotFound;
-        } else if (parameters->type == Expression::Tuple) {
-            auto p_tuple = std::static_pointer_cast<Tuple>(parameters);
-
-            if (arguments->type == Expression::Tuple) {
-                auto a_tuple = std::static_pointer_cast<Tuple>(arguments);
-
-                if (a_tuple->objects.size() == p_tuple->objects.size())
-                    for (size_t i = 0; i < p_tuple->objects.size(); i++)
-                        if (findSymbol(context, function_context, symbol, p_tuple->objects[i], a_tuple->objects[i]) != NotFound)
-                            return Set;
-            } else {
-                for (size_t i = 0; i < p_tuple->objects.size(); i++)
-                    if (findSymbol(context, function_context, symbol, p_tuple->objects[i], nullptr) == Found) {
-                        setReferences(function_context, parameters, Interpreter::execute(context, arguments));
-                        return Set;
-                    }
-            }
-        }
-    } else {
-        if (parameters->type == Expression::Symbol) {
-            if (std::static_pointer_cast<Symbol>(parameters)->name == symbol) return Found;
-            else return NotFound;
-        } else if (parameters->type == Expression::Tuple) {
-            auto p_tuple = std::static_pointer_cast<Tuple>(parameters);
-
-            for (size_t i = 0; i < p_tuple->objects.size(); i++)
-                return findSymbol(context, function_context, symbol, p_tuple->objects[i], nullptr);
-        }
-    }
-}
-
 Reference FunctionContext::getSymbol(std::string const& symbol, bool const& create) {
     auto it = symbols.find(symbol);
-
-    if (it != symbols.end()) findSymbol(*parent, *this, symbol, parameters, arguments);
 
     if (it != symbols.end()) {
         if (it->second.isPointerCopy())

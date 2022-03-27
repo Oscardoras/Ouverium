@@ -43,11 +43,7 @@ struct FunctionContext: public Context {
 
     Context* parent;
 
-    std::shared_ptr<Expression> parameters;
-    std::shared_ptr<Expression> arguments;
-
     FunctionContext(Context const& parent);
-    FunctionContext(Context const& parent, std::shared_ptr<Expression> parameters, std::shared_ptr<Expression> arguments);
 
     virtual GlobalContext* getGlobal();
     virtual Context* getParent();

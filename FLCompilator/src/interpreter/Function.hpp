@@ -30,9 +30,10 @@ struct CustomFunction: public Function {
 };
 
 struct SystemFunction: public Function {
-    Reference (*pointer)(Reference, FunctionContext&);
+    std::shared_ptr<Expression> parameters;
+    Reference (*pointer)(FunctionContext&);
 
-    SystemFunction(Reference (*pointer)(Reference, FunctionContext&));
+    SystemFunction(std::shared_ptr<Expression> parameters, Reference (*pointer)(FunctionContext&));
     virtual ~SystemFunction() = default;
 };
 

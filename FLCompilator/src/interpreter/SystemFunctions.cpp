@@ -1,24 +1,37 @@
 #include <algorithm>
 #include <iostream>
 
-#include "Context.hpp"
-#include "InterpreterError.hpp"
+#include "Interpreter.hpp"
 
 
 namespace SystemFunctions {
 
-    Reference separator(Reference reference, FunctionContext & context) {
-        if (reference.isTuple()) return reference.tuple[reference.getTupleSize()-1];
-        else {
-            auto object = context.getSymbol("arguments").toObject();
-            if (object->type > 0) return Reference(&object->data.a[object->type].o);
-            else return reference;
-        }
+    std::shared_ptr<Expression> separator() {
+        auto tuple = std::make_shared<Tuple>();
+
+        auto a = std::make_shared<Symbol>();
+        a->name = "a";
+        tuple->objects.push_back(a);
+
+        auto b = std::make_shared<Symbol>();
+        b->name = "b";
+        tuple->objects.push_back(b);
+
+        return tuple;
+    }
+    Reference separator(FunctionContext & context) {
+        return Reference(context.getSymbol("b"));
     }
 
-    Reference copy(__attribute__((unused)) Reference reference, FunctionContext & context) {
-        auto object = context.getSymbol("arguments").toObject();
-        return Reference(new Object(*object));
+    std::shared_ptr<Expression> copy() {
+        auto object = std::make_shared<Symbol>();
+        object->name = "object";
+
+        return object;
+    }
+    Reference copy(FunctionContext & context) {
+        auto object = context.getSymbol("object").toObject(context);
+        return Reference(context.addObject(new Object(*object)));
     }
 
     void assign1(std::vector<Object*> & cache, Reference const& var, Object* const& object) {
@@ -33,225 +46,287 @@ namespace SystemFunctions {
 
     void assign2(Context & context, std::vector<Object*>::iterator & it, Reference const& var) {
         if (var.isPointerReference()) {
-            context.removeReference(*var.ptrRef);
             *var.ptrRef = *it++;
-            context.addReference(*var.ptrRef);
         } else if (var.isArrayReference()) {
             auto ref = var.getArrayReference();
-            context.removeReference(*ref);
             *ref = *it++;
-            context.addReference(*ref);
         } else if (var.isTuple()) {
             auto n = var.getTupleSize();
             for (long i = 0; i < n; i++) assign2(context, it, var.tuple[i]);
         }
     }
 
-    Reference assign(Reference reference, FunctionContext & context) {
-        if (reference.getTupleSize() == 2) {
-            auto var = reference.tuple[0];
-            auto object = reference.tuple[1].toObject();
-            context.addSymbol("object", Reference(object));
+    std::shared_ptr<Expression> assign() {
+        auto tuple = std::make_shared<Tuple>();
 
-            std::vector<Object*> cache;
-            assign1(cache, var, object);
-            auto it = cache.begin();
-            assign2(context, it, var);
+        auto var = std::make_shared<Symbol>();
+        var->name = "var";
+        tuple->objects.push_back(var);
 
-            return var;
-        } else {
-            auto tuple = context.getSymbol("arguments").toObject();
+        auto object = std::make_shared<Symbol>();
+        object->name = "object";
+        tuple->objects.push_back(object);
 
-            if (tuple->type == 2) return Reference(&tuple->data.a[2].o);
-            else throw InterpreterError();
-        }
+        return tuple;
+    }
+    Reference assign(FunctionContext & context) {
+        auto var = context.getSymbol("var");
+        auto object = context.getSymbol("object").toObject(context);
+
+        std::vector<Object*> cache;
+        assign1(cache, var, object);
+        auto it = cache.begin();
+        assign2(context, it, var);
     }
 
-    Reference function_definition(Reference reference, FunctionContext & context) {
-        auto tuple = context.getSymbol("arguments").toObject();
+    std::shared_ptr<Expression> assign() {
+        auto tuple = std::make_shared<Tuple>();
 
-        if (tuple->type == 2) {
-            auto var = tuple->data.a[1].o;
-            auto object = tuple->data.a[2].o;
+        auto var = std::make_shared<Symbol>();
+        var->name = "var";
+        tuple->objects.push_back(var);
 
-            if (var->function != nullptr) {
-                if (var->function->type == Function::Custom) {
-                    if (var->references == 0) {
-                        for (auto & element : ((CustomFunction*) var->function)->objects)
-                            if (element.second->references == 0) delete element.second;
-                    } else {
-                        for (auto & element : ((CustomFunction*) var->function)->objects)
-                            context.removeReference(element.second);
-                    }
-                }
-                delete var->function;
-            }
-            if (object->function != nullptr) {
-                if (object->function->type == Function::Custom) {
-                    var->function = new CustomFunction(((CustomFunction*) object->function)->pointer);
-                    for (auto & element : ((CustomFunction*) object->function)->objects) {
-                        ((CustomFunction*) var->function)->objects[element.first] = element.second;
-                        if (var->references > 0) context.removeReference(element.second);
-                    }
-                } else var->function = new SystemFunction(((SystemFunction*) object->function)->pointer);
-            } else var->function = nullptr;
+        auto object = std::make_shared<Symbol>();
+        object->name = "object";
+        tuple->objects.push_back(object);
 
-            if (reference.getTupleSize() == 2) return reference.tuple[0];
-            else return Reference(tuple->data.a[1].o);
-        } else throw InterpreterError();
+        return tuple;
     }
+    Reference function_definition(FunctionContext & context) {
+        auto var = context.getSymbol("var").toObject(context);
+        auto object = context.getSymbol("object").toObject(context);
 
-    Reference equals(__attribute__((unused)) Reference reference, FunctionContext & context) {
-        auto tuple = context.getSymbol("arguments").toObject();
-
-        if (tuple->type == 2) {
-            auto object1 = tuple->data.a[1].o;
-            auto object2 = tuple->data.a[2].o;
-            
-            if (object1->type == object2->type) {
-                for (auto const& element : object1->fields) {
-                    auto it = object2->fields.find(element.first);
-                    if (it != object2->fields.end()) {
-                        FunctionContext funcContext(context);
-                        Reference arguments(2);
-                        arguments.tuple[0] = Reference(element.second);
-                        arguments.tuple[1] = Reference(it->second);
-                        funcContext.addSymbol("arguments", arguments);
-
-                        auto result = equals(arguments, context).toObject();
-
-                        if (!result->data.b) {
-                            funcContext.freeContext();
-                            return Reference(new Object(false));
-                        } else funcContext.freeContext();
-                    } else  return Reference(new Object(false));
-                }
-
-                if (object1->function != nullptr && object2->function != nullptr) {
-                    if (object1->function->type == object2->function->type) {
-                        if (object1->function->type == Function::Custom) {
-                            if (((CustomFunction*) object1->function)->pointer != ((CustomFunction*) object2->function)->pointer)
-                                return Reference(new Object(false));
-                            if (((CustomFunction*) object1->function)->objects != ((CustomFunction*) object2->function)->objects)
-                                return Reference(new Object(false));
-                        } else if (((SystemFunction*) object1->function)->pointer != ((SystemFunction*) object2->function)->pointer)
-                            return Reference(new Object(false));
-                    } else
-                        return Reference(new Object(false));
-                } else if (object1->function != object2->function)
-                    return Reference(new Object(false));
-
-                if (object1->type >= 0) {
-                    for (long i = 1; i <= object1->type; i++) {
-                        FunctionContext funcContext(context);
-                        Reference arguments(2);
-                        arguments.tuple[0] = Reference(object1->data.a[i].o);
-                        arguments.tuple[1] = Reference(object2->data.a[i].o);
-                        funcContext.addSymbol("arguments", arguments);
-
-                        auto result = equals(arguments, context).toObject();
-
-                        if (!result->data.b) {
-                            funcContext.freeContext();
-                            return Reference(new Object(false));
-                        } else funcContext.freeContext();
-                    }
-                    return Reference(new Object(true));
-                } else if (object1->type == Object::Boolean)
-                    return Reference(new Object(object1->data.b == object2->data.b));
-                else if (object1->type == Object::Integer)
-                    return Reference(new Object(object1->data.i == object2->data.i));
-                else if (object1->type == Object::Float)
-                    return Reference(new Object(object1->data.f == object2->data.f));
-                else if (object1->type == Object::Char)
-                    return Reference(new Object(object1->data.c == object2->data.c));
-                else return Reference(new Object(true));
-            } else return Reference(new Object(false));
-        } else throw InterpreterError();
-    }
-
-    Reference not_equals(Reference reference, FunctionContext & context) {
-        auto r = equals(reference, context);
-        r.ptrCopy->data.b = !r.ptrCopy->data.b;
-        return r;
-    }
-
-    Reference checkPointers(__attribute__((unused)) Reference reference, FunctionContext & context) {
-        auto tuple = context.getSymbol("arguments").toObject();
-
-        if (tuple->type == 2) return Reference(new Object(tuple->data.a[1].o == tuple->data.a[2].o));
-        else throw InterpreterError();
-    }
-
-    Reference logicalNot(__attribute__((unused)) Reference reference, FunctionContext & context) {
-        auto object = context.getSymbol("arguments").toObject();
+        if (var->function != nullptr)
+            delete var->function;
         
-        if (object->type == Object::Boolean) return Reference(new Object(!object->data.b));
+        if (object->function != nullptr) {
+            if (object->function->type == Function::Custom) {
+                var->function = new CustomFunction(*((CustomFunction*) object->function));
+            } else var->function = new SystemFunction(*((SystemFunction*) object->function));
+        } else var->function = nullptr;
+
+        return context.getSymbol("var");
+    }
+
+    bool equals(Object* a, Object* b) {
+        if (a->type == b->type) {
+            for (auto const& element : a->fields) {
+                auto it = b->fields.find(element.first);
+                if (it != b->fields.end()) {
+                    if (!equals(element.second, it->second))
+                        return false;
+                } else return false;
+            }
+
+            if (a->function != nullptr && b->function != nullptr) {
+                if (a->function->type == b->function->type) {
+                    if (a->function->type == Function::Custom) {
+                        if (((CustomFunction*) a->function)->pointer != ((CustomFunction*) b->function)->pointer)
+                            return false;
+                        if (((CustomFunction*) a->function)->objects != ((CustomFunction*) b->function)->objects)
+                            return false;
+                    } else if (((SystemFunction*) a->function)->pointer != ((SystemFunction*) b->function)->pointer)
+                        return false;
+                } else
+                    return false;
+            } else if (a->function != b->function)
+                return false;
+
+            if (a->type >= 0) {
+                for (long i = 1; i <= a->type; i++) {
+                    if (!equals(a->data.a[i].o, b->data.a[i].o))
+                        return false;
+                }
+                return true;
+            } else if (a->type == Object::Boolean)
+                return a->data.b == b->data.b;
+            else if (a->type == Object::Integer)
+                return a->data.i == b->data.i;
+            else if (a->type == Object::Float)
+                return a->data.f == b->data.f;
+            else if (a->type == Object::Char)
+                return a->data.c == b->data.c;
+            else return true;
+        } else return false;
+    }
+
+    std::shared_ptr<Expression> equals() {
+        auto tuple = std::make_shared<Tuple>();
+
+        auto a = std::make_shared<Symbol>();
+        a->name = "a";
+        tuple->objects.push_back(a);
+
+        auto b = std::make_shared<Symbol>();
+        b->name = "b";
+        tuple->objects.push_back(b);
+
+        return tuple;
+    }
+    Reference equals(FunctionContext & context) {
+        auto a = context.getSymbol("a").toObject(context);
+        auto b = context.getSymbol("b").toObject(context);
+        
+        return Reference(context.addObject(new Object(equals(a, b))));
+    }
+
+    std::shared_ptr<Expression> not_equals() {
+        auto tuple = std::make_shared<Tuple>();
+
+        auto a = std::make_shared<Symbol>();
+        a->name = "a";
+        tuple->objects.push_back(a);
+
+        auto b = std::make_shared<Symbol>();
+        b->name = "b";
+        tuple->objects.push_back(b);
+
+        return tuple;
+    }
+    Reference not_equals(FunctionContext & context) {
+        auto a = context.getSymbol("a").toObject(context);
+        auto b = context.getSymbol("b").toObject(context);
+        
+        return Reference(context.addObject(new Object(!equals(a, b))));
+    }
+
+    std::shared_ptr<Expression> check_pointers() {
+        auto tuple = std::make_shared<Tuple>();
+
+        auto a = std::make_shared<Symbol>();
+        a->name = "a";
+        tuple->objects.push_back(a);
+
+        auto b = std::make_shared<Symbol>();
+        b->name = "b";
+        tuple->objects.push_back(b);
+
+        return tuple;
+    }
+    Reference check_pointers(FunctionContext & context) {
+        auto a = context.getSymbol("a").toObject(context);
+        auto b = context.getSymbol("b").toObject(context);
+
+        return Reference(context.addObject(new Object(a == b)));
+    }
+
+    std::shared_ptr<Expression> logical_not() {
+        auto a = std::make_shared<Symbol>();
+        a->name = "a";
+        return a;
+    }
+    Reference logical_not(FunctionContext & context) {
+        auto a = context.getSymbol("a").toObject(context);
+        
+        if (a->type == Object::Boolean) return Reference(context.addObject(new Object(!a->data.b)));
         else throw InterpreterError();
     }
 
-    Reference logicalAnd(__attribute__((unused)) Reference reference, FunctionContext & context) {
-        auto tuple = context.getSymbol("arguments").toObject();
+    std::shared_ptr<Expression> logical_and() {
+        auto tuple = std::make_shared<Tuple>();
 
-        if (tuple->type == 2) {
-            auto object1 = tuple->data.a[1].o;
-            auto object2 = tuple->data.a[2].o;
-            
-            if (object1->type == Object::Boolean && object2->type == Object::Boolean)
-                return Reference(new Object(object1->data.b && object2->data.b));
-            else throw InterpreterError();
-        } else throw InterpreterError();
+        auto a = std::make_shared<Symbol>();
+        a->name = "a";
+        tuple->objects.push_back(a);
+
+        auto b = std::make_shared<Symbol>();
+        b->name = "b";
+        tuple->objects.push_back(b);
+
+        return tuple;
+    }
+    Reference logical_and(FunctionContext & context) {
+        auto a = context.getSymbol("a").toObject(context);
+        auto b = context.getSymbol("b").toObject(context);
+
+        if (a->type == Object::Boolean && b->type == Object::Boolean)
+            return Reference(context.addObject(new Object(a->data.b && b->data.b)));
+        else throw InterpreterError();
     }
 
-    Reference logicalOr(__attribute__((unused)) Reference reference, FunctionContext & context) {
-        auto tuple = context.getSymbol("arguments").toObject();
+    std::shared_ptr<Expression> logical_or() {
+        auto tuple = std::make_shared<Tuple>();
 
-        if (tuple->type == 2) {
-            auto object1 = tuple->data.a[1].o;
-            auto object2 = tuple->data.a[2].o;
-            
-            if (object1->type == Object::Boolean && object2->type == Object::Boolean)
-                return Reference(new Object(object1->data.b || object2->data.b));
-            else throw InterpreterError();
-        } else throw InterpreterError();
+        auto a = std::make_shared<Symbol>();
+        a->name = "a";
+        tuple->objects.push_back(a);
+
+        auto b = std::make_shared<Symbol>();
+        b->name = "b";
+        tuple->objects.push_back(b);
+
+        return tuple;
+    }
+    Reference logical_or(FunctionContext & context) {
+        auto a = context.getSymbol("a").toObject(context);
+        auto b = context.getSymbol("b").toObject(context);
+
+        if (a->type == Object::Boolean && b->type == Object::Boolean)
+            return Reference(context.addObject(new Object(a->data.b || b->data.b)));
+        else throw InterpreterError();
     }
 
-    Reference print(__attribute__((unused)) Reference reference, FunctionContext & context) {
-        auto object = context.getSymbol("arguments").toObject();
-
+    void print(Object* object) {
         if (object->type == Object::Boolean) std::cout << object->data.b;
         else if (object->type == Object::Integer) std::cout << object->data.i;
         else if (object->type == Object::Float) std::cout << object->data.f;
         else if (object->type == Object::Char) std::cout << object->data.c;
         else if (object->type > 0)
-            for (long i = 1; i <= object->type; i++) {
-                FunctionContext funcContext((Context&) context);
-                auto arguments = Reference(&object->data.a[i].o);
-                funcContext.addSymbol("arguments", arguments);
-
-                auto ref = print(arguments, funcContext);
-                context.unuse(ref);
-            }
-
-        return Reference(new Object());
+            for (long i = 1; i <= object->type; i++)
+                print(object->data.a[i].o);
     }
 
-    Reference addition(__attribute__((unused)) Reference reference, FunctionContext & context) {
-        auto tuple = context.getSymbol("arguments").toObject();
+    std::shared_ptr<Expression> print() {
+        auto object = std::make_shared<Symbol>();
+        object->name = "object";
+        return object;
+    }
+    Reference print(FunctionContext & context) {
+        auto object = context.getSymbol("object").toObject(context);
 
-        if (tuple->type == 2) {
-            auto object1 = tuple->data.a[1].o;
-            auto object2 = tuple->data.a[2].o;
+        print(object);
+
+        return Reference(context.addObject(new Object()));
+    }
+
+    std::shared_ptr<Expression> logical_or() {
+        auto tuple = std::make_shared<Tuple>();
+
+        auto a = std::make_shared<Symbol>();
+        a->name = "a";
+        tuple->objects.push_back(a);
+
+        auto b = std::make_shared<Symbol>();
+        b->name = "b";
+        tuple->objects.push_back(b);
+
+        return tuple;
+    }
+    Reference addition(FunctionContext & context) {
+        auto a = context.getSymbol("a").toObject(context);
+        auto b = context.getSymbol("b").toObject(context);
             
-            if (object1->type == Object::Integer && object2->type == Object::Integer)
-                return Reference(new Object(object1->data.i + object2->data.i));
-            else if (object1->type == Object::Float && object2->type == Object::Float)
-                return Reference(new Object(object1->data.f + object2->data.f));
-            else throw InterpreterError();
-        } else throw InterpreterError();
+        if (a->type == Object::Integer && b->type == Object::Integer)
+            return Reference(context.addObject(new Object(a->data.i + b->data.i)));
+        else if (a->type == Object::Float && b->type == Object::Float)
+            return Reference(context.addObject(new Object(a->data.f + b->data.f)));
+        else throw InterpreterError();
     }
 
-    Reference substraction(__attribute__((unused)) Reference reference, FunctionContext & context) {
+    std::shared_ptr<Expression> logical_or() {
+        auto tuple = std::make_shared<Tuple>();
+
+        auto a = std::make_shared<Symbol>();
+        a->name = "a";
+        tuple->objects.push_back(a);
+
+        auto b = std::make_shared<Symbol>();
+        b->name = "b";
+        tuple->objects.push_back(b);
+
+        return tuple;
+    }
+    Reference substraction(FunctionContext & context) {
         auto tuple = context.getSymbol("arguments").toObject();
 
         if (tuple->type == Object::Integer) return Reference(new Object(-tuple->data.i));

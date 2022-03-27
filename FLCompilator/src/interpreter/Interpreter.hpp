@@ -1,7 +1,14 @@
 #ifndef INTERPRETER_INTERPRETER_HPP_
 #define INTERPRETER_INTERPRETER_HPP_
 
-#include "../parser/expression/Expression.hpp"
+#include "Context.hpp"
+#include "InterpreterError.hpp"
+
+#include "../parser/expression/FunctionCall.hpp"
+#include "../parser/expression/FunctionDefinition.hpp"
+#include "../parser/expression/Property.hpp"
+#include "../parser/expression/Symbol.hpp"
+#include "../parser/expression/Tuple.hpp"
 
 
 namespace Interpreter {
