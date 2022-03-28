@@ -209,7 +209,6 @@ void Interpreter::run(std::shared_ptr<Expression> expression) {
     addFunction(context, "add", SystemFunctions::add_array_element);
     addFunction(context, "remove", SystemFunctions::add_array_element);
 
-    auto result = execute(context, expression);
-    SystemFunction print(SystemFunctions::print);
-    callFunction(context, &print, std::shared_ptr<Expression> arguments);
+    auto result = execute(context, expression).toObject(context);
+    SystemFunctions::print(result);
 }
