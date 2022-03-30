@@ -16,8 +16,8 @@ void dfs(Object* object) {
     for (auto it = object->fields.begin(); it != object->fields.end(); it++)
         dfs(it->second);
     
-    if (object->function != nullptr && object->function->type == Function::Custom)
-        for (auto it = ((CustomFunction*) object->function)->objects.begin(); it != ((CustomFunction*) object->function)->objects.end(); it++)
+    for (auto f : object->functions)
+        for (auto it = ((CustomFunction*) f)->objects.begin(); it != ((CustomFunction*) f)->objects.end(); it++)
             dfs(it->second);
     
     if (object->type > 0)
@@ -44,8 +44,7 @@ void Context::collect(Object* current) {
         if (!(*it)->referenced) {
             auto finalize = (*it)->fields.find("finalize");
             if (finalize != (*it)->fields.end())
-                if (finalize->second->function != nullptr)
-                    Interpreter::callFunction(*getGlobal(), finalize->second->function, std::make_shared<Tuple>());
+                Interpreter::callFunction(*getGlobal(), finalize->second->functions, std::make_shared<Tuple>());
 
             delete *it;
             global->objects.erase(it);

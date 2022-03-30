@@ -13,7 +13,7 @@
 
 namespace Interpreter {
 
-    Reference callFunction(Context & context, Function* function, std::shared_ptr<Expression> arguments);
+    Reference callFunction(Context & context, std::list<Function*> function, std::shared_ptr<Expression> arguments);
 
     Reference execute(Context & context, std::shared_ptr<Expression> expression);
 

@@ -96,14 +96,11 @@ namespace SystemFunctions {
         auto var = context.getSymbol("var").toObject(context);
         auto object = context.getSymbol("object").toObject(context);
 
-        if (var->function != nullptr)
-            delete var->function;
-        
-        if (object->function != nullptr) {
-            if (object->function->type == Function::Custom) {
-                var->function = new CustomFunction(*((CustomFunction*) object->function));
-            } else var->function = new SystemFunction(*((SystemFunction*) object->function));
-        } else var->function = nullptr;
+        for (auto it = object->functions.end(); it != object->functions.begin(); it--) {
+            if ((*it)->type == Function::Custom) {
+                var->functions.push_front(new CustomFunction(*((CustomFunction*) *it)));
+            } else var->functions.push_front(new SystemFunction(*((SystemFunction*) *it)));
+        }
 
         return context.getSymbol("var");
     }

@@ -1,21 +1,22 @@
 #include "Context.hpp"
 
 
-Object::Object() {
-    function = nullptr;
+Object::Object() {   
     type = None;
     referenced = false;
 }
 
 Object::Object(Object const& object) {
-    if (object.function != nullptr) {
-        if (object.function->type == Function::Custom) {
-            function = new CustomFunction(((CustomFunction*) object.function)->pointer);
-            ((CustomFunction*) function)->objects = ((CustomFunction*) object.function)->objects;
+    for (auto f : object.functions) {
+        Function* function;
+        if (f->type == Function::Custom) {
+            function = new CustomFunction(((CustomFunction*) f)->pointer);
+            ((CustomFunction*) function)->objects = ((CustomFunction*) f)->objects;
         } else {
-            function = new SystemFunction(((SystemFunction*) object.function)->pointer);
+            function = new SystemFunction(((SystemFunction*) f)->parameters, ((SystemFunction*) f)->pointer);
         }
-    } else function = nullptr;
+        functions.push_front(function);
+    }
 
     fields = object.fields;
 
@@ -35,35 +36,30 @@ Object::Object(Object const& object) {
 }
 
 Object::Object(bool const& b) {
-    function = nullptr;
     type = Boolean;
     data.b = b;
     referenced = false;
 }
 
 Object::Object(long const& i) {
-    function = nullptr;
     type = Integer;
     data.i = i;
     referenced = false;
 }
 
 Object::Object(double const& f) {
-    function = nullptr;
     type = Float;
     data.f = f;
     referenced = false;
 }
 
 Object::Object(char const& c) {
-    function = nullptr;
     type = Char;
     data.c = c;
     referenced = false;
 }
 
 Object::Object(size_t const& tuple_size) {
-    function = nullptr;
     type = (long) tuple_size;
     data.a = (Object::Data::ArrayElement *) std::malloc(sizeof(Object::Data::ArrayElement) * (type+1));
     data.a[0].c = type;

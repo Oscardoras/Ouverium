@@ -1,6 +1,7 @@
 #ifndef INTERPRETER_OBJECT_HPP_
 #define INTERPRETER_OBJECT_HPP_
 
+#include <list>
 #include <map>
 #include <memory>
 #include <string>
@@ -13,7 +14,7 @@ struct Object {
     
     std::map<std::string, Object*> fields;
 
-    Function* function;
+    std::list<Function*> functions;
 
     enum ObjectType {
         Char = -4,

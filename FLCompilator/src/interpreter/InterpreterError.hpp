@@ -4,5 +4,7 @@
 
 class InterpreterError {};
 
+class FunctionArgumentsError {};
+
 
 #endif
