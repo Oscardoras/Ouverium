@@ -183,35 +183,34 @@ Reference Interpreter::execute(Context & context, std::shared_ptr<Expression> ex
 
 
 void addFunction(Context & context, std::string symbol, std::shared_ptr<Expression> parameters, Reference (*function)(FunctionContext&)) {
-    Object * object = new Object();
-    object->functions.push_front(new SystemFunction(parameters, function));
-    context.addSymbol(symbol, Reference(object));
+    context.getSymbol(symbol).toObject(context)->functions.push_front(new SystemFunction(parameters, function));
 }
 
 void Interpreter::run(std::shared_ptr<Expression> expression) {
     GlobalContext context;
     addFunction(context, ";", SystemFunctions::separator(), SystemFunctions::separator);
     addFunction(context, "$", SystemFunctions::copy(), SystemFunctions::copy);
-    addFunction(context, ":=", SystemFunctions::assign);
-    addFunction(context, ":", SystemFunctions::function_definition);
-    addFunction(context, "=", SystemFunctions::equals);
-    addFunction(context, "!=", SystemFunctions::not_equals);
-    addFunction(context, "===", SystemFunctions::checkPointers);
-    addFunction(context, "!", SystemFunctions::logicalNot);
-    addFunction(context, "&", SystemFunctions::logicalAnd);
-    addFunction(context, "|", SystemFunctions::logicalOr);
-    addFunction(context, "+", SystemFunctions::addition);
-    addFunction(context, "-", SystemFunctions::substraction);
-    addFunction(context, "*", SystemFunctions::multiplication);
-    addFunction(context, "/", SystemFunctions::division);
-    addFunction(context, "%", SystemFunctions::modulo);
-    addFunction(context, "print", SystemFunctions::print);
-    addFunction(context, "lenght", SystemFunctions::get_array_size);
-    addFunction(context, "get_capacity", SystemFunctions::get_array_capacity);
-    addFunction(context, "set_capacity", SystemFunctions::set_array_capacity);
-    addFunction(context, "get", SystemFunctions::get_array_element);
-    addFunction(context, "add", SystemFunctions::add_array_element);
-    addFunction(context, "remove", SystemFunctions::add_array_element);
+    addFunction(context, ":=", SystemFunctions::assign(), SystemFunctions::assign);
+    addFunction(context, ":", SystemFunctions::function_definition(), SystemFunctions::function_definition);
+    addFunction(context, "=", SystemFunctions::equals(), SystemFunctions::equals);
+    addFunction(context, "!=", SystemFunctions::not_equals(), SystemFunctions::not_equals);
+    addFunction(context, "===", SystemFunctions::check_pointers(), SystemFunctions::check_pointers);
+    addFunction(context, "!", SystemFunctions::logical_not(), SystemFunctions::logical_not);
+    addFunction(context, "&", SystemFunctions::logical_and(), SystemFunctions::logical_and);
+    addFunction(context, "|", SystemFunctions::logical_or(), SystemFunctions::logical_or);
+    addFunction(context, "+", SystemFunctions::addition(), SystemFunctions::addition);
+    addFunction(context, "-", SystemFunctions::opposite(), SystemFunctions::opposite);
+    addFunction(context, "-", SystemFunctions::substraction(), SystemFunctions::substraction);
+    addFunction(context, "*", SystemFunctions::multiplication(), SystemFunctions::multiplication);
+    addFunction(context, "/", SystemFunctions::division(), SystemFunctions::division);
+    addFunction(context, "%", SystemFunctions::modulo(), SystemFunctions::modulo);
+    addFunction(context, "print", SystemFunctions::print(), SystemFunctions::print);
+    addFunction(context, "lenght", SystemFunctions::get_array_size(), SystemFunctions::get_array_size);
+    addFunction(context, "get_capacity", SystemFunctions::get_array_capacity(), SystemFunctions::get_array_capacity);
+    addFunction(context, "set_capacity", SystemFunctions::set_array_capacity(), SystemFunctions::set_array_capacity);
+    addFunction(context, "get", SystemFunctions::get_array_element(), SystemFunctions::get_array_element);
+    addFunction(context, "add", SystemFunctions::add_array_element(), SystemFunctions::add_array_element);
+    addFunction(context, "remove", SystemFunctions::add_array_element(), SystemFunctions::add_array_element);
 
     auto result = execute(context, expression).toObject(context);
     SystemFunctions::print(result);

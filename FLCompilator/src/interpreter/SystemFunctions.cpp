@@ -40,7 +40,7 @@ namespace SystemFunctions {
             auto n = var.getTupleSize();
             if ((long) n == object->type)
                 for (long i = 0; i < n; i++) assign1(cache, var.tuple[i], object->data.a[i+1].o);
-            else throw InterpreterError();
+            else throw FunctionArgumentsError();
         }
     }
 
@@ -79,7 +79,7 @@ namespace SystemFunctions {
         assign2(context, it, var);
     }
 
-    std::shared_ptr<Expression> assign() {
+    std::shared_ptr<Expression> function_definition() {
         auto tuple = std::make_shared<Tuple>();
 
         auto var = std::make_shared<Symbol>();
@@ -115,19 +115,21 @@ namespace SystemFunctions {
                 } else return false;
             }
 
-            if (a->function != nullptr && b->function != nullptr) {
-                if (a->function->type == b->function->type) {
-                    if (a->function->type == Function::Custom) {
-                        if (((CustomFunction*) a->function)->pointer != ((CustomFunction*) b->function)->pointer)
+            auto ita = a->functions.begin();
+            auto itb = b->functions.begin();
+            while (ita != a->functions.end()) {
+                if (itb != b->functions.end()) {
+                    if ((*ita)->type == Function::Custom) {
+                        if (((CustomFunction*) *ita)->pointer != ((CustomFunction*) *itb)->pointer)
                             return false;
-                        if (((CustomFunction*) a->function)->objects != ((CustomFunction*) b->function)->objects)
+                    } else
+                        if (((SystemFunction*) *ita)->pointer != ((SystemFunction*) *itb)->pointer)
                             return false;
-                    } else if (((SystemFunction*) a->function)->pointer != ((SystemFunction*) b->function)->pointer)
-                        return false;
-                } else
-                    return false;
-            } else if (a->function != b->function)
-                return false;
+                } else return false;
+
+                ita++;
+                itb++;
+            }
 
             if (a->type >= 0) {
                 for (long i = 1; i <= a->type; i++) {
@@ -216,7 +218,7 @@ namespace SystemFunctions {
         auto a = context.getSymbol("a").toObject(context);
         
         if (a->type == Object::Boolean) return Reference(context.addObject(new Object(!a->data.b)));
-        else throw InterpreterError();
+        else throw FunctionArgumentsError();
     }
 
     std::shared_ptr<Expression> logical_and() {
@@ -238,7 +240,7 @@ namespace SystemFunctions {
 
         if (a->type == Object::Boolean && b->type == Object::Boolean)
             return Reference(context.addObject(new Object(a->data.b && b->data.b)));
-        else throw InterpreterError();
+        else throw FunctionArgumentsError();
     }
 
     std::shared_ptr<Expression> logical_or() {
@@ -260,7 +262,7 @@ namespace SystemFunctions {
 
         if (a->type == Object::Boolean && b->type == Object::Boolean)
             return Reference(context.addObject(new Object(a->data.b || b->data.b)));
-        else throw InterpreterError();
+        else throw FunctionArgumentsError();
     }
 
     void print(Object* object) {
@@ -286,7 +288,7 @@ namespace SystemFunctions {
         return Reference(context.addObject(new Object()));
     }
 
-    std::shared_ptr<Expression> logical_or() {
+    std::shared_ptr<Expression> addition() {
         auto tuple = std::make_shared<Tuple>();
 
         auto a = std::make_shared<Symbol>();
@@ -307,10 +309,25 @@ namespace SystemFunctions {
             return Reference(context.addObject(new Object(a->data.i + b->data.i)));
         else if (a->type == Object::Float && b->type == Object::Float)
             return Reference(context.addObject(new Object(a->data.f + b->data.f)));
-        else throw InterpreterError();
+        else throw FunctionArgumentsError();
     }
 
-    std::shared_ptr<Expression> logical_or() {
+    std::shared_ptr<Expression> opposite() {
+        auto a = std::make_shared<Symbol>();
+        a->name = "a";
+        return a;
+    }
+    Reference opposite(FunctionContext & context) {
+        auto a = context.getSymbol("a").toObject(context);
+            
+        if (a->type == Object::Integer)
+            return Reference(context.addObject(new Object(-a->data.i)));
+        else if (a->type == Object::Float)
+            return Reference(context.addObject(new Object(-a->data.f)));
+        else throw FunctionArgumentsError();
+    }
+
+    std::shared_ptr<Expression> substraction() {
         auto tuple = std::make_shared<Tuple>();
 
         auto a = std::make_shared<Symbol>();
@@ -324,151 +341,211 @@ namespace SystemFunctions {
         return tuple;
     }
     Reference substraction(FunctionContext & context) {
-        auto tuple = context.getSymbol("arguments").toObject();
-
-        if (tuple->type == Object::Integer) return Reference(new Object(-tuple->data.i));
-        else if (tuple->type == Object::Float) return Reference(new Object(-tuple->data.f));
-        else if (tuple->type == 2) {
-            auto object1 = tuple->data.a[1].o;
-            auto object2 = tuple->data.a[2].o;
+        auto a = context.getSymbol("a").toObject(context);
+        auto b = context.getSymbol("b").toObject(context);
             
-            if (object1->type == Object::Integer && object2->type == Object::Integer)
-                return Reference(new Object(object1->data.i - object2->data.i));
-            else if (object1->type == Object::Float && object2->type == Object::Float)
-                return Reference(new Object(object1->data.f - object2->data.f));
-            else throw InterpreterError();
-        } else throw InterpreterError();
+        if (a->type == Object::Integer && b->type == Object::Integer)
+            return Reference(context.addObject(new Object(a->data.i - b->data.i)));
+        else if (a->type == Object::Float && b->type == Object::Float)
+            return Reference(context.addObject(new Object(a->data.f - b->data.f)));
+        else throw FunctionArgumentsError();
     }
 
-    Reference multiplication(__attribute__((unused)) Reference reference, FunctionContext & context) {
-        auto tuple = context.getSymbol("arguments").toObject();
+    std::shared_ptr<Expression> multiplication() {
+        auto tuple = std::make_shared<Tuple>();
 
-        if (tuple->type == 2) {
-            auto object1 = tuple->data.a[1].o;
-            auto object2 = tuple->data.a[2].o;
+        auto a = std::make_shared<Symbol>();
+        a->name = "a";
+        tuple->objects.push_back(a);
+
+        auto b = std::make_shared<Symbol>();
+        b->name = "b";
+        tuple->objects.push_back(b);
+
+        return tuple;
+    }
+    Reference multiplication(FunctionContext & context) {
+        auto a = context.getSymbol("a").toObject(context);
+        auto b = context.getSymbol("b").toObject(context);
             
-            if (object1->type == Object::Integer && object2->type == Object::Integer)
-                return Reference(new Object(object1->data.i * object2->data.i));
-            else if (object1->type == Object::Float && object2->type == Object::Float)
-                return Reference(new Object(object1->data.f * object2->data.f));
-            else throw InterpreterError();
-        } else throw InterpreterError();
+        if (a->type == Object::Integer && b->type == Object::Integer)
+            return Reference(context.addObject(new Object(a->data.i * b->data.i)));
+        else if (a->type == Object::Float && b->type == Object::Float)
+            return Reference(context.addObject(new Object(a->data.f * b->data.f)));
+        else throw FunctionArgumentsError();
     }
 
-    Reference division(__attribute__((unused)) Reference reference, FunctionContext & context) {
-        auto tuple = context.getSymbol("arguments").toObject();
+    std::shared_ptr<Expression> division() {
+        auto tuple = std::make_shared<Tuple>();
 
-        if (tuple->type == 2) {
-            auto object1 = tuple->data.a[1].o;
-            auto object2 = tuple->data.a[2].o;
+        auto a = std::make_shared<Symbol>();
+        a->name = "a";
+        tuple->objects.push_back(a);
+
+        auto b = std::make_shared<Symbol>();
+        b->name = "b";
+        tuple->objects.push_back(b);
+
+        return tuple;
+    }
+    Reference division(FunctionContext & context) {
+        auto a = context.getSymbol("a").toObject(context);
+        auto b = context.getSymbol("b").toObject(context);
             
-            if (object1->type == Object::Integer && object2->type == Object::Integer)
-                return Reference(new Object(object1->data.i / object2->data.i));
-            else if (object1->type == Object::Float && object2->type == Object::Float)
-                return Reference(new Object(object1->data.f / object2->data.f));
-            else throw InterpreterError();
-        } else throw InterpreterError();
+        if (a->type == Object::Integer && b->type == Object::Integer)
+            return Reference(context.addObject(new Object(a->data.i / b->data.i)));
+        else if (a->type == Object::Float && b->type == Object::Float)
+            return Reference(context.addObject(new Object(a->data.f / b->data.f)));
+        else throw FunctionArgumentsError();
     }
 
-    Reference modulo(__attribute__((unused)) Reference reference, FunctionContext & context) {
-        auto tuple = context.getSymbol("arguments").toObject();
+    std::shared_ptr<Expression> modulo() {
+        auto tuple = std::make_shared<Tuple>();
 
-        if (tuple->type == 2) {
-            auto object1 = tuple->data.a[1].o;
-            auto object2 = tuple->data.a[2].o;
+        auto a = std::make_shared<Symbol>();
+        a->name = "a";
+        tuple->objects.push_back(a);
+
+        auto b = std::make_shared<Symbol>();
+        b->name = "b";
+        tuple->objects.push_back(b);
+
+        return tuple;
+    }
+    Reference modulo(FunctionContext & context) {
+        auto a = context.getSymbol("a").toObject(context);
+        auto b = context.getSymbol("b").toObject(context);
             
-            if (object1->type == Object::Integer && object2->type == Object::Integer)
-                return Reference(new Object(object1->data.i % object2->data.i));
-            else throw InterpreterError();
-        } else throw InterpreterError();
+        if (a->type == Object::Integer && b->type == Object::Integer)
+            return Reference(context.addObject(new Object(a->data.i / b->data.i)));
+        else if (a->type == Object::Float && b->type == Object::Float)
+            return Reference(context.addObject(new Object(a->data.f / b->data.f)));
+        else throw FunctionArgumentsError();
     }
 
-    Reference get_array_size(__attribute__((unused)) Reference reference, FunctionContext & context) {
-        auto object = context.getSymbol("arguments").toObject();
+    std::shared_ptr<Expression> get_array_size() {
+        auto array = std::make_shared<Symbol>();
+        array->name = "array";
+        return array;
+    }
+    Reference get_array_size(FunctionContext & context) {
+        auto array = context.getSymbol("array").toObject(context);
         
-        if (object->type >= 0)
-            return Reference(new Object((long) object->type));
-        else throw InterpreterError();
+        if (array->type >= 0)
+            return Reference(context.addObject(new Object((long) array->type)));
+        else throw FunctionArgumentsError();
     }
 
-    Reference get_array_element(__attribute__((unused)) Reference reference, FunctionContext & context) {
-        auto tuple = context.getSymbol("arguments").toObject();
+    std::shared_ptr<Expression> get_array_element() {
+        auto tuple = std::make_shared<Tuple>();
 
-        if (tuple->type == 2) {
-            auto array = tuple->data.a[1].o;
-            auto index = tuple->data.a[2].o;
-            
-            if (array->type > 0 && index->type == Object::Integer)
-                return Reference(array, index->data.i);
-            else throw InterpreterError();
-        } else throw InterpreterError();
+        auto array = std::make_shared<Symbol>();
+        array->name = "array";
+        tuple->objects.push_back(array);
+
+        auto i = std::make_shared<Symbol>();
+        i->name = "i";
+        tuple->objects.push_back(i);
+
+        return tuple;
+    }
+    Reference get_array_element(FunctionContext & context) {
+        auto array = context.getSymbol("array").toObject(context);
+        auto i = context.getSymbol("i").toObject(context);
+
+        if (array->type > 0 && i->type == Object::Integer)
+            return Reference(array, i->data.i);
+        else throw FunctionArgumentsError();
     }
 
-    Reference get_array_capacity(__attribute__((unused)) Reference reference, FunctionContext & context) {
-        auto array = context.getSymbol("arguments").toObject();
+    std::shared_ptr<Expression> get_array_capacity() {
+        auto array = std::make_shared<Symbol>();
+        array->name = "array";
+        return array;
+    }
+    Reference get_array_capacity(FunctionContext & context) {
+        auto array = context.getSymbol("array").toObject(context);
 
         if (array->type == 0) return new Object((long) 0);
         else if (array->type > 0) return new Object((long) array->data.a[0].c);
-        else throw InterpreterError();
+        else throw FunctionArgumentsError();
     }
 
-    Reference set_array_capacity(__attribute__((unused)) Reference reference, FunctionContext & context) {
-        auto tuple = context.getSymbol("arguments").toObject();
+    std::shared_ptr<Expression> set_array_capacity() {
+        auto tuple = std::make_shared<Tuple>();
 
-        if (tuple->type == 3) {
-            auto array = tuple->data.a[1].o;
-            auto capacity = tuple->data.a[2].o;
-            
-            if (capacity->type == Object::Integer && capacity->data.i >= 0) {
-                if (array->type <= 0) {
-                    if (capacity->data.i > 0) {
-                        array->data.a = (Object::Data::ArrayElement *) malloc(sizeof(Object::Data::ArrayElement) * (capacity->data.i+1));
-                        array->data.a[0].c = capacity->data.i;
-                    }
-                    array->type = 0;
-                } else if (capacity->data.i != (long) array->data.a[0].c) {
-                    if (capacity->data.i < array->type && array->references > 0)
-                        for (int i = capacity->data.i; i <= array->type; i++)
-                            context.addReference(capacity->data.a[i].o);
-                    array->data.a[0].c = capacity->data.i;
-                    array->data.a = (Object::Data::ArrayElement *) realloc(array->data.a, sizeof(Object::Data::ArrayElement) * (1 + array->data.a[0].c));
-                }
+        auto array = std::make_shared<Symbol>();
+        array->name = "array";
+        tuple->objects.push_back(array);
 
-                return new Object();
-            } else throw InterpreterError();
-        } else throw InterpreterError();
+        auto capacity = std::make_shared<Symbol>();
+        capacity->name = "capacity";
+        tuple->objects.push_back(capacity);
+
+        return tuple;
     }
+    Reference set_array_capacity(FunctionContext & context) {
+        auto array = context.getSymbol("array").toObject(context);
+        auto capacity = context.getSymbol("capacity").toObject(context);
 
-    Reference add_array_element(__attribute__((unused)) Reference reference, FunctionContext & context) {
-        auto tuple = context.getSymbol("arguments").toObject();
-
-        if (tuple->type == 2) {
-            auto array = tuple->data.a[1].o;
-            auto element = tuple->data.a[2].o;
-            
+        if (capacity->type == Object::Integer && capacity->data.i >= 0) {
             if (array->type <= 0) {
-                array->data.a = (Object::Data::ArrayElement *) malloc(sizeof(Object::Data::ArrayElement) * 2);
-                array->data.a[0].c = 1;
-            } else if ((long) array->data.a[0].c <= array->type) {
-                array->data.a[0].c *= 2;
+                if (capacity->data.i > 0) {
+                    array->data.a = (Object::Data::ArrayElement *) malloc(sizeof(Object::Data::ArrayElement) * (capacity->data.i+1));
+                    array->data.a[0].c = capacity->data.i;
+                }
+                array->type = 0;
+            } else if (capacity->data.i != (long) array->data.a[0].c) {
+                array->data.a[0].c = capacity->data.i;
                 array->data.a = (Object::Data::ArrayElement *) realloc(array->data.a, sizeof(Object::Data::ArrayElement) * (1 + array->data.a[0].c));
             }
 
-            array->type++;
-            array->data.a[array->type].o = element;
-            if (array->references > 0) context.addReference(element);
-
-            return Reference(array, array->type);
-        } else throw InterpreterError();
+            return context.addObject(new Object());
+        } else throw FunctionArgumentsError();
     }
 
-    Reference remove_array_element(__attribute__((unused)) Reference reference, FunctionContext & context) {
-        auto array = context.getSymbol("arguments").toObject();
+    std::shared_ptr<Expression> add_array_element() {
+        auto tuple = std::make_shared<Tuple>();
 
-        if (array->type > 0) {
-            if (array->references > 0) context.removeReference(array->data.a[array->type].o);
+        auto array = std::make_shared<Symbol>();
+        array->name = "array";
+        tuple->objects.push_back(array);
+
+        auto element = std::make_shared<Symbol>();
+        element->name = "element";
+        tuple->objects.push_back(element);
+
+        return tuple;
+    }
+    Reference add_array_element(FunctionContext & context) {
+        auto array = context.getSymbol("array").toObject(context);
+        auto element = context.getSymbol("element").toObject(context);
+
+        if (array->type <= 0) {
+            array->data.a = (Object::Data::ArrayElement *) malloc(sizeof(Object::Data::ArrayElement) * 2);
+            array->data.a[0].c = 1;
+        } else if ((long) array->data.a[0].c <= array->type) {
+            array->data.a[0].c *= 2;
+            array->data.a = (Object::Data::ArrayElement *) realloc(array->data.a, sizeof(Object::Data::ArrayElement) * (1 + array->data.a[0].c));
+        }
+
+        array->type++;
+        array->data.a[array->type].o = element;
+
+        return Reference(array, array->type);
+    }
+
+    std::shared_ptr<Expression> remove_array_element() {
+        auto array = std::make_shared<Symbol>();
+        array->name = "array";
+        return array;
+    }
+    Reference remove_array_element(FunctionContext & context) {
+        auto array = context.getSymbol("array").toObject(context);
+
+        if (array->type > 0)
             array->type--;
-        } else throw InterpreterError();
+        else throw FunctionArgumentsError();
     }
 
 }
