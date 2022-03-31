@@ -3,6 +3,8 @@
 
 #include "Object.hpp"
 
+class Context;
+
 
 struct Reference {
     

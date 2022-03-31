@@ -103,9 +103,8 @@ std::shared_ptr<Expression> expressionsToExpression(std::vector<std::shared_ptr<
 
         if (expressions.size() >= 2) {
             std::shared_ptr<Tuple> tuple = std::make_shared<Tuple>();
-            for (int i = 1; i < expressions.size(); i++) {
-                tuple->objects.push_back(expressions[i]);
-            }
+            for (auto const& expr : expressions)
+                tuple->objects.push_back(expr);
             functioncall->object = tuple;
         } else functioncall->object = expressions[1];
 
@@ -254,8 +253,11 @@ std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words,
 
             if (!is_alphanum(symbol->name[0])) {
                 std::shared_ptr<FunctionCall> functioncall = std::make_shared<FunctionCall>();
+
                 functioncall->function = symbol;
                 functioncall->object = getExpression(words, i, isTuple, false);
+                
+                expression = functioncall;
                 continue;
             }
         }

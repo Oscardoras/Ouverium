@@ -43,7 +43,7 @@ struct FunctionContext: public Context {
 
     Context* parent;
 
-    FunctionContext(Context const& parent);
+    FunctionContext(Context & parent);
 
     virtual GlobalContext* getGlobal();
     virtual Context* getParent();

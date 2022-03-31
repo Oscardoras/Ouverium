@@ -77,6 +77,8 @@ namespace SystemFunctions {
         assign1(cache, var, object);
         auto it = cache.begin();
         assign2(context, it, var);
+
+        return var;
     }
 
     std::shared_ptr<Expression> function_definition() {
@@ -543,9 +545,10 @@ namespace SystemFunctions {
     Reference remove_array_element(FunctionContext & context) {
         auto array = context.getSymbol("array").toObject(context);
 
-        if (array->type > 0)
+        if (array->type > 0) {
             array->type--;
-        else throw FunctionArgumentsError();
+            return Reference(array, array->type+1);
+        } else throw FunctionArgumentsError();
     }
 
 }

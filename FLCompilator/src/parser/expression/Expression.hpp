@@ -16,7 +16,7 @@ struct Expression {
         Tuple
     };
 
-    const Type type;
+    Type type;
 
     std::vector<std::string> usedSymbols;
     std::vector<std::string> newSymbols;

@@ -1,7 +1,1 @@
-euclide : (a,b) |-> {
-    while (b != 0) repeat {
-        (a,b) := (b, a % b)
-    } ;
-    a
-} ;
-print(euclide(40, 48), "\n")
++ 1

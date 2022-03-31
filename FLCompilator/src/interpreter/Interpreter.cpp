@@ -97,6 +97,8 @@ Reference Interpreter::callFunction(Context & context, std::list<Function*> func
             }
         } catch (FunctionArgumentsError error) {}
     }
+
+    throw InterpreterError();
 }
 
 

@@ -87,6 +87,11 @@ GlobalContext::~GlobalContext() {
     collect(nullptr);
 }
 
+
+FunctionContext::FunctionContext(Context & parent) {
+    this->parent = &parent;
+}
+
 GlobalContext* FunctionContext::getGlobal() {
     return parent->getGlobal();
 }

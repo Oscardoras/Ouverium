@@ -1,6 +1,3 @@
-#include "Condition.hpp"
-#include "ConditionAlternative.hpp"
-#include "ConditionRepeat.hpp"
 #include "FunctionCall.hpp"
 #include "FunctionDefinition.hpp"
 #include "Property.hpp"
@@ -24,37 +21,14 @@ std::string expressionToString(Expression const * const expression, int n) {
         for (std::string name : expression->usedSymbols) s += tabu(1) + " " + name + "\n";
     }
 
-    std::string type = expression->getType();
-    if (type == "Condition") {
-        Condition * condition = (Condition *) expression;
-
-        s += "Condition :\n";
-        n++;
-        s += tabu(n) + "condition : " + expressionToString(condition->condition.get(), n);
-        s += tabu(n) + "object : " + expressionToString(condition->object.get(), n);
-    } else if (type == "ConditionAlternative") {
-        ConditionAlternative * alternativeCondition = (ConditionAlternative *) expression;
-
-        s += "ConditionAlternative :\n";
-        n++;
-        s += tabu(n) + "condition : " + expressionToString(alternativeCondition->condition.get(), n);
-        s += tabu(n) + "object : " + expressionToString(alternativeCondition->object.get(), n);
-        s += tabu(n) + "alternative : " + expressionToString(alternativeCondition->alternative.get(), n);
-    } else if (type == "ConditionRepeat") {
-        ConditionRepeat * conditionRepeat = (ConditionRepeat *) expression;
-
-        s += "ConditionRepeat :\n";
-        n++;
-        s += tabu(n) + "condition : " + expressionToString(conditionRepeat->condition.get(), n);
-        s += tabu(n) + "object : " + expressionToString(conditionRepeat->object.get(), n);
-    } else if (type == "FunctionCall") {
+    if (expression->type == Expression::FunctionCall) {
         FunctionCall * functionCall = (FunctionCall *) expression;
 
         s += "FunctionCall :\n";
         n++;
         s += tabu(n) + "function : " + expressionToString(functionCall->function.get(), n);
         s += tabu(n) + "object : " + expressionToString(functionCall->object.get(), n);
-    } else if (type == "FunctionDefinition") {
+    } else if (expression->type == Expression::FunctionDefinition) {
         FunctionDefinition * functionDefinition = (FunctionDefinition *) expression;
 
         s += "FunctionDefinition :\n";
@@ -65,18 +39,18 @@ std::string expressionToString(Expression const * const expression, int n) {
         s += tabu(n) + "localSymbols :\n";
         n++;
         for (std::string name : functionDefinition->object->usedSymbols) s += tabu(n) + " " + name + "\n";
-    } else if (type == "Property") {
+    } else if (expression->type == Expression::Property) {
         Property * property = (Property *) expression;
         
         s += "Property :\n";
         n++;
         s += tabu(n) + "object : " + expressionToString(property->object.get(), n);
         s += tabu(n) + "name : " + property->name + "\n";
-    } else if (type == "Symbol") {
+    } else if (expression->type == Expression::Symbol) {
         Symbol * symbol = (Symbol *) expression;
         
         s += "Symbol : " + symbol->name + "\n";
-    } else if (type == "Tuple") {
+    } else if (expression->type == Expression::Tuple) {
         Tuple * tuple = (Tuple *) expression;
 
         s += "Tuple :\n";
