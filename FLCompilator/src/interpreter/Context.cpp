@@ -84,7 +84,13 @@ Reference GlobalContext::getSymbol(std::string const& symbol, bool const& create
 }
 
 GlobalContext::~GlobalContext() {
-    collect(nullptr);
+    for (auto it = objects.begin(); it != objects.end(); it++) {
+        auto finalize = (*it)->fields.find("finalize");
+        if (finalize != (*it)->fields.end())
+            Interpreter::callFunction(*getGlobal(), finalize->second->functions, std::make_shared<Tuple>());
+
+        delete *it;
+    }
 }
 
 

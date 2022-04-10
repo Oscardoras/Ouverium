@@ -5,7 +5,9 @@
 
 struct Property: public Expression {
 
-    const Type type = Expression::Property;
+    Property() {
+        type = Type::Property;
+    }
 
     std::shared_ptr<Expression> object;
     std::string name;

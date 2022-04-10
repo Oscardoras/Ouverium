@@ -30,7 +30,7 @@ int main(int argc, char ** argv) {
 
             std::shared_ptr<Expression> tree = StandardParser::getTree(code, symbols);
             std::cout << tree->toString() << std::endl;
-            //Interpreter::run(tree);
+            Interpreter::run(tree);
         } else std::cerr << "Error: unable to load the source file " << argv[1] << "." << std::endl;
     } else std::cerr << "Error: please give the name of the source and the name of the destination." << std::endl;
 	

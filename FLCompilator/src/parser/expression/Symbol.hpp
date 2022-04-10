@@ -5,7 +5,9 @@
 
 struct Symbol: public Expression {
 
-    const Type type = Expression::Symbol;
+    Symbol() {
+        type = Type::Symbol;
+    }
 
     std::string name;
 

@@ -101,10 +101,10 @@ std::shared_ptr<Expression> expressionsToExpression(std::vector<std::shared_ptr<
         std::shared_ptr<FunctionCall> functioncall = std::make_shared<FunctionCall>();
         functioncall->function = expressions[0];
 
-        if (expressions.size() >= 2) {
+        if (expressions.size() != 2) {
             std::shared_ptr<Tuple> tuple = std::make_shared<Tuple>();
-            for (auto const& expr : expressions)
-                tuple->objects.push_back(expr);
+            for (unsigned int i = 1; i < expressions.size(); i++)
+                tuple->objects.push_back(expressions[i]);
             functioncall->object = tuple;
         } else functioncall->object = expressions[1];
 
@@ -261,16 +261,16 @@ std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words,
                 continue;
             }
         }
-        if (!is_alphanum(words[i][0])) {
+        if (!is_alphanum(words[i][0]) && !is_sys(words[i])) {
             if (priority && !isFunction) {
                 expressions.push_back(expression);
                 std::shared_ptr<Symbol> symbol = std::make_shared<Symbol>();
                 symbol->name = words[i];
                 i++;
-                expressions.push_back(expression);
+                expressions.push_back(symbol);
                 expression = getExpression(words, i, isTuple, false);
                 continue;
-            } break;
+            } else break;
         }
         {
             isFunction = true;

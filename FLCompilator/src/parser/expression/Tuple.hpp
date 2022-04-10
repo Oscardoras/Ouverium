@@ -8,7 +8,9 @@
 
 struct Tuple: public Expression {
 
-    const Type type = Expression::Tuple;
+    Tuple() {
+        type = Type::Tuple;
+    }
 
     std::vector<std::shared_ptr<Expression>> objects;
 

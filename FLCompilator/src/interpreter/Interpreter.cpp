@@ -71,10 +71,10 @@ void setReferences(Context & context, FunctionContext & function_context, std::s
 
 Reference Interpreter::callFunction(Context & context, std::list<Function*> functions, std::shared_ptr<Expression> arguments) {
     for (auto function : functions) {
+        Reference result;
         try {
+            FunctionContext function_context(context);
             if (function->type == Function::Custom) {
-                FunctionContext function_context(context);
-
                 for (auto & symbol : ((CustomFunction*) function)->objects)
                     function_context.addSymbol(symbol.first, Reference(symbol.second));
                 
@@ -86,16 +86,23 @@ Reference Interpreter::callFunction(Context & context, std::list<Function*> func
                 else filter = context.addObject(new Object(true));
 
                 if (filter->type == Object::Boolean && filter->data.b)
-                    return execute(function_context, ((CustomFunction*) function)->pointer->object);
+                    result = execute(function_context, ((CustomFunction*) function)->pointer->object);
                 else throw FunctionArgumentsError();
             } else {
-                FunctionContext function_context(context);
-
-                setReferences(context, function_context, ((CustomFunction*) function)->pointer->parameters, arguments);
+                setReferences(context, function_context, ((SystemFunction*) function)->parameters, arguments);
                 
-                return ((SystemFunction*) function)->pointer(function_context);
+                result = ((SystemFunction*) function)->pointer(function_context);
             }
-        } catch (FunctionArgumentsError error) {}
+
+            if (result.isPointerReference())
+                for (auto symbol : function_context.symbols)
+                    if (symbol.second.isPointerCopy())
+                        if (symbol.second.ptrCopy == *result.ptrRef) {
+                            result = symbol.second;
+                            break;
+                        }
+            return result;
+        } catch (Object & error) {}
     }
 
     throw InterpreterError();
@@ -214,6 +221,6 @@ void Interpreter::run(std::shared_ptr<Expression> expression) {
     addFunction(context, "add", SystemFunctions::add_array_element(), SystemFunctions::add_array_element);
     addFunction(context, "remove", SystemFunctions::add_array_element(), SystemFunctions::add_array_element);
 
-    auto result = execute(context, expression).toObject(context);
-    SystemFunctions::print(result);
+    auto result = execute(context, expression);
+    SystemFunctions::print(result.toObject(context));
 }

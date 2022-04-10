@@ -98,7 +98,7 @@ namespace SystemFunctions {
         auto var = context.getSymbol("var").toObject(context);
         auto object = context.getSymbol("object").toObject(context);
 
-        for (auto it = object->functions.end(); it != object->functions.begin(); it--) {
+        for (auto it = object->functions.rbegin(); it != object->functions.rend(); it++) {
             if ((*it)->type == Function::Custom) {
                 var->functions.push_front(new CustomFunction(*((CustomFunction*) *it)));
             } else var->functions.push_front(new SystemFunction(*((SystemFunction*) *it)));

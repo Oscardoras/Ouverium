@@ -9,17 +9,26 @@ class Context;
 struct Reference {
     
     enum ReferenceType {
-        //Tuple <= -2
-        PointerCopy = -1,
-        PointerReference = 0,
-        //ArrayPointerReference > 0
+        SymbolReference = -3,
+        PropertyReference = -2,
+        ArrayReference = -1,
+        Pointer = 0
+        //Tuple > 0
     };
     
     long type;
 
     union {
-        Object* ptrCopy;
-        Object* * ptrRef;
+        Object* * symbolReference;
+        struct {
+            Object* parent;
+            Object* * reference;
+        } propertyRefrence;
+        struct {
+            Object* array;
+            unsigned long i;
+        } arrayReference;
+        Object* pointer;
         Reference * tuple;
     };
 
@@ -27,23 +36,20 @@ struct Reference {
 
     Reference(Reference const& reference);
 
-    Reference(Object* const& pointer);
-
     Reference(Object** const& reference);
 
-    Reference(Object* const& reference, unsigned long const& i);
+    Reference(Object* const& parent, Object** const& reference);
+
+    Reference(Object* const& array, unsigned long const& i);
+
+    Reference(Object* const& pointer);
 
     Reference(size_t const& tuple_size);
 
     ~Reference();
 
-    bool isTuple() const;
-    bool isPointerCopy() const;
-    bool isPointerReference() const;
-    bool isArrayReference() const;
+    bool isReference() const;
 
-    long getArrayIndex() const;
-    long getTupleSize() const;
     Object** getArrayReference() const;
 
     Reference toSymbolReference(Context & context) const;

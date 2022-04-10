@@ -6,7 +6,9 @@
 
 struct FunctionCall: public Expression {
 
-    const Type type = Expression::FunctionCall;
+    FunctionCall() {
+        type = Type::FunctionCall;
+    }
 
     std::shared_ptr<Expression> function;
     std::shared_ptr<Expression> object;

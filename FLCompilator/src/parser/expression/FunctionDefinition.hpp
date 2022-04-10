@@ -8,7 +8,9 @@
 
 struct FunctionDefinition: public Expression {
 
-    const Type type = Expression::FunctionDefinition;
+    FunctionDefinition() {
+        type = Type::FunctionDefinition;
+    }
 
     std::shared_ptr<Expression> parameters;
     std::shared_ptr<Expression> filter;
