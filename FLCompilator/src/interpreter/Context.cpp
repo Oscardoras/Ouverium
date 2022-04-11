@@ -29,8 +29,8 @@ void Context::collect(Object* current) {
     auto context = this;
     while (context != nullptr) {
         for (auto it = symbols.begin(); it != symbols.end(); it++)
-            if (it->second.isPointerCopy())
-                dfs(it->second.ptrCopy);
+            if (it->second.type == Reference::Pointer)
+                dfs(it->second.pointer);
 
         auto parent = context->getParent();
         if (parent != context) context = parent;
@@ -73,13 +73,13 @@ Context* GlobalContext::getParent() {
 Reference GlobalContext::getSymbol(std::string const& symbol, bool const& create) {
     auto it = symbols.find(symbol);
     if (it != symbols.end()) {
-        if (it->second.isPointerCopy())
-            return Reference(&it->second.ptrCopy);
+        if (it->second.type == Reference::Pointer)
+            return Reference(&it->second.pointer);
         else return it->second;
     } else if (create) {
         auto & ref = symbols[symbol];
-        ref.ptrCopy = addObject(new Object());
-        return Reference(&ref.ptrCopy);
+        ref.pointer = addObject(new Object());
+        return Reference(&ref.pointer);
     } else return Reference((Object**) nullptr);
 }
 
@@ -110,16 +110,16 @@ Reference FunctionContext::getSymbol(std::string const& symbol, bool const& crea
     auto it = symbols.find(symbol);
 
     if (it != symbols.end()) {
-        if (it->second.isPointerCopy())
-            return Reference(&it->second.ptrCopy);
+        if (it->second.type == Reference::Pointer)
+            return Reference(&it->second.pointer);
         else return it->second;
     } else {
         auto ref = getGlobal()->getSymbol(symbol, false);
-        if (ref.ptrRef != nullptr) return ref;
+        if (ref.pointer != nullptr) return ref;
         else if (create) {
             auto & ref = symbols[symbol];
-            ref.ptrCopy = addObject(new Object());
-            return Reference(&ref.ptrCopy);
+            ref.pointer = addObject(new Object());
+            return Reference(&ref.pointer);
         } else return Reference((Object**) nullptr);
     }
 }

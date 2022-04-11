@@ -36,7 +36,7 @@ namespace SystemFunctions {
 
     void assign1(std::vector<Object*> & cache, Reference const& var, Object* const& object) {
         if (var.type >= 0) cache.push_back(object);
-        else if (var.isTuple()) {
+        else if (var.type > 0) {
             auto n = var.getTupleSize();
             if ((long) n == object->type)
                 for (long i = 0; i < n; i++) assign1(cache, var.tuple[i], object->data.a[i+1].o);

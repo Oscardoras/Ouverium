@@ -50,7 +50,7 @@ struct Reference {
 
     bool isReference() const;
 
-    Object** getArrayReference() const;
+    Object** getReference() const;
 
     Reference toSymbolReference(Context & context) const;
     Object* toObject(Context & context) const;

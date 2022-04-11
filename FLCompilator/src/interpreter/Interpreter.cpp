@@ -22,7 +22,7 @@ void setReferences(FunctionContext & function_context, std::shared_ptr<Expressio
     } else if (parameters->type == Expression::Tuple) {
         auto tuple = std::static_pointer_cast<Tuple>(parameters);
 
-        if (reference.isTuple()) {
+        if (reference.type > 0) {
             for (size_t i = 0; i < tuple->objects.size(); i++)
                 setReferences(function_context, tuple->objects[i], reference.tuple[i]);
         } else {
@@ -94,10 +94,10 @@ Reference Interpreter::callFunction(Context & context, std::list<Function*> func
                 result = ((SystemFunction*) function)->pointer(function_context);
             }
 
-            if (result.isPointerReference())
+            if (result.type == Reference::SymbolReference)
                 for (auto symbol : function_context.symbols)
-                    if (symbol.second.isPointerCopy())
-                        if (symbol.second.ptrCopy == *result.ptrRef) {
+                    if (symbol.second.type == Reference::Pointer)
+                        if (symbol.second.pointer == *result.symbolReference) {
                             result = symbol.second;
                             break;
                         }
