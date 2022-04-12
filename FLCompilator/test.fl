@@ -1,4 +1,4 @@
 euclide : a |-> {
     a
 } ;
-print(euclide(3))
+print(euclide(3+4), "\n")

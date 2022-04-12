@@ -57,10 +57,10 @@ bool Reference::isReference() const {
     return type < 0;
 }
 
-Object** Reference::getReference() const {
-    if (type == SymbolReference) return symbolReference;
-    else if (type == PropertyReference) return propertyRefrence.reference;
-    else if (type == ArrayReference) return &arrayReference.array->data.a[arrayReference.i].o;
+Object* & Reference::getReference() const {
+    if (type == PropertyReference) return *propertyRefrence.reference;
+    else if (type == ArrayReference) return arrayReference.array->data.a[arrayReference.i].o;
+    else return *symbolReference;
 }
 
 Reference Reference::toSymbolReference(Context & context) const {
@@ -74,7 +74,7 @@ Reference Reference::toSymbolReference(Context & context) const {
 
 Object* Reference::toObject(Context & context) const {
     if (type == Pointer) return pointer;
-    else if (isReference()) return *getReference();
+    else if (isReference()) return getReference();
     else {
         auto object = context.addObject(new Object((size_t) type));
         for (long i = 0; i < type; i++)

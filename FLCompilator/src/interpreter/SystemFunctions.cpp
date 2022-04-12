@@ -23,6 +23,34 @@ namespace SystemFunctions {
         return Reference(context.getSymbol("b"));
     }
 
+    std::shared_ptr<Expression> if_statement() {
+        auto tuple = std::make_shared<Tuple>();
+
+        auto condition = std::make_shared<Symbol>();
+        condition->name = "condition";
+        tuple->objects.push_back(condition);
+
+        auto block = std::make_shared<FunctionCall>();
+        auto function_name = std::make_shared<Symbol>();
+        function_name->name = "block";
+        block->function = function_name;
+        block->object = std::make_shared<Tuple>();
+        tuple->objects.push_back(block);
+
+        return tuple;
+    }
+    Reference if_statement(FunctionContext & context) {
+        auto condition = context.getSymbol("condition").toObject(context);
+
+        if (condition->type == Object::Boolean)
+            if (condition->data.b) {
+                auto parent = context.getParent();
+                auto functions = context.getSymbol("block").toObject(context)->functions;
+                return Interpreter::callFunction(*parent, functions, std::make_shared<Tuple>());
+            } else return Reference(context.addObject(new Object()));
+        else throw FunctionArgumentsError();
+    }
+
     std::shared_ptr<Expression> copy() {
         auto object = std::make_shared<Symbol>();
         object->name = "object";
@@ -32,28 +60,6 @@ namespace SystemFunctions {
     Reference copy(FunctionContext & context) {
         auto object = context.getSymbol("object").toObject(context);
         return Reference(context.addObject(new Object(*object)));
-    }
-
-    void assign1(std::vector<Object*> & cache, Reference const& var, Object* const& object) {
-        if (var.type >= 0) cache.push_back(object);
-        else if (var.type > 0) {
-            auto n = var.getTupleSize();
-            if ((long) n == object->type)
-                for (long i = 0; i < n; i++) assign1(cache, var.tuple[i], object->data.a[i+1].o);
-            else throw FunctionArgumentsError();
-        }
-    }
-
-    void assign2(Context & context, std::vector<Object*>::iterator & it, Reference const& var) {
-        if (var.isPointerReference()) {
-            *var.ptrRef = *it++;
-        } else if (var.isArrayReference()) {
-            auto ref = var.getArrayReference();
-            *ref = *it++;
-        } else if (var.isTuple()) {
-            auto n = var.getTupleSize();
-            for (long i = 0; i < n; i++) assign2(context, it, var.tuple[i]);
-        }
     }
 
     std::shared_ptr<Expression> assign() {
@@ -73,10 +79,8 @@ namespace SystemFunctions {
         auto var = context.getSymbol("var");
         auto object = context.getSymbol("object").toObject(context);
 
-        std::vector<Object*> cache;
-        assign1(cache, var, object);
-        auto it = cache.begin();
-        assign2(context, it, var);
+        if (var.isReference())
+            var.getReference() = object;
 
         return var;
     }
