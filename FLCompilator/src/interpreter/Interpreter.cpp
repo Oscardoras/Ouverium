@@ -198,10 +198,13 @@ void addFunction(Context & context, std::string symbol, std::shared_ptr<Expressi
 void Interpreter::run(std::shared_ptr<Expression> expression) {
     GlobalContext context;
     addFunction(context, ";", SystemFunctions::separator(), SystemFunctions::separator);
+    addFunction(context, "if", SystemFunctions::if_statement(), SystemFunctions::if_statement);
+    addFunction(context, "if", SystemFunctions::if_else_statement(), SystemFunctions::if_else_statement);
+    addFunction(context, "while", SystemFunctions::while_statement(), SystemFunctions::while_statement);
     addFunction(context, "$", SystemFunctions::copy(), SystemFunctions::copy);
     addFunction(context, ":=", SystemFunctions::assign(), SystemFunctions::assign);
     addFunction(context, ":", SystemFunctions::function_definition(), SystemFunctions::function_definition);
-    addFunction(context, "=", SystemFunctions::equals(), SystemFunctions::equals);
+    addFunction(context, "==", SystemFunctions::equals(), SystemFunctions::equals);
     addFunction(context, "!=", SystemFunctions::not_equals(), SystemFunctions::not_equals);
     addFunction(context, "===", SystemFunctions::check_pointers(), SystemFunctions::check_pointers);
     addFunction(context, "!", SystemFunctions::logical_not(), SystemFunctions::logical_not);

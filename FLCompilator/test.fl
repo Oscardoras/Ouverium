@@ -1,4 +1,9 @@
 euclide : a |-> {
     a
 } ;
-print(euclide(3+4), "\n")
+print(euclide(3+4), "\n") ;
+if (false) {
+    print("Test\n")
+} {
+    print("False\n")
+}

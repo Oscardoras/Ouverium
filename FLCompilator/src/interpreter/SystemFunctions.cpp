@@ -51,6 +51,96 @@ namespace SystemFunctions {
         else throw FunctionArgumentsError();
     }
 
+    std::shared_ptr<Expression> if_else_statement() {
+        auto tuple = std::make_shared<Tuple>();
+
+        auto condition = std::make_shared<Symbol>();
+        condition->name = "condition";
+        tuple->objects.push_back(condition);
+
+        auto block = std::make_shared<FunctionCall>();
+        auto function_name = std::make_shared<Symbol>();
+        function_name->name = "block";
+        block->function = function_name;
+        block->object = std::make_shared<Tuple>();
+        tuple->objects.push_back(block);
+
+        auto else_s = std::make_shared<Symbol>();
+        else_s->name = "else_s";
+        tuple->objects.push_back(else_s);
+
+        auto alternative = std::make_shared<FunctionCall>();
+        function_name = std::make_shared<Symbol>();
+        function_name->name = "alternative";
+        alternative->function = function_name;
+        alternative->object = std::make_shared<Tuple>();
+        tuple->objects.push_back(alternative);
+
+        return tuple;
+    }
+    Reference if_else_statement(FunctionContext & context) {
+        auto condition = context.getSymbol("condition").toObject(context);
+
+        if (condition->type == Object::Boolean)
+            if (condition->data.b) {
+                auto parent = context.getParent();
+                auto functions = context.getSymbol("block").toObject(context)->functions;
+                return Interpreter::callFunction(*parent, functions, std::make_shared<Tuple>());
+            } else {
+                auto parent = context.getParent();
+                auto functions = context.getSymbol("alternative").toObject(context)->functions;
+                return Interpreter::callFunction(*parent, functions, std::make_shared<Tuple>());
+            }
+        else throw FunctionArgumentsError();
+    }
+
+    std::shared_ptr<Expression> else_statement() {
+        return std::make_shared<Tuple>();
+    }
+    Reference else_statement(FunctionContext & context) {
+        throw FunctionArgumentsError();
+    }
+
+    std::shared_ptr<Expression> while_statement() {
+        auto tuple = std::make_shared<Tuple>();
+
+        auto condition = std::make_shared<FunctionCall>();
+        auto function_name = std::make_shared<Symbol>();
+        function_name->name = "condition";
+        condition->function = function_name;
+        condition->object = std::make_shared<Tuple>();
+        tuple->objects.push_back(condition);
+
+        auto block = std::make_shared<FunctionCall>();
+        function_name = std::make_shared<Symbol>();
+        function_name->name = "block";
+        block->function = function_name;
+        block->object = std::make_shared<Tuple>();
+        tuple->objects.push_back(block);
+
+        return tuple;
+    }
+    Reference while_statement(FunctionContext & context) {
+        auto parent = context.getParent();
+        Reference result;
+
+        while (true) {
+            auto functions = context.getSymbol("condition").toObject(context)->functions;
+            auto condition = Interpreter::callFunction(*parent, functions, std::make_shared<Tuple>()).toObject(context);
+
+            if (condition->type == Object::Boolean) {
+                if (condition->data.b) {
+                    functions = context.getSymbol("block").toObject(context)->functions;
+                    result = Interpreter::callFunction(*parent, functions, std::make_shared<Tuple>());
+                } else break;
+            } else throw FunctionArgumentsError();
+        }
+        
+        if (result.type == Reference::Pointer && result.pointer == nullptr)
+            return Reference(context.addObject(new Object()));
+        else return result;
+    }
+
     std::shared_ptr<Expression> copy() {
         auto object = std::make_shared<Symbol>();
         object->name = "object";

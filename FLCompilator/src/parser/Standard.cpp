@@ -151,12 +151,12 @@ std::shared_ptr<Expression> expressionsToExpression(std::vector<std::shared_ptr<
     }
 }
 
-std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words, int &i, bool const& isTuple, bool const& priority) {
+std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words, int &i, bool inTuple, bool inFunction, bool priority) {
     std::shared_ptr<Expression> expression = nullptr;
 
     if (words[i] == "(") {
         i++;
-        expression = getExpression(words, i, false, true);
+        expression = getExpression(words, i, false, false, true);
         if (words[i] == ")") i++;
         else throw "Error";
     } else if (words[i] == ")") {
@@ -164,7 +164,7 @@ std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words,
         else throw "Error";
     } else if (words[i] == "[") {
         i++;
-        expression = getExpression(words, i, false, true);
+        expression = getExpression(words, i, false, false, true);
         if (words[i] == "]") i++;
         else throw "Error";
     } else if (words[i] == "]") {
@@ -172,7 +172,7 @@ std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words,
         else throw "Error";
     } else if (words[i] == "{") {
         i++;
-        expression = getExpression(words, i, false, true);
+        expression = getExpression(words, i, false, false, true);
         if (words[i] == "}") i++;
         else throw "Error";
     } else if (words[i] == "}") {
@@ -212,12 +212,12 @@ std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words,
             continue;
         }
         if (words[i] == ",") {
-            if (!isTuple && priority) {
+            if (!inTuple && priority) {
                 std::shared_ptr<Tuple> tuple = std::make_shared<Tuple>();
                 tuple->objects.push_back(expressionsToExpression(expressions, expression, isFunction));
                 while (words[i] == ",") {
                     i++;
-                    tuple->objects.push_back(getExpression(words, i, true, true));
+                    tuple->objects.push_back(getExpression(words, i, true, false, true));
                 }
                 return tuple;
             } break;
@@ -225,13 +225,13 @@ std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words,
         if (words[i] == "like") {
             if (priority) {
                 i++;
-                std::shared_ptr<Expression> like = getExpression(words, i, false, false);
+                std::shared_ptr<Expression> like = getExpression(words, i, false, false, false);
                 if (words[i] == "|->") {
                     i++;
                     std::shared_ptr<FunctionDefinition> functionDefinition = std::make_shared<FunctionDefinition>();
                     functionDefinition->parameters = expression;
                     functionDefinition->filter = like;
-                    functionDefinition->object = getExpression(words, i, isTuple, false);
+                    functionDefinition->object = getExpression(words, i, inTuple, inFunction, false);
                     expression = functionDefinition;
                     continue;
                 } else throw "Error";
@@ -243,7 +243,7 @@ std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words,
                 std::shared_ptr<FunctionDefinition> functionDefinition = std::make_shared<FunctionDefinition>();
                 functionDefinition->parameters = expression;
                 functionDefinition->filter = nullptr;
-                functionDefinition->object = getExpression(words, i, isTuple, false);
+                functionDefinition->object = getExpression(words, i, inTuple, inFunction, false);
                 expression = functionDefinition;
                 continue;
             } break;
@@ -255,7 +255,7 @@ std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words,
                 std::shared_ptr<FunctionCall> functioncall = std::make_shared<FunctionCall>();
 
                 functioncall->function = symbol;
-                functioncall->object = getExpression(words, i, isTuple, false);
+                functioncall->object = getExpression(words, i, inTuple, inFunction, false);
                 
                 expression = functioncall;
                 continue;
@@ -268,16 +268,16 @@ std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words,
                 symbol->name = words[i];
                 i++;
                 expressions.push_back(symbol);
-                expression = getExpression(words, i, isTuple, false);
+                expression = getExpression(words, i, inTuple, inFunction, false);
                 continue;
             } else break;
         }
-        {
+        if (!inFunction) {
             isFunction = true;
             expressions.push_back(expression);
-            expression = getExpression(words, i, isTuple, false);
+            expression = getExpression(words, i, inTuple, true, false);
             continue;
-        }
+        } else break;
 
     }
 
@@ -331,7 +331,7 @@ void findSymbols(std::shared_ptr<Expression> & expression, std::shared_ptr<Expre
 std::shared_ptr<Expression> StandardParser::getTree(std::string code, std::vector<std::string> symbols) {
     std::vector<std::string> words = getWords(code);
     int i = 0;
-    std::shared_ptr<Expression> expression = getExpression(words, i, false, true);
+    std::shared_ptr<Expression> expression = getExpression(words, i, false, false, true);
     std::shared_ptr<Expression> expr = std::make_shared<Expression>();
     findSymbols(expression, expr, symbols, true);
     return expression;
