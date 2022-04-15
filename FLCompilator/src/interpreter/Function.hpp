@@ -7,9 +7,7 @@
 
 #include "../parser/expression/FunctionDefinition.hpp"
 
-class Object;
-class Reference;
-class FunctionContext;
+#include "Context.hpp"
 
 
 struct Function {
@@ -23,7 +21,7 @@ struct Function {
 
 struct CustomFunction: public Function {
     std::shared_ptr<FunctionDefinition> pointer;
-    std::map<std::string, Object*> objects;
+    std::map<std::string, Reference> externSymbols;
 
     CustomFunction(std::shared_ptr<FunctionDefinition> pointer);
     virtual ~CustomFunction() = default;

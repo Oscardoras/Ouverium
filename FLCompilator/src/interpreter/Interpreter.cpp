@@ -1,6 +1,6 @@
 #include <stdexcept>
 
-#include "Context.hpp"
+#include "Function.hpp"
 #include "Interpreter.hpp"
 #include "InterpreterError.hpp"
 #include "SystemFunctions.cpp"
@@ -60,10 +60,18 @@ void setReferences(Context & context, FunctionContext & function_context, std::s
             if (context.hasSymbol(symbol->name)) {
                 //TODO
             } else {
-                auto function = std::make_shared<FunctionDefinition>();
-                function->parameters = p_function->object;
-                function->object = arguments;
-                function_context.addSymbol(symbol->name, Interpreter::execute(context, function));
+                auto function_definition = std::make_shared<FunctionDefinition>();
+                function_definition->parameters = p_function->object;
+                function_definition->object = arguments;
+
+                auto object = context.addObject(new Object());
+                auto f = new CustomFunction(function_definition);
+                if (context.getGlobal() != &context)
+                    for (auto symbol : function_definition->object->usedSymbols)
+                        ((CustomFunction*) f)->externSymbols[symbol] = context.getSymbol(symbol);
+                object->functions.push_front(f);
+
+                function_context.addSymbol(symbol->name, Reference(object));
             }
         } else throw FunctionArgumentsError();
     } else throw FunctionArgumentsError();
@@ -75,8 +83,8 @@ Reference Interpreter::callFunction(Context & context, std::list<Function*> func
         try {
             FunctionContext function_context(context);
             if (function->type == Function::Custom) {
-                for (auto & symbol : ((CustomFunction*) function)->objects)
-                    function_context.addSymbol(symbol.first, Reference(symbol.second));
+                for (auto & symbol : ((CustomFunction*) function)->externSymbols)
+                    function_context.addSymbol(symbol.first, symbol.second);
                 
                 setReferences(context, function_context, ((CustomFunction*) function)->pointer->parameters, arguments);
 
@@ -123,7 +131,7 @@ Reference Interpreter::execute(Context & context, std::shared_ptr<Expression> ex
         if (context.getGlobal() != &context)
             for (auto symbol : function_definition->object->usedSymbols)
                 if (context.hasSymbol(symbol))
-                    ((CustomFunction*) f)->objects[symbol] = context.getSymbol(symbol).toObject(context);
+                    ((CustomFunction*) f)->externSymbols[symbol] = context.getSymbol(symbol);
         object->functions.push_front(f);
         
         return Reference(object);

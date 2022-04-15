@@ -152,25 +152,48 @@ namespace SystemFunctions {
         return Reference(context.addObject(new Object(*object)));
     }
 
+    void assign1(std::vector<Object*> & cache, Reference const& var, Object* const& object) {
+        if (var.type > 0) {
+            if (var.type == object->type)
+                for (long i = 0; i < var.type; i++) assign1(cache, var.tuple[i], object->data.a[i+1].o);
+            else throw InterpreterError();
+        } else cache.push_back(object);
+    }
+
+    void assign2(Context & context, std::vector<Object*>::iterator & it, Reference const& var) {
+        if (var.isReference()) var.getReference() = *it++;
+        else if (var.type > 0) {
+            for (long i = 0; i < var.type; i++) assign2(context, it, var.tuple[i]);
+        }
+    }
+
     std::shared_ptr<Expression> assign() {
         auto tuple = std::make_shared<Tuple>();
 
-        auto var = std::make_shared<Symbol>();
-        var->name = "var";
+        auto var = std::make_shared<FunctionCall>();
+        auto function_name = std::make_shared<Symbol>();
+        function_name->name = "var";
+        var->function = function_name;
+        var->object = std::make_shared<Tuple>();
         tuple->objects.push_back(var);
 
-        auto object = std::make_shared<Symbol>();
-        object->name = "object";
+        auto object = std::make_shared<FunctionCall>();
+        function_name = std::make_shared<Symbol>();
+        function_name->name = "object";
+        object->function = function_name;
+        object->object = std::make_shared<Tuple>();
         tuple->objects.push_back(object);
 
         return tuple;
     }
     Reference assign(FunctionContext & context) {
-        auto var = context.getSymbol("var");
-        auto object = context.getSymbol("object").toObject(context);
+        auto var = Interpreter::callFunction(context, context.getSymbol("var").toObject(context)->functions, std::make_shared<Tuple>());
+        auto object = Interpreter::callFunction(context, context.getSymbol("object").toObject(context)->functions, std::make_shared<Tuple>()).toObject(context);
 
-        if (var.isReference())
-            var.getReference() = object;
+        std::vector<Object*> cache;
+        assign1(cache, var, object);
+        auto it = cache.begin();
+        assign2(context, it, var);
 
         return var;
     }
@@ -513,9 +536,7 @@ namespace SystemFunctions {
         auto b = context.getSymbol("b").toObject(context);
             
         if (a->type == Object::Integer && b->type == Object::Integer)
-            return Reference(context.addObject(new Object(a->data.i / b->data.i)));
-        else if (a->type == Object::Float && b->type == Object::Float)
-            return Reference(context.addObject(new Object(a->data.f / b->data.f)));
+            return Reference(context.addObject(new Object(a->data.i % b->data.i)));
         else throw FunctionArgumentsError();
     }
 

@@ -1,10 +1,7 @@
 euclide : (a,b) |-> {
     while (b != 0) {
-        t := b;
-        b := a % b;
-        a := t;
-        print(b,"\n")
+        (a,b) := (b, a % b)
     };
     a
 };
-print(euclide(40, 48))
+print(euclide(40, 50), "\n")

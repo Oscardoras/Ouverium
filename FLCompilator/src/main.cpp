@@ -8,6 +8,7 @@
 
 int main(int argc, char ** argv) {
     std::vector<std::string> symbols = {
+        "if", "else", "while",
         ";", "$", ":=", ":", "=", "!=", "===",
         "!", "&", "|",
         "+", "-", "*", "/", "%",

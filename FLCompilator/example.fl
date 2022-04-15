@@ -1,17 +1,17 @@
 test := 3 ;
 test2 := solve( x |-> (x + 1 = 4) ) ;
-if (1=1) then (test := 4)
+if (1=1) (test := 4)
 else (test2 := 4) ;
-while (test >= 1) repeat (test := test-1) ;
+while (test >= 1) (test := test-1) ;
 
 euclide : (a,b) |-> {
     (a1,b1) := (a,b);
-    while (b1 != 0) repeat {
+    while (b1 != 0) {
         (a1,b1) := (b1, a1 % b1)
-    } ;
+    };
     a1
-} ;
-print(euclide(40, 48)) ;
+};
+print(euclide(40, 48), "\n");
 
 
 forall( [a,b,c] like ((a,b,c) ? float*float*float & a != 0) |-> (

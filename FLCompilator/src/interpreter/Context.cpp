@@ -1,4 +1,4 @@
-#include "Context.hpp"
+#include "Function.hpp"
 #include "Interpreter.hpp"
 #include "InterpreterError.hpp"
 
@@ -17,8 +17,9 @@ void dfs(Object* object) {
         dfs(it->second);
     
     for (auto f : object->functions)
-        for (auto it = ((CustomFunction*) f)->objects.begin(); it != ((CustomFunction*) f)->objects.end(); it++)
-            dfs(it->second);
+        for (auto it = ((CustomFunction*) f)->externSymbols.begin(); it != ((CustomFunction*) f)->externSymbols.end(); it++)
+            if (it->second.type == Reference::Pointer)
+                dfs(it->second.pointer);
     
     if (object->type > 0)
         for (long i = 1; i < object->type; i++)

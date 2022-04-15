@@ -1,4 +1,4 @@
-#include "Context.hpp"
+#include "Function.hpp"
 
 
 Object::Object() {   
@@ -11,7 +11,7 @@ Object::Object(Object const& object) {
         Function* function;
         if (f->type == Function::Custom) {
             function = new CustomFunction(((CustomFunction*) f)->pointer);
-            ((CustomFunction*) function)->objects = ((CustomFunction*) f)->objects;
+            ((CustomFunction*) function)->externSymbols = ((CustomFunction*) f)->externSymbols;
         } else {
             function = new SystemFunction(((SystemFunction*) f)->parameters, ((SystemFunction*) f)->pointer);
         }

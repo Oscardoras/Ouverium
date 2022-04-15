@@ -1,7 +1,7 @@
 #ifndef INTERPRETER_INTERPRETER_HPP_
 #define INTERPRETER_INTERPRETER_HPP_
 
-#include "Context.hpp"
+#include "Function.hpp"
 #include "InterpreterError.hpp"
 
 #include "../parser/expression/FunctionCall.hpp"

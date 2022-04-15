@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-#include "Function.hpp"
+struct Function;
 
 
 struct Object {
