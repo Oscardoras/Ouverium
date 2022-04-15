@@ -81,7 +81,7 @@ namespace SystemFunctions {
     Reference if_else_statement(FunctionContext & context) {
         auto condition = context.getSymbol("condition").toObject(context);
 
-        if (condition->type == Object::Boolean)
+        if (condition->type == Object::Boolean && context.getSymbol("else_s").toObject(context) == context.getSymbol("else").toObject(context))
             if (condition->data.b) {
                 auto parent = context.getParent();
                 auto functions = context.getSymbol("block").toObject(context)->functions;
@@ -97,7 +97,7 @@ namespace SystemFunctions {
     std::shared_ptr<Expression> else_statement() {
         return std::make_shared<Tuple>();
     }
-    Reference else_statement(FunctionContext & context) {
+    Reference else_statement(__attribute__((unused)) FunctionContext & context) {
         throw FunctionArgumentsError();
     }
 
@@ -124,14 +124,14 @@ namespace SystemFunctions {
         auto parent = context.getParent();
         Reference result;
 
+        auto condition_functions = context.getSymbol("condition").toObject(context)->functions;
+        auto block_functions = context.getSymbol("block").toObject(context)->functions;
         while (true) {
-            auto functions = context.getSymbol("condition").toObject(context)->functions;
-            auto condition = Interpreter::callFunction(*parent, functions, std::make_shared<Tuple>()).toObject(context);
+            auto condition = Interpreter::callFunction(*parent, condition_functions, std::make_shared<Tuple>()).toObject(context);
 
             if (condition->type == Object::Boolean) {
                 if (condition->data.b) {
-                    functions = context.getSymbol("block").toObject(context)->functions;
-                    result = Interpreter::callFunction(*parent, functions, std::make_shared<Tuple>());
+                    result = Interpreter::callFunction(*parent, block_functions, std::make_shared<Tuple>());
                 } else break;
             } else throw FunctionArgumentsError();
         }

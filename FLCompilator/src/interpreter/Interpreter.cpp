@@ -200,6 +200,7 @@ void Interpreter::run(std::shared_ptr<Expression> expression) {
     addFunction(context, ";", SystemFunctions::separator(), SystemFunctions::separator);
     addFunction(context, "if", SystemFunctions::if_statement(), SystemFunctions::if_statement);
     addFunction(context, "if", SystemFunctions::if_else_statement(), SystemFunctions::if_else_statement);
+    addFunction(context, "else", SystemFunctions::else_statement(), SystemFunctions::else_statement);
     addFunction(context, "while", SystemFunctions::while_statement(), SystemFunctions::while_statement);
     addFunction(context, "$", SystemFunctions::copy(), SystemFunctions::copy);
     addFunction(context, ":=", SystemFunctions::assign(), SystemFunctions::assign);

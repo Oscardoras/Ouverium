@@ -1,9 +1,10 @@
-euclide : a |-> {
+euclide : (a,b) |-> {
+    while (b != 0) {
+        t := b;
+        b := a % b;
+        a := t;
+        print(b,"\n")
+    };
     a
-} ;
-print(euclide(3+4), "\n") ;
-if (false) {
-    print("Test\n")
-} {
-    print("False\n")
-}
+};
+print(euclide(40, 48))
