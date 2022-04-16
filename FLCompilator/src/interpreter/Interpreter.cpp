@@ -64,7 +64,7 @@ void setReferences(Context & context, FunctionContext & function_context, std::s
                 function_definition->parameters = p_function->object;
                 function_definition->object = arguments;
 
-                auto object = context.addObject(new Object());
+                auto object = context.newObject();
                 auto f = new CustomFunction(function_definition);
                 if (context.getGlobal() != &context)
                     for (auto symbol : function_definition->object->usedSymbols)
@@ -82,24 +82,25 @@ Reference Interpreter::callFunction(Context & context, std::list<Function*> func
         Reference result;
         try {
             FunctionContext function_context(context);
+            for (auto & symbol : function->externSymbols)
+                function_context.addSymbol(symbol.first, symbol.second);
+
             if (function->type == Function::Custom) {
-                for (auto & symbol : ((CustomFunction*) function)->externSymbols)
-                    function_context.addSymbol(symbol.first, symbol.second);
-                
                 setReferences(context, function_context, ((CustomFunction*) function)->pointer->parameters, arguments);
 
                 Object* filter;
                 if (((CustomFunction*) function)->pointer->filter != nullptr)
                     filter = execute(function_context, ((CustomFunction*) function)->pointer->filter).toObject(context);
-                else filter = context.addObject(new Object(true));
+                else filter = context.newObject(true);
 
                 if (filter->type == Object::Boolean && filter->data.b)
                     result = execute(function_context, ((CustomFunction*) function)->pointer->object);
                 else throw FunctionArgumentsError();
             } else {
+                auto f = ((SystemFunction*) function)->pointer;
                 setReferences(context, function_context, ((SystemFunction*) function)->parameters, arguments);
                 
-                result = ((SystemFunction*) function)->pointer(function_context);
+                result = f(function_context);
             }
 
             if (result.type == Reference::SymbolReference)
@@ -126,7 +127,7 @@ Reference Interpreter::execute(Context & context, std::shared_ptr<Expression> ex
     } else if (expression->type == Expression::FunctionDefinition) {
         auto function_definition = std::static_pointer_cast<FunctionDefinition>(expression);
 
-        auto object = context.addObject(new Object());
+        auto object = context.newObject();
         auto f = new CustomFunction(function_definition);
         if (context.getGlobal() != &context)
             for (auto symbol : function_definition->object->usedSymbols)
@@ -140,7 +141,7 @@ Reference Interpreter::execute(Context & context, std::shared_ptr<Expression> ex
         
         auto object = execute(context, property->object).toObject(context);
         auto & field = object->fields[property->name];
-        if (field == nullptr) field = context.addObject(new Object());
+        if (field == nullptr) field = context.newObject();
         return Reference(&field);
     } else if (expression->type == Expression::Symbol) {
         auto symbol = std::static_pointer_cast<Symbol>(expression)->name;
@@ -171,18 +172,18 @@ Reference Interpreter::execute(Context & context, std::shared_ptr<Expression> ex
             } else first = false;
 
             long l = str.length();
-            Object* obj = context.addObject(new Object((size_t) l));
+            Object* obj = context.newObject((size_t) l);
             for (long i = 0; i < l; i++)
-                obj->data.a[i+1].o = context.addObject(new Object(str[i]));
+                obj->data.a[i+1].o = context.newObject(str[i]);
             return obj;
         }
-        if (symbol == "true") return Reference(context.addObject(new Object(true)));
-        if (symbol == "false") return Reference(context.addObject(new Object(false)));
+        if (symbol == "true") return Reference(context.newObject(true));
+        if (symbol == "false") return Reference(context.newObject(false));
         try {
-            return Reference(context.addObject(new Object(std::stol(symbol))));
+            return Reference(context.newObject(std::stol(symbol)));
         } catch (std::invalid_argument const& ex1) {
             try {
-                return Reference(context.addObject(new Object(std::stod(symbol))));
+                return Reference(context.newObject(std::stod(symbol)));
             } catch (std::invalid_argument const& ex2) {
                 return context.getSymbol(std::static_pointer_cast<Symbol>(expression)->name);
             }
@@ -226,12 +227,13 @@ void Interpreter::run(std::shared_ptr<Expression> expression) {
     addFunction(context, "/", SystemFunctions::division(), SystemFunctions::division);
     addFunction(context, "%", SystemFunctions::modulo(), SystemFunctions::modulo);
     addFunction(context, "print", SystemFunctions::print(), SystemFunctions::print);
+    addFunction(context, "scan", SystemFunctions::scan(), SystemFunctions::scan);
     addFunction(context, "lenght", SystemFunctions::get_array_size(), SystemFunctions::get_array_size);
     addFunction(context, "get_capacity", SystemFunctions::get_array_capacity(), SystemFunctions::get_array_capacity);
     addFunction(context, "set_capacity", SystemFunctions::set_array_capacity(), SystemFunctions::set_array_capacity);
     addFunction(context, "get", SystemFunctions::get_array_element(), SystemFunctions::get_array_element);
     addFunction(context, "add", SystemFunctions::add_array_element(), SystemFunctions::add_array_element);
-    addFunction(context, "remove", SystemFunctions::add_array_element(), SystemFunctions::add_array_element);
+    addFunction(context, "remove", SystemFunctions::remove_array_element(), SystemFunctions::remove_array_element);
 
     auto result = execute(context, expression);
     SystemFunctions::print(result.toObject(context));

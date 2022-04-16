@@ -41,14 +41,15 @@ struct Object {
     bool referenced;
 
     Object();
-
     Object(Object const& object);
 
-    Object(bool const& b);
-    Object(long const& i);
-    Object(double const& f);
-    Object(char const& c);
-    Object(size_t const& tuple_size);
+    Object(bool b);
+    Object(long i);
+    Object(double f);
+    Object(char c);
+    Object(size_t tuple_size);
+
+    ~Object();
 
 };
 

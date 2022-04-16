@@ -1,0 +1,16 @@
+include("Expression.fl");
+
+
+Property : (this, object, name) like (object ~ Expression & name ~ String) |-> {
+    Expression(this);
+    this :~ Symbol;
+
+    this->object := object;
+    this->name := name;
+
+    this
+};
+
+Property : (object, name) like (object ~ Expression & name ~ String) |-> {
+    Property((), object, name)
+}

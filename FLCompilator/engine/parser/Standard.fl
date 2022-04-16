@@ -1,0 +1,9 @@
+get_words : code like (code ~ String) |-> {
+    words := ArrayList();
+
+    l := lenght(code);
+
+    for i from 0 to l {
+        
+    }
+}

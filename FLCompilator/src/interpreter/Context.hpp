@@ -17,7 +17,14 @@ struct Context {
     virtual GlobalContext* getGlobal() = 0;
     virtual Context* getParent() = 0;
 
-    Object* addObject(Object* object);
+    Object* newObject();
+    Object* newObject(Object const& object);
+    Object* newObject(bool b);
+    Object* newObject(long i);
+    Object* newObject(double f);
+    Object* newObject(char c);
+    Object* newObject(size_t tuple_size);
+
     void collect(Object* current);
 
     void addSymbol(std::string const& symbol, Reference const& reference);
@@ -28,7 +35,8 @@ struct Context {
 
 struct GlobalContext: public Context {
 
-    std::list<Object*> objects;
+    std::list<Object> objects;
+    std::list<Object*> references;
 
     virtual GlobalContext* getGlobal();
     virtual Context* getParent();

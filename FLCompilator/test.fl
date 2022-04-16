@@ -1,7 +1,8 @@
 euclide : (a,b) |-> {
-    while (b != 0) {
-        (a,b) := (b, a % b)
+    (a1,b1) := (a,b);
+    while (b1 != 0) {
+        (a1,b1) := (b1, a1 % b1)
     };
-    a
+    a1
 };
-print(euclide(40, 50), "\n")
+print(euclide(40, 48), "\n")

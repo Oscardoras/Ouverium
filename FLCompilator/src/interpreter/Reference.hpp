@@ -49,10 +49,8 @@ struct Reference {
     ~Reference();
 
     bool isReference() const;
-
     Object* & getReference() const;
 
-    Reference toSymbolReference(Context & context) const;
     Object* toObject(Context & context) const;
 
     Reference& operator=(Reference const& reference);

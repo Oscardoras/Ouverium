@@ -1,0 +1,15 @@
+include("Expression.fl");
+
+
+Symbol : (this, name) like (name ~ String) |-> {
+    Expression(this);
+    this :~ Symbol;
+
+    this->name := name;
+
+    this
+};
+
+Symbol : name like (name ~ String) |-> {
+    Symbol((), name)
+}

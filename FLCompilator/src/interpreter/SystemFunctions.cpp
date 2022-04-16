@@ -47,7 +47,7 @@ namespace SystemFunctions {
                 auto parent = context.getParent();
                 auto functions = context.getSymbol("block").toObject(context)->functions;
                 return Interpreter::callFunction(*parent, functions, std::make_shared<Tuple>());
-            } else return Reference(context.addObject(new Object()));
+            } else return Reference(context.newObject());
         else throw FunctionArgumentsError();
     }
 
@@ -137,7 +137,7 @@ namespace SystemFunctions {
         }
         
         if (result.type == Reference::Pointer && result.pointer == nullptr)
-            return Reference(context.addObject(new Object()));
+            return Reference(context.newObject());
         else return result;
     }
 
@@ -149,7 +149,7 @@ namespace SystemFunctions {
     }
     Reference copy(FunctionContext & context) {
         auto object = context.getSymbol("object").toObject(context);
-        return Reference(context.addObject(new Object(*object)));
+        return Reference(context.newObject(*object));
     }
 
     void assign1(std::vector<Object*> & cache, Reference const& var, Object* const& object) {
@@ -285,7 +285,7 @@ namespace SystemFunctions {
         auto a = context.getSymbol("a").toObject(context);
         auto b = context.getSymbol("b").toObject(context);
         
-        return Reference(context.addObject(new Object(equals(a, b))));
+        return Reference(context.newObject(equals(a, b)));
     }
 
     std::shared_ptr<Expression> not_equals() {
@@ -305,7 +305,7 @@ namespace SystemFunctions {
         auto a = context.getSymbol("a").toObject(context);
         auto b = context.getSymbol("b").toObject(context);
         
-        return Reference(context.addObject(new Object(!equals(a, b))));
+        return Reference(context.newObject(!equals(a, b)));
     }
 
     std::shared_ptr<Expression> check_pointers() {
@@ -325,7 +325,7 @@ namespace SystemFunctions {
         auto a = context.getSymbol("a").toObject(context);
         auto b = context.getSymbol("b").toObject(context);
 
-        return Reference(context.addObject(new Object(a == b)));
+        return Reference(context.newObject(a == b));
     }
 
     std::shared_ptr<Expression> logical_not() {
@@ -336,7 +336,7 @@ namespace SystemFunctions {
     Reference logical_not(FunctionContext & context) {
         auto a = context.getSymbol("a").toObject(context);
         
-        if (a->type == Object::Boolean) return Reference(context.addObject(new Object(!a->data.b)));
+        if (a->type == Object::Boolean) return Reference(context.newObject(!a->data.b));
         else throw FunctionArgumentsError();
     }
 
@@ -358,7 +358,7 @@ namespace SystemFunctions {
         auto b = context.getSymbol("b").toObject(context);
 
         if (a->type == Object::Boolean && b->type == Object::Boolean)
-            return Reference(context.addObject(new Object(a->data.b && b->data.b)));
+            return Reference(context.newObject(a->data.b && b->data.b));
         else throw FunctionArgumentsError();
     }
 
@@ -380,7 +380,7 @@ namespace SystemFunctions {
         auto b = context.getSymbol("b").toObject(context);
 
         if (a->type == Object::Boolean && b->type == Object::Boolean)
-            return Reference(context.addObject(new Object(a->data.b || b->data.b)));
+            return Reference(context.newObject(a->data.b || b->data.b));
         else throw FunctionArgumentsError();
     }
 
@@ -404,7 +404,21 @@ namespace SystemFunctions {
 
         print(object);
 
-        return Reference(context.addObject(new Object()));
+        return Reference(context.newObject());
+    }
+
+    std::shared_ptr<Expression> scan() {
+        return std::make_shared<Tuple>();
+    }
+    Reference scan(FunctionContext & context) {
+        std::string str;
+        getline(std::cin, str);
+
+        long l = str.length();
+        Object* obj = context.newObject((size_t) l);
+        for (long i = 0; i < l; i++)
+            obj->data.a[i+1].o = context.newObject(str[i]);
+        return Reference(obj);
     }
 
     std::shared_ptr<Expression> addition() {
@@ -425,9 +439,9 @@ namespace SystemFunctions {
         auto b = context.getSymbol("b").toObject(context);
             
         if (a->type == Object::Integer && b->type == Object::Integer)
-            return Reference(context.addObject(new Object(a->data.i + b->data.i)));
+            return Reference(context.newObject(a->data.i + b->data.i));
         else if (a->type == Object::Float && b->type == Object::Float)
-            return Reference(context.addObject(new Object(a->data.f + b->data.f)));
+            return Reference(context.newObject(a->data.f + b->data.f));
         else throw FunctionArgumentsError();
     }
 
@@ -440,9 +454,9 @@ namespace SystemFunctions {
         auto a = context.getSymbol("a").toObject(context);
             
         if (a->type == Object::Integer)
-            return Reference(context.addObject(new Object(-a->data.i)));
+            return Reference(context.newObject(-a->data.i));
         else if (a->type == Object::Float)
-            return Reference(context.addObject(new Object(-a->data.f)));
+            return Reference(context.newObject(-a->data.f));
         else throw FunctionArgumentsError();
     }
 
@@ -464,9 +478,9 @@ namespace SystemFunctions {
         auto b = context.getSymbol("b").toObject(context);
             
         if (a->type == Object::Integer && b->type == Object::Integer)
-            return Reference(context.addObject(new Object(a->data.i - b->data.i)));
+            return Reference(context.newObject(a->data.i - b->data.i));
         else if (a->type == Object::Float && b->type == Object::Float)
-            return Reference(context.addObject(new Object(a->data.f - b->data.f)));
+            return Reference(context.newObject(a->data.f - b->data.f));
         else throw FunctionArgumentsError();
     }
 
@@ -488,9 +502,9 @@ namespace SystemFunctions {
         auto b = context.getSymbol("b").toObject(context);
             
         if (a->type == Object::Integer && b->type == Object::Integer)
-            return Reference(context.addObject(new Object(a->data.i * b->data.i)));
+            return Reference(context.newObject(a->data.i * b->data.i));
         else if (a->type == Object::Float && b->type == Object::Float)
-            return Reference(context.addObject(new Object(a->data.f * b->data.f)));
+            return Reference(context.newObject(a->data.f * b->data.f));
         else throw FunctionArgumentsError();
     }
 
@@ -512,9 +526,9 @@ namespace SystemFunctions {
         auto b = context.getSymbol("b").toObject(context);
             
         if (a->type == Object::Integer && b->type == Object::Integer)
-            return Reference(context.addObject(new Object(a->data.i / b->data.i)));
+            return Reference(context.newObject(a->data.i / b->data.i));
         else if (a->type == Object::Float && b->type == Object::Float)
-            return Reference(context.addObject(new Object(a->data.f / b->data.f)));
+            return Reference(context.newObject(a->data.f / b->data.f));
         else throw FunctionArgumentsError();
     }
 
@@ -536,7 +550,7 @@ namespace SystemFunctions {
         auto b = context.getSymbol("b").toObject(context);
             
         if (a->type == Object::Integer && b->type == Object::Integer)
-            return Reference(context.addObject(new Object(a->data.i % b->data.i)));
+            return Reference(context.newObject(a->data.i % b->data.i));
         else throw FunctionArgumentsError();
     }
 
@@ -549,7 +563,7 @@ namespace SystemFunctions {
         auto array = context.getSymbol("array").toObject(context);
         
         if (array->type >= 0)
-            return Reference(context.addObject(new Object((long) array->type)));
+            return Reference(context.newObject((long) array->type));
         else throw FunctionArgumentsError();
     }
 
@@ -583,8 +597,8 @@ namespace SystemFunctions {
     Reference get_array_capacity(FunctionContext & context) {
         auto array = context.getSymbol("array").toObject(context);
 
-        if (array->type == 0) return new Object((long) 0);
-        else if (array->type > 0) return new Object((long) array->data.a[0].c);
+        if (array->type == 0) return context.newObject((long) 0);
+        else if (array->type > 0) return context.newObject((long) array->data.a[0].c);
         else throw FunctionArgumentsError();
     }
 
@@ -617,7 +631,7 @@ namespace SystemFunctions {
                 array->data.a = (Object::Data::ArrayElement *) realloc(array->data.a, sizeof(Object::Data::ArrayElement) * (1 + array->data.a[0].c));
             }
 
-            return context.addObject(new Object());
+            return context.newObject();
         } else throw FunctionArgumentsError();
     }
 

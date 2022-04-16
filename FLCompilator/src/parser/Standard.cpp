@@ -251,7 +251,7 @@ std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words,
         if (expression->type == Expression::Symbol) {
             std::shared_ptr<Symbol> symbol = std::static_pointer_cast<Symbol>(expression);
 
-            if (!is_alphanum(symbol->name[0])) {
+            if (!is_alphanum(symbol->name[0]) && symbol->name[0] != '.'  && symbol->name[0] != '\"') {
                 std::shared_ptr<FunctionCall> functioncall = std::make_shared<FunctionCall>();
 
                 functioncall->function = symbol;
@@ -275,7 +275,7 @@ std::shared_ptr<Expression> getExpression(std::vector<std::string> const& words,
                     symbol->name = words[i];
                     i++;
                     expressions.push_back(symbol);
-                    expression = getExpression(words, i, inTuple, inFunction, inOperator, false);
+                    expression = getExpression(words, i, inTuple, inFunction, true, false);
                     continue;
                 }
             } else break;

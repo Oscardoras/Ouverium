@@ -63,20 +63,11 @@ Object* & Reference::getReference() const {
     else return *symbolReference;
 }
 
-Reference Reference::toSymbolReference(Context & context) const {
-    if (type > 0) {
-        auto reference = Reference(context.addObject(new Object((size_t) type)));
-        for (long i = 0; i < type; i++)
-            reference.pointer->data.a[i+1].o = tuple[i].toObject(context);
-        return reference;
-    } else return *this;
-}
-
 Object* Reference::toObject(Context & context) const {
     if (type == Pointer) return pointer;
     else if (isReference()) return getReference();
     else {
-        auto object = context.addObject(new Object((size_t) type));
+        auto object = context.newObject((size_t) type);
         for (long i = 0; i < type; i++)
             object->data.a[i+1].o = tuple[i].toObject(context);
         return object;

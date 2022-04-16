@@ -15,13 +15,13 @@ struct Function {
         Custom,
         System
     } type;
+    std::map<std::string, Reference> externSymbols;
 
     virtual ~Function() = default;
 };
 
 struct CustomFunction: public Function {
     std::shared_ptr<FunctionDefinition> pointer;
-    std::map<std::string, Reference> externSymbols;
 
     CustomFunction(std::shared_ptr<FunctionDefinition> pointer);
     virtual ~CustomFunction() = default;

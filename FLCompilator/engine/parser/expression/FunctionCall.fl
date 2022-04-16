@@ -1,0 +1,16 @@
+include("Expression.fl");
+
+
+FunctionCall : (this, function, argument) like (function ~ Expression & argument ~ Expression) |-> {
+    Expression(this);
+    this :~ FunctionCall;
+
+    this->function := function;
+    this->argument := argument;
+
+    this
+};
+
+FunctionCall : (function, argument) like (function ~ Expression & argument ~ Expression) |-> {
+    FunctionCall((), function, argument)
+}

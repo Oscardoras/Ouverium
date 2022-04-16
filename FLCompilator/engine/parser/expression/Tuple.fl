@@ -1,0 +1,9 @@
+include("Expression.fl");
+
+
+Tuple : this |-> {
+    Expression(this);
+    this :~ Tuple;
+
+    this
+}

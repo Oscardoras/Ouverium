@@ -5,9 +5,46 @@
 #include "../parser/expression/Tuple.hpp"
 
 
-Object* Context::addObject(Object* object) {
-    getGlobal()->objects.push_back(object);
-    return object;
+Object* Context::newObject() {
+    auto & objects = getGlobal()->objects;
+    objects.push_back(Object());
+    return &objects.back();
+}
+
+Object* Context::newObject(Object const& object) {
+    auto & objects = getGlobal()->objects;
+    objects.push_back(object);
+    return &objects.back();
+}
+
+Object* Context::newObject(bool b) {
+    auto & objects = getGlobal()->objects;
+    objects.push_back(Object(b));
+    return &objects.back();
+}
+
+Object* Context::newObject(long i) {
+    auto & objects = getGlobal()->objects;
+    objects.push_back(Object(i));
+    return &objects.back();
+}
+
+Object* Context::newObject(double f) {
+    auto & objects = getGlobal()->objects;
+    objects.push_back(Object(f));
+    return &objects.back();
+}
+
+Object* Context::newObject(char c) {
+    auto & objects = getGlobal()->objects;
+    objects.push_back(Object(c));
+    return &objects.back();
+}
+
+Object* Context::newObject(size_t tuple_size) {
+    auto & objects = getGlobal()->objects;
+    objects.push_back(Object(tuple_size));
+    return &objects.back();
 }
 
 void dfs(Object* object) {
@@ -42,21 +79,30 @@ void Context::collect(Object* current) {
 
     auto global = getGlobal();
     for (auto it = global->objects.begin(); it != global->objects.end(); it++)
-        if (!(*it)->referenced) {
-            auto finalize = (*it)->fields.find("finalize");
-            if (finalize != (*it)->fields.end())
+        if (!it->referenced) {
+            auto finalize = it->fields.find("finalize");
+            if (finalize != it->fields.end())
                 Interpreter::callFunction(*getGlobal(), finalize->second->functions, std::make_shared<Tuple>());
 
-            delete *it;
             global->objects.erase(it);
         } else
-            (*it)->referenced = false;
+            it->referenced = false;
     
     if (current != nullptr) current->referenced = false;
 }
 
 void Context::addSymbol(std::string const& symbol, Reference const& reference) {
-    symbols[symbol] = reference.toSymbolReference(*this);
+    auto & references = getGlobal()->references;
+
+    if (reference.type == Reference::Pointer) {
+        references.push_back(reference.pointer);
+        symbols[symbol] = Reference(&references.back());
+    } else if (reference.type > 0) {
+        references.push_back(newObject((size_t) reference.type));
+        for (long i = 0; i < reference.type; i++)
+            references.back()->data.a[i+1].o = reference.tuple[i].toObject(*this);
+        symbols[symbol] = Reference(&references.back());
+    } symbols[symbol] = reference;
 }
 
 bool Context::hasSymbol(std::string const& symbol) const {
@@ -74,23 +120,21 @@ Context* GlobalContext::getParent() {
 Reference GlobalContext::getSymbol(std::string const& symbol, bool const& create) {
     auto it = symbols.find(symbol);
     if (it != symbols.end()) {
-        if (it->second.type == Reference::Pointer)
-            return Reference(&it->second.pointer);
-        else return it->second;
+        return it->second;
     } else if (create) {
         auto & ref = symbols[symbol];
-        ref.pointer = addObject(new Object());
-        return Reference(&ref.pointer);
+        ref.type = Reference::SymbolReference;
+        references.push_back(newObject());
+        ref.symbolReference = &references.back();
+        return ref;
     } else return Reference((Object**) nullptr);
 }
 
 GlobalContext::~GlobalContext() {
     for (auto it = objects.begin(); it != objects.end(); it++) {
-        auto finalize = (*it)->fields.find("finalize");
-        if (finalize != (*it)->fields.end())
+        auto finalize = it->fields.find("finalize");
+        if (finalize != it->fields.end())
             Interpreter::callFunction(*getGlobal(), finalize->second->functions, std::make_shared<Tuple>());
-
-        delete *it;
     }
 }
 
@@ -110,17 +154,18 @@ Context* FunctionContext::getParent() {
 Reference FunctionContext::getSymbol(std::string const& symbol, bool const& create) {
     auto it = symbols.find(symbol);
 
-    if (it != symbols.end()) {
-        if (it->second.type == Reference::Pointer)
-            return Reference(&it->second.pointer);
-        else return it->second;
-    } else {
+    if (it != symbols.end()) return it->second;
+    else {
         auto ref = getGlobal()->getSymbol(symbol, false);
         if (ref.pointer != nullptr) return ref;
         else if (create) {
+            auto & references = getGlobal()->references;
+
             auto & ref = symbols[symbol];
-            ref.pointer = addObject(new Object());
-            return Reference(&ref.pointer);
+            ref.type = Reference::SymbolReference;
+            references.push_back(newObject());
+            ref.symbolReference = &references.back();
+            return ref;
         } else return Reference((Object**) nullptr);
     }
 }

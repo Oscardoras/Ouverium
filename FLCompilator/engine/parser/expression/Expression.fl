@@ -1,0 +1,7 @@
+include("Type.fl");
+
+
+Expression : this |-> {
+    this :~ Expression;
+    this
+};

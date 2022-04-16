@@ -12,7 +12,7 @@ int main(int argc, char ** argv) {
         ";", "$", ":=", ":", "=", "!=", "===",
         "!", "&", "|",
         "+", "-", "*", "/", "%",
-        "print",
+        "print", "scan",
         "get_capacity", "set_capacity", "lenght", "get", "add", "remove"
     };
 

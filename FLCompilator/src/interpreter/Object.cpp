@@ -35,33 +35,41 @@ Object::Object(Object const& object) {
     referenced = false;
 }
 
-Object::Object(bool const& b) {
+Object::Object(bool b) {
     type = Boolean;
     data.b = b;
     referenced = false;
 }
 
-Object::Object(long const& i) {
+Object::Object(long i) {
     type = Integer;
     data.i = i;
     referenced = false;
 }
 
-Object::Object(double const& f) {
+Object::Object(double f) {
     type = Float;
     data.f = f;
     referenced = false;
 }
 
-Object::Object(char const& c) {
+Object::Object(char c) {
     type = Char;
     data.c = c;
     referenced = false;
 }
 
-Object::Object(size_t const& tuple_size) {
+Object::Object(size_t tuple_size) {
     type = (long) tuple_size;
     data.a = (Object::Data::ArrayElement *) std::malloc(sizeof(Object::Data::ArrayElement) * (type+1));
     data.a[0].c = type;
     referenced = false;
+}
+
+Object::~Object() {
+    for (auto f : functions)
+        delete f;
+    
+    if (type > 0)
+        free(data.a);
 }
