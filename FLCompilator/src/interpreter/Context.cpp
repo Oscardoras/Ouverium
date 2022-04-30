@@ -1,6 +1,5 @@
 #include "Function.hpp"
 #include "Interpreter.hpp"
-#include "InterpreterError.hpp"
 
 #include "../parser/expression/Tuple.hpp"
 
@@ -20,6 +19,12 @@ Object* Context::newObject(Object const& object) {
 Object* Context::newObject(bool b) {
     auto & objects = getGlobal()->objects;
     objects.push_back(Object(b));
+    return &objects.back();
+}
+
+Object* Context::newObject(void* ptr) {
+    auto & objects = getGlobal()->objects;
+    objects.push_back(Object(ptr));
     return &objects.back();
 }
 
@@ -82,7 +87,7 @@ void Context::collect(Object* current) {
         if (!it->referenced) {
             auto finalize = it->fields.find("finalize");
             if (finalize != it->fields.end())
-                Interpreter::callFunction(*getGlobal(), finalize->second->functions, std::make_shared<Tuple>());
+                Interpreter::callFunction(*getGlobal(), finalize->second->functions, std::make_shared<Tuple>(), nullptr);
 
             global->objects.erase(it);
         } else
@@ -134,7 +139,11 @@ GlobalContext::~GlobalContext() {
     for (auto it = objects.begin(); it != objects.end(); it++) {
         auto finalize = it->fields.find("finalize");
         if (finalize != it->fields.end())
-            Interpreter::callFunction(*getGlobal(), finalize->second->functions, std::make_shared<Tuple>());
+            Interpreter::callFunction(*getGlobal(), finalize->second->functions, std::make_shared<Tuple>(), nullptr);
+    }
+
+    for (auto it = cpointers.begin(); it != cpointers.end(); it++) {
+        //delete *it;
     }
 }
 

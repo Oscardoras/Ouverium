@@ -1,8 +1,8 @@
-include("../Type.fl");
+using "../Type.fl";
 
 
 Iterable : this |-> {
-    this :~ List;
+    this :~ Iterable;
 
     this->foreach : function |-> {};
 
@@ -17,12 +17,31 @@ Iterable->Iterator : (this, iterable) |-> {
     this->iterable := iterable;
 
     this->has_next : () |-> {};
-
     this->next : () |-> {};
 
     this->get : () |-> {};
-
     this->remove : () |-> {};
+    this->insert : object |-> {};
+
+    this
+};
+
+BidirectionalIterable : this |-> {
+    Iterable(this);
+    this :~ BidirectionalIterable;
+
+    this->iterator_first : () |-> {};
+    this->iterator_last : () |-> {};
+
+    this
+};
+
+BidirectionalIterable->Iterator : (this, iterable) |-> {
+    Iterable->Iterator(this, iterable);
+    this :~ BidirectionalIterable->Iterator;
+
+    this->has_previous : () |-> {};
+    this->previous : () |-> {};
 
     this
 }

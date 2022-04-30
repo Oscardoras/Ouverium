@@ -5,6 +5,8 @@
 #include <memory>
 #include <vector>
 
+#include "../Position.hpp"
+
 
 struct Expression {
 
@@ -17,6 +19,8 @@ struct Expression {
     };
 
     Type type;
+
+    std::shared_ptr<Position> position;
 
     std::vector<std::string> usedSymbols;
     std::vector<std::string> newSymbols;

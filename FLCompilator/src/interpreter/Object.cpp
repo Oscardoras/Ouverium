@@ -1,4 +1,5 @@
 #include "Function.hpp"
+#include "Interpreter.hpp"
 
 
 Object::Object() {   
@@ -9,22 +10,22 @@ Object::Object() {
 Object::Object(Object const& object) {
     for (auto f : object.functions) {
         Function* function;
-        if (f->type == Function::Custom) {
+        if (f->type == Function::Custom)
             function = new CustomFunction(((CustomFunction*) f)->pointer);
-            ((CustomFunction*) function)->externSymbols = ((CustomFunction*) f)->externSymbols;
-        } else {
+        else
             function = new SystemFunction(((SystemFunction*) f)->parameters, ((SystemFunction*) f)->pointer);
-        }
+        function->externSymbols = f->externSymbols;
         functions.push_front(function);
     }
 
     fields = object.fields;
 
     type = object.type;
-    if (type == Char) data.c = object.data.c;
+    if (type == CPointer) data.ptr = object.data.ptr;
+    else if (type == Char) data.c = object.data.c;
     else if (type == Float) data.f = object.data.f;
-    else if (type == Integer) data.i = object.data.i;
-    else if (type == Boolean) data.b = object.data.b;
+    else if (type == Int) data.i = object.data.i;
+    else if (type == Bool) data.b = object.data.b;
     else if (type > 0) {
         data.a = (Object::Data::ArrayElement *) std::malloc(sizeof(Object::Data::ArrayElement) * (type+1));
         data.a[0].c = (long) object.data.a[0].c;
@@ -35,14 +36,20 @@ Object::Object(Object const& object) {
     referenced = false;
 }
 
+Object::Object(void* ptr) {
+    type = CPointer;
+    data.ptr = ptr;
+    referenced = false;
+}
+
 Object::Object(bool b) {
-    type = Boolean;
+    type = Bool;
     data.b = b;
     referenced = false;
 }
 
 Object::Object(long i) {
-    type = Integer;
+    type = Int;
     data.i = i;
     referenced = false;
 }
@@ -72,4 +79,18 @@ Object::~Object() {
     
     if (type > 0)
         free(data.a);
+}
+
+std::string Object::toString() const {
+    if (type > 0) {
+        std::string str;
+
+        for (long i = 1; i <= type; i++) {
+            auto o = data.a[i].o;
+            if (o->type == Object::Char) str.push_back(o->data.c);
+            else throw InterpreterError();
+        }
+
+        return str;
+    } else throw InterpreterError();
 }

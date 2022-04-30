@@ -1,7 +1,7 @@
-include("Expression.fl");
+using "Expression";
 
 
-FunctionCall : (this, function, argument) like (function ~ Expression & argument ~ Expression) |-> {
+FunctionCall : (this, function, argument) \ (function ~ Expression & argument ~ Expression) |-> {
     Expression(this);
     this :~ FunctionCall;
 
@@ -11,6 +11,6 @@ FunctionCall : (this, function, argument) like (function ~ Expression & argument
     this
 };
 
-FunctionCall : (function, argument) like (function ~ Expression & argument ~ Expression) |-> {
+FunctionCall : (function, argument) \ (function ~ Expression & argument ~ Expression) |-> {
     FunctionCall((), function, argument)
 }

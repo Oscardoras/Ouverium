@@ -1,8 +1,8 @@
-include("../Iterable.fl");
+using "Iterable.fl";
 
 
 List : this |-> {
-    Iterable(this);
+    BidirectionalIterable(this);
     this :~ List;
 
     this : index |-> {};
@@ -19,24 +19,10 @@ List : this |-> {
     this->remove_first : () |-> {};
     this->remove_last : () |-> {};
 
-    this->insert : (index, object) |-> {};
-    this->remove : index |-> {};
+    this->insert : (index, object) \ (index ~ Int) |-> {};
+    this->remove : index \ (index ~ Int) |-> {};
 
-    this->iterator : index |-> {};
-    this->iterator_first : () |-> {};
-    this->iterator_last : () |-> {};
-
-    this
-};
-
-List->Iterator : (this, list) |-> {
-    Iterable->Iterator(this, list);
-    this :~ List->Iterator;
-
-    this->has_previous : () |-> {};
-    this->previous : () |-> {};
-
-    this->insert : object |-> {};
+    this->iterator : index \ (index ~ Int) |-> {};
 
     this
 }

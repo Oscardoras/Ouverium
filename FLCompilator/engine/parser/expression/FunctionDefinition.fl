@@ -1,7 +1,7 @@
-include("Expression.fl");
+using "Expression";
 
 
-FunctionDefinition : (this, parameter, filter, object) like (parameter ~ Expression & filter ~ Expression & object ~ Expression) |-> {
+FunctionDefinition : (this, parameter, filter, object) \ (parameter ~ Expression & filter ~ Expression & object ~ Expression) |-> {
     Expression(this);
     this :~ FunctionDefinition;
 
@@ -12,6 +12,6 @@ FunctionDefinition : (this, parameter, filter, object) like (parameter ~ Express
     this
 };
 
-FunctionDefinition : (parameter, filter, object) like (parameter ~ Expression & filter ~ Expression & object ~ Expression) |-> {
+FunctionDefinition : (parameter, filter, object) \ (parameter ~ Expression & filter ~ Expression & object ~ Expression) |-> {
     FunctionDefinition((), parameter, filter, object)
 }

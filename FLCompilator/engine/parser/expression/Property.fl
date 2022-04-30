@@ -1,9 +1,9 @@
-include("Expression.fl");
+using "Expression";
 
 
-Property : (this, object, name) like (object ~ Expression & name ~ String) |-> {
+Property : (this, object, name) \ (object ~ Expression & name ~ String) |-> {
     Expression(this);
-    this :~ Symbol;
+    this :~ Property;
 
     this->object := object;
     this->name := name;
@@ -11,6 +11,6 @@ Property : (this, object, name) like (object ~ Expression & name ~ String) |-> {
     this
 };
 
-Property : (object, name) like (object ~ Expression & name ~ String) |-> {
+Property : (object, name) \ (object ~ Expression & name ~ String) |-> {
     Property((), object, name)
 }

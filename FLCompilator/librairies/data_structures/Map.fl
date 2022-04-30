@@ -1,0 +1,20 @@
+using "Iterable.fl";
+
+
+Map : this |-> {
+    Iterable(this);
+    this :~ Map;
+
+    this : key |-> {};
+
+    this->lenght : () |-> {};
+    this->is_empty : () |-> {};
+
+    this->has : key |-> {};
+
+    this->iterator : key |-> {};
+    this->iterator_first : () |-> {};
+    this->iterator_last : () |-> {};
+
+    this
+}

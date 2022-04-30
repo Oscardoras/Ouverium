@@ -1,9 +1,11 @@
-include("Expression.fl");
+using "Expression";
 
 
 Tuple : this |-> {
     Expression(this);
     this :~ Tuple;
+
+    this->objects := ArrayList();
 
     this
 }

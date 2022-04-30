@@ -3,6 +3,16 @@
     object
 };
 
-(~) : (object, type) |-> {
-    type @ object->_types
+(~) : (object, type) \ (type !== Char & type !== Int & type !== Float & type !== Bool) |-> {
+    found := false;
+    l := lenght(object->_types);
+    i := 1;
+    while (!found & i <= l) repeat {
+        if (get(object->_types, i) = type) then {
+            found := true
+        } else {
+            i :=+ 1
+        }
+    };
+    found
 }

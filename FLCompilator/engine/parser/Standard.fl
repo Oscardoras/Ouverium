@@ -1,9 +1,95 @@
-get_words : code like (code ~ String) |-> {
-    words := ArrayList();
+using "expression/";
+using "Position.fl"
 
-    l := lenght(code);
+
+TextPosition : (this, line, column) \ (line ~ Int & column ~ Int) |-> {
+    Position(this);
+    this :~ TextPosition;
+
+    this->line := line;
+    this->column := column;
+
+    this
+};
+
+TextPosition : (line, column) \ (line ~ Int & column ~ Int) |-> {
+    TextPosition((), line, column)
+};
+
+Word : (this, word, position) \ (word ~ String & position ~ TextPosition) |-> {
+    this :~ Word;
+
+    this->word := word;
+    this->position := position;
+
+    this
+};
+
+Word : (word, position) \ (word ~ String & position ~ TextPosition) |-> {
+    Word((), word, position)
+};
+
+get_words : code \ (code ~ String) |-> {
+    l := code.lenght();
+
+    chars := ArrayList();
+    line := 1;
+    column := 1;
+    for i from 0 to l {
+        chars->add_last(TextPosition(line, column));
+
+        if (code[i] == "\n") {
+            ++line;
+            column := 1
+        } else {
+            ++column
+        }
+    };
+
+    words := ArrayList();
+    b := 0;
+    last := "\n";
+    is_str := false;
+    escape := false;
 
     for i from 0 to l {
-        
-    }
+        char c = code[i];
+
+        if (!is_str) {
+            if (c->is_space()) {
+                if (b < i) words.add_last(Word(code.substr(b, i-b), chars[b]));
+                b := i+1;
+            } else if (c == ',' || c == '(' || c == ')' || c == '[' || c == ']' || c == '{' || c == '}') {
+                if (b < i) words.push_back(Word(code.substr(b, i-b), chars[b]));
+                std::string s(1,c);
+                words.push_back(Word(s, chars[b]));
+                b := i+1;
+            } else if (c == '\"') {
+                if (b < i) words.push_back(Word(code.substr(b, i-b), chars[b]));
+                b = i;
+                is_str = true;
+            } else if (!is_alphanum(last) && is_alphanum(c) && !(std::isdigit(last) && c == '.') && b < i) {
+                words.push_back(Word(code.substr(b, i-b), chars[b]));
+                b = i;
+            } else if (is_alphanum(last) && !is_alphanum(c) && !(last == '.' && std::isdigit(c)) && b < i) {
+                words.push_back(Word(code.substr(b, i-b), chars[b]));
+                b = i;
+            }
+        } else {
+            if (!escape) {
+                if (c == "\"") {
+                    words.add_last(Word(code.substr(b, i-b+1), chars[b]));
+                    b = i+1;
+                    is_str = false;
+                } else if (c == '\\') {
+                    escape = true;
+                }
+            } else escape = false;
+        }
+
+        last := c;
+    };
+    if (b < i) words.add_last(Word(code.substr(b, i-b), chars[b]));
+
+    words;
 }

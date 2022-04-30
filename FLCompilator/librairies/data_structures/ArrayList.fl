@@ -1,4 +1,4 @@
-include("List.fl");
+using "List.fl";
 
 
 ArrayList : this |-> {
@@ -34,11 +34,11 @@ ArrayList : this |-> {
         set_capacity(capacity)
     };
 
-    this->get_first : () like lenght(this) > 0 |-> {
+    this->get_first : () \ lenght(this) > 0 |-> {
         get(this, 1)
     };
 
-    this->get_last : () like lenght(this) > 0 |-> {
+    this->get_last : () \ lenght(this) > 0 |-> {
         get(this, lenght(this))
     };
 
@@ -61,7 +61,7 @@ ArrayList : this |-> {
         add(this, element)
     };
 
-    this->remove_first : () like lenght(this) > 0 |-> {
+    this->remove_first : () \ lenght(this) > 0 |-> {
         l := lenght(this);
         i := 1;
         while (i < l) {
@@ -71,11 +71,11 @@ ArrayList : this |-> {
         remove(this)
     };
 
-    this->remove_last : () like lenght(this) > 0 |-> {
+    this->remove_last : () \ lenght(this) > 0 |-> {
         remove(this)
     };
 
-    this->insert : (index, object) like 0 <= index & index < lenght(this) |-> {
+    this->insert : (index, object) \ 0 <= index & index < lenght(this) |-> {
         l := lenght(this);
         add(this, get(this, l));
         i := l;
@@ -86,7 +86,7 @@ ArrayList : this |-> {
         get(this, index+1) := element
     };
 
-    this->remove : index like 0 <= index & index < lenght(this) |-> {
+    this->remove : index \ 0 <= index & index < lenght(this) |-> {
         l := lenght(this);
         i := index+1;
         tmp := get(this, i);
@@ -96,6 +96,20 @@ ArrayList : this |-> {
         };
         remove(this);
         get(this, i)
+    };
+
+    this->iterator_first : () \ this->_first != () |-> {
+        ArrayList->Iterator((), this, 0)
+    };
+
+    this->iterator_last : () \ this->_last != () |-> {
+        ArrayList->Iterator((), this, lenght(this))
+    };
+
+    this->iterator : this->iterator_first;
+
+    this->iterator : index \ 0 <= index & index < lenght(this) |-> {
+        ArrayList->Iterator((), this, index)
     };
 
     this
@@ -111,7 +125,7 @@ ArrayList->Iterator : (this, list, index) |-> {
         this->_index > 0
     };
 
-    this->previous : () like this->has_previous() |-> {
+    this->previous : () \ this->has_previous() |-> {
         --this->_index;
         this->iterable[this->_index]
     };
@@ -120,7 +134,7 @@ ArrayList->Iterator : (this, list, index) |-> {
         this->_index < lenght(this->iterable)-1
     };
 
-    this->next : () like this->has_next() |-> {
+    this->next : () \ this->has_next() |-> {
         ++this->_index;
         this->iterable[this->_index]
     };

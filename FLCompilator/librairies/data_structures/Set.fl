@@ -1,0 +1,15 @@
+using "Iterable.fl";
+
+
+Set : this |-> {
+    BidirectionalIterable(this);
+    this :~ Set;
+
+    this->lenght : () |-> {};
+    this->is_empty : () |-> {};
+
+    this->add : object |-> {};
+    this->remove : object |-> {};
+
+    this
+}

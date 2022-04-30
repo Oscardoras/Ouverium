@@ -19,6 +19,7 @@ struct Context {
 
     Object* newObject();
     Object* newObject(Object const& object);
+    Object* newObject(void* ptr);
     Object* newObject(bool b);
     Object* newObject(long i);
     Object* newObject(double f);
@@ -35,8 +36,10 @@ struct Context {
 
 struct GlobalContext: public Context {
 
+    std::list<std::string> files;
     std::list<Object> objects;
     std::list<Object*> references;
+    std::list<void*> cpointers;
 
     virtual GlobalContext* getGlobal();
     virtual Context* getParent();

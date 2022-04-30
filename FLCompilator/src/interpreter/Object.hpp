@@ -17,10 +17,11 @@ struct Object {
     std::list<Function*> functions;
 
     enum ObjectType {
-        Char = -4,
+        CPointer = -5,
+        Char,
         Float,
-        Integer,
-        Boolean,
+        Int,
+        Bool,
         None = 0
         //Array > 0
     };
@@ -28,6 +29,7 @@ struct Object {
     long type;
 
     union Data {
+        void* ptr;
         char c;
         double f;
         long i;
@@ -44,12 +46,15 @@ struct Object {
     Object(Object const& object);
 
     Object(bool b);
+    Object(void* ptr);
     Object(long i);
     Object(double f);
     Object(char c);
     Object(size_t tuple_size);
 
     ~Object();
+
+    std::string toString() const;
 
 };
 
