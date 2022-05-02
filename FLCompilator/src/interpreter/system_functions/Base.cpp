@@ -150,7 +150,7 @@ namespace Base {
 
     Reference include(FunctionContext & context) {
         auto path = context.getSymbol("path").toObject(context);
-        auto path = context.getSymbol("path").toObject(context);
+        auto system_position = context.getSymbol("system_position").toObject(context);
 
         std::string path_name;
         try {
@@ -166,7 +166,7 @@ namespace Base {
         while (std::getline(file, line))
             code += line + " ";
 
-        return Interpreter::run(context, path, code);
+        return Interpreter::run(context, path_name, code);
     }
 
     Reference use(FunctionContext & context) {

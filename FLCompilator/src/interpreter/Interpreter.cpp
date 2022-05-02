@@ -87,7 +87,8 @@ Reference Interpreter::callFunction(Context & context, std::list<Function*> func
         Reference result;
         try {
             FunctionContext function_context(context);
-            function_context.addSymbol("system_position");
+            if (position != nullptr) function_context.addSymbol("system_position", context.newObject(position->path));
+
             for (auto & symbol : function->externSymbols)
                 function_context.addSymbol(symbol.first, symbol.second);
 

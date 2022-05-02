@@ -25,6 +25,7 @@ struct Context {
     Object* newObject(double f);
     Object* newObject(char c);
     Object* newObject(size_t tuple_size);
+    Object* newObject(std::string const& str);
 
     void collect(Object* current);
 

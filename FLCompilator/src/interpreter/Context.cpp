@@ -52,6 +52,14 @@ Object* Context::newObject(size_t tuple_size) {
     return &objects.back();
 }
 
+Object* Context::newObject(std::string const& str) {
+    auto & objects = getGlobal()->objects;
+    objects.push_back(Object(str.size()));
+    for (long i = 0; i < objects.back().type; i++)
+        objects.back().data.a[i+1].o = newObject(str[i]);
+    return &objects.back();
+}
+
 void dfs(Object* object) {
     object->referenced = true;
 
