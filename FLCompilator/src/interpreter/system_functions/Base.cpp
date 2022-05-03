@@ -150,7 +150,12 @@ namespace Base {
 
     Reference include(FunctionContext & context) {
         auto path = context.getSymbol("path").toObject(context);
-        auto system_position = context.getSymbol("system_position").toObject(context);
+        std::string system_position;
+        try {
+            system_position = context.getSymbol("system_position").toObject(context)->toString();
+        } catch (InterpreterError & e) {
+            throw FunctionArgumentsError();
+        }
 
         std::string path_name;
         try {
@@ -158,11 +163,17 @@ namespace Base {
         } catch (InterpreterError e) {
             throw FunctionArgumentsError();
         }
+        if (path_name[0] != '/') {
+            if (system_position.back() == '/')
+                path_name = system_position + path_name;
+            else
+                path_name = system_position + '/' + path_name;
+        }
 
         std::ifstream file(path_name);
 
-        std::string code = "";
-        std::string line = "";
+        std::string code;
+        std::string line;
         while (std::getline(file, line))
             code += line + " ";
 
@@ -171,12 +182,24 @@ namespace Base {
 
     Reference use(FunctionContext & context) {
         auto path = context.getSymbol("path").toObject(context);
+        std::string system_position;
+        try {
+            system_position = context.getSymbol("system_position").toObject(context)->toString();
+        } catch (InterpreterError & e) {
+            throw FunctionArgumentsError();
+        }
 
         std::string path_name;
         try {
             path_name = path->toString();
         } catch (InterpreterError e) {
             throw FunctionArgumentsError();
+        }
+        if (path_name[0] != '/') {
+            if (system_position.back() == '/')
+                path_name = system_position + path_name;
+            else
+                path_name = system_position + '/' + path_name;
         }
 
         auto & files = context.getGlobal()->files;
@@ -190,7 +213,7 @@ namespace Base {
             while (std::getline(file, line))
                 code += line + " ";
 
-            return Interpreter::run(context, , code);
+            return Interpreter::run(context, path_name, code);
         } else return Reference(context.newObject());
     }
 
