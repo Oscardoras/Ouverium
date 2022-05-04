@@ -30,7 +30,7 @@ struct Context {
     void collect(Object* current);
 
     void addSymbol(std::string const& symbol, Reference const& reference);
-    virtual Reference getSymbol(std::string const& symbol, bool const& create = true) = 0;
+    Reference getSymbol(std::string const& symbol);
     bool hasSymbol(std::string const& symbol) const;
 
 };
@@ -45,8 +45,6 @@ struct GlobalContext: public Context {
     virtual GlobalContext* getGlobal();
     virtual Context* getParent();
 
-    virtual Reference getSymbol(std::string const& symbol, bool const& create = true);
-
     ~GlobalContext();
 
 };
@@ -59,8 +57,6 @@ struct FunctionContext: public Context {
 
     virtual GlobalContext* getGlobal();
     virtual Context* getParent();
-
-    virtual Reference getSymbol(std::string const& symbol, bool const& create = true);
 
 };
 

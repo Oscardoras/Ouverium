@@ -180,11 +180,7 @@ Reference Interpreter::execute(Context & context, std::shared_ptr<Expression> ex
                 }
             } else first = false;
 
-            long l = str.length();
-            Object* obj = context.newObject((size_t) l);
-            for (long i = 0; i < l; i++)
-                obj->data.a[i+1].o = context.newObject(str[i]);
-            return obj;
+            return context.newObject(str);
         }
         if (symbol == "true") return Reference(context.newObject(true));
         if (symbol == "false") return Reference(context.newObject(false));

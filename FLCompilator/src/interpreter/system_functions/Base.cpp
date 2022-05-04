@@ -149,71 +149,51 @@ namespace Base {
     }
 
     Reference include(FunctionContext & context) {
-        auto path = context.getSymbol("path").toObject(context);
+        std::string path;
         std::string system_position;
         try {
+            path = context.getSymbol("path").toObject(context)->toString();
             system_position = context.getSymbol("system_position").toObject(context)->toString();
         } catch (InterpreterError & e) {
             throw FunctionArgumentsError();
         }
+        if (path[0] != '/')
+            path = system_position.substr(0, system_position.find_last_of("/")+1) + path;
 
-        std::string path_name;
-        try {
-            path_name = path->toString();
-        } catch (InterpreterError e) {
-            throw FunctionArgumentsError();
-        }
-        if (path_name[0] != '/') {
-            if (system_position.back() == '/')
-                path_name = system_position + path_name;
-            else
-                path_name = system_position + '/' + path_name;
-        }
-
-        std::ifstream file(path_name);
+        std::ifstream file(path);
 
         std::string code;
         std::string line;
         while (std::getline(file, line))
             code += line + " ";
 
-        return Interpreter::run(context, path_name, code);
+        return Interpreter::run(*context.getGlobal(), path, code);
     }
 
     Reference use(FunctionContext & context) {
-        auto path = context.getSymbol("path").toObject(context);
+        std::string path;
         std::string system_position;
         try {
+            path = context.getSymbol("path").toObject(context)->toString();
             system_position = context.getSymbol("system_position").toObject(context)->toString();
         } catch (InterpreterError & e) {
             throw FunctionArgumentsError();
         }
-
-        std::string path_name;
-        try {
-            path_name = path->toString();
-        } catch (InterpreterError e) {
-            throw FunctionArgumentsError();
-        }
-        if (path_name[0] != '/') {
-            if (system_position.back() == '/')
-                path_name = system_position + path_name;
-            else
-                path_name = system_position + '/' + path_name;
-        }
+        if (path[0] != '/')
+            path = system_position.substr(0, system_position.find_last_of("/")+1) + path;
 
         auto & files = context.getGlobal()->files;
-        if (std::find(files.begin(), files.end(), path_name) != files.end()) {
-            files.push_back(path_name);
+        if (std::find(files.begin(), files.end(), path) != files.end()) {
+            files.push_back(path);
 
-            std::ifstream file(path_name);
+            std::ifstream file(path);
 
             std::string code = "";
             std::string line = "";
             while (std::getline(file, line))
                 code += line + " ";
 
-            return Interpreter::run(context, path_name, code);
+            return Interpreter::run(*context.getGlobal(), path, code);
         } else return Reference(context.newObject());
     }
 

@@ -1,3 +1,5 @@
+#include <fstream>
+
 #include "Function.hpp"
 #include "Interpreter.hpp"
 
@@ -53,11 +55,13 @@ Object* Context::newObject(size_t tuple_size) {
 }
 
 Object* Context::newObject(std::string const& str) {
+    long l = str.length();
     auto & objects = getGlobal()->objects;
     objects.push_back(Object(str.size()));
-    for (long i = 0; i < objects.back().type; i++)
-        objects.back().data.a[i+1].o = newObject(str[i]);
-    return &objects.back();
+    auto object = &objects.back();
+    for (long i = 0; i < l; i++)
+        object->data.a[i+1].o = newObject(str[i]);
+    return object;
 }
 
 void dfs(Object* object) {
@@ -122,25 +126,27 @@ bool Context::hasSymbol(std::string const& symbol) const {
     return symbols.find(symbol) != symbols.end();
 }
 
+Reference Context::getSymbol(std::string const& symbol) {
+    auto & ref = symbols[symbol];
+
+    if (ref.type == Reference::Pointer && ref.pointer == nullptr) {
+        auto & references = getGlobal()->references;
+
+        ref.type = Reference::SymbolReference;
+        references.push_back(newObject());
+        ref.symbolReference = &references.back();
+    }
+
+    return ref;
+}
+
+
 GlobalContext* GlobalContext::getGlobal() {
     return this;
 }
 
 Context* GlobalContext::getParent() {
     return this;
-}
-
-Reference GlobalContext::getSymbol(std::string const& symbol, bool const& create) {
-    auto it = symbols.find(symbol);
-    if (it != symbols.end()) {
-        return it->second;
-    } else if (create) {
-        auto & ref = symbols[symbol];
-        ref.type = Reference::SymbolReference;
-        references.push_back(newObject());
-        ref.symbolReference = &references.back();
-        return ref;
-    } else return Reference((Object**) nullptr);
 }
 
 GlobalContext::~GlobalContext() {
@@ -150,9 +156,8 @@ GlobalContext::~GlobalContext() {
             Interpreter::callFunction(*getGlobal(), finalize->second->functions, std::make_shared<Tuple>(), nullptr);
     }
 
-    for (auto it = cpointers.begin(); it != cpointers.end(); it++) {
-        //delete *it;
-    }
+    for (auto it = cpointers.begin(); it != cpointers.end(); it++)
+        delete (std::ios*) *it;
 }
 
 
@@ -166,23 +171,4 @@ GlobalContext* FunctionContext::getGlobal() {
 
 Context* FunctionContext::getParent() {
     return parent;
-}
-
-Reference FunctionContext::getSymbol(std::string const& symbol, bool const& create) {
-    auto it = symbols.find(symbol);
-
-    if (it != symbols.end()) return it->second;
-    else {
-        auto ref = getGlobal()->getSymbol(symbol, false);
-        if (ref.pointer != nullptr) return ref;
-        else if (create) {
-            auto & references = getGlobal()->references;
-
-            auto & ref = symbols[symbol];
-            ref.type = Reference::SymbolReference;
-            references.push_back(newObject());
-            ref.symbolReference = &references.back();
-            return ref;
-        } else return Reference((Object**) nullptr);
-    }
 }
