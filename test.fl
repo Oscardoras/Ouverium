@@ -1,3 +1,10 @@
-print("0");
-include "test2.fl";
-print(1, "\n")
+file := InputFile("test2.fl");
+
+while (file->has()) {
+    print(file->read())
+};
+
+Console->out->write("Test");
+Console->out->flush();
+
+while (true) {}

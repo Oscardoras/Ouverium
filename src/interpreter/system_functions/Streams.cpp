@@ -46,14 +46,26 @@ namespace Streams {
         return Reference(obj);
     }
 
+    Reference has(FunctionContext & context) {
+        auto stream = (std::istream*) context.getSymbol("this").toObject(context)->data.ptr;
+
+        return Reference(context.newObject(stream->operator bool()));
+    }
+
     void setInputStream(Context & context, Object & object) {
         object.type = Object::CPointer;
 
         auto & read = object.fields["read"];
         if (read == nullptr) read = context.newObject();
-        auto f = new SystemFunction(std::make_shared<Tuple>(), Streams::read);
-        f->externSymbols["this"] = Reference(&object);
-        read->functions.push_front(f);
+        auto f1 = new SystemFunction(std::make_shared<Tuple>(), Streams::read);
+        f1->externSymbols["this"] = Reference(&object);
+        read->functions.push_front(f1);
+
+        auto & has = object.fields["has"];
+        if (has == nullptr) has = context.newObject();
+        auto f2 = new SystemFunction(std::make_shared<Tuple>(), Streams::has);
+        f2->externSymbols["this"] = Reference(&object);
+        has->functions.push_front(f2);
     }
 
     Reference write(FunctionContext & context) {
@@ -61,6 +73,14 @@ namespace Streams {
         auto message = context.getSymbol("message").toObject(context);
 
         Interpreter::print(*stream, message);
+
+        return Reference(context.newObject());
+    }
+
+    Reference flush(FunctionContext & context) {
+        auto stream = (std::ostream*) context.getSymbol("this").toObject(context)->data.ptr;
+
+        stream->flush();
 
         return Reference(context.newObject());
     }
@@ -75,6 +95,12 @@ namespace Streams {
         auto f = new SystemFunction(message, Streams::write);
         f->externSymbols["this"] = Reference(&object);
         write->functions.push_front(f);
+
+        auto & flush = object.fields["flush"];
+        if (flush == nullptr) flush = context.newObject();
+        auto f2 = new SystemFunction(std::make_shared<Tuple>(), Streams::flush);
+        f2->externSymbols["this"] = Reference(&object);
+        flush->functions.push_front(f2);
     }
 
     std::shared_ptr<Expression> path() {
