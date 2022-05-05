@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/interpreter",
-            "args": ["${workspaceFolder}/test.fl"],
+            "args": ["${file}"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

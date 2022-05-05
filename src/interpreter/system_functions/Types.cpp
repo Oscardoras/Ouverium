@@ -29,13 +29,15 @@ namespace Types {
     }
 
     void initiate(Context & context) {
-        context.getSymbol("Char");
-        context.getSymbol("Int");
-        context.getSymbol("Float");
-        context.getSymbol("Bool");
-        context.getSymbol("Array");
+        auto f = new SystemFunction(is_type(), is_type);
+        
+        f->externSymbols["Char"] = context.getSymbol("Char");
+        f->externSymbols["Int"] = context.getSymbol("Int");
+        f->externSymbols["Float"] = context.getSymbol("Float");
+        f->externSymbols["Bool"] = context.getSymbol("Bool");
+        f->externSymbols["Array"] = context.getSymbol("Array");
 
-        context.getSymbol("~").toObject(context)->functions.push_front(new SystemFunction(is_type(), is_type));
+        context.getSymbol("~").toObject(context)->functions.push_front(f);
     }
 
 }

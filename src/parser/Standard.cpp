@@ -14,7 +14,8 @@
 namespace StandardParser {
 
     bool is_operator(char c) {
-        return !std::isalnum(c) && c != '_' && c != '\'' && c != '`' && c != '\"' && c != '.';
+        return !std::isalnum(c) && c != '_' && c != '\'' && c != '`' && c != '\"' && c != '.'
+        && c != '(' && c != '[' && c != '{' && c != ')' && c != ']' && c != '}';
     }
 
     bool is_number(char c) {
@@ -160,62 +161,66 @@ namespace StandardParser {
     }
 
     std::shared_ptr<Expression> expressionsToExpression(std::vector<std::shared_ptr<Expression>> expressions, std::shared_ptr<Expression> expression, bool isFunction) {
-        expressions.push_back(expression);
-        if (isFunction) {
-            auto functioncall = std::make_shared<FunctionCall>();
-            functioncall->position = expressions[0]->position;
-            functioncall->function = expressions[0];
-
-            if (expressions.size() != 2) {
-                auto tuple = std::make_shared<Tuple>();
-                tuple->position = functioncall->position;
-                for (unsigned long i = 1; i < expressions.size(); i++)
-                    tuple->objects.push_back(expressions[i]);
-                functioncall->object = tuple;
-            } else functioncall->object = expressions[1];
-
-            return functioncall;
+        if (expressions.empty()) {
+            return expression;
         } else {
-            std::vector<std::vector<std::string>> operators;
-            for (auto expr : expressions) {
-                if (expr->type == Expression::Symbol) {
-                    auto symbol = std::static_pointer_cast<Symbol>(expr);
-                    if (is_operator(symbol->name[0])) {
-                        for (auto & op : operators)
-                            if (compareOperators(symbol->name, op[0]) == 0)
-                                op.push_back(symbol->name);
-                        std::vector<std::string> op;
-                        op.push_back(symbol->name);
-                        operators.push_back(op);
+            expressions.push_back(expression);
+            if (isFunction) {
+                auto functioncall = std::make_shared<FunctionCall>();
+                functioncall->position = expressions[0]->position;
+                functioncall->function = expressions[0];
+
+                if (expressions.size() != 2) {
+                    auto tuple = std::make_shared<Tuple>();
+                    tuple->position = functioncall->position;
+                    for (unsigned long i = 1; i < expressions.size(); i++)
+                        tuple->objects.push_back(expressions[i]);
+                    functioncall->object = tuple;
+                } else functioncall->object = expressions[1];
+
+                return functioncall;
+            } else {
+                std::vector<std::vector<std::string>> operators;
+                for (auto expr : expressions) {
+                    if (expr->type == Expression::Symbol) {
+                        auto symbol = std::static_pointer_cast<Symbol>(expr);
+                        if (is_operator(symbol->name)) {
+                            for (auto & op : operators)
+                                if (compareOperators(symbol->name, op[0]) == 0)
+                                    op.push_back(symbol->name);
+                            std::vector<std::string> op;
+                            op.push_back(symbol->name);
+                            operators.push_back(op);
+                        }
                     }
                 }
-            }
 
-            std::sort(operators.begin(), operators.end(), comparator);
+                std::sort(operators.begin(), operators.end(), comparator);
 
-            for (auto op : operators) {
-                for (auto it = expressions.begin(); it != expressions.end();) {
-                    if ((*it)->type == Expression::Symbol) {
-                        auto symbol = std::static_pointer_cast<Symbol>(*it);
-                        if (std::find(op.begin(), op.end(), symbol->name) != op.end()) {
-                            auto functioncall = std::make_shared<FunctionCall>();
-                            functioncall->position = symbol->position;
-                            functioncall->function = symbol;
-                            auto tuple = std::make_shared<Tuple>();
-                            tuple->position = functioncall->position;
-                            tuple->objects.push_back(*(it-1));
-                            tuple->objects.push_back(*(it+1));
-                            functioncall->object = tuple;
-                            
-                            *(it-1) = functioncall;
-                            it = expressions.erase(it);
-                            it = expressions.erase(it);
+                for (auto op : operators) {
+                    for (auto it = expressions.begin(); it != expressions.end();) {
+                        if ((*it)->type == Expression::Symbol) {
+                            auto symbol = std::static_pointer_cast<Symbol>(*it);
+                            if (std::find(op.begin(), op.end(), symbol->name) != op.end()) {
+                                auto functioncall = std::make_shared<FunctionCall>();
+                                functioncall->position = symbol->position;
+                                functioncall->function = symbol;
+                                auto tuple = std::make_shared<Tuple>();
+                                tuple->position = functioncall->position;
+                                tuple->objects.push_back(*(it-1));
+                                tuple->objects.push_back(*(it+1));
+                                functioncall->object = tuple;
+                                
+                                *(it-1) = functioncall;
+                                it = expressions.erase(it);
+                                it = expressions.erase(it);
+                            } else it++;
                         } else it++;
-                    } else it++;
+                    }
                 }
-            }
 
-            return expressions[0];
+                return expressions[0];
+            }
         }
     }
 
@@ -322,7 +327,7 @@ namespace StandardParser {
             if (expression->type == Expression::Symbol) {
                 auto symbol = std::static_pointer_cast<Symbol>(expression);
 
-                if (is_operator(symbol->name[0])) {
+                if (is_operator(words[i-1].word)) {
                     auto functioncall = std::make_shared<FunctionCall>();
                     functioncall->position = symbol->position;
 
@@ -333,7 +338,7 @@ namespace StandardParser {
                     continue;
                 }
             }
-            if (is_operator(words[i].word[0]) && !is_system(words[i].word)) {
+            if (is_operator(words[i].word) && !is_system(words[i].word)) {
                 if (priority) {
                     if (inOperator) break;
                     else {

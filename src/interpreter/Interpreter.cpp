@@ -224,6 +224,7 @@ Reference Interpreter::run(Context & context, std::string const& path, std::stri
 
     try {
         auto tree = StandardParser::getTree(path, code, symbols);
+        std::cout << tree->toString() << std::endl;
         try {
             return Interpreter::execute(context, tree);
         } catch (InterpreterError & e) {
