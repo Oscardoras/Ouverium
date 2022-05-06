@@ -22,8 +22,11 @@ struct Expression {
 
     std::shared_ptr<Position> position;
 
+    bool escaped;
     std::vector<std::string> usedSymbols;
     std::vector<std::string> newSymbols;
+
+    Expression();
 
     std::string toString() const;
 

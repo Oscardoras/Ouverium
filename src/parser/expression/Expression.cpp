@@ -66,6 +66,10 @@ std::string expressionToString(Expression const * const expression, int n) {
     return s;
 }
 
+Expression::Expression() {
+    escaped = false;
+}
+
 std::string Expression::toString() const {
     return expressionToString(this, 0);
 }

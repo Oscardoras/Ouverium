@@ -230,29 +230,35 @@ namespace StandardParser {
         if (words[i].word == "(") {
             i++;
             expression = getExpression(words, i, false, false, false, true);
+            expression->escaped = true;
             if (words[i].word == ")") i++;
             else throw ParserError(") expected", words[i].position);
         } else if (words[i].word == ")") {
             if (words[i-1].word == "(") expression = std::make_shared<Tuple>();
             else throw ParserError(") unexpected", words[i].position);
+            expression->escaped = true;
             expression->position = std::make_shared<TextPosition>(words[i-1].position);
         } else if (words[i].word == "[") {
             i++;
             expression = getExpression(words, i, false, false, false, true);
+            expression->escaped = true;
             if (words[i].word == "]") i++;
             else throw ParserError("] expected", words[i].position);
         } else if (words[i].word == "]") {
             if (words[i-1].word == "[") expression = std::make_shared<Tuple>();
             else throw ParserError("] unexpected", words[i].position);
+            expression->escaped = true;
             expression->position = std::make_shared<TextPosition>(words[i-1].position);
         } else if (words[i].word == "{") {
             i++;
             expression = getExpression(words, i, false, false, false, true);
+            expression->escaped = true;
             if (words[i].word == "}") i++;
             else throw ParserError("} expected", words[i].position);
         } else if (words[i].word == "}") {
             if (words[i-1].word == "{") expression = std::make_shared<Tuple>();
             else throw ParserError("} unexpected", words[i].position);
+            expression->escaped = true;
             expression->position = std::make_shared<TextPosition>(words[i-1].position);
         } else if (!is_system(words[i].word)) {
             std::shared_ptr<Symbol> symbol = std::make_shared<Symbol>();
@@ -327,7 +333,7 @@ namespace StandardParser {
             if (expression->type == Expression::Symbol) {
                 auto symbol = std::static_pointer_cast<Symbol>(expression);
 
-                if (is_operator(words[i-1].word)) {
+                if (!symbol->escaped && is_operator(symbol->name)) {
                     auto functioncall = std::make_shared<FunctionCall>();
                     functioncall->position = symbol->position;
 
