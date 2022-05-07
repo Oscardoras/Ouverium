@@ -7,11 +7,11 @@
     found := false;
     l := lenght(object->_types);
     i := 1;
-    while (!found & i <= l) repeat {
-        if (get(object->_types, i) = type) then {
+    while (!found & i <= l) {
+        if (get(object->_types, i) === type) {
             found := true
         } else {
-            i :=+ 1
+            i := i + 1
         }
     };
     found

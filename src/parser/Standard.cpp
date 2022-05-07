@@ -184,7 +184,7 @@ namespace StandardParser {
                 for (auto expr : expressions) {
                     if (expr->type == Expression::Symbol) {
                         auto symbol = std::static_pointer_cast<Symbol>(expr);
-                        if (is_operator(symbol->name)) {
+                        if (!symbol->escaped && is_operator(symbol->name)) {
                             for (auto & op : operators)
                                 if (compareOperators(symbol->name, op[0]) == 0)
                                     op.push_back(symbol->name);
@@ -201,7 +201,7 @@ namespace StandardParser {
                     for (auto it = expressions.begin(); it != expressions.end();) {
                         if ((*it)->type == Expression::Symbol) {
                             auto symbol = std::static_pointer_cast<Symbol>(*it);
-                            if (std::find(op.begin(), op.end(), symbol->name) != op.end()) {
+                            if (!symbol->escaped && std::find(op.begin(), op.end(), symbol->name) != op.end()) {
                                 auto functioncall = std::make_shared<FunctionCall>();
                                 functioncall->position = symbol->position;
                                 functioncall->function = symbol;

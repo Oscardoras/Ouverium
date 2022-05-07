@@ -183,7 +183,7 @@ namespace Base {
             path = system_position.substr(0, system_position.find_last_of("/")+1) + path;
 
         auto & files = context.getGlobal()->files;
-        if (std::find(files.begin(), files.end(), path) != files.end()) {
+        if (std::find(files.begin(), files.end(), path) == files.end()) {
             files.push_back(path);
 
             std::ifstream file(path);
@@ -371,8 +371,10 @@ namespace Base {
     void initiate(Context & context) {
         context.getSymbol(";").toObject(context)->functions.push_front(new SystemFunction(separator(), separator));
         context.getSymbol("if").toObject(context)->functions.push_front(new SystemFunction(if_statement(), if_statement));
-        context.getSymbol("if").toObject(context)->functions.push_front(new SystemFunction(if_else_statement(), if_else_statement));
         context.getSymbol("else").toObject(context)->functions.push_front(new SystemFunction(else_statement(), else_statement));
+        auto if_else = new SystemFunction(if_else_statement(), if_else_statement);
+        if_else->externSymbols["else"] = context.getSymbol("else");
+        context.getSymbol("if").toObject(context)->functions.push_front(if_else);
         context.getSymbol("while").toObject(context)->functions.push_front(new SystemFunction(while_statement(), while_statement));
         context.getSymbol("include").toObject(context)->functions.push_front(new SystemFunction(path(), include));
         context.getSymbol("using").toObject(context)->functions.push_front(new SystemFunction(path(), use));

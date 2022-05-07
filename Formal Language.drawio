@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e" pages="4">
     <diagram id="5_BCksHGUc6veGD5Rrwg" name="Presentation">
-        <mxGraphModel dx="1876" dy="750" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="1876" dy="423" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="-pB6dK3asgWXY20V-I0a-0"/>
                 <mxCell id="-pB6dK3asgWXY20V-I0a-1" parent="-pB6dK3asgWXY20V-I0a-0"/>
@@ -11,7 +11,7 @@
         </mxGraphModel>
     </diagram>
     <diagram id="95ChfJcYz4LJRr9AhdbQ" name="Formal Language">
-        <mxGraphModel dx="1049" dy="458" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="1049" dy="423" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="v-T4cHczStaTHuqniMII-0"/>
                 <mxCell id="v-T4cHczStaTHuqniMII-1" parent="v-T4cHczStaTHuqniMII-0"/>

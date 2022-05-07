@@ -36,7 +36,7 @@ std::string expressionToString(Expression const * const expression, int n) {
         s += tabu(n) + "parameters : " + expressionToString(functionDefinition->parameters.get(), n);
         s += tabu(n) + "filter : " + expressionToString(functionDefinition->filter.get(), n);
         s += tabu(n) + "object : " + expressionToString(functionDefinition->object.get(), n);
-        s += tabu(n) + "localSymbols :\n";
+        s += tabu(n) + "usedSymbols :\n";
         n++;
         for (std::string name : functionDefinition->object->usedSymbols) s += tabu(n) + " " + name + "\n";
     } else if (expression->type == Expression::Property) {

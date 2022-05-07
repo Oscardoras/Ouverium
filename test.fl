@@ -1,3 +1,7 @@
-(~) : object \ (true) |-> {
-    found
-}
+using "librairies/Type.fl";
+
+a :~ CustomType;
+
+print(1 ~ Int, "\n");
+print(a ~ Int, "\n");
+print(a ~ CustomType, "\n")

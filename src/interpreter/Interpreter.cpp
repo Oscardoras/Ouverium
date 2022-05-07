@@ -53,7 +53,8 @@ void setReferences(Context & context, FunctionContext & function_context, std::s
             auto a_tuple = std::static_pointer_cast<Tuple>(arguments);
 
             if (p_tuple->objects.size() == a_tuple->objects.size()) {
-                for (size_t i = 0; i < p_tuple->objects.size(); i++)
+                size_t size = p_tuple->objects.size();
+                for (size_t i = 0; i < size; i++)
                     setReferences(context, function_context, p_tuple->objects[i], a_tuple->objects[i]);
             } else throw FunctionArgumentsError();
         } else setReferences(function_context, parameters, Interpreter::execute(context, arguments));
@@ -63,21 +64,17 @@ void setReferences(Context & context, FunctionContext & function_context, std::s
         if (p_function->function->type == Expression::Symbol) {
             auto symbol = std::static_pointer_cast<Symbol>(p_function->function);
 
-            if (context.hasSymbol(symbol->name)) {
-                //TODO
-            } else {
-                auto function_definition = std::make_shared<FunctionDefinition>();
-                function_definition->parameters = p_function->object;
-                function_definition->object = arguments;
+            auto function_definition = std::make_shared<FunctionDefinition>();
+            function_definition->parameters = p_function->object;
+            function_definition->object = arguments;
 
-                auto object = context.newObject();
-                auto f = new CustomFunction(function_definition);
-                for (auto symbol : function_definition->object->usedSymbols)
-                    ((CustomFunction*) f)->externSymbols[symbol] = context.getSymbol(symbol);
-                object->functions.push_front(f);
+            auto object = context.newObject();
+            auto f = new CustomFunction(function_definition);
+            for (auto symbol : function_definition->object->usedSymbols)
+                ((CustomFunction*) f)->externSymbols[symbol] = context.getSymbol(symbol);
+            object->functions.push_front(f);
 
-                function_context.addSymbol(symbol->name, Reference(object));
-            }
+            function_context.addSymbol(symbol->name, Reference(object));
         } else throw FunctionArgumentsError();
     } else throw FunctionArgumentsError();
 }
@@ -104,10 +101,9 @@ Reference Interpreter::callFunction(Context & context, std::list<Function*> func
                     result = execute(function_context, ((CustomFunction*) function)->pointer->object);
                 else throw FunctionArgumentsError();
             } else {
-                auto f = ((SystemFunction*) function)->pointer;
                 setReferences(context, function_context, ((SystemFunction*) function)->parameters, arguments);
                 
-                result = f(function_context);
+                result = ((SystemFunction*) function)->pointer(function_context);
             }
 
             if (result.type == Reference::SymbolReference)
@@ -121,7 +117,7 @@ Reference Interpreter::callFunction(Context & context, std::list<Function*> func
         } catch (FunctionArgumentsError & error) {}
     }
 
-    arguments->position->notify();
+    if (arguments->position != nullptr) arguments->position->notify();
     throw InterpreterError();
 }
 
@@ -137,10 +133,13 @@ Reference Interpreter::execute(Context & context, std::shared_ptr<Expression> ex
 
         auto object = context.newObject();
         auto f = new CustomFunction(function_definition);
-        if (context.getGlobal() != &context)
-            for (auto symbol : function_definition->object->usedSymbols)
+        for (auto symbol : function_definition->object->usedSymbols)
+            if (context.hasSymbol(symbol))
+                f->externSymbols[symbol] = context.getSymbol(symbol);
+        if (function_definition->filter != nullptr)
+            for (auto symbol : function_definition->filter->usedSymbols)
                 if (context.hasSymbol(symbol))
-                    ((CustomFunction*) f)->externSymbols[symbol] = context.getSymbol(symbol);
+                    f->externSymbols[symbol] = context.getSymbol(symbol);
         object->functions.push_front(f);
         
         return Reference(object);
@@ -224,7 +223,7 @@ Reference Interpreter::run(Context & context, std::string const& path, std::stri
 
     try {
         auto tree = StandardParser::getTree(path, code, symbols);
-        std::cout << tree->toString() << std::endl;
+        //std::cout << tree->toString() << std::endl;
         try {
             return Interpreter::execute(context, tree);
         } catch (InterpreterError & e) {
