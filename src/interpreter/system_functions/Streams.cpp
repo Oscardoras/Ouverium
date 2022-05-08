@@ -144,8 +144,7 @@ namespace Streams {
         context.getSymbol("OutputFile").toObject(context)->functions.push_front(new SystemFunction(path(), output_file));
 
 
-        auto* console = context.newObject();
-        context.getSymbol("Console").getReference() = console;
+        auto console = context.getSymbol("Console").toObject(context);
 
         auto in = context.newObject();
         setInputStream(context, *in);

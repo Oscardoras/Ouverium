@@ -1,17 +1,17 @@
 (:~) : (object, type) |-> {
-    add(object->_types, type);
+    Array->add(object->_types, type);
     object
 };
 
 (~) : (object, type) \ (type !== Char & type !== Int & type !== Float & type !== Bool) |-> {
     found := false;
-    l := lenght(object->_types);
+    l := Array->lenght(object->_types);
     i := 1;
     while (!found & i <= l) {
-        if (get(object->_types, i) === type) {
+        if (Array->get(object->_types, i) === type) {
             found := true
         } else {
-            i := i + 1
+            ++i
         }
     };
     found

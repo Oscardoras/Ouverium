@@ -158,6 +158,15 @@ namespace Math {
         else throw FunctionArgumentsError();
     }
 
+    Reference iterate(FunctionContext & context) {
+        auto a = context.getSymbol("a").toObject(context);
+            
+        if (a->type == Object::Int) {
+            a->data.i++;
+            return context.getSymbol("a");
+        } else throw FunctionArgumentsError();
+    }
+
     void initiate(Context & context) {
         context.getSymbol("!").toObject(context)->functions.push_front(new SystemFunction(a(), logical_not));
         context.getSymbol("&").toObject(context)->functions.push_front(new SystemFunction(ab(), logical_and));
@@ -172,6 +181,7 @@ namespace Math {
         context.getSymbol(">").toObject(context)->functions.push_front(new SystemFunction(ab(), strictly_sup));
         context.getSymbol("<=").toObject(context)->functions.push_front(new SystemFunction(ab(), inf_equals));
         context.getSymbol(">=").toObject(context)->functions.push_front(new SystemFunction(ab(), sup_equals));
+        context.getSymbol("++").toObject(context)->functions.push_front(new SystemFunction(a(), iterate));
     }
 
 }

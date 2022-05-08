@@ -12,7 +12,7 @@ LinkedList : this |-> {
     this : index |-> {
         i := 0;
         cell := this->first;
-        while (i < index) repeat {
+        while (i < index) {
             cell := cell->next;
             ++i
         };
@@ -21,7 +21,7 @@ LinkedList : this |-> {
 
     this->foreach : function |-> {
         cell := this->_first;
-        while (cell != ()) repeat {
+        while (cell != ()) {
             function(cell->object);
             cell := cell->next
         };
@@ -36,11 +36,11 @@ LinkedList : this |-> {
         this->_first = ()
     };
 
-    this->get_first : () \ this->_first != () |-> {
+    this->get_first : () \ (this->_first != ()) |-> {
         this->_first->object
     };
 
-    this->get_last : () \ this->_last != () |-> {
+    this->get_last : () \ (this->_last != ()) |-> {
         this->_last->object
     };
 
@@ -48,7 +48,7 @@ LinkedList : this |-> {
         tmp->object := a;
         tmp->previous := ();
         tmp->next := this->_first;
-        if (this->_first != ()) then {
+        if (this->_first != ()) {
             this->_first->previous := tmp
         } else {
             this->_last := tmp
@@ -62,7 +62,7 @@ LinkedList : this |-> {
         tmp->object := a;
         tmp->previous := this->_last;
         tmp->next := ();
-        if (this->_last != ()) then {
+        if (this->_last != ()) {
             this->_last->next := tmp
         } else {
             this->_first := tmp
@@ -72,10 +72,10 @@ LinkedList : this |-> {
         tmp->object
     };
 
-    this->remove_first : () \ this->_first != () |-> {
+    this->remove_first : () \ (this->_first != ()) |-> {
         tmp := this->_first->object;
         this->_first := this->_first->next;
-        if (this->_first != ()) then {
+        if (this->_first != ()) {
             this->_first->previous := ()
         } else {
             this->_last := ()
@@ -84,10 +84,10 @@ LinkedList : this |-> {
         tmp
     };
 
-    this->remove_last : () \ this->_last != () |-> {
+    this->remove_last : () \ (this->_last != ()) |-> {
         tmp := this->_last->object;
         this->_last := this->_last->previous;
-        if (this->_last != ()) then {
+        if (this->_last != ()) {
             this->_last->next := ()
         } else {
             this->_first := ()
@@ -96,10 +96,10 @@ LinkedList : this |-> {
         tmp
     };
 
-    this->insert : (index, object) \ 0 <= index & index < this->_lenght |-> {
+    this->insert : (index, object) \ (0 <= index & index < this->_lenght) |-> {
         i := 0;
         cell := this->_first;
-        while (i < index) repeat {
+        while (i < index) {
             cell := cell->next;
             ++i
         };
@@ -118,10 +118,10 @@ LinkedList : this |-> {
         tmp->object;
     };
 
-    this->remove : index \ 0 <= index & index < this->_lenght |-> {
+    this->remove : index \ (0 <= index & index < this->_lenght) |-> {
         i := 0;
         cell := this->_first;
-        while (i < index) repeat {
+        while (i < index) {
             cell := cell->next;
             ++i
         };
@@ -131,14 +131,14 @@ LinkedList : this |-> {
         cell->object
     };
 
-    this->iterator_first : () \ this->_first != () |-> {
+    this->iterator_first : () \ (this->_first != ()) |-> {
         cell->object := ();
         cell->previous := ();
         cell->next := this->_first;
         LinkedList->Iterator((), this, cell)
     };
 
-    this->iterator_last : () \ this->_last != () |-> {
+    this->iterator_last : () \ (this->_last != ()) |-> {
         cell->object := ();
         cell->previous := this->_last;
         cell->next := ();
@@ -147,10 +147,10 @@ LinkedList : this |-> {
 
     this->iterator : this->iterator_first;
 
-    this->iterator : index \ 0 <= index & index < this->_lenght |-> {
+    this->iterator : index \ (0 <= index & index < this->_lenght) |-> {
         i := 0;
         cell := this->first;
-        while (i < index) repeat {
+        while (i < index) {
             cell := cell->next;
             ++i
         };
@@ -170,7 +170,7 @@ LinkedList->Iterator : (this, list, cell) |-> {
         this->_cell->previous != ()
     };
 
-    this->previous : () \ this->has_previous() |-> {
+    this->previous : () \ (this->has_previous()) |-> {
         this->_cell := this->_cell->previous;
         this->_cell->object
     };
@@ -179,7 +179,7 @@ LinkedList->Iterator : (this, list, cell) |-> {
         this->_cell->next != ()
     };
 
-    this->next : () \ this->has_next() |-> {
+    this->next : () \ (this->has_next()) |-> {
         this->_cell := this->_cell->next;
         this->_cell->object
     };
@@ -189,13 +189,13 @@ LinkedList->Iterator : (this, list, cell) |-> {
     };
 
     this->remove : () |-> {
-        if (this->_cell->previous != ()) then {
+        if (this->_cell->previous != ()) {
             this->_cell->previous->next := cell->next
         } else {
             this->iterable->first := cell->next
         };
 
-        if (this->_cell->next != ()) then {
+        if (this->_cell->next != ()) {
             this->_cell->next->previous := cell->previous
         } else {
             this->iterable->last := cell->previous
@@ -222,22 +222,22 @@ LinkedList->Iterator : (this, list, cell) |-> {
     this
 };
 
-(@) : (element, list) |-> {
+(@) : (element, list) \ (list ~ LinkedList) |-> {
     found := false;
     it := list->iterator();
-    while (!found & it->has_next()) repeat {
-        if (it->next() = element) then {
+    while (!found & it->has_next()) {
+        if (it->next() = element) {
             found := true
         }
     };
     found
 };
 
-(@==) : (element, list) |-> {
+(@==) : (element, list) \ (list ~ LinkedList) |-> {
     found := false;
     it := list->iterator();
-    while (!found & it->has_next()) repeat {
-        if (it->next() === element) then {
+    while (!found & it->has_next()) {
+        if (it->next() === element) {
             found := true
         }
     };

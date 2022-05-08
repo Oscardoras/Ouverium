@@ -6,109 +6,109 @@ ArrayList : this |-> {
     this :~ ArrayList;
 
     this : index |-> {
-        get(this, index-1)
+        Array->get(this, index-1)
     };
 
     this->foreach : function |-> {
-        l := lenght(list);
+        l := Array->lenght(list);
         i := 1;
-        while (i <= l) repeat {
-            function(get(list, index))
+        while (i <= l) {
+            function(Array->get(list, index))
         };
         ()
     };
 
     this->lenght : () |-> {
-        lenght(this)
+        Array->lenght(this)
     };
 
     this->is_empty : () |-> {
-        lenght(this) = 0
+        Array->lenght(this) = 0
     };
 
     this->get_capacity : () |-> {
-        get_capacity(this)
+        Array->get_capacity(this)
     };
 
-    this->set_capacity : capacity |-> {
-        set_capacity(capacity)
+    this->set_capacity : (capacity ~ Int & capacity >= 0) |-> {
+        Array->set_capacity(capacity)
     };
 
-    this->get_first : () \ lenght(this) > 0 |-> {
-        get(this, 1)
+    this->get_first : () \ Array->lenght(this) > 0 |-> {
+        Array->get(this, 1)
     };
 
-    this->get_last : () \ lenght(this) > 0 |-> {
-        get(this, lenght(this))
+    this->get_last : () \ Array->lenght(this) > 0 |-> {
+        Array->get(this, Array->lenght(this))
     };
 
     this->add_first : element |-> {
-        l := lenght(this);
+        l := Array->lenght(this);
         if (l > 0) {
-            add(this, get(this, l));
+            Array->add(this, Array->get(this, l));
             i := l;
             while (i > 0) {
-                get(this, i-1) := get(this, i);
+                Array->get(this, i-1) := Array->get(this, i);
                 --i
             };
-            get(this, 0) := element
+            Array->get(this, 0) := element
         } else {
-            add(this, element)
+            Array->add(this, element)
         }
     };
 
     this->add_last : element |-> {
-        add(this, element)
+        Array->add(this, element)
     };
 
-    this->remove_first : () \ lenght(this) > 0 |-> {
-        l := lenght(this);
+    this->remove_first : () \ Array->lenght(this) > 0 |-> {
+        l := Array->lenght(this);
         i := 1;
         while (i < l) {
-            get(this, i) := get(this, i+1);
+            Array->get(this, i) := Array->get(this, i+1);
             ++i
         };
-        remove(this)
+        Array->remove(this)
     };
 
-    this->remove_last : () \ lenght(this) > 0 |-> {
-        remove(this)
+    this->remove_last : () \ Array->lenght(this) > 0 |-> {
+        Array->remove(this)
     };
 
-    this->insert : (index, object) \ 0 <= index & index < lenght(this) |-> {
-        l := lenght(this);
-        add(this, get(this, l));
+    this->insert : (index, object) \ (0 <= index & index < Array->lenght(this)) |-> {
+        l := Array->lenght(this);
+        Array->add(this, Array->get(this, l));
         i := l;
         while (i > index+1) {
-            get(this, i-1) := get(this, i);
+            Array->get(this, i-1) := Array->get(this, i);
             --i
         };
-        get(this, index+1) := element
+        Array->get(this, index+1) := element
     };
 
-    this->remove : index \ 0 <= index & index < lenght(this) |-> {
-        l := lenght(this);
+    this->remove : index \ (0 <= index & index < lenght(this)) |-> {
+        l := Array->lenght(this);
         i := index+1;
-        tmp := get(this, i);
+        tmp := Array->get(this, i);
         while (i < l) {
-            get(this, i) := get(this, i+1);
+            Array->get(this, i) := Array->get(this, i+1);
             ++i
         };
-        remove(this);
-        get(this, i)
+        Array->remove(this);
+        Array->get(this, i)
     };
 
-    this->iterator_first : () \ this->_first != () |-> {
+    this->iterator_first : () \ (this->_first != ()) |-> {
         ArrayList->Iterator((), this, 0)
     };
 
-    this->iterator_last : () \ this->_last != () |-> {
-        ArrayList->Iterator((), this, lenght(this))
+    this->iterator_last : () \ (this->_last != ()) |-> {
+        ArrayList->Iterator((), this, lArray->enght(this))
     };
 
     this->iterator : this->iterator_first;
 
-    this->iterator : index \ 0 <= index & index < lenght(this) |-> {
+    this->iterator : index \ (0 <= index & index < lenght(this)) |-> {
         ArrayList->Iterator((), this, index)
     };
 
@@ -125,16 +125,16 @@ ArrayList->Iterator : (this, list, index) |-> {
         this->_index > 0
     };
 
-    this->previous : () \ this->has_previous() |-> {
+    this->previous : () \ (this->has_previous()) |-> {
         --this->_index;
         this->iterable[this->_index]
     };
 
     this->has_next : () |-> {
-        this->_index < lenght(this->iterable)-1
+        this->_index < Array->lenght(this->iterable)-1
     };
 
-    this->next : () \ this->has_next() |-> {
+    this->next : () \ (this->has_next()) |-> {
         ++this->_index;
         this->iterable[this->_index]
     };
@@ -157,13 +157,13 @@ ArrayList->Iterator : (this, list, index) |-> {
 
 (@) : (element, list) |-> {
     found := false;
-    l := lenght(list);
+    l := Array->lenght(list);
     i := 1;
-    while (!found & i <= l) repeat {
-        if (get(list, i) = element) then {
+    while (!found & i <= l) {
+        if (Array->get(list, i) == element) {
             found := true
         } else {
-            i := i+1
+            ++i
         }
     };
     found
@@ -171,13 +171,13 @@ ArrayList->Iterator : (this, list, index) |-> {
 
 (@==) : (element, list) |-> {
     found := false;
-    l := lenght(list);
+    l := Array->lenght(list);
     i := 1;
-    while (!found & i <= l) repeat {
-        if (get(list, i) === element) then {
+    while (!found & i <= l) {
+        if (Array->get(list, i) === element) {
             found := true
         } else {
-            i := i+1
+            ++i
         }
     };
     found
