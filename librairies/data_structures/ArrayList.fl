@@ -34,11 +34,11 @@ ArrayList : this |-> {
         Array->set_capacity(capacity)
     };
 
-    this->get_first : () \ Array->lenght(this) > 0 |-> {
+    this->get_first : () \ (Array->lenght(this) > 0) |-> {
         Array->get(this, 1)
     };
 
-    this->get_last : () \ Array->lenght(this) > 0 |-> {
+    this->get_last : () \ (Array->lenght(this) > 0) |-> {
         Array->get(this, Array->lenght(this))
     };
 
@@ -61,7 +61,7 @@ ArrayList : this |-> {
         Array->add(this, element)
     };
 
-    this->remove_first : () \ Array->lenght(this) > 0 |-> {
+    this->remove_first : () \ (Array->lenght(this) > 0) |-> {
         l := Array->lenght(this);
         i := 1;
         while (i < l) {
@@ -71,7 +71,7 @@ ArrayList : this |-> {
         Array->remove(this)
     };
 
-    this->remove_last : () \ Array->lenght(this) > 0 |-> {
+    this->remove_last : () \ (Array->lenght(this) > 0) |-> {
         Array->remove(this)
     };
 
@@ -152,7 +152,7 @@ ArrayList->Iterator : (this, list, index) |-> {
     };
 
     this
-}
+};
 
 
 (@) : (element, list) |-> {

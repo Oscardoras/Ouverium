@@ -59,7 +59,7 @@ namespace StandardParser {
     }
 
     void TextPosition::notify() {
-        std::cerr << "Arguments given to the function don't match at : line " << line << ", column " << column << "." << std::endl;
+        std::cerr << "Arguments given to the function don't match in file \"" << path << "\" at line " << line << ", column " << column << "." << std::endl;
     }
 
     Word::Word(std::string const& word, TextPosition position): word(word), position(position) {}
@@ -188,9 +188,11 @@ namespace StandardParser {
                             for (auto & op : operators)
                                 if (compareOperators(symbol->name, op[0]) == 0)
                                     op.push_back(symbol->name);
-                            std::vector<std::string> op;
-                            op.push_back(symbol->name);
-                            operators.push_back(op);
+                                else {
+                                    std::vector<std::string> op;
+                                    op.push_back(symbol->name);
+                                    operators.push_back(op);
+                                }
                         }
                     }
                 }
@@ -300,7 +302,7 @@ namespace StandardParser {
                         tuple->objects.push_back(getExpression(words, i, true, false, false, true));
                     }
                     return tuple;
-                } break;
+                } else break;
             }
             if (words[i].word == "\\") {
                 if (priority) {
@@ -316,7 +318,7 @@ namespace StandardParser {
                         expression = functionDefinition;
                         continue;
                     } else throw ParserError("|-> expected", words[i].position);
-                } break;
+                } else break;
             }
             if (words[i].word == "|->") {
                 if (priority) {

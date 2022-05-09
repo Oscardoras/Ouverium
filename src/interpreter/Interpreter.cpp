@@ -230,7 +230,7 @@ Reference Interpreter::run(Context & context, std::string const& path, std::stri
             return Reference(context.newObject());
         }
     } catch (StandardParser::ParserError & e) {
-        std::cerr << e.message << " at : line " << e.position.line << ", column " << e.position.column << "." << std::endl;
+        std::cerr << e.message << " in file \"" << e.position.path << "\" at line " << e.position.line << ", column " << e.position.column << "." << std::endl;
         return Reference(context.newObject());
     }
 }
