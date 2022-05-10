@@ -68,8 +68,10 @@ Object::Object(char c) {
 
 Object::Object(size_t tuple_size) {
     type = (long) tuple_size;
-    data.a = (Object::Data::ArrayElement *) std::malloc(sizeof(Object::Data::ArrayElement) * (type+1));
-    data.a[0].c = type;
+    if (type > 0) {
+        data.a = (Object::Data::ArrayElement *) std::malloc(sizeof(Object::Data::ArrayElement) * (type+1));
+        data.a[0].c = type;
+    }
     referenced = false;
 }
 

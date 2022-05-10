@@ -22,7 +22,7 @@ int main(int argc, char ** argv) {
             std::string code;
             std::string line;
             while (std::getline(src, line))
-                code += line + "\n";
+                code += line + '\n';
             
             GlobalContext context;
             Interpreter::setStandardContext(context);

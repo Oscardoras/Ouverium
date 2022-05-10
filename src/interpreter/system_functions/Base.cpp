@@ -95,13 +95,6 @@ namespace Base {
         else throw FunctionArgumentsError();
     }
 
-    std::shared_ptr<Expression> else_statement() {
-        return std::make_shared<Tuple>();
-    }
-    Reference else_statement(__attribute__((unused)) FunctionContext & context) {
-        throw FunctionArgumentsError();
-    }
-
     std::shared_ptr<Expression> while_statement() {
         auto tuple = std::make_shared<Tuple>();
 
@@ -165,7 +158,7 @@ namespace Base {
         std::string code;
         std::string line;
         while (std::getline(file, line))
-            code += line + " ";
+            code += line + '\n';
 
         return Interpreter::run(*context.getGlobal(), path, code);
     }
@@ -191,7 +184,7 @@ namespace Base {
             std::string code = "";
             std::string line = "";
             while (std::getline(file, line))
-                code += line + " ";
+                code += line + '\n';
 
             return Interpreter::run(*context.getGlobal(), path, code);
         } else return Reference(context.newObject());
@@ -371,7 +364,6 @@ namespace Base {
     void initiate(Context & context) {
         context.getSymbol(";").toObject(context)->functions.push_front(new SystemFunction(separator(), separator));
         context.getSymbol("if").toObject(context)->functions.push_front(new SystemFunction(if_statement(), if_statement));
-        context.getSymbol("else").toObject(context)->functions.push_front(new SystemFunction(else_statement(), else_statement));
         auto if_else = new SystemFunction(if_else_statement(), if_else_statement);
         if_else->externSymbols["else"] = context.getSymbol("else");
         context.getSymbol("if").toObject(context)->functions.push_front(if_else);

@@ -19,10 +19,10 @@ List : this |-> {
     this->remove_first : () |-> {};
     this->remove_last : () |-> {};
 
-    this->insert : (index, object) \ (index ~ Int) |-> {};
-    this->remove : index \ (index ~ Int) |-> {};
+    this->insert : (index, object) ? (index ~ Int) |-> {};
+    this->remove : index ? (index ~ Int) |-> {};
 
-    this->iterator : index \ (index ~ Int) |-> {};
+    this->iterator : index ? (index ~ Int) |-> {};
 
     this
 }
