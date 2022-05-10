@@ -81,7 +81,6 @@ void setReferences(Context & context, FunctionContext & function_context, std::s
 
 Reference Interpreter::callFunction(Context & context, std::list<Function*> functions, std::shared_ptr<Expression> arguments, std::shared_ptr<Position> position) {
     for (auto function : functions) {
-        Reference result;
         try {
             FunctionContext function_context(context);
             if (position != nullptr) function_context.addSymbol("system_position", context.newObject(position->path));
@@ -98,22 +97,14 @@ Reference Interpreter::callFunction(Context & context, std::list<Function*> func
                 else filter = context.newObject(true);
 
                 if (filter->type == Object::Bool && filter->data.b)
-                    result = execute(function_context, ((CustomFunction*) function)->pointer->object);
+                    return execute(function_context, ((CustomFunction*) function)->pointer->object);
                 else throw FunctionArgumentsError();
             } else {
                 setReferences(context, function_context, ((SystemFunction*) function)->parameters, arguments);
                 
-                result = ((SystemFunction*) function)->pointer(function_context);
+                return ((SystemFunction*) function)->pointer(function_context);
             }
 
-            if (result.type == Reference::SymbolReference)
-                for (auto symbol : function_context.symbols)
-                    if (symbol.second.type == Reference::Pointer)
-                        if (symbol.second.pointer == *result.symbolReference) {
-                            result = symbol.second;
-                            break;
-                        }
-            return result;
         } catch (FunctionArgumentsError & error) {}
     }
 
@@ -196,9 +187,12 @@ Reference Interpreter::execute(Context & context, std::shared_ptr<Expression> ex
         auto tuple = std::static_pointer_cast<Tuple>(expression);
 
         auto n = tuple->objects.size();
-        Reference reference(n);
-        for (int i = 0; i < (int) n; i++)
-            reference.tuple[i] = execute(context, tuple->objects[i]);
+        Reference reference;
+        if (n > 0) {
+            reference = Reference(n);
+            for (int i = 0; i < (int) n; i++)
+                reference.tuple[i] = execute(context, tuple->objects[i]);
+        } else reference = Reference(context.newObject());
         return reference;
     } else return Reference();
 }
