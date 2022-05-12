@@ -18,10 +18,10 @@ String : this |-> {
     }
 
     this
-}
+};
 
 
-(+) : (str1, str2) \ (str1 ~ String & str2 ~ String) |-> {
+(+) : (str1, str2) ? (str1 ~ String & str2 ~ String) |-> {
     str := String();
 
     (l1,l2) := (str1->lenght(), str2->lenght());
@@ -40,7 +40,7 @@ String : this |-> {
     str
 };
 
-(:=+) : (str1, str2) \ (str1 ~ String & str2 ~ String) |-> {
+(:=+) : (str1, str2) ? (str1 ~ String & str2 ~ String) |-> {
     (l1,l2) := (str1->lenght(), str2->lenght());
     l := l1+l2;
 
