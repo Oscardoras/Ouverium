@@ -1,8 +1,8 @@
-using "librairies/data_structures/ArrayList.fl";
+using "librairies/data_structures/LinkedList.fl";
 
 print("Test1\n");
 
-list := ArrayList();
+list := LinkedList();
 print("Test2\n");
 list->add_last(1);
 list->add_last(2);
@@ -10,4 +10,7 @@ list->add_last(3);
 list->add_last(4);
 
 print("Test3\n");
-print(list)
+list->foreach(x |-> {
+    print(x)
+});
+print("\n")

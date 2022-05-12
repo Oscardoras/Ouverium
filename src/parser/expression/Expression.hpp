@@ -24,7 +24,6 @@ struct Expression {
 
     bool escaped;
     std::vector<std::string> usedSymbols;
-    std::vector<std::string> newSymbols;
 
     Expression();
 

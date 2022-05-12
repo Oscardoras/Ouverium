@@ -209,18 +209,20 @@ namespace StandardParser {
                         if ((*it)->type == Expression::Symbol) {
                             auto symbol = std::static_pointer_cast<Symbol>(*it);
                             if (!symbol->escaped && std::find(op.begin(), op.end(), symbol->name) != op.end()) {
-                                auto functioncall = std::make_shared<FunctionCall>();
-                                functioncall->position = symbol->position;
-                                functioncall->function = symbol;
-                                auto tuple = std::make_shared<Tuple>();
-                                tuple->position = functioncall->position;
-                                tuple->objects.push_back(*(it-1));
-                                tuple->objects.push_back(*(it+1));
-                                functioncall->object = tuple;
-                                
-                                *(it-1) = functioncall;
-                                it = expressions.erase(it);
-                                it = expressions.erase(it);
+                                if (expressions.begin() <= it-1 && it+1 < expressions.end()) {
+                                    auto functioncall = std::make_shared<FunctionCall>();
+                                    functioncall->position = symbol->position;
+                                    functioncall->function = symbol;
+                                    auto tuple = std::make_shared<Tuple>();
+                                    tuple->position = functioncall->position;
+                                    tuple->objects.push_back(*(it-1));
+                                    tuple->objects.push_back(*(it+1));
+                                    functioncall->object = tuple;
+                                    
+                                    *(it-1) = functioncall;
+                                    it = expressions.erase(it);
+                                    it = expressions.erase(it);
+                                } else throw ParserError("operator " + symbol->name + " must be placed between two expressions", *std::static_pointer_cast<TextPosition>(symbol->position));
                             } else it++;
                         } else it++;
                     }
@@ -232,6 +234,8 @@ namespace StandardParser {
     }
 
     std::shared_ptr<Expression> getExpression(std::vector<Word> const& words, int &i, bool inTuple, bool inFunction, bool inOperator, bool priority) {
+        if (i >= (int) words.size()) throw IncompleteError();
+        
         std::shared_ptr<Expression> expression = nullptr;
 
         if (words[i].word == "(") {
@@ -395,11 +399,10 @@ namespace StandardParser {
         } else if (type == Expression::FunctionDefinition) {
             auto functionDefinition = std::static_pointer_cast<FunctionDefinition>(expression);
 
-            auto expr = std::make_shared<Expression>();
             auto symbolsCopy = symbols;
-            findSymbols(functionDefinition->parameters, expr, symbolsCopy, false);
-            findSymbols(functionDefinition->filter, expr, symbolsCopy, false);
-            findSymbols(functionDefinition->object, expr, symbolsCopy, true);
+            findSymbols(functionDefinition->parameters, expression, symbolsCopy, true);
+            findSymbols(functionDefinition->filter, expression, symbolsCopy, true);
+            findSymbols(functionDefinition->object, expression, symbolsCopy, true);
         } else if (type == Expression::Property) {
             auto property = std::static_pointer_cast<Property>(expression);
 
@@ -408,6 +411,7 @@ namespace StandardParser {
             auto symbol = std::static_pointer_cast<Symbol>(expression);
 
             expression->usedSymbols = {symbol->name};
+            symbols.push_back(symbol->name);
         } else if (type == Expression::Tuple) {
             auto tuple = std::static_pointer_cast<Tuple>(expression);
 
@@ -415,16 +419,10 @@ namespace StandardParser {
                 findSymbols(ex, expression, symbols, false);
         }
 
-        if (newScope)
-            for (auto name : expression->usedSymbols)
-                if (std::find(symbols.begin(), symbols.end(), name) == symbols.end()) {
-                    expression->newSymbols.push_back(name);
-                    symbols.push_back(name);
-                }
-
         for (auto name : expression->usedSymbols)
             if (std::find(parent->usedSymbols.begin(), parent->usedSymbols.end(), name) == parent->usedSymbols.end())
-                parent->usedSymbols.push_back(name);
+                if (!newScope || std::find(symbols.begin(), symbols.end(), name) != symbols.end())
+                    parent->usedSymbols.push_back(name);
     }
 
     std::shared_ptr<Expression> getTree(std::string const& path, std::string const& code, std::vector<std::string> symbols) {

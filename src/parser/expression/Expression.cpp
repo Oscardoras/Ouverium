@@ -58,11 +58,6 @@ std::string expressionToString(Expression const * const expression, int n) {
         for (std::shared_ptr<Expression> ex : tuple->objects) s += tabu(n) + expressionToString(ex.get(), n);
     }
 
-    if (!expression->newSymbols.empty()) {
-        s += tabu(n-1) + "newSymbols :\n";
-        for (std::string name : expression->newSymbols) s += tabu(n) + " " + name + "\n";
-    }
-
     return s;
 }
 
