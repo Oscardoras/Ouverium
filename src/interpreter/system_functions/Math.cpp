@@ -98,9 +98,9 @@ namespace Math {
         auto a = context.getSymbol("a").toObject(context);
         auto b = context.getSymbol("b").toObject(context);
             
-        if (a->type == Object::Int && b->type == Object::Int)
+        if (a->type == Object::Int && b->type == Object::Int && b->data.i != 0)
             return Reference(context.newObject(a->data.i / b->data.i));
-        else if (a->type == Object::Float && b->type == Object::Float)
+        else if (a->type == Object::Float && b->type == Object::Float && b->data.f != 0)
             return Reference(context.newObject(a->data.f / b->data.f));
         else throw FunctionArgumentsError();
     }
@@ -158,13 +158,74 @@ namespace Math {
         else throw FunctionArgumentsError();
     }
 
-    Reference iterate(FunctionContext & context) {
+    Reference increment(FunctionContext & context) {
         auto a = context.getSymbol("a").toObject(context);
             
         if (a->type == Object::Int) {
             a->data.i++;
             return context.getSymbol("a");
         } else throw FunctionArgumentsError();
+    }
+
+    Reference decrement(FunctionContext & context) {
+        auto a = context.getSymbol("a").toObject(context);
+            
+        if (a->type == Object::Int) {
+            a->data.i--;
+            return context.getSymbol("a");
+        } else throw FunctionArgumentsError();
+    }
+
+    Reference add(FunctionContext & context) {
+        auto a = context.getSymbol("a").toObject(context);
+        auto b = context.getSymbol("b").toObject(context);
+            
+        if (a->type == Object::Int && b->type == Object::Int)
+            a->data.i += b->data.i;
+        else if (a->type == Object::Float && b->type == Object::Float)
+            a->data.f += b->data.f;
+        else throw FunctionArgumentsError();
+
+        return Reference(context.newObject());
+    }
+
+    Reference remove(FunctionContext & context) {
+        auto a = context.getSymbol("a").toObject(context);
+        auto b = context.getSymbol("b").toObject(context);
+            
+        if (a->type == Object::Int && b->type == Object::Int)
+            a->data.i -= b->data.i;
+        else if (a->type == Object::Float && b->type == Object::Float)
+            a->data.f -= b->data.f;
+        else throw FunctionArgumentsError();
+
+        return Reference(context.newObject());
+    }
+
+    Reference mutiply(FunctionContext & context) {
+        auto a = context.getSymbol("a").toObject(context);
+        auto b = context.getSymbol("b").toObject(context);
+            
+        if (a->type == Object::Int && b->type == Object::Int)
+            a->data.i *= b->data.i;
+        else if (a->type == Object::Float && b->type == Object::Float)
+            a->data.f *= b->data.f;
+        else throw FunctionArgumentsError();
+
+        return Reference(context.newObject());
+    }
+
+    Reference divide(FunctionContext & context) {
+        auto a = context.getSymbol("a").toObject(context);
+        auto b = context.getSymbol("b").toObject(context);
+            
+        if (a->type == Object::Int && b->type == Object::Int && b->data.i != 0)
+            a->data.i /= b->data.i;
+        else if (a->type == Object::Float && b->type == Object::Float && b->data.i != 0)
+            a->data.f /= b->data.f;
+        else throw FunctionArgumentsError();
+
+        return Reference(context.newObject());
     }
 
     void initiate(Context & context) {
@@ -181,7 +242,12 @@ namespace Math {
         context.getSymbol(">").toObject(context)->functions.push_front(new SystemFunction(ab(), strictly_sup));
         context.getSymbol("<=").toObject(context)->functions.push_front(new SystemFunction(ab(), inf_equals));
         context.getSymbol(">=").toObject(context)->functions.push_front(new SystemFunction(ab(), sup_equals));
-        context.getSymbol("++").toObject(context)->functions.push_front(new SystemFunction(a(), iterate));
+        context.getSymbol("++").toObject(context)->functions.push_front(new SystemFunction(a(), increment));
+        context.getSymbol("--").toObject(context)->functions.push_front(new SystemFunction(a(), decrement));
+        context.getSymbol(":+").toObject(context)->functions.push_front(new SystemFunction(ab(), add));
+        context.getSymbol(":-").toObject(context)->functions.push_front(new SystemFunction(ab(), remove));
+        context.getSymbol(":*").toObject(context)->functions.push_front(new SystemFunction(ab(), mutiply));
+        context.getSymbol(":/").toObject(context)->functions.push_front(new SystemFunction(ab(), divide));
     }
 
 }
