@@ -23,7 +23,7 @@ ArrayList : this |-> {
     };
 
     this->is_empty : () |-> {
-        Array->lenght(this) = 0
+        Array->lenght(this) == 0
     };
 
     this->get_capacity : () |-> {
