@@ -33,7 +33,7 @@ LinkedList : this |-> {
     };
 
     this->is_empty : () |-> {
-        this->_first = ()
+        this->_first == ()
     };
 
     this->get_first : () ? (this->_first != ()) |-> {
@@ -161,7 +161,7 @@ LinkedList : this |-> {
 };
 
 LinkedList->Iterator : (this, list, cell) |-> {
-    List->Iterator(this, list);
+    BidirectionalIterator(this, list);
     this :~ LinkedList->Iterator;
 
     this->_cell := cell;

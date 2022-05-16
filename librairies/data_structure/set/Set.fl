@@ -1,8 +1,8 @@
-using "Iterable.fl";
+using "../Iterable.fl";
 
 
 Set : this |-> {
-    BidirectionalIterable(this);
+    Iterable(this);
     this :~ Set;
 
     this->lenght : () |-> {};

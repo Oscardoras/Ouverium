@@ -1,0 +1,169 @@
+using "Set.fl";
+
+
+LinkedSet : this |-> {
+    Set(this);
+    this :~ LinkedSet;
+
+    this->_first := ();
+    this->_last := ();
+    this->_lenght := 0;
+
+    this->foreach : function |-> {
+        cell := this->_first;
+        while (cell != ()) {
+            function(cell->object);
+            cell := cell->next
+        };
+        ()
+    };
+
+    this->lenght : () |-> {
+        this->_lenght
+    };
+
+    this->is_empty : () |-> {
+        this->_first == ()
+    };
+
+    this->add : object |-> {
+        cell := this->_first;
+        while (cell != () && cell->object != object) {
+            cell := cell->next
+        };
+
+        if (cell == ()) {
+            tmp->object := object;
+            tmp->previous := this->_last;
+            tmp->next := ();
+            if (this->_last != ()) {
+                this->_last->next := tmp
+            } else {
+                this->_first := tmp
+            };
+            this->_last := tmp;
+            ++this->_lenght;
+            TRUE
+        } else {
+            FALSE
+        }
+    };
+
+    this->remove : object |-> {
+        cell := this->_first;
+        while (cell != () && cell->object != object) {
+            cell := cell->next
+        };
+
+        if (cell == ()) {
+            FALSE
+        } else {
+            if (cell->previous != ()) {
+                cell->previous->next := cell->next
+            } else {
+                this->_first := cell->next
+            };
+            if (cell->next != ()) {
+                cell->next->previous := cell->previous
+            } else {
+                this->_last := cell->previous
+            };
+            --this->_lenght;
+
+            TRUE
+        }
+    };
+
+    this->iterator : () ? (this->_first != ()) |-> {
+        cell->object := ();
+        cell->previous := ();
+        cell->next := this->_first;
+        LinkedSet->Iterator((), this, cell)
+    };
+
+    this
+};
+
+LinkedSet->Iterator : (this, list, cell) |-> {
+    Iterator(this, list);
+    this :~ LinkedSet->Iterator;
+
+    this->_cell := cell;
+
+    this->has_previous : () |-> {
+        this->_cell->previous != ()
+    };
+
+    this->previous : () ? (this->has_previous()) |-> {
+        this->_cell := this->_cell->previous;
+        this->_cell->object
+    };
+
+    this->has_next : () |-> {
+        this->_cell->next != ()
+    };
+
+    this->next : () ? (this->has_next()) |-> {
+        this->_cell := this->_cell->next;
+        this->_cell->object
+    };
+
+    this->get : () |-> {
+        this->_cell->object
+    };
+
+    this->remove : () |-> {
+        if (this->_cell->previous != ()) {
+            this->_cell->previous->next := cell->next
+        } else {
+            this->iterable->first := cell->next
+        };
+
+        if (this->_cell->next != ()) {
+            this->_cell->next->previous := cell->previous
+        } else {
+            this->iterable->last := cell->previous
+        };
+        
+        this->_cell->object
+    };
+
+    this->insert : object |-> {
+        tmp->object := object;
+        tmp->previous := this->_cell->previous;
+        tmp->next := this->_cell;
+
+        if (this->_cell->previous != ()) {
+            this->_cell->previous->next := tmp
+        } else {
+            this->iterable->_first := tmp
+        };
+        this->_cell->previous := tmp;
+
+        tmp->object
+    };
+
+    this
+};
+
+(@) : (element, list) ? (list ~ LinkedList) |-> {
+    found := false;
+    it := list->iterator();
+    while (!found & it->has_next()) {
+        if (it->next() = element) {
+            found := true
+        }
+    };
+    found
+};
+
+(@==) : (element, list) ? (list ~ LinkedList) |-> {
+    found := false;
+    it := list->iterator();
+    while (!found & it->has_next()) {
+        if (it->next() === element) {
+            found := true
+        }
+    };
+    found
+}
