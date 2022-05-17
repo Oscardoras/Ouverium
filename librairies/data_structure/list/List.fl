@@ -5,24 +5,33 @@ List : this |-> {
     BidirectionalIterable(this);
     this :~ List;
 
-    this : index |-> {};
+    this : index ? (index ~ Int & 0 <= index & index < this->lenght()) |-> {};
 
     this->lenght : () |-> {};
     this->is_empty : () |-> {};
 
-    this->get_first : () |-> {};
-    this->get_last : () |-> {};
+    this->get_first : () ? (!this->is_empty()) |-> {};
+    this->get_last : () ? (!this->is_empty()) |-> {};
 
     this->add_first : () |-> {};
     this->add_last : () |-> {};
     
-    this->remove_first : () |-> {};
-    this->remove_last : () |-> {};
+    this->remove_first : () ? (!this->is_empty()) |-> {};
+    this->remove_last : () ? (!this->is_empty()) |-> {};
 
-    this->insert : (index, object) ? (index ~ Int) |-> {};
-    this->remove : index ? (index ~ Int) |-> {};
+    this->insert : (index, object) ? (index ~ Int & 0 <= index & index < this->lenght()) |-> {};
+    this->remove : index ? (index ~ Int & 0 <= index & index < this->lenght()) |-> {};
 
-    this->iterator : index ? (index ~ Int) |-> {};
+    this->iterator : index ? (index ~ Int & 0 <= index & index < this->lenght()) |-> {};
+
+    this
+};
+
+List->Iterator : (this, iterable) |-> {
+    BidirectionalIterable->Iterator(this, iterable);
+    this :~ List->Iterator;
+
+    this->insert : object |-> {};
 
     this
 }

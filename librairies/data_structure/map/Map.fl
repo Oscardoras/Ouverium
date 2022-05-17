@@ -12,9 +12,7 @@ Map : this |-> {
 
     this->has : key |-> {};
 
-    this->iterator : key |-> {};
-    this->iterator_first : () |-> {};
-    this->iterator_last : () |-> {};
+    this->iterator : key ? (this->has(key)) |-> {};
 
     this
 }

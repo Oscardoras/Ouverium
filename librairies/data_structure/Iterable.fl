@@ -17,11 +17,10 @@ Iterable->Iterator : (this, iterable) |-> {
     this->iterable := iterable;
 
     this->has_next : () |-> {};
-    this->next : () |-> {};
+    this->next : () ? (this->has_next()) |-> {};
 
     this->get : () |-> {};
     this->remove : () |-> {};
-    this->insert : object |-> {};
 
     this
 };
@@ -41,7 +40,7 @@ BidirectionalIterable->Iterator : (this, iterable) |-> {
     this :~ BidirectionalIterable->Iterator;
 
     this->has_previous : () |-> {};
-    this->previous : () |-> {};
+    this->previous : () ? (this->has_previous()) |-> {};
 
     this
 }

@@ -5,14 +5,13 @@ ArrayList : this |-> {
     List(this);
     this :~ ArrayList;
 
-    this : index |-> {
+    this : index ? (index ~ Int & 0 <= index & index < this->lenght()) |-> {
         Array->get(this, index-1)
     };
 
     this->foreach : function |-> {
         l := Array->lenght(list);
-        i := 1;
-        while (i <= l) {
+        for i from 1 to Array->lenght(list) {
             function(Array->get(list, index))
         };
         ()
@@ -31,14 +30,14 @@ ArrayList : this |-> {
     };
 
     this->set_capacity : (capacity ~ Int & capacity >= 0) |-> {
-        Array->set_capacity(capacity)
+        Array->set_capacity(this, capacity)
     };
 
-    this->get_first : () ? (Array->lenght(this) > 0) |-> {
+    this->get_first : () ? (!this->is_empty()) |-> {
         Array->get(this, 1)
     };
 
-    this->get_last : () ? (Array->lenght(this) > 0) |-> {
+    this->get_last : () ? (!this->is_empty()) |-> {
         Array->get(this, Array->lenght(this))
     };
 
