@@ -45,10 +45,8 @@ ArrayList : this |-> {
         l := Array->lenght(this);
         if (l > 0) {
             Array->add(this, Array->get(this, l));
-            i := l;
-            while (i > 0) {
-                Array->get(this, i-1) := Array->get(this, i);
-                --i
+            for i from l to 2 step (-1) {
+                Array->get(this, i) := Array->get(this, i-1)
             };
             Array->get(this, 0) := element
         } else {
@@ -60,41 +58,35 @@ ArrayList : this |-> {
         Array->add(this, element)
     };
 
-    this->remove_first : () ? (Array->lenght(this) > 0) |-> {
+    this->remove_first : () ? (!this->is_empty()) |-> {
         l := Array->lenght(this);
-        i := 1;
-        while (i < l) {
-            Array->get(this, i) := Array->get(this, i+1);
-            ++i
+        for i from 1 to (l-1) {
+            Array->get(this, i) := Array->get(this, i+1)
         };
         Array->remove(this)
     };
 
-    this->remove_last : () ? (Array->lenght(this) > 0) |-> {
+    this->remove_last : () ? (!this->is_empty()) |-> {
         Array->remove(this)
     };
 
-    this->insert : (index, object) ? (0 <= index & index < Array->lenght(this)) |-> {
+    this->insert : (index, object) ? (index ~ Int & 0 <= index & index < this->lenght()) |-> {
         l := Array->lenght(this);
         Array->add(this, Array->get(this, l));
-        i := l;
-        while (i > index+1) {
-            Array->get(this, i-1) := Array->get(this, i);
-            --i
+        for i from l to (index+2) step (-1) {
+            Array->get(this, i) := Array->get(this, i-1)
         };
         Array->get(this, index+1) := element
     };
 
-    this->remove : index ? (0 <= index & index < lenght(this)) |-> {
+    this->remove : index ? (index ~ Int & 0 <= index & index < this->lenght()) |-> {
         l := Array->lenght(this);
-        i := index+1;
-        tmp := Array->get(this, i);
-        while (i < l) {
-            Array->get(this, i) := Array->get(this, i+1);
-            ++i
+        tmp := Array->get(this, index+1);
+        for i from (index+1) to l {
+            Array->get(this, i) := Array->get(this, i+1)
         };
         Array->remove(this);
-        Array->get(this, i)
+        tmp
     };
 
     this->iterator_first : () ? (this->_first != ()) |-> {
@@ -107,7 +99,7 @@ ArrayList : this |-> {
 
     this->iterator : this->iterator_first;
 
-    this->iterator : index ? (0 <= index & index < lenght(this)) |-> {
+    this->iterator : index ? (index ~ Int & 0 <= index & index < this->lenght()) |-> {
         ArrayList->Iterator((), this, index)
     };
 
