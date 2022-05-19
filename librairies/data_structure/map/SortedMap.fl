@@ -1,0 +1,99 @@
+using "Map.fl";
+
+
+SortedMap : this |-> {
+    Map(this);
+    this :~ SortedMap;
+
+    this->_root := ();
+    this->_lenght := 0;
+
+    this : key |-> {
+        parent := ();
+        cell := this->_root;
+        while (cell != () & cell->key != key) {
+            parent := cell;
+            if (key < cell->key) {
+                cell := cell->left
+            } else {
+                cell := cell->right
+            }
+        };
+        if (cell == ()) {
+            cell->key := key
+        };
+        cell->value
+    };
+
+    this->lenght : () |-> {
+        this->_lenght 
+    };
+    this->is_empty : () |-> {
+        this->_lenght == 0
+    };
+
+    this->has : key |-> {
+        cell := this->_root;
+        while (cell != () & cell->key != key) {
+            if (key < cell->key) {
+                cell := cell->left
+            } else {
+                cell := cell->right
+            }
+        };
+        cell != ()
+    };
+
+    this->iterator : key ? (this->has(key)) |-> {
+
+    };
+
+    this
+};
+
+SortedMap->Iterator : (this, list, cell) |-> {
+    BidirectionalIterator(this, list);
+    this :~ SortedMap->Iterator;
+
+    this->_cell := cell;
+
+    this->has_previous : () |-> {
+        this->_cell->previous != ()
+    };
+
+    this->previous : () ? (this->has_previous()) |-> {
+        this->_cell := this->_cell->previous;
+        this->_cell->object
+    };
+
+    this->has_next : () |-> {
+        this->_cell->next != ()
+    };
+
+    this->next : () ? (this->has_next()) |-> {
+        this->_cell := this->_cell->next;
+        this->_cell->object
+    };
+
+    this->get : () |-> {
+        this->_cell->object
+    };
+
+    this->remove : () |-> {
+        if (this->_cell->previous != ()) {
+            this->_cell->previous->next := cell->next
+        } else {
+            this->iterable->first := cell->next
+        };
+
+        if (this->_cell->next != ()) {
+            this->_cell->next->previous := cell->previous
+        } else {
+            this->iterable->last := cell->previous
+        };
+        
+        this->_cell->object
+    };
+
+    this
+}
