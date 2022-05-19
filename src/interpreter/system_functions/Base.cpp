@@ -135,6 +135,111 @@ namespace Base {
         else return result;
     }
 
+    std::shared_ptr<Expression> for_statement() {
+        auto tuple = std::make_shared<Tuple>();
+
+        auto from_s = std::make_shared<Symbol>();
+        from_s->name = "from_s";
+        tuple->objects.push_back(from_s);
+
+        auto begin = std::make_shared<Symbol>();
+        begin->name = "begin";
+        tuple->objects.push_back(begin);
+
+        auto to_s = std::make_shared<Symbol>();
+        to_s->name = "to_s";
+        tuple->objects.push_back(to_s);
+
+        auto end = std::make_shared<Symbol>();
+        end->name = "end";
+        tuple->objects.push_back(end);
+
+        auto block = std::make_shared<FunctionCall>();
+        auto function_name = std::make_shared<Symbol>();
+        function_name->name = "block";
+        block->function = function_name;
+        block->object = std::make_shared<Tuple>();
+        tuple->objects.push_back(block);
+
+        return tuple;
+    }
+    Reference for_statement(FunctionContext & context) {
+        auto parent = context.getParent();
+
+        auto from_s = context.getSymbol("from_s").toObject(context);
+        auto begin = context.getSymbol("begin").toObject(context);
+        auto to_s = context.getSymbol("to_s").toObject(context);
+        auto end = context.getSymbol("end").toObject(context);
+        auto block_functions = context.getSymbol("block").toObject(context)->functions;
+
+        if (from_s == context.getSymbol("from_s").toObject(context) && begin->type == Object::Int && to_s == context.getSymbol("to_s").toObject(context) && end->type == Object::Int ) {
+            for (int i = 0; i < begin->data.i; i++)
+                Interpreter::callFunction(*parent, block_functions, std::make_shared<Tuple>(), nullptr);
+            
+            return Reference(context.newObject());
+        } else throw FunctionArgumentsError();
+    }
+
+    std::shared_ptr<Expression> for_step_statement() {
+        auto tuple = std::make_shared<Tuple>();
+
+        auto from_s = std::make_shared<Symbol>();
+        from_s->name = "from_s";
+        tuple->objects.push_back(from_s);
+
+        auto begin = std::make_shared<Symbol>();
+        begin->name = "begin";
+        tuple->objects.push_back(begin);
+
+        auto to_s = std::make_shared<Symbol>();
+        to_s->name = "to_s";
+        tuple->objects.push_back(to_s);
+
+        auto end = std::make_shared<Symbol>();
+        end->name = "end";
+        tuple->objects.push_back(end);
+
+        auto step_s = std::make_shared<Symbol>();
+        step_s->name = "step_s";
+        tuple->objects.push_back(step_s);
+
+        auto step = std::make_shared<Symbol>();
+        step->name = "step";
+        tuple->objects.push_back(step);
+
+        auto block = std::make_shared<FunctionCall>();
+        auto function_name = std::make_shared<Symbol>();
+        function_name->name = "block";
+        block->function = function_name;
+        block->object = std::make_shared<Tuple>();
+        tuple->objects.push_back(block);
+
+        return tuple;
+    }
+    Reference for_step_statement(FunctionContext & context) {
+        auto parent = context.getParent();
+
+        auto from_s = context.getSymbol("from_s").toObject(context);
+        auto begin = context.getSymbol("begin").toObject(context);
+        auto to_s = context.getSymbol("to_s").toObject(context);
+        auto end = context.getSymbol("end").toObject(context);
+        auto step_s = context.getSymbol("step_s").toObject(context);
+        auto step = context.getSymbol("step").toObject(context);
+        auto block_functions = context.getSymbol("block").toObject(context)->functions;
+
+        if (from_s == context.getSymbol("from_s").toObject(context) && begin->type == Object::Int && to_s == context.getSymbol("to_s").toObject(context) && end->type == Object::Int && step_s == context.getSymbol("step_s").toObject(context) && step->type == Object::Int) {
+            if (step->data.i > 0)
+                for (int i = 0; i < begin->data.i; i += step->data.i)
+                    Interpreter::callFunction(*parent, block_functions, std::make_shared<Tuple>(), nullptr);
+            else if (step->data.i < 0)
+                for (int i = 0; i > begin->data.i; i += step->data.i)
+                    Interpreter::callFunction(*parent, block_functions, std::make_shared<Tuple>(), nullptr);
+            else throw FunctionArgumentsError();
+            
+            return Reference(context.newObject());
+        } else throw FunctionArgumentsError();
+    }
+
     std::shared_ptr<Expression> path() {
         auto path = std::make_shared<Symbol>();
         path->name = "path";
@@ -363,11 +468,26 @@ namespace Base {
 
     void initiate(Context & context) {
         context.getSymbol(";").toObject(context)->functions.push_front(new SystemFunction(separator(), separator));
+
         context.getSymbol("if").toObject(context)->functions.push_front(new SystemFunction(if_statement(), if_statement));
+
         auto if_else = new SystemFunction(if_else_statement(), if_else_statement);
         if_else->externSymbols["else"] = context.getSymbol("else");
         context.getSymbol("if").toObject(context)->functions.push_front(if_else);
+
         context.getSymbol("while").toObject(context)->functions.push_front(new SystemFunction(while_statement(), while_statement));
+
+        auto for_s = new SystemFunction(for_statement(), for_statement);
+        for_s->externSymbols["from"] = context.getSymbol("from");
+        for_s->externSymbols["to"] = context.getSymbol("to");
+        context.getSymbol("for").toObject(context)->functions.push_front(for_s);
+
+        auto for_step_s = new SystemFunction(for_step_statement(), for_step_statement);
+        for_step_s->externSymbols["from"] = context.getSymbol("from");
+        for_step_s->externSymbols["to"] = context.getSymbol("to");
+        for_step_s->externSymbols["step"] = context.getSymbol("step");
+        context.getSymbol("for").toObject(context)->functions.push_front(for_step_s);
+
         context.getSymbol("include").toObject(context)->functions.push_front(new SystemFunction(path(), include));
         context.getSymbol("using").toObject(context)->functions.push_front(new SystemFunction(path(), use));
         context.getSymbol("$").toObject(context)->functions.push_front(new SystemFunction(copy(), copy));
