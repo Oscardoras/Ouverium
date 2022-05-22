@@ -2,7 +2,7 @@ using "expression/";
 using "Position.fl"
 
 
-TextPosition : (this, line, column) \ (line ~ Int & column ~ Int) |-> {
+TextPosition : (this, line, column) ? (line ~ Int & column ~ Int) |-> {
     Position(this);
     this :~ TextPosition;
 
@@ -12,11 +12,11 @@ TextPosition : (this, line, column) \ (line ~ Int & column ~ Int) |-> {
     this
 };
 
-TextPosition : (line, column) \ (line ~ Int & column ~ Int) |-> {
+TextPosition : (line, column) ? (line ~ Int & column ~ Int) |-> {
     TextPosition((), line, column)
 };
 
-Word : (this, word, position) \ (word ~ String & position ~ TextPosition) |-> {
+Word : (this, word, position) ? (word ~ String & position ~ TextPosition) |-> {
     this :~ Word;
 
     this->word := word;
@@ -25,12 +25,12 @@ Word : (this, word, position) \ (word ~ String & position ~ TextPosition) |-> {
     this
 };
 
-Word : (word, position) \ (word ~ String & position ~ TextPosition) |-> {
+Word : (word, position) ? (word ~ String & position ~ TextPosition) |-> {
     Word((), word, position)
 };
 
-get_words : code \ (code ~ String) |-> {
-    l := code.lenght();
+get_words : code ? (code ~ String) |-> {
+    l := code->lenght();
 
     chars := ArrayList();
     line := 1;

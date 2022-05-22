@@ -305,6 +305,9 @@ namespace Base {
         auto object = context.getSymbol("object").toObject(context);
         return Reference(context.newObject(*object));
     }
+    Reference copy_pointer(FunctionContext & context) {
+        return Reference(context.getSymbol("object").toObject(context));
+    }
 
     void assign1(std::vector<Object*> & cache, Reference const& var, Object* const& object) {
         if (var.type > 0) {
@@ -491,6 +494,7 @@ namespace Base {
         context.getSymbol("include").toObject(context)->functions.push_front(new SystemFunction(path(), include));
         context.getSymbol("using").toObject(context)->functions.push_front(new SystemFunction(path(), use));
         context.getSymbol("$").toObject(context)->functions.push_front(new SystemFunction(copy(), copy));
+        context.getSymbol("$==").toObject(context)->functions.push_front(new SystemFunction(copy(), copy_pointer));
         context.getSymbol(":=").toObject(context)->functions.push_front(new SystemFunction(assign(), assign));
         context.getSymbol(":").toObject(context)->functions.push_front(new SystemFunction(function_definition(), function_definition));
         context.getSymbol("==").toObject(context)->functions.push_front(new SystemFunction(equality(), equals));

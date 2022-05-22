@@ -22,7 +22,7 @@ SortedMap : this |-> {
         if (cell == ()) {
             cell->key := key
         };
-        cell->value
+        $== cell->value
     };
 
     this->lenght : () |-> {
@@ -44,55 +44,148 @@ SortedMap : this |-> {
         cell != ()
     };
 
-    this->iterator : key ? (this->has(key)) |-> {
+    this->remove : key ? (this->has(key)) |-> {
+        parent := ();
+        cell := this->_root;
+        while (cell != () & cell->key != key) {
+            parent := cell;
+            if (key < cell->key) {
+                cell := cell->left
+            } else {
+                cell := cell->right
+            }
+        };
 
+        if (parent == ()) {
+            this->_root := cell->right;
+            parent := this->_root;
+            while (parent->left != ()) {
+                parent := parent->left
+            };
+            parent->left := cell->left
+        } else if (cell === parent->left) {
+            parent->left := cell->right;
+            parent := parent->left;
+            while (parent->left != ()) {
+                parent := parent->left
+            };
+            parent->left := cell->left
+        } else {
+            parent->right := cell->left;
+            parent := parent->right;
+            while (parent->right != ()) {
+                parent := parent->right
+            };
+            parent->right := cell->right
+        };
+
+        ()
+    };
+
+    this->iterator : key ? (this->has(key)) |-> {
+        stack := ();
+        cell := this->_root;
+        while (cell != () & cell->key != key) {
+            head->parent := stack;
+            head->cell := cell;
+            stack := head;
+
+            if (key < cell->key) {
+                cell := cell->left
+            } else {
+                cell := cell->right
+            }
+        };
+        
+        SortedMap->Iterator((), this, stack)
     };
 
     this
 };
 
-SortedMap->Iterator : (this, list, cell) |-> {
-    BidirectionalIterator(this, list);
+SortedMap->Iterator : (this, map, stack) |-> {
+    BidirectionalIterator(this, map);
     this :~ SortedMap->Iterator;
 
-    this->_cell := cell;
+    this->_stack := stack;
 
     this->has_previous : () |-> {
-        this->_cell->previous != ()
+        if (this->_stack->cell->left != ()) {
+            true
+        } else {
+            stack := this->_stack;
+            while (stack->parent != () & stack->parent->cell->left === stack->cell) {
+                stack := stack->parent
+            };
+            stack->parent != ()
+        }
     };
 
     this->previous : () ? (this->has_previous()) |-> {
-        this->_cell := this->_cell->previous;
-        this->_cell->object
+        if (this->_stack->cell->left != ()) {
+            $== this->_stack->cell->left->value
+        } else {
+            while (this->_stack->parent != () & this->_stack->parent->cell->left === this->_stack->cell) {
+                this->_stack := this->_stack->parent
+            };
+            $== this->_stack->parent->cell->left
+        }
     };
 
     this->has_next : () |-> {
-        this->_cell->next != ()
+        if (this->_stack->cell->right != ()) {
+            true
+        } else {
+            stack := this->_stack;
+            while (stack->parent != () & stack->parent->cell->right === stack->cell) {
+                stack := stack->parent
+            };
+            stack->parent != ()
+        }
     };
 
     this->next : () ? (this->has_next()) |-> {
-        this->_cell := this->_cell->next;
-        this->_cell->object
+        if (this->_stack->cell->right != ()) {
+            $== this->_stack->cell->right->value
+        } else {
+            while (this->_stack->parent != () & this->_stack->parent->cell->right === this->_stack->cell) {
+                this->_stack := stack->parent
+            };
+            $== this->_stack->parent->cell->right
+        }
     };
 
     this->get : () |-> {
-        this->_cell->object
+        $== this->_stack->cell
     };
 
     this->remove : () |-> {
-        if (this->_cell->previous != ()) {
-            this->_cell->previous->next := cell->next
+        cell := this->_stack->left;
+        this->_stack := this->_stack->parent;
+        if (this->_stack == ()) {
+            map->_root := cell->right;
+            parent := map->_root;
+            while (parent->left != ()) {
+                parent := parent->left
+            };
+            parent->left := cell->left
+        } else if (cell === this->_stack->cell->left) {
+            this->_stack->cell->left := cell->right;
+            parent := this->_stack->cell->left;
+            while (parent->left != ()) {
+                parent := parent->left
+            };
+            parent->left := cell->left
         } else {
-            this->iterable->first := cell->next
+            this->_stack->cell->right := cell->left;
+            parent := this->_stack->cell->right;
+            while (parent->right != ()) {
+                parent := parent->right
+            };
+            parent->right := cell->right
         };
 
-        if (this->_cell->next != ()) {
-            this->_cell->next->previous := cell->previous
-        } else {
-            this->iterable->last := cell->previous
-        };
-        
-        this->_cell->object
+        ()
     };
 
     this
