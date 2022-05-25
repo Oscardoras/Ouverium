@@ -222,7 +222,7 @@ LinkedList->Iterator : (this, list, cell) |-> {
     this
 };
 
-(@) : (element, list) ? (list ~ LinkedList) |-> {
+(~) : (element, list) ? (list ~ LinkedList) |-> {
     found := false;
     it := list->iterator();
     while (!found & it->has_next()) {
@@ -233,7 +233,7 @@ LinkedList->Iterator : (this, list, cell) |-> {
     found
 };
 
-(@==) : (element, list) ? (list ~ LinkedList) |-> {
+(~==) : (element, list) ? (list ~ LinkedList) |-> {
     found := false;
     it := list->iterator();
     while (!found & it->has_next()) {

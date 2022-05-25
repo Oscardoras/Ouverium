@@ -146,7 +146,7 @@ ArrayList->Iterator : (this, list, index) |-> {
 };
 
 
-(@) : (element, list) |-> {
+(~) : (element, list) |-> {
     found := false;
     l := Array->lenght(list);
     i := 1;
@@ -160,7 +160,7 @@ ArrayList->Iterator : (this, list, index) |-> {
     found
 };
 
-(@==) : (element, list) |-> {
+(~==) : (element, list) |-> {
     found := false;
     l := Array->lenght(list);
     i := 1;
