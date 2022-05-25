@@ -1,0 +1,25 @@
+{
+    "name": "ouver",
+    "displayName": "Ouver",
+    "description": "VSCode support for Ouver.",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.67.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "ouver",
+            "aliases": ["Ouver", "ouver"],
+            "extensions": [".fl",".ov"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "ouver",
+            "scopeName": "source.fl",
+            "path": "./syntaxes/ouver.tmLanguage.json"
+        }]
+    }
+}
