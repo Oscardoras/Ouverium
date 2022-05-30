@@ -3,29 +3,96 @@
 	"name": "Ouver",
 	"patterns": [
 		{
-			"include": "#keywords"
-		},
-		{
-			"include": "#strings"
+			"include": "#expression"
 		}
 	],
 	"repository": {
-		"keywords": {
-			"patterns": [{
-				"name": "keyword.control.ouver",
-				"match": "\\b(if|while|for|return)\\b"
-			}]
+		"expression": {
+			"patterns": [
+				{ "include": "#comment" },
+				{ "include": "#block-parenthesis" },
+				{ "include": "#block-brackets" },
+				{ "include": "#block-brace" },
+				{ "include": "#operator-symbol" },
+				{ "include": "#regular-symbol" },
+				{ "include": "#number-symbol" },
+				{ "include": "#boolean-symbol" },
+				{ "include": "#string-symbol" },
+				{ "include": "#function-definition" },
+				{ "include": "#function-definition-filter" },
+				{ "include": "#tuple" },
+				{ "include": "#property" },
+				{ "include": "#base-functions" }
+			]
 		},
-		"strings": {
-			"name": "string.quoted.double.ouver",
+		"comment": {
+			"name": "comment",
+			"match": "#.*"
+		},
+		"block-parenthesis": {
+			"begin": "\\(",
+			"end": "\\)",
+			"patterns": [
+				{ "include": "#expression" }
+			]
+		},
+		"block-brackets": {
+			"begin": "\\[",
+			"end": "\\]",
+			"patterns": [
+				{ "include": "#expression" }
+			]
+		},
+		"block-brace": {
+			"begin": "\\{",
+			"end": "\\}",
+			"patterns": [
+				{ "include": "#expression" }
+			]
+		},
+		"operator-symbol": {
+			"name": "keyword.operator",
+			"match": "(?!\\|->|->|\\?|,)[!\\$%&\\*\\+-/:;<=>\\?@\\^\\|~]+"
+		},
+		"regular-symbol": {
+			"name": "variable.other",
+			"match": "\\b(?!true|false|if|else|while|for|from|to|step|using|include)([_a-zA-Z]+[_a-zA-Z0-9]*|[_a-zA-Z0-9]*[_a-zA-Z]+)\\b"
+		},
+		"number-symbol": {
+			"name": "constant.numeric",
+			"match": "\\b([0-9]+\\.?[0-9]*)|([0-9]*\\.?[0-9]+)\\b"
+		},
+		"boolean-symbol": {
+			"name": "constant.language",
+			"match": "\\b(true|false)\\b"
+		},
+		"string-symbol": {
+			"name": "string.quoted.double",
 			"begin": "\"",
 			"end": "\"",
-			"patterns": [
-				{
-					"name": "constant.character.escape.ouver",
-					"match": "\\\\."
-				}
-			]
+			"patterns": [{
+				"match": "\\\\\""
+			}]
+		},
+		"tuple": {
+			"name": "keyword.control",
+			"match": ","
+		},
+		"property": {
+			"name": "keyword.control",
+			"match": "->"
+		},
+		"function-definition": {
+			"name": "keyword.control",
+			"match": "\\|->"
+		},
+		"function-definition-filter": {
+			"name": "keyword.control",
+			"match": "\\?"
+		},
+		"base-functions": {
+			"name": "support.function",
+			"match": "\\b(if|else|while|for|from|to|step|using|include)\\b"
 		}
 	},
 	"scopeName": "source.fl"
