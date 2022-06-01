@@ -53,8 +53,13 @@ namespace Math {
         auto a = context.getSymbol("a").toObject(context);
         auto b = context.getSymbol("b").toObject(context);
 
-        if (a->type == Object::Bool && b->type == Object::Bool)
-            return Reference(context.newObject(a->data.b && b->data.b));
+        if (a->type == Object::Bool)
+            if (a->data.b) {
+                auto r = Interpreter::callFunction(*context.getParent(), b->functions, std::make_shared<Tuple>(), nullptr).toObject(context);
+                if (r->type == Object::Bool)
+                    return Reference(context.newObject(r->data.b));
+                else throw FunctionArgumentsError();
+            } else return Reference(context.newObject(false));
         else throw FunctionArgumentsError();
     }
 
@@ -62,8 +67,13 @@ namespace Math {
         auto a = context.getSymbol("a").toObject(context);
         auto b = context.getSymbol("b").toObject(context);
 
-        if (a->type == Object::Bool && b->type == Object::Bool)
-            return Reference(context.newObject(a->data.b || b->data.b));
+        if (a->type == Object::Bool)
+            if (!a->data.b) {
+                auto r = Interpreter::callFunction(*context.getParent(), b->functions, std::make_shared<Tuple>(), nullptr).toObject(context);
+                if (r->type == Object::Bool)
+                    return Reference(context.newObject(r->data.b));
+                else throw FunctionArgumentsError();
+            } else return Reference(context.newObject(true));
         else throw FunctionArgumentsError();
     }
 
