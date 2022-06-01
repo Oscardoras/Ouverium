@@ -3,6 +3,7 @@
 #include <fstream>
 
 #include "../Interpreter.hpp"
+#include "../../parser/Standard.hpp"
 
 
 namespace Base {
@@ -138,6 +139,10 @@ namespace Base {
     std::shared_ptr<Expression> for_statement() {
         auto tuple = std::make_shared<Tuple>();
 
+        auto variable = std::make_shared<Symbol>();
+        variable->name = "variable";
+        tuple->objects.push_back(variable);
+
         auto from_s = std::make_shared<Symbol>();
         from_s->name = "from_s";
         tuple->objects.push_back(from_s);
@@ -166,6 +171,7 @@ namespace Base {
     Reference for_statement(FunctionContext & context) {
         auto parent = context.getParent();
 
+        auto variable = context.getSymbol("variable");
         auto from_s = context.getSymbol("from_s").toObject(context);
         auto begin = context.getSymbol("begin").toObject(context);
         auto to_s = context.getSymbol("to_s").toObject(context);
@@ -173,8 +179,10 @@ namespace Base {
         auto block_functions = context.getSymbol("block").toObject(context)->functions;
 
         if (from_s == context.getSymbol("from_s").toObject(context) && begin->type == Object::Int && to_s == context.getSymbol("to_s").toObject(context) && end->type == Object::Int ) {
-            for (int i = 0; i < begin->data.i; i++)
+            for (long i = begin->data.i; i < end->data.i; i++) {
+                variable.getReference() = context.newObject(i);
                 Interpreter::callFunction(*parent, block_functions, std::make_shared<Tuple>(), nullptr);
+            }
             
             return Reference(context.newObject());
         } else throw FunctionArgumentsError();
@@ -182,6 +190,10 @@ namespace Base {
 
     std::shared_ptr<Expression> for_step_statement() {
         auto tuple = std::make_shared<Tuple>();
+
+        auto variable = std::make_shared<Symbol>();
+        variable->name = "variable";
+        tuple->objects.push_back(variable);
 
         auto from_s = std::make_shared<Symbol>();
         from_s->name = "from_s";
@@ -219,6 +231,7 @@ namespace Base {
     Reference for_step_statement(FunctionContext & context) {
         auto parent = context.getParent();
 
+        auto variable = context.getSymbol("variable");
         auto from_s = context.getSymbol("from_s").toObject(context);
         auto begin = context.getSymbol("begin").toObject(context);
         auto to_s = context.getSymbol("to_s").toObject(context);
@@ -229,11 +242,15 @@ namespace Base {
 
         if (from_s == context.getSymbol("from_s").toObject(context) && begin->type == Object::Int && to_s == context.getSymbol("to_s").toObject(context) && end->type == Object::Int && step_s == context.getSymbol("step_s").toObject(context) && step->type == Object::Int) {
             if (step->data.i > 0)
-                for (int i = 0; i < begin->data.i; i += step->data.i)
+                for (long i = begin->data.i; i < end->data.i; i += step->data.i) {
+                    variable.getReference() = context.newObject(i);
                     Interpreter::callFunction(*parent, block_functions, std::make_shared<Tuple>(), nullptr);
+                }
             else if (step->data.i < 0)
-                for (int i = 0; i > begin->data.i; i += step->data.i)
+                for (long i = begin->data.i; i > end->data.i; i += step->data.i) {
+                    variable.getReference() = context.newObject(i);
                     Interpreter::callFunction(*parent, block_functions, std::make_shared<Tuple>(), nullptr);
+                }
             else throw FunctionArgumentsError();
             
             return Reference(context.newObject());
@@ -265,7 +282,12 @@ namespace Base {
         while (std::getline(file, line))
             code += line + '\n';
 
-        return Interpreter::run(*context.getGlobal(), path, code);
+        try {
+            return Interpreter::run(*context.getGlobal(), path, code);
+        } catch (StandardParser::IncompleteError & e) {
+            std::cerr << "incomplete code, you must finish the last expression in file \"" << path << "\"" << std::endl;
+            return Reference(context.newObject());
+        }
     }
 
     Reference use(FunctionContext & context) {
@@ -291,7 +313,12 @@ namespace Base {
             while (std::getline(file, line))
                 code += line + '\n';
 
-            return Interpreter::run(*context.getGlobal(), path, code);
+            try {
+                return Interpreter::run(*context.getGlobal(), path, code);
+            } catch (StandardParser::IncompleteError & e) {
+                std::cerr << "incomplete code, you must finish the last expression in file \"" << path << "\"" << std::endl;
+                return Reference(context.newObject());
+            }
         } else return Reference(context.newObject());
     }
 

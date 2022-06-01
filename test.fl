@@ -1,10 +1,13 @@
-using "librairies/data_structures/LinkedList.fl";
+using "librairies/data_structure/ArrayList.fl";
 
-list := LinkedList();
-list->add_last(1);
-list->add_last(2);
-list->add_last(3);
-list->add_last(4);
-list->foreach(x |-> {
-    print(x, "\n")
-})
+list := ArrayList();
+list->add_last(1,1);
+list->add_last(2,2);
+list->add_last(3,3);
+list->add_last(4,4);
+
+it := list->iterator();
+while (it->has_next()) {
+    print(it->get(), "\n");
+    it->next()
+}

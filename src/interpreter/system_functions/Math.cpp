@@ -25,6 +25,22 @@ namespace Math {
 
         return tuple;
     }
+    std::shared_ptr<Expression> a_b() {
+        auto tuple = std::make_shared<Tuple>();
+
+        auto a = std::make_shared<Symbol>();
+        a->name = "a";
+        tuple->objects.push_back(a);
+
+        auto b = std::make_shared<FunctionCall>();
+        auto function_name = std::make_shared<Symbol>();
+        function_name->name = "b";
+        b->function = function_name;
+        b->object = std::make_shared<Tuple>();
+        tuple->objects.push_back(b);
+
+        return tuple;
+    }
 
     Reference logical_not(FunctionContext & context) {
         auto a = context.getSymbol("a").toObject(context);

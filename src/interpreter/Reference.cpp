@@ -59,7 +59,7 @@ bool Reference::isReference() const {
 
 Object* & Reference::getReference() const {
     if (type == PropertyReference) return *propertyRefrence.reference;
-    else if (type == ArrayReference) return arrayReference.array->data.a[arrayReference.i].o;
+    else if (type == ArrayReference) return arrayReference.array->data.a[arrayReference.i+1].o;
     else return *symbolReference;
 }
 

@@ -37,7 +37,7 @@ namespace Array {
         auto array = context.getSymbol("array").toObject(context);
         auto i = context.getSymbol("i").toObject(context);
 
-        if (array->type > 0 && i->type == Object::Int)
+        if (i->type == Object::Int && i->data.i >= 0 && i->data.i < array->type)
             return Reference(array, i->data.i);
         else throw FunctionArgumentsError();
     }
@@ -116,7 +116,7 @@ namespace Array {
         array->type++;
         array->data.a[array->type].o = element;
 
-        return Reference(array, array->type);
+        return Reference(array, array->type-1);
     }
 
     std::shared_ptr<Expression> remove_array_element() {
@@ -129,7 +129,7 @@ namespace Array {
 
         if (array->type > 0) {
             array->type--;
-            return Reference(array, array->type+1);
+            return Reference(array, array->type);
         } else throw FunctionArgumentsError();
     }
 

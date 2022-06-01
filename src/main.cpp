@@ -36,7 +36,7 @@ int main(int argc, char ** argv) {
             try {
                 Interpreter::run(context, argv[1], code);
             } catch (StandardParser::IncompleteError & e) {
-                std::cerr << "incomplete code, you must finish the last expression" << std::endl;
+                std::cerr << "incomplete code, you must finish the last expression in file \"" << argv[1] << "\"" << std::endl;
             }
         } else std::cerr << "Error: unable to load the source file " << argv[1] << "." << std::endl;
     } else std::cerr << "Error: please give the name of the source and the name of the destination." << std::endl;
