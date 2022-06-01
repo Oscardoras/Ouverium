@@ -256,8 +256,8 @@ namespace Math {
 
     void initiate(Context & context) {
         context.getSymbol("!").toObject(context)->functions.push_front(new SystemFunction(a(), logical_not));
-        context.getSymbol("&").toObject(context)->functions.push_front(new SystemFunction(ab(), logical_and));
-        context.getSymbol("|").toObject(context)->functions.push_front(new SystemFunction(ab(), logical_or));
+        context.getSymbol("&").toObject(context)->functions.push_front(new SystemFunction(a_b(), logical_and));
+        context.getSymbol("|").toObject(context)->functions.push_front(new SystemFunction(a_b(), logical_or));
         context.getSymbol("+").toObject(context)->functions.push_front(new SystemFunction(ab(), addition));
         context.getSymbol("-").toObject(context)->functions.push_front(new SystemFunction(a(), opposite));
         context.getSymbol("-").toObject(context)->functions.push_front(new SystemFunction(ab(), substraction));
