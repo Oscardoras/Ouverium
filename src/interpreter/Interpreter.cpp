@@ -94,9 +94,9 @@ Reference Interpreter::callFunction(Context & context, std::list<Function*> func
                 Object* filter;
                 if (((CustomFunction*) function)->pointer->filter != nullptr)
                     filter = execute(function_context, ((CustomFunction*) function)->pointer->filter).toObject(context);
-                else filter = context.newObject(true);
+                else filter = nullptr;
 
-                if (filter->type == Object::Bool && filter->data.b)
+                if (filter == nullptr || (filter->type == Object::Bool && filter->data.b))
                     return execute(function_context, ((CustomFunction*) function)->pointer->object);
                 else throw FunctionArgumentsError();
             } else {

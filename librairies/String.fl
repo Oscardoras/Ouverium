@@ -1,11 +1,11 @@
-using "data_structures/ArrayList.fl";
+using "data_structure/ArrayList.fl";
 
 
-Char : this ? (this ~ Char) |-> {
+Char : this \ (this ~ Char) |-> {
     this
 };
-Char : this ? (this ~ String & this->lenght() == 1) |-> {
-    this[0]
+Char : this \ (Array->lenght(this) == 1) |-> {
+    Array->get(this, 0)
 };
 
 String : this |-> {
@@ -24,7 +24,7 @@ String : this |-> {
         })
     };
 
-    this->index_of : (substring ~ String) |-> {
+    this->index_of : substring \ (substring ~ String) |-> {
         index := -1;
 
         i := 0;
@@ -35,18 +35,19 @@ String : this |-> {
             };
             if (j == substring->lenght()) {
                 index := i
-            };
-            ++i
+            } else {
+                ++i
+            }
         };
 
         index
     };
 
-    this->substring : (begin, len) ? (begin ~ Int & len ~ Int & len >= 0 & begin+len < this->lenght()) |-> {
+    this->substring : (begin, len) \ (begin ~ Int & len ~ Int & len >= 0 & begin+len < this->lenght()) |-> {
         str := String();
-        str->set_capacity(end - begin);
+        str->set_capacity(len);
 
-        for i from 0 to (len-1) {
+        for i from 0 to len {
             str->add_last(this[begin+i])
         };
 
@@ -57,62 +58,60 @@ String : this |-> {
 };
 
 
-(~) : (substring, string) ? (substring ~ String & string ~ String) |-> {
+(~) : (substring, string) \ (is substring String & is string String) |-> {
     string->index_of(substring) >= 0
 };
 
-(+) : (str1, str2) ? (str1 ~ String & str2 ~ String) |-> {
+(+) : (str1, str2) \ (str1 ~ String & str2 ~ String) |-> {
     str := String();
 
     (l1,l2) := (str1->lenght(), str2->lenght());
     l := l1+l2;
     str->set_capacity(l);
 
-    i := 1;
-    while (i <= l1) {
-        str->add_last(get(str1, i))
+    for i from 0 to l1 {
+        str->add_last(str1[i])
     };
-    i := 1;
-    while (i <= l2) {
-        str->add_last(get(str2, i))
+    i := 0;
+    for i from 0 to l2 {
+        str->add_last(str2[i])
     };
     
     str
 };
-(+) : (str1, c2) ? (str1 ~ String & c2 ~ Char) |-> {
+(+) : (str1, c2) \ (str1 ~ String & c2 ~ Char) |-> {
     str2 := String();
     str2->add_last(c2);
     str1 + str2
 };
-(+) : (c1, str2) ? (c1 ~ Char & str2 ~ String) |-> {
+(+) : (c1, str2) \ (c1 ~ Char & str2 ~ String) |-> {
     str1 := String();
     str1->add_last(c1);
     str1 + str2
 };
-(+) : (c1, c2) ? (c1 ~ Char & c2 ~ Char) |-> {
+(+) : (c1, c2) \ (c1 ~ Char & c2 ~ Char) |-> {
     str1 := String();
     str1->add_last(c1);
     str1 + c2
 };
 
-(:+) : (str1, str2) ? (str1 ~ String & str2 ~ String) |-> {
+(:+) : (str1, str2) \ (str1 ~ String & str2 ~ String) |-> {
     (l1,l2) := (str1->lenght(), str2->lenght());
     l := l1+l2;
 
     if (str1->get_capacity() < l) {
         str1->set_capacity(l)
-    }
+    };
 
-    str->set_capacity(l);
+    str1->set_capacity(l);
 
-    i := 1;
-    while (i <= l2) {
-        str->add_last(get(str2, i))
+    for i from 0 to l2 {
+        str1->add_last(str2[i])
     };
     
-    str
+    str1
 };
-(:+) : (str1, c2) ? (str1 ~ String & c2 ~ Char) |-> {
+(:+) : (str1, c2) \ (str1 ~ String & c2 ~ Char) |-> {
     str2 := String();
     str2->add_last(c2);
     str1 :+ str2

@@ -1,5 +1,5 @@
 using "expression/";
-using "Position.fl"
+using "Position.fl";
 
 
 TextPosition : (this, line, column) ? (line ~ Int & column ~ Int) |-> {
@@ -25,15 +25,15 @@ Word : (this, position) ? (this ~ String & position ~ TextPosition) |-> {
 
 is_operator : c ? (c ~ Char) |-> {
     !Char->is_alphanumeric(c) & !(c ~ "_'`\".([{)]}")
-}
+};
 
 is_number : c ? (c ~ Char) {
     Char->is_digit(c) | c == Char "."
-}
+};
 
 is_alphanumeric : c ? (c ~ Char) |-> {
     Char->is_alphanumeric(c) | c ~ "_\'`"
-}
+};
 
 is_operator : str ? (str ~ String) |-> {
     ok := true;
@@ -45,7 +45,7 @@ is_operator : str ? (str ~ String) |-> {
         ++i
     }
     return ok;
-}
+};
 
 is_number : str ? (str ~ String) |-> {
     ok := true;
@@ -57,7 +57,7 @@ is_number : str ? (str ~ String) |-> {
         ++i
     }
     return ok;
-}
+};
 
 is_alphanumeric : str ? (str ~ String) |-> {
     ok := true;
@@ -69,13 +69,13 @@ is_alphanumeric : str ? (str ~ String) |-> {
         ++i
     }
     return ok;
-}
+};
 
 system_chars = ArrayList["->", ",", "(", ")", "[", "]", "{", "}", "?", "|->"];
 
 is_system : str ? (str ~ String) |-> {
     str ~ system_chars
-}
+};
 
 get_words : code ? (code ~ String) |-> {
     words := ArrayList();
@@ -159,7 +159,7 @@ get_char_priority : c ? (c ~ Char) |-> {
     else if (c == Char ":") 6
     else if (c == Char ";") 7
     else 4
-}
+};
 
 compare_operators : (a, b) ? (a ~ String, b ~ String) |-> {
     result := 0;

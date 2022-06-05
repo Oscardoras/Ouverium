@@ -11,9 +11,9 @@ Map : this |-> {
     this->is_empty : () |-> {};
 
     this->has : key |-> {};
-    this->remove : key ? (this->has(key)) |-> {};
+    this->remove : key \ (this->has(key)) |-> {};
 
-    this->iterator : key ? (this->has(key)) |-> {};
+    this->iterator : key \ (this->has(key)) |-> {};
 
     this
 }

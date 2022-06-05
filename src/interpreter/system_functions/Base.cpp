@@ -330,7 +330,16 @@ namespace Base {
     }
     Reference copy(FunctionContext & context) {
         auto object = context.getSymbol("object").toObject(context);
-        return Reference(context.newObject(*object));
+
+        if (object->type == Object::Char)
+            return Reference(context.newObject(object->data.c));
+        else if (object->type == Object::Float)
+            return Reference(context.newObject(object->data.f));
+        else if (object->type == Object::Int)
+            return Reference(context.newObject(object->data.i));
+        else if (object->type == Object::Bool)
+            return Reference(context.newObject(object->data.b));
+        else throw FunctionArgumentsError();
     }
     Reference copy_pointer(FunctionContext & context) {
         return Reference(context.getSymbol("object").toObject(context));
@@ -410,31 +419,31 @@ namespace Base {
 
     bool equals(Object* a, Object* b) {
         if (a->type == b->type) {
-            for (auto const& element : a->fields) {
-                auto it = b->fields.find(element.first);
-                if (it != b->fields.end()) {
-                    if (!equals(element.second, it->second))
-                        return false;
-                } else return false;
-            }
-
-            auto ita = a->functions.begin();
-            auto itb = b->functions.begin();
-            while (ita != a->functions.end()) {
-                if (itb != b->functions.end()) {
-                    if ((*ita)->type == Function::Custom) {
-                        if (((CustomFunction*) *ita)->pointer != ((CustomFunction*) *itb)->pointer)
-                            return false;
-                    } else
-                        if (((SystemFunction*) *ita)->pointer != ((SystemFunction*) *itb)->pointer)
-                            return false;
-                } else return false;
-
-                ita++;
-                itb++;
-            }
-
             if (a->type >= 0) {
+                for (auto const& element : a->fields) {
+                    auto it = b->fields.find(element.first);
+                    if (it != b->fields.end()) {
+                        if (!equals(element.second, it->second))
+                            return false;
+                    } else return false;
+                }
+
+                auto ita = a->functions.begin();
+                auto itb = b->functions.begin();
+                while (ita != a->functions.end()) {
+                    if (itb != b->functions.end()) {
+                        if ((*ita)->type == Function::Custom) {
+                            if (((CustomFunction*) *ita)->pointer != ((CustomFunction*) *itb)->pointer)
+                                return false;
+                        } else
+                            if (((SystemFunction*) *ita)->pointer != ((SystemFunction*) *itb)->pointer)
+                                return false;
+                    } else return false;
+
+                    ita++;
+                    itb++;
+                }
+
                 for (long i = 1; i <= a->type; i++) {
                     if (!equals(a->data.a[i].o, b->data.a[i].o))
                         return false;

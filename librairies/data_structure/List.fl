@@ -5,24 +5,24 @@ List : this |-> {
     BidirectionalIterable(this);
     this :~ List;
 
-    this : index ? (index ~ Int & 0 <= index & index < this->lenght()) |-> {};
+    this : index \ (index ~ Int & 0 <= index & index < this->lenght()) |-> {};
 
     this->lenght : () |-> {};
     this->is_empty : () |-> {};
 
-    this->get_first : () ? (!this->is_empty()) |-> {};
-    this->get_last : () ? (!this->is_empty()) |-> {};
+    this->get_first : () \ (!this->is_empty()) |-> {};
+    this->get_last : () \ (!this->is_empty()) |-> {};
 
     this->add_first : () |-> {};
     this->add_last : () |-> {};
     
-    this->remove_first : () ? (!this->is_empty()) |-> {};
-    this->remove_last : () ? (!this->is_empty()) |-> {};
+    this->remove_first : () \ (!this->is_empty()) |-> {};
+    this->remove_last : () \ (!this->is_empty()) |-> {};
 
-    this->insert : (index, object) ? (index ~ Int & 0 <= index & index < this->lenght()) |-> {};
-    this->remove : index ? (index ~ Int & 0 <= index & index < this->lenght()) |-> {};
+    this->insert : (index, object) \ (index ~ Int & 0 <= index & index < this->lenght()) |-> {};
+    this->remove : index \ (index ~ Int & 0 <= index & index < this->lenght()) |-> {};
 
-    this->iterator : index ? (index ~ Int & 0 <= index & index < this->lenght()) |-> {};
+    this->iterator : index \ (index ~ Int & 0 <= index & index < this->lenght()) |-> {};
 
     this
 };

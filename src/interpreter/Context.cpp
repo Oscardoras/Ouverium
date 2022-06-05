@@ -119,7 +119,7 @@ void Context::addSymbol(std::string const& symbol, Reference const& reference) {
         for (long i = 0; i < reference.type; i++)
             references.back()->data.a[i+1].o = reference.tuple[i].toObject(*this);
         symbols[symbol] = Reference(&references.back());
-    } symbols[symbol] = reference;
+    } else symbols[symbol] = reference;
 }
 
 bool Context::hasSymbol(std::string const& symbol) const {

@@ -11,7 +11,7 @@ Reference::Reference(Reference const& reference) {
     type = reference.type;
     
     if (type == SymbolReference) symbolReference = reference.symbolReference;
-    else if (type == PropertyReference) propertyRefrence = reference.propertyRefrence;
+    else if (type == PropertyReference) propertyReference = reference.propertyReference;
     else if (type == ArrayReference) arrayReference = reference.arrayReference;
     else if (type == Pointer) pointer = reference.pointer;
     else {
@@ -28,8 +28,8 @@ Reference::Reference(Object** const& reference) {
 
 Reference::Reference(Object* const& parent, Object** const& reference) {
     type = PropertyReference;
-    propertyRefrence.parent = parent;
-    propertyRefrence.reference = reference;
+    propertyReference.parent = parent;
+    propertyReference.reference = reference;
 }
 
 Reference::Reference(Object* const& array, unsigned long const& i) {
@@ -58,7 +58,7 @@ bool Reference::isReference() const {
 }
 
 Object* & Reference::getReference() const {
-    if (type == PropertyReference) return *propertyRefrence.reference;
+    if (type == PropertyReference) return *propertyReference.reference;
     else if (type == ArrayReference) return arrayReference.array->data.a[arrayReference.i+1].o;
     else return *symbolReference;
 }
@@ -81,7 +81,7 @@ Reference& Reference::operator=(Reference const& reference) {
     type = reference.type;
     
     if (type == SymbolReference) symbolReference = reference.symbolReference;
-    else if (type == PropertyReference) propertyRefrence = reference.propertyRefrence;
+    else if (type == PropertyReference) propertyReference = reference.propertyReference;
     else if (type == ArrayReference) arrayReference = reference.arrayReference;
     else if (type == Pointer) pointer = reference.pointer;
     else {

@@ -1,4 +1,4 @@
-using "Type"
+using "Type";
 
 
 Position : this |-> {

@@ -47,7 +47,7 @@ namespace StandardParser {
         return true;
     }
 
-    std::vector<std::string> systemChars = {"->", ",", "(", ")", "[", "]", "{", "}", "?", "|->"};
+    std::vector<std::string> systemChars = {"->", ",", "(", ")", "[", "]", "{", "}", "\\", "|->"};
 
     bool is_system(std::string const& str) {
         return std::find(systemChars.begin(), systemChars.end(), str) != systemChars.end();
@@ -313,7 +313,7 @@ namespace StandardParser {
                     return tuple;
                 } else break;
             }
-            if (words[i].word == "?") {
+            if (words[i].word == "\\") {
                 if (priority) {
                     i++;
                     auto like = getExpression(words, i, false, false, false, false);

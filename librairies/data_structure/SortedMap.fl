@@ -44,7 +44,7 @@ SortedMap : this |-> {
         cell != ()
     };
 
-    this->remove : key ? (this->has(key)) |-> {
+    this->remove : key \ (this->has(key)) |-> {
         parent := ();
         cell := this->_root;
         while (cell != () & cell->key != key) {
@@ -82,7 +82,7 @@ SortedMap : this |-> {
         ()
     };
 
-    this->iterator : key ? (this->has(key)) |-> {
+    this->iterator : key \ (this->has(key)) |-> {
         stack := ();
         cell := this->_root;
         while (cell != () & cell->key != key) {
@@ -121,7 +121,7 @@ SortedMap->Iterator : (this, map, stack) |-> {
         }
     };
 
-    this->previous : () ? (this->has_previous()) |-> {
+    this->previous : () \ (this->has_previous()) |-> {
         if (this->_stack->cell->left != ()) {
             $== this->_stack->cell->left->value
         } else {
@@ -144,7 +144,7 @@ SortedMap->Iterator : (this, map, stack) |-> {
         }
     };
 
-    this->next : () ? (this->has_next()) |-> {
+    this->next : () \ (this->has_next()) |-> {
         if (this->_stack->cell->right != ()) {
             $== this->_stack->cell->right->value
         } else {

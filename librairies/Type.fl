@@ -3,11 +3,11 @@
     object
 };
 
-is : (object, type) ? (type !== Char & type !== Int & type !== Float & type !== Bool) |-> {
+is : (object, type) \ (type !== Char & type !== Int & type !== Float & type !== Bool) |-> {
     found := false;
     l := Array->lenght(object->_types);
-    i := 1;
-    while (!found & i <= l) {
+    i := 0;
+    while (!found & i < l) {
         if (Array->get(object->_types, i) === type) {
             found := true
         } else {

@@ -23,7 +23,7 @@ struct Reference {
         struct {
             Object* parent;
             Object* * reference;
-        } propertyRefrence;
+        } propertyReference;
         struct {
             Object* array;
             unsigned long i;

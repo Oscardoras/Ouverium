@@ -5,7 +5,7 @@ ArrayList : this |-> {
     List(this);
     this :~ ArrayList;
 
-    this : index ? (index ~ Int & 0 <= index & index < this->lenght()) |-> {
+    this : index \ (index ~ Int & 0 <= index & index < this->lenght()) |-> {
         Array->get(this, index)
     };
 
@@ -29,15 +29,15 @@ ArrayList : this |-> {
         Array->get_capacity(this)
     };
 
-    this->set_capacity : (capacity ~ Int & capacity >= 0) |-> {
+    this->set_capacity : capacity \ (capacity ~ Int & capacity >= 0) |-> {
         Array->set_capacity(this, capacity)
     };
 
-    this->get_first : () ? (!this->is_empty()) |-> {
+    this->get_first : () \ (!this->is_empty()) |-> {
         Array->get(this, 1)
     };
 
-    this->get_last : () ? (!this->is_empty()) |-> {
+    this->get_last : () \ (!this->is_empty()) |-> {
         Array->get(this, Array->lenght(this))
     };
 
@@ -58,7 +58,7 @@ ArrayList : this |-> {
         Array->add(this, element)
     };
 
-    this->remove_first : () ? (!this->is_empty()) |-> {
+    this->remove_first : () \ (!this->is_empty()) |-> {
         l := Array->lenght(this);
         for i from 0 to (l-1) {
             Array->get(this, i) := Array->get(this, i+1)
@@ -66,11 +66,11 @@ ArrayList : this |-> {
         Array->remove(this)
     };
 
-    this->remove_last : () ? (!this->is_empty()) |-> {
+    this->remove_last : () \ (!this->is_empty()) |-> {
         Array->remove(this)
     };
 
-    this->insert : (index, element) ? (index ~ Int & 0 <= index & index < this->lenght()) |-> {
+    this->insert : (index, element) \ (index ~ Int & 0 <= index & index < this->lenght()) |-> {
         l := Array->lenght(this);
         Array->add(this, Array->get(this, l-1));
         for i from (l-1) to index step (-1) {
@@ -79,7 +79,7 @@ ArrayList : this |-> {
         Array->get(this, index) := element
     };
 
-    this->remove : index ? (index ~ Int & 0 <= index & index < this->lenght()) |-> {
+    this->remove : index \ (index ~ Int & 0 <= index & index < this->lenght()) |-> {
         l := Array->lenght(this);
         tmp := Array->get(this, index);
         for i from index to (l-1) {
@@ -99,7 +99,7 @@ ArrayList : this |-> {
 
     this->iterator : this->iterator_first;
 
-    this->iterator : index ? (index ~ Int & 0 <= index & index < this->lenght()) |-> {
+    this->iterator : index \ (index ~ Int & 0 <= index & index < this->lenght()) |-> {
         ArrayList->Iterator((), this, index)
     };
 
@@ -116,8 +116,8 @@ ArrayList->Iterator : (this, list, index) |-> {
         this->_index > 0
     };
 
-    this->previous : () ? (this->has_previous()) |-> {
-        --this->_index;
+    this->previous : () \ (this->has_previous()) |-> {
+        --this->_index; 
         this->iterable[this->_index]
     };
 
@@ -125,7 +125,7 @@ ArrayList->Iterator : (this, list, index) |-> {
         this->_index < Array->lenght(this->iterable)-1
     };
 
-    this->next : () ? (this->has_next()) |-> {
+    this->next : () \ (this->has_next()) |-> {
         ++this->_index;
         this->iterable[this->_index]
     };
@@ -146,7 +146,7 @@ ArrayList->Iterator : (this, list, index) |-> {
 };
 
 
-(~) : (element, list) ? (is list ArrayList) |-> {
+(~) : (element, list) \ (is list ArrayList) |-> {
     found := false;
     l := Array->lenght(list);
     i := 0;
@@ -160,7 +160,7 @@ ArrayList->Iterator : (this, list, index) |-> {
     found
 };
 
-(~==) : (element, list) ? (is list ArrayList) |-> {
+(~==) : (element, list) \ (is list ArrayList) |-> {
     found := false;
     l := Array->lenght(list);
     i := 0;
@@ -172,4 +172,8 @@ ArrayList->Iterator : (this, list, index) |-> {
         }
     };
     found
+};
+
+($) : iterator \ (iterator ~ ArrayList->Iterator) |-> {
+    ArrayList->Iterator((), iterator->iterable, $iterator->_index)
 }
