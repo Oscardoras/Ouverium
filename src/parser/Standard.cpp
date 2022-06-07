@@ -59,7 +59,7 @@ namespace StandardParser {
     }
 
     void TextPosition::notify() {
-        std::cerr << "Arguments given to the function don't match in file \"" << path << "\" at line " << line << ", column " << column << "." << std::endl;
+        std::cerr << "\tin file \"" << path << "\" at line " << line << ", column " << column << std::endl;
     }
 
     Word::Word(std::string const& word, TextPosition position): word(word), position(position) {}

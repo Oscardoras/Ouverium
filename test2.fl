@@ -1,5 +1,9 @@
-Constructor : this |-> {
-    this->add : () |-> {
-        Array->add(1)
-    }
+a := 3;
+
+if (false) {
+    print("ok\n")
+} else if (false) {
+    print("not ok\n")
+} else {
+    print("other\n")
 }

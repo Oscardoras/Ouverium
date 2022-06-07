@@ -148,6 +148,8 @@ namespace Math {
             return Reference(context.newObject(a->data.i < b->data.i));
         else if (a->type == Object::Float && b->type == Object::Float)
             return Reference(context.newObject(a->data.f < b->data.f));
+        else if (a->type == Object::Char && b->type == Object::Char)
+            return Reference(context.newObject(a->data.c < b->data.c));
         else throw FunctionArgumentsError();
     }
 
@@ -159,6 +161,8 @@ namespace Math {
             return Reference(context.newObject(a->data.i > b->data.i));
         else if (a->type == Object::Float && b->type == Object::Float)
             return Reference(context.newObject(a->data.f > b->data.f));
+        else if (a->type == Object::Char && b->type == Object::Char)
+            return Reference(context.newObject(a->data.c > b->data.c));
         else throw FunctionArgumentsError();
     }
     
@@ -170,6 +174,8 @@ namespace Math {
             return Reference(context.newObject(a->data.i <= b->data.i));
         else if (a->type == Object::Float && b->type == Object::Float)
             return Reference(context.newObject(a->data.f <= b->data.f));
+        else if (a->type == Object::Char && b->type == Object::Char)
+            return Reference(context.newObject(a->data.c <= b->data.c));
         else throw FunctionArgumentsError();
     }
 
@@ -181,24 +187,26 @@ namespace Math {
             return Reference(context.newObject(a->data.i >= b->data.i));
         else if (a->type == Object::Float && b->type == Object::Float)
             return Reference(context.newObject(a->data.f >= b->data.f));
+        else if (a->type == Object::Char && b->type == Object::Char)
+            return Reference(context.newObject(a->data.c >= b->data.c));
         else throw FunctionArgumentsError();
     }
 
     Reference increment(FunctionContext & context) {
-        auto a = context.getSymbol("a").toObject(context);
+        auto a = context.getSymbol("a");
             
-        if (a->type == Object::Int) {
-            a->data.i++;
-            return context.getSymbol("a");
+        if (a.getReference()->type == Object::Int) {
+            a.getReference() = context.newObject(a.getReference()->data.i+1);
+            return a;
         } else throw FunctionArgumentsError();
     }
 
     Reference decrement(FunctionContext & context) {
-        auto a = context.getSymbol("a").toObject(context);
+        auto a = context.getSymbol("a");
             
-        if (a->type == Object::Int) {
-            a->data.i--;
-            return context.getSymbol("a");
+        if (a.getReference()->type == Object::Int) {
+            a.getReference() = context.newObject(a.getReference()->data.i-1);
+            return a;
         } else throw FunctionArgumentsError();
     }
 

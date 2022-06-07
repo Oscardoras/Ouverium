@@ -1,8 +1,13 @@
-using "librairies/data_structure/ArrayList.fl";
-using "librairies/data_structure/Algorithm.fl";
+using "engine/parser/Standard.fl";
 
-list := ArrayList(4,8,2,6,7);
 
-print(is_sorted(list), "\n");
-print(insertion_sort(list), "\n");
-print(is_sorted(list), "\n")
+file := InputFile("test.fl");
+
+str := String "";
+while (file->has()) {
+    s := file->read();
+    str :+ (String s + String "\n")
+};
+
+words := get_words(str);
+print(words)

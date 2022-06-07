@@ -64,50 +64,6 @@ Object* Context::newObject(std::string const& str) {
     return object;
 }
 
-void dfs(Object* object) {
-    object->referenced = true;
-
-    for (auto it = object->fields.begin(); it != object->fields.end(); it++)
-        dfs(it->second);
-    
-    for (auto f : object->functions)
-        for (auto it = ((CustomFunction*) f)->externSymbols.begin(); it != ((CustomFunction*) f)->externSymbols.end(); it++)
-            if (it->second.type == Reference::Pointer)
-                dfs(it->second.pointer);
-    
-    if (object->type > 0)
-        for (long i = 1; i < object->type; i++)
-            dfs(object->data.a[i].o);
-}
-
-void Context::collect(Object* current) {
-    auto context = this;
-    while (context != nullptr) {
-        for (auto it = symbols.begin(); it != symbols.end(); it++)
-            if (it->second.type == Reference::Pointer)
-                dfs(it->second.pointer);
-
-        auto parent = context->getParent();
-        if (parent != context) context = parent;
-        else context = nullptr;
-    }
-
-    if (current != nullptr) current->referenced = true;
-
-    auto global = getGlobal();
-    for (auto it = global->objects.begin(); it != global->objects.end(); it++)
-        if (!it->referenced) {
-            auto finalize = it->fields.find("finalize");
-            if (finalize != it->fields.end())
-                Interpreter::callFunction(*getGlobal(), finalize->second->functions, std::make_shared<Tuple>(), nullptr);
-
-            global->objects.erase(it);
-        } else
-            it->referenced = false;
-    
-    if (current != nullptr) current->referenced = false;
-}
-
 void Context::addSymbol(std::string const& symbol, Reference const& reference) {
     auto & references = getGlobal()->references;
 
@@ -161,8 +117,9 @@ GlobalContext::~GlobalContext() {
 }
 
 
-FunctionContext::FunctionContext(Context & parent) {
+FunctionContext::FunctionContext(Context & parent, std::shared_ptr<Position> position) {
     this->parent = &parent;
+    this->position = position;
 }
 
 GlobalContext* FunctionContext::getGlobal() {

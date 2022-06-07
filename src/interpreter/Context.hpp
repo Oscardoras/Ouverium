@@ -7,11 +7,14 @@
 
 #include "Reference.hpp"
 
+#include "../parser/Position.hpp"
+
 struct GlobalContext;
 
 
 struct Context {
 
+    std::shared_ptr<Position> position;
     std::map<std::string, Reference> symbols;
 
     virtual GlobalContext* getGlobal() = 0;
@@ -26,8 +29,6 @@ struct Context {
     Object* newObject(char c);
     Object* newObject(size_t tuple_size);
     Object* newObject(std::string const& str);
-
-    void collect(Object* current);
 
     void addSymbol(std::string const& symbol, Reference const& reference);
     Reference getSymbol(std::string const& symbol);
@@ -53,7 +54,7 @@ struct FunctionContext: public Context {
 
     Context* parent;
 
-    FunctionContext(Context & parent);
+    FunctionContext(Context & parent, std::shared_ptr<Position> position);
 
     virtual GlobalContext* getGlobal();
     virtual Context* getParent();

@@ -82,7 +82,7 @@ void setReferences(Context & context, FunctionContext & function_context, std::s
 Reference Interpreter::callFunction(Context & context, std::list<Function*> functions, std::shared_ptr<Expression> arguments, std::shared_ptr<Position> position) {
     for (auto function : functions) {
         try {
-            FunctionContext function_context(context);
+            FunctionContext function_context(context, position);
             if (position != nullptr) function_context.addSymbol("system_position", context.newObject(position->path));
 
             for (auto & symbol : function->externSymbols)
@@ -108,7 +108,15 @@ Reference Interpreter::callFunction(Context & context, std::list<Function*> func
         } catch (FunctionArgumentsError & error) {}
     }
 
-    if (arguments->position != nullptr) arguments->position->notify();
+    std::cerr << "Arguments given to the function don't match\n";
+    arguments->position->notify();
+    auto old_c = (Context*) nullptr;
+    auto c = &context;
+    while (c != old_c) {
+        if (c->position != nullptr) c->position->notify();
+        old_c = c;
+        c = c->getParent();
+    }
     throw InterpreterError();
 }
 

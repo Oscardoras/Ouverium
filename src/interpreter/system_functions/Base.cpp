@@ -26,74 +26,48 @@ namespace Base {
     }
 
     std::shared_ptr<Expression> if_statement() {
-        auto tuple = std::make_shared<Tuple>();
-
-        auto condition = std::make_shared<Symbol>();
-        condition->name = "condition";
-        tuple->objects.push_back(condition);
-
-        auto block = std::make_shared<FunctionCall>();
+        auto function = std::make_shared<FunctionCall>();
         auto function_name = std::make_shared<Symbol>();
-        function_name->name = "block";
-        block->function = function_name;
-        block->object = std::make_shared<Tuple>();
-        tuple->objects.push_back(block);
-
-        return tuple;
+        function_name->name = "function";
+        function->function = function_name;
+        function->object = std::make_shared<Tuple>();
+        return function;
     }
     Reference if_statement(FunctionContext & context) {
-        auto condition = context.getSymbol("condition").toObject(context);
+        auto function = ((CustomFunction*) *context.getSymbol("function").toObject(context)->functions.begin())->pointer->object;
 
-        if (condition->type == Object::Bool)
-            if (condition->data.b) {
+        if (function->type == Expression::Tuple) {
+            auto tuple = std::static_pointer_cast<Tuple>(function);
+            if (tuple->objects.size() >= 2) {
                 auto parent = context.getParent();
-                auto functions = context.getSymbol("block").toObject(context)->functions;
-                return Interpreter::callFunction(*parent, functions, std::make_shared<Tuple>(), nullptr);
-            } else return Reference(context.newObject());
-        else throw FunctionArgumentsError();
-    }
 
-    std::shared_ptr<Expression> if_else_statement() {
-        auto tuple = std::make_shared<Tuple>();
-
-        auto condition = std::make_shared<Symbol>();
-        condition->name = "condition";
-        tuple->objects.push_back(condition);
-
-        auto block = std::make_shared<FunctionCall>();
-        auto function_name = std::make_shared<Symbol>();
-        function_name->name = "block";
-        block->function = function_name;
-        block->object = std::make_shared<Tuple>();
-        tuple->objects.push_back(block);
-
-        auto else_s = std::make_shared<Symbol>();
-        else_s->name = "else_s";
-        tuple->objects.push_back(else_s);
-
-        auto alternative = std::make_shared<FunctionCall>();
-        function_name = std::make_shared<Symbol>();
-        function_name->name = "alternative";
-        alternative->function = function_name;
-        alternative->object = std::make_shared<Tuple>();
-        tuple->objects.push_back(alternative);
-
-        return tuple;
-    }
-    Reference if_else_statement(FunctionContext & context) {
-        auto condition = context.getSymbol("condition").toObject(context);
-
-        if (condition->type == Object::Bool && context.getSymbol("else_s").toObject(context) == context.getSymbol("else").toObject(context))
-            if (condition->data.b) {
-                auto parent = context.getParent();
-                auto functions = context.getSymbol("block").toObject(context)->functions;
-                return Interpreter::callFunction(*parent, functions, std::make_shared<Tuple>(), nullptr);
-            } else {
-                auto parent = context.getParent();
-                auto functions = context.getSymbol("alternative").toObject(context)->functions;
-                return Interpreter::callFunction(*parent, functions, std::make_shared<Tuple>(), nullptr);
-            }
-        else throw FunctionArgumentsError();
+                auto first_condition = Interpreter::execute(*parent, tuple->objects[0]).toObject(context);
+                if (first_condition->type == Object::Bool) {
+                    if (first_condition->data.b)
+                        return Interpreter::execute(*parent, tuple->objects[1]).toObject(context);
+                    else {
+                        unsigned long i = 2;
+                        while (i < tuple->objects.size()) {
+                            auto else_s = Interpreter::execute(*parent, tuple->objects[i]).toObject(context);
+                            if (else_s == context.getSymbol("else").toObject(context) && i+1 < tuple->objects.size()) {
+                                auto s = Interpreter::execute(*parent, tuple->objects[i+1]).toObject(context);
+                                if (s == context.getSymbol("if").toObject(context)) {
+                                    if (i+3 < tuple->objects.size()) {
+                                        auto condition = Interpreter::execute(*parent, tuple->objects[i+2]).toObject(context);
+                                        if (condition->type == Object::Bool) {
+                                            if (condition->data.b)
+                                                return Interpreter::execute(*parent, tuple->objects[i+3]).toObject(context);
+                                            else i += 4;
+                                        } else throw FunctionArgumentsError();
+                                    } else throw FunctionArgumentsError();
+                                } else return s;
+                            } else throw FunctionArgumentsError();
+                        }
+                        return Reference(context.newObject());
+                    }
+                } else throw FunctionArgumentsError();
+            } else throw FunctionArgumentsError();
+        } else throw FunctionArgumentsError();
     }
 
     std::shared_ptr<Expression> while_statement() {
@@ -508,11 +482,10 @@ namespace Base {
     void initiate(Context & context) {
         context.getSymbol(";").toObject(context)->functions.push_front(new SystemFunction(separator(), separator));
 
-        context.getSymbol("if").toObject(context)->functions.push_front(new SystemFunction(if_statement(), if_statement));
-
-        auto if_else = new SystemFunction(if_else_statement(), if_else_statement);
-        if_else->externSymbols["else"] = context.getSymbol("else");
-        context.getSymbol("if").toObject(context)->functions.push_front(if_else);
+        auto if_s = new SystemFunction(if_statement(), if_statement);
+        if_s->externSymbols["if"] = context.getSymbol("if");
+        if_s->externSymbols["else"] = context.getSymbol("else");
+        context.getSymbol("if").toObject(context)->functions.push_front(if_s);
 
         context.getSymbol("while").toObject(context)->functions.push_front(new SystemFunction(while_statement(), while_statement));
 

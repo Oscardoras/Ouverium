@@ -124,7 +124,7 @@ namespace Streams {
     }
     Reference output_file(FunctionContext & context) {
         try {
-            auto path = context.getSymbol("this").toObject(context)->toString();
+            auto path = context.getSymbol("path").toObject(context)->toString();
 
             auto object = context.newObject();
             setOutputStream(context, *object);

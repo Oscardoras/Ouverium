@@ -8,6 +8,18 @@ Char : this \ (Array->lenght(this) == 1) |-> {
     Array->get(this, 0)
 };
 
+Char->is_digit : c \ (c ~ Char) |-> {
+    Char "0" <= c & c <= Char "9"
+};
+
+Char->is_alpha : c \ (c ~ Char) |-> {
+    (Char "A" <= c & c <= Char "Z") | (Char "a" <= c & c <= Char "z")
+};
+
+Char->is_alphanum : c \ (c ~ Char) |-> {
+    Char->is_alpha(c) | Char->is_digit(c)
+};
+
 String : this |-> {
     ArrayList(this);
     this :~ String;

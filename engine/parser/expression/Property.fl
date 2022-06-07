@@ -1,4 +1,4 @@
-using "Expression";
+using "Expression.fl";
 
 
 Property : (this, object, name) \ (object ~ Expression & name ~ String) |-> {
