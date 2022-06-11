@@ -6,6 +6,7 @@ file := InputFile("test.fl");
 str := String "";
 while (file->has()) {
     s := file->read();
+    print(s, "\n");
     str :+ (String s + String "\n")
 };
 
