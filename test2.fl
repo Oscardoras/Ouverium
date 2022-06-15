@@ -1,9 +1,7 @@
 a := 3;
 
 if (false) {
-    print("ok\n")
-} else if (false) {
-    print("not ok\n")
+    print("ok\n");
 } else {
-    print("other\n")
-}
+    print("other\n");
+};

@@ -2,7 +2,7 @@ using "Iterable.fl";
 
 
 Map : this |-> {
-    BidirectionalIterable(this);
+    Iterable(this);
     this :~ Map;
 
     this : key |-> {};

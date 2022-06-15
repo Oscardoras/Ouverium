@@ -1,14 +1,16 @@
 using "engine/parser/Standard.fl";
 
 
-file := InputFile("test.fl");
+file := InputFile("test2.fl");
 
 str := String "";
 while (file->has()) {
     s := file->read();
-    print(s, "\n");
     str :+ (String s + String "\n")
 };
+print(str);
 
 words := get_words(str);
-print(words)
+words->foreach(x |-> {
+    print(x, "\n")
+})

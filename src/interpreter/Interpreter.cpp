@@ -28,12 +28,12 @@ void setReferences(FunctionContext & function_context, std::shared_ptr<Expressio
     } else if (parameters->type == Expression::Tuple) {
         auto tuple = std::static_pointer_cast<Tuple>(parameters);
 
-        if (reference.type > 0) {
+        if (reference.type == (long) tuple->objects.size()) {
             for (size_t i = 0; i < tuple->objects.size(); i++)
                 setReferences(function_context, tuple->objects[i], reference.tuple[i]);
         } else {
             auto object = reference.toObject(function_context);
-            if (object->type >= 0) {
+            if (object->type == (long) tuple->objects.size()) {
                 for (unsigned long i = 1; i <= tuple->objects.size(); i++)
                     setReferences(function_context, tuple->objects[i], Reference(&object->data.a[i].o));
             } else throw FunctionArgumentsError();
@@ -222,16 +222,18 @@ Reference Interpreter::run(Context & context, std::string const& path, std::stri
     for (auto it = context.symbols.begin(); it != context.symbols.end(); it++)
         symbols.push_back(it->first);
 
-    try {
-        auto tree = StandardParser::getTree(path, code, symbols);
-        //std::cout << tree->toString() << std::endl;
+    std::vector<StandardParser::ParserError> errors;
+    auto tree = StandardParser::getTree(errors, path, code, symbols);
+    //std::cout << tree->toString() << std::endl;
+    if (errors.empty()) {
         try {
             return Interpreter::execute(context, tree);
         } catch (InterpreterError & e) {
             return Reference(context.newObject());
         }
-    } catch (StandardParser::ParserError & e) {
-        std::cerr << e.message << " in file \"" << e.position.path << "\" at line " << e.position.line << ", column " << e.position.column << "." << std::endl;
+    } else {
+        for (auto & e : errors)
+            std::cerr << e.message << " in file \"" << e.position.path << "\" at line " << e.position.line << ", column " << e.position.column << "." << std::endl;
         return Reference(context.newObject());
     }
 }

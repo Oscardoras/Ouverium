@@ -35,7 +35,7 @@ namespace StandardParser {
 
     std::vector<Word> getWords(std::string const& path, std::string const& code);
 
-    std::shared_ptr<Expression> getTree(std::string const& path, std::string const& code, std::vector<std::string> symbols);
+    std::shared_ptr<Expression> getTree(std::vector<ParserError> & errors, std::string const& path, std::string const& code, std::vector<std::string> symbols);
 
 }
 

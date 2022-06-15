@@ -4,7 +4,7 @@ using "data_structure/ArrayList.fl";
 Char : this \ (this ~ Char) |-> {
     this
 };
-Char : this \ (Array->lenght(this) == 1) |-> {
+Char : this \ (Array->lenght(this) == 1 & is (Array->get(this, 0)) Char) |-> {
     Array->get(this, 0)
 };
 
@@ -20,7 +20,17 @@ Char->is_alphanum : c \ (c ~ Char) |-> {
     Char->is_alpha(c) | Char->is_digit(c)
 };
 
-String : this |-> {
+String : this \ {
+    found := false;
+    i := 0;
+    while (!found & i < Array->lenght(this)) {
+        if (!is (Array->get(this, i)) Char) {
+            found := true
+        };
+        ++i
+    };
+    !found
+} |-> {
     ArrayList(this);
     this :~ String;
 
@@ -67,6 +77,10 @@ String : this |-> {
     };
 
     this
+};
+String : c \ (is c Char) |-> {
+    Array->add(this, c);
+    String(this)
 };
 
 

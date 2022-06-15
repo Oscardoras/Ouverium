@@ -31,7 +31,7 @@ Word : (this, position) \ (this ~ String & position ~ TextPosition) |-> {
 };
 
 is_operator : c \ (c ~ Char) |-> {
-    !Char->is_alphanum(c) & !(c ~ "_'`\".([{)]}")
+    !Char->is_alphanum(c) & !(c ~ ArrayList "_'`\".([{)]}")
 };
 
 is_number : c \ (c ~ Char) |-> {
@@ -101,16 +101,16 @@ get_words : code \ (code ~ String) |-> {
         c := code[i];
 
         if (!is_str) {
-            if (c ~ " \n\r\t") {
+            if (c ~ ArrayList " \n\r\t") {
                 if (b < i) {
                     words->add_last(Word(code->substring(b, i-b), position))
                 };
                 b := i+1
-            } else if (c ~ ",()[]{}") {
+            } else if (c ~ ArrayList ",()[]{}") {
                 if (b < i) {
                     words->add_last(Word(code->substring(b, i-b), position))
                 };
-                words->add_last(Word(""+c, position));
+                words->add_last(Word(String(c), position));
                 b := i+1
             } else if (c == Char "\"") {
                 if (b < i) {

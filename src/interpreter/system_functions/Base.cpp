@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <iostream>
+#include <filesystem>
 #include <fstream>
 
 #include "../Interpreter.hpp"
@@ -275,10 +276,12 @@ namespace Base {
         }
         if (path[0] != '/')
             path = system_position.substr(0, system_position.find_last_of("/")+1) + path;
+        std::filesystem::path p(path);
+        path = std::filesystem::canonical(p).string();
 
         auto & files = context.getGlobal()->files;
-        if (std::find(files.begin(), files.end(), path) == files.end()) {
-            files.push_back(path);
+        if (files.find(path) == files.end()) {
+            files.insert(path);
 
             std::ifstream file(path);
 

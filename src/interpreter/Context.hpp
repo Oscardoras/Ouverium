@@ -2,7 +2,7 @@
 #define INTERPRETER_CONTEXT_HPP_
 
 #include <map>
-#include <list>
+#include <set>
 #include <string>
 
 #include "Reference.hpp"
@@ -38,7 +38,7 @@ struct Context {
 
 struct GlobalContext: public Context {
 
-    std::list<std::string> files;
+    std::set<std::string> files;
     std::list<Object> objects;
     std::list<Object*> references;
     std::list<void*> cpointers;
