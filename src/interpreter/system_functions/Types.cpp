@@ -17,33 +17,33 @@ namespace Types {
         return tuple;
     }
     Reference is_type(FunctionContext & context) {
-        auto object = context.getSymbol("object").toObject(context);
-        auto type = context.getSymbol("type").toObject(context);
+        auto object = context.get_symbol("object").to_object(context);
+        auto type = context.get_symbol("type").to_object(context);
 
-        if (type == context.getSymbol("Char").toObject(context)) return Reference(context.newObject(object->type == Object::Char));
-        else if (type == context.getSymbol("Int").toObject(context)) return Reference(context.newObject(object->type == Object::Int));
-        else if (type == context.getSymbol("Float").toObject(context)) return Reference(context.newObject(object->type == Object::Float));
-        else if (type == context.getSymbol("Bool").toObject(context)) return Reference(context.newObject(object->type == Object::Bool));
-        else if (type == context.getSymbol("Array").toObject(context)) return Reference(context.newObject(object->type >= 0));
+        if (type == context.get_symbol("Char").to_object(context)) return Reference(context.new_object(object->type == Object::Char));
+        else if (type == context.get_symbol("Int").to_object(context)) return Reference(context.new_object(object->type == Object::Int));
+        else if (type == context.get_symbol("Float").to_object(context)) return Reference(context.new_object(object->type == Object::Float));
+        else if (type == context.get_symbol("Bool").to_object(context)) return Reference(context.new_object(object->type == Object::Bool));
+        else if (type == context.get_symbol("Array").to_object(context)) return Reference(context.new_object(object->type >= 0));
         else throw FunctionArgumentsError();
     }
 
     void initiate(Context & context) {
         auto f = new SystemFunction(is_type(), is_type);
-        f->externSymbols["Char"] = context.getSymbol("Char");
-        f->externSymbols["Int"] = context.getSymbol("Int");
-        f->externSymbols["Float"] = context.getSymbol("Float");
-        f->externSymbols["Bool"] = context.getSymbol("Bool");
-        f->externSymbols["Array"] = context.getSymbol("Array");
-        context.getSymbol("is").toObject(context)->functions.push_front(f);
+        f->extern_symbols["Char"] = context.get_symbol("Char");
+        f->extern_symbols["Int"] = context.get_symbol("Int");
+        f->extern_symbols["Float"] = context.get_symbol("Float");
+        f->extern_symbols["Bool"] = context.get_symbol("Bool");
+        f->extern_symbols["Array"] = context.get_symbol("Array");
+        context.get_symbol("is").to_object(context)->functions.push_front(f);
 
         f = new SystemFunction(is_type(), is_type);
-        f->externSymbols["Char"] = context.getSymbol("Char");
-        f->externSymbols["Int"] = context.getSymbol("Int");
-        f->externSymbols["Float"] = context.getSymbol("Float");
-        f->externSymbols["Bool"] = context.getSymbol("Bool");
-        f->externSymbols["Array"] = context.getSymbol("Array");
-        context.getSymbol("~").toObject(context)->functions.push_front(f);
+        f->extern_symbols["Char"] = context.get_symbol("Char");
+        f->extern_symbols["Int"] = context.get_symbol("Int");
+        f->extern_symbols["Float"] = context.get_symbol("Float");
+        f->extern_symbols["Bool"] = context.get_symbol("Bool");
+        f->extern_symbols["Array"] = context.get_symbol("Array");
+        context.get_symbol("~").to_object(context)->functions.push_front(f);
     }
 
 }

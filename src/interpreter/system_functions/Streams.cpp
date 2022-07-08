@@ -12,11 +12,11 @@ namespace Streams {
         return object;
     }
     Reference print(FunctionContext & context) {
-        auto object = context.getSymbol("object").toObject(context);
+        auto object = context.get_symbol("object").to_object(context);
 
         Interpreter::print(std::cout, object);
 
-        return Reference(context.newObject());
+        return Reference(context.new_object());
     }
 
     std::shared_ptr<Expression> scan() {
@@ -27,79 +27,79 @@ namespace Streams {
         getline(std::cin, str);
 
         long l = str.length();
-        Object* obj = context.newObject((size_t) l);
+        Object* obj = context.new_object((size_t) l);
         for (long i = 0; i < l; i++)
-            obj->data.a[i+1].o = context.newObject(str[i]);
+            obj->data.a[i+1].o = context.new_object(str[i]);
         return Reference(obj);
     }
 
     Reference read(FunctionContext & context) {
-        auto stream = (std::istream*) context.getSymbol("this").toObject(context)->data.ptr;
+        auto stream = (std::istream*) context.get_symbol("this").to_object(context)->data.ptr;
 
         std::string str;
         getline(*stream, str);
 
         long l = str.length();
-        Object* obj = context.newObject((size_t) l);
+        Object* obj = context.new_object((size_t) l);
         for (long i = 0; i < l; i++)
-            obj->data.a[i+1].o = context.newObject(str[i]);
+            obj->data.a[i+1].o = context.new_object(str[i]);
         return Reference(obj);
     }
 
     Reference has(FunctionContext & context) {
-        auto stream = (std::istream*) context.getSymbol("this").toObject(context)->data.ptr;
+        auto stream = (std::istream*) context.get_symbol("this").to_object(context)->data.ptr;
 
-        return Reference(context.newObject(stream->operator bool()));
+        return Reference(context.new_object(stream->operator bool()));
     }
 
     void setInputStream(Context & context, Object & object) {
         object.type = Object::CPointer;
 
-        auto & read = object.fields["read"];
-        if (read == nullptr) read = context.newObject();
+        auto & read = object.properties["read"];
+        if (read == nullptr) read = context.new_object();
         auto f1 = new SystemFunction(std::make_shared<Tuple>(), Streams::read);
-        f1->externSymbols["this"] = Reference(&object);
+        f1->extern_symbols["this"] = Reference(&object);
         read->functions.push_front(f1);
 
-        auto & has = object.fields["has"];
-        if (has == nullptr) has = context.newObject();
+        auto & has = object.properties["has"];
+        if (has == nullptr) has = context.new_object();
         auto f2 = new SystemFunction(std::make_shared<Tuple>(), Streams::has);
-        f2->externSymbols["this"] = Reference(&object);
+        f2->extern_symbols["this"] = Reference(&object);
         has->functions.push_front(f2);
     }
 
     Reference write(FunctionContext & context) {
-        auto stream = (std::ostream*) context.getSymbol("this").toObject(context)->data.ptr;
-        auto message = context.getSymbol("message").toObject(context);
+        auto stream = (std::ostream*) context.get_symbol("this").to_object(context)->data.ptr;
+        auto message = context.get_symbol("message").to_object(context);
 
         Interpreter::print(*stream, message);
 
-        return Reference(context.newObject());
+        return Reference(context.new_object());
     }
 
     Reference flush(FunctionContext & context) {
-        auto stream = (std::ostream*) context.getSymbol("this").toObject(context)->data.ptr;
+        auto stream = (std::ostream*) context.get_symbol("this").to_object(context)->data.ptr;
 
         stream->flush();
 
-        return Reference(context.newObject());
+        return Reference(context.new_object());
     }
 
     void setOutputStream(Context & context, Object & object) {
         object.type = Object::CPointer;
 
-        auto & write = object.fields["write"];
-        if (write == nullptr) write = context.newObject();
+        auto & write = object.properties["write"];
+        if (write == nullptr) write = context.new_object();
         auto message = std::make_shared<Symbol>();
         message->name = "message";
         auto f = new SystemFunction(message, Streams::write);
-        f->externSymbols["this"] = Reference(&object);
+        f->extern_symbols["this"] = Reference(&object);
         write->functions.push_front(f);
 
-        auto & flush = object.fields["flush"];
-        if (flush == nullptr) flush = context.newObject();
+        auto & flush = object.properties["flush"];
+        if (flush == nullptr) flush = context.new_object();
         auto f2 = new SystemFunction(std::make_shared<Tuple>(), Streams::flush);
-        f2->externSymbols["this"] = Reference(&object);
+        f2->extern_symbols["this"] = Reference(&object);
         flush->functions.push_front(f2);
     }
 
@@ -110,12 +110,12 @@ namespace Streams {
     }
     Reference input_file(FunctionContext & context) {
         try {
-            auto path = context.getSymbol("path").toObject(context)->toString();
+            auto path = context.get_symbol("path").to_object(context)->to_string();
 
-            auto object = context.newObject();
+            auto object = context.new_object();
             setInputStream(context, *object);
             object->data.ptr = new std::ifstream(path);
-            context.getGlobal()->cpointers.push_back(object->data.ptr);
+            context.get_global()->c_pointers.push_back(object->data.ptr);
 
             return Reference(object);
         } catch (InterpreterError & e) {
@@ -124,12 +124,12 @@ namespace Streams {
     }
     Reference output_file(FunctionContext & context) {
         try {
-            auto path = context.getSymbol("path").toObject(context)->toString();
+            auto path = context.get_symbol("path").to_object(context)->to_string();
 
-            auto object = context.newObject();
+            auto object = context.new_object();
             setOutputStream(context, *object);
             object->data.ptr = new std::ofstream(path);
-            context.getGlobal()->cpointers.push_back(object->data.ptr);
+            context.get_global()->c_pointers.push_back(object->data.ptr);
 
             return Reference(object);
         } catch (InterpreterError & e) {
@@ -138,28 +138,28 @@ namespace Streams {
     }
 
     void initiate(Context & context) {
-        context.getSymbol("print").toObject(context)->functions.push_front(new SystemFunction(print(), print));
-        context.getSymbol("scan").toObject(context)->functions.push_front(new SystemFunction(scan(), scan));
-        context.getSymbol("InputFile").toObject(context)->functions.push_front(new SystemFunction(path(), input_file));
-        context.getSymbol("OutputFile").toObject(context)->functions.push_front(new SystemFunction(path(), output_file));
+        context.get_symbol("print").to_object(context)->functions.push_front(new SystemFunction(print(), print));
+        context.get_symbol("scan").to_object(context)->functions.push_front(new SystemFunction(scan(), scan));
+        context.get_symbol("InputFile").to_object(context)->functions.push_front(new SystemFunction(path(), input_file));
+        context.get_symbol("OutputFile").to_object(context)->functions.push_front(new SystemFunction(path(), output_file));
 
 
-        auto console = context.getSymbol("Console").toObject(context);
+        auto console = context.get_symbol("Console").to_object(context);
 
-        auto in = context.newObject();
+        auto in = context.new_object();
         setInputStream(context, *in);
         in->data.ptr = &std::cin;
-        console->fields["in"] = in;
+        console->properties["in"] = in;
 
-        auto out = context.newObject();
+        auto out = context.new_object();
         setOutputStream(context, *out);
         out->data.ptr = &std::cout;
-        console->fields["out"] = out;
+        console->properties["out"] = out;
 
-        auto err = context.newObject();
+        auto err = context.new_object();
         setOutputStream(context, *err);
         err->data.ptr = &std::cerr;
-        console->fields["err"] = err;
+        console->properties["err"] = err;
     }
 
 }

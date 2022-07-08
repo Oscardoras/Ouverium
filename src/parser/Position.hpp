@@ -1,5 +1,5 @@
-#ifndef PARSER_POSITION_HPP_
-#define PARSER_POSITION_HPP_
+#ifndef __PARSER_POSITION_HPP__
+#define __PARSER_POSITION_HPP__
 
 
 struct Position {

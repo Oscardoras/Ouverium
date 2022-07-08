@@ -1,5 +1,5 @@
-#ifndef PARSER_EXPRESSION_EXPRESSION_HPP_
-#define PARSER_EXPRESSION_EXPRESSION_HPP_
+#ifndef __PARSER_EXPRESSION_EXPRESSION_HPP__
+#define __PARSER_EXPRESSION_EXPRESSION_HPP__
 
 #include <string>
 #include <memory>
@@ -16,18 +16,15 @@ struct Expression {
         Property,
         Symbol,
         Tuple
-    };
-
-    Type type;
+    } type;
 
     std::shared_ptr<Position> position;
-
     bool escaped;
-    std::vector<std::string> usedSymbols;
+    std::vector<std::string> symbols;
 
     Expression();
 
-    std::string toString() const;
+    std::string to_string() const;
 
 };
 

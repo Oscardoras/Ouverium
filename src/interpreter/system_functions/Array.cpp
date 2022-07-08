@@ -13,10 +13,10 @@ namespace Array {
         return array;
     }
     Reference get_array_size(FunctionContext & context) {
-        auto array = context.getSymbol("array").toObject(context);
+        auto array = context.get_symbol("array").to_object(context);
         
         if (array->type >= 0)
-            return Reference(context.newObject((long) array->type));
+            return Reference(context.new_object((long) array->type));
         else throw FunctionArgumentsError();
     }
 
@@ -34,8 +34,8 @@ namespace Array {
         return tuple;
     }
     Reference get_array_element(FunctionContext & context) {
-        auto array = context.getSymbol("array").toObject(context);
-        auto i = context.getSymbol("i").toObject(context);
+        auto array = context.get_symbol("array").to_object(context);
+        auto i = context.get_symbol("i").to_object(context);
 
         if (i->type == Object::Int && i->data.i >= 0 && i->data.i < array->type)
             return Reference(array, i->data.i);
@@ -48,10 +48,10 @@ namespace Array {
         return array;
     }
     Reference get_array_capacity(FunctionContext & context) {
-        auto array = context.getSymbol("array").toObject(context);
+        auto array = context.get_symbol("array").to_object(context);
 
-        if (array->type == 0) return context.newObject((long) 0);
-        else if (array->type > 0) return context.newObject((long) array->data.a[0].c);
+        if (array->type == 0) return context.new_object((long) 0);
+        else if (array->type > 0) return context.new_object((long) array->data.a[0].c);
         else throw FunctionArgumentsError();
     }
 
@@ -69,8 +69,8 @@ namespace Array {
         return tuple;
     }
     Reference set_array_capacity(FunctionContext & context) {
-        auto array = context.getSymbol("array").toObject(context);
-        auto capacity = context.getSymbol("capacity").toObject(context);
+        auto array = context.get_symbol("array").to_object(context);
+        auto capacity = context.get_symbol("capacity").to_object(context);
 
         if (capacity->type == Object::Int && capacity->data.i >= 0) {
             if (array->type <= 0) {
@@ -84,7 +84,7 @@ namespace Array {
                 array->data.a = (Object::Data::ArrayElement *) realloc(array->data.a, sizeof(Object::Data::ArrayElement) * (1 + array->data.a[0].c));
             }
 
-            return context.newObject();
+            return context.new_object();
         } else throw FunctionArgumentsError();
     }
 
@@ -102,8 +102,8 @@ namespace Array {
         return tuple;
     }
     Reference add_array_element(FunctionContext & context) {
-        auto array = context.getSymbol("array").toObject(context);
-        auto element = context.getSymbol("element").toObject(context);
+        auto array = context.get_symbol("array").to_object(context);
+        auto element = context.get_symbol("element").to_object(context);
 
         if (array->type <= 0) {
             array->data.a = (Object::Data::ArrayElement *) malloc(sizeof(Object::Data::ArrayElement) * 2);
@@ -125,7 +125,7 @@ namespace Array {
         return array;
     }
     Reference remove_array_element(FunctionContext & context) {
-        auto array = context.getSymbol("array").toObject(context);
+        auto array = context.get_symbol("array").to_object(context);
 
         if (array->type > 0) {
             array->type--;
@@ -134,20 +134,20 @@ namespace Array {
     }
 
     void initiate(Context & context) {
-        auto array = context.getSymbol("Array").toObject(context);
+        auto array = context.get_symbol("Array").to_object(context);
 
-        array->fields["lenght"] = context.newObject();
-        array->fields["lenght"]->functions.push_front(new SystemFunction(get_array_size(), get_array_size));
-        array->fields["get_capacity"] = context.newObject();
-        array->fields["get_capacity"]->functions.push_front(new SystemFunction(get_array_capacity(), get_array_capacity));
-        array->fields["set_capacity"] = context.newObject();
-        array->fields["set_capacity"]->functions.push_front(new SystemFunction(set_array_capacity(), set_array_capacity));
-        array->fields["get"] = context.newObject();
-        array->fields["get"]->functions.push_front(new SystemFunction(get_array_element(), get_array_element));
-        array->fields["add"] = context.newObject();
-        array->fields["add"]->functions.push_front(new SystemFunction(add_array_element(), add_array_element));
-        array->fields["remove"] = context.newObject();
-        array->fields["remove"]->functions.push_front(new SystemFunction(remove_array_element(), remove_array_element));
+        array->properties["lenght"] = context.new_object();
+        array->properties["lenght"]->functions.push_front(new SystemFunction(get_array_size(), get_array_size));
+        array->properties["get_capacity"] = context.new_object();
+        array->properties["get_capacity"]->functions.push_front(new SystemFunction(get_array_capacity(), get_array_capacity));
+        array->properties["set_capacity"] = context.new_object();
+        array->properties["set_capacity"]->functions.push_front(new SystemFunction(set_array_capacity(), set_array_capacity));
+        array->properties["get"] = context.new_object();
+        array->properties["get"]->functions.push_front(new SystemFunction(get_array_element(), get_array_element));
+        array->properties["add"] = context.new_object();
+        array->properties["add"]->functions.push_front(new SystemFunction(add_array_element(), add_array_element));
+        array->properties["remove"] = context.new_object();
+        array->properties["remove"]->functions.push_front(new SystemFunction(remove_array_element(), remove_array_element));
     }
 
 }

@@ -1,7 +1,8 @@
-#ifndef PARSER_STANDARD_HPP_
-#define PARSER_STANDARD_HPP_
+#ifndef __PARSER_STANDARD_HPP__
+#define __PARSER_STANDARD_HPP__
 
 #include "expression/Expression.hpp"
+
 #include "Position.hpp"
 
 
@@ -33,9 +34,9 @@ namespace StandardParser {
 
     struct IncompleteError {};
 
-    std::vector<Word> getWords(std::string const& path, std::string const& code);
+    std::vector<Word> get_words(std::string const& path, std::string const& code);
 
-    std::shared_ptr<Expression> getTree(std::vector<ParserError> & errors, std::string const& path, std::string const& code, std::vector<std::string> symbols);
+    std::shared_ptr<Expression> get_tree(std::vector<ParserError> & errors, std::string const& path, std::string const& code, std::vector<std::string> symbols);
 
 }
 

@@ -10,9 +10,9 @@ Reference::Reference() {
 Reference::Reference(Reference const& reference) {
     type = reference.type;
     
-    if (type == SymbolReference) symbolReference = reference.symbolReference;
-    else if (type == PropertyReference) propertyReference = reference.propertyReference;
-    else if (type == ArrayReference) arrayReference = reference.arrayReference;
+    if (type == SymbolReference) symbol_reference = reference.symbol_reference;
+    else if (type == PropertyReference) property_reference = reference.property_reference;
+    else if (type == ArrayReference) array_reference = reference.array_reference;
     else if (type == Pointer) pointer = reference.pointer;
     else {
         tuple = new Reference[type];
@@ -21,21 +21,21 @@ Reference::Reference(Reference const& reference) {
     }
 }
 
-Reference::Reference(Object** const& reference) {
+Reference::Reference(Object** const& symbol_reference) {
     type = SymbolReference;
-    symbolReference = reference;
+    this->symbol_reference = symbol_reference;
 }
 
 Reference::Reference(Object* const& parent, Object** const& reference) {
     type = PropertyReference;
-    propertyReference.parent = parent;
-    propertyReference.reference = reference;
+    property_reference.parent = parent;
+    property_reference.reference = reference;
 }
 
 Reference::Reference(Object* const& array, unsigned long const& i) {
     type = ArrayReference;
-    arrayReference.array = array;
-    arrayReference.i = i;
+    array_reference.array = array;
+    array_reference.i = i;
 }
 
 Reference::Reference(Object* const& pointer) {
@@ -53,23 +53,23 @@ Reference::~Reference() {
         delete[] tuple;
 }
 
-bool Reference::isReference() const {
+bool Reference::is_reference() const {
     return type < 0;
 }
 
-Object* & Reference::getReference() const {
-    if (type == PropertyReference) return *propertyReference.reference;
-    else if (type == ArrayReference) return arrayReference.array->data.a[arrayReference.i+1].o;
-    else return *symbolReference;
+Object* & Reference::get_reference() const {
+    if (type == PropertyReference) return *property_reference.reference;
+    else if (type == ArrayReference) return array_reference.array->data.a[array_reference.i+1].o;
+    else return *symbol_reference;
 }
 
-Object* Reference::toObject(Context & context) const {
+Object* Reference::to_object(Context & context) const {
     if (type == Pointer) return pointer;
-    else if (isReference()) return getReference();
+    else if (is_reference()) return get_reference();
     else {
-        auto object = context.newObject((size_t) type);
+        auto object = context.new_object((size_t) type);
         for (long i = 0; i < type; i++)
-            object->data.a[i+1].o = tuple[i].toObject(context);
+            object->data.a[i+1].o = tuple[i].to_object(context);
         return object;
     }
 }
@@ -80,9 +80,9 @@ Reference& Reference::operator=(Reference const& reference) {
 
     type = reference.type;
     
-    if (type == SymbolReference) symbolReference = reference.symbolReference;
-    else if (type == PropertyReference) propertyReference = reference.propertyReference;
-    else if (type == ArrayReference) arrayReference = reference.arrayReference;
+    if (type == SymbolReference) symbol_reference = reference.symbol_reference;
+    else if (type == PropertyReference) property_reference = reference.property_reference;
+    else if (type == ArrayReference) array_reference = reference.array_reference;
     else if (type == Pointer) pointer = reference.pointer;
     else {
         tuple = new Reference[type];

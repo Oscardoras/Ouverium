@@ -1,5 +1,5 @@
-#ifndef INTERPRETER_OBJECT_HPP_
-#define INTERPRETER_OBJECT_HPP_
+#ifndef __INTERPRETER_OBJECT_HPP__
+#define __INTERPRETER_OBJECT_HPP__
 
 #include <list>
 #include <map>
@@ -12,7 +12,7 @@ struct Function;
 
 struct Object {
     
-    std::map<std::string, Object*> fields;
+    std::map<std::string, Object*> properties;
 
     std::list<Function*> functions;
 
@@ -37,7 +37,7 @@ struct Object {
         union ArrayElement {
             size_t c;
             Object* o;
-        } * a;
+        } *a;
     } data;
 
     bool referenced;
@@ -54,7 +54,7 @@ struct Object {
 
     ~Object();
 
-    std::string toString() const;
+    std::string to_string() const;
 
 };
 

@@ -9,7 +9,7 @@
 int main(int argc, char ** argv) {
     if (argc == 1) {
         GlobalContext context;
-        Interpreter::setStandardContext(context);
+        Interpreter::set_standard_context(context);
 
         std::string code;
         std::string line;
@@ -18,7 +18,7 @@ int main(int argc, char ** argv) {
                 code += line + '\n';
                 try {
                     auto r = Interpreter::run(context, ".", code);
-                    if (Interpreter::print(std::cout, r.toObject(context)))
+                    if (Interpreter::print(std::cout, r.to_object(context)))
                         std::cout << std::endl;
                     code = "";
                 } catch (StandardParser::IncompleteError & e) {}
@@ -32,7 +32,7 @@ int main(int argc, char ** argv) {
                 code += line + '\n';
             
             GlobalContext context;
-            Interpreter::setStandardContext(context);
+            Interpreter::set_standard_context(context);
             try {
                 Interpreter::run(context, argv[1], code);
             } catch (StandardParser::IncompleteError & e) {

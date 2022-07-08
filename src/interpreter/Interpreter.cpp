@@ -20,32 +20,32 @@
 
 
 
-void setReferences(FunctionContext & function_context, std::shared_ptr<Expression> parameters, Reference reference) {
+void set_references(FunctionContext & function_context, std::shared_ptr<Expression> parameters, Reference reference) {
     if (parameters->type == Expression::Symbol) {
         auto symbol = std::static_pointer_cast<Symbol>(parameters);
 
-        function_context.addSymbol(symbol->name, reference);
+        function_context.add_symbol(symbol->name, reference);
     } else if (parameters->type == Expression::Tuple) {
         auto tuple = std::static_pointer_cast<Tuple>(parameters);
 
         if (reference.type == (long) tuple->objects.size()) {
             for (size_t i = 0; i < tuple->objects.size(); i++)
-                setReferences(function_context, tuple->objects[i], reference.tuple[i]);
+                set_references(function_context, tuple->objects[i], reference.tuple[i]);
         } else {
-            auto object = reference.toObject(function_context);
+            auto object = reference.to_object(function_context);
             if (object->type == (long) tuple->objects.size()) {
                 for (unsigned long i = 1; i <= tuple->objects.size(); i++)
-                    setReferences(function_context, tuple->objects[i], Reference(&object->data.a[i].o));
+                    set_references(function_context, tuple->objects[i], Reference(&object->data.a[i].o));
             } else throw FunctionArgumentsError();
         }
     } else throw FunctionArgumentsError();
 }
 
-void setReferences(Context & context, FunctionContext & function_context, std::shared_ptr<Expression> parameters, std::shared_ptr<Expression> arguments) {
+void set_references(Context & context, FunctionContext & function_context, std::shared_ptr<Expression> parameters, std::shared_ptr<Expression> arguments) {
     if (parameters->type == Expression::Symbol) {
         auto symbol = std::static_pointer_cast<Symbol>(parameters);
 
-        function_context.addSymbol(symbol->name, Interpreter::execute(context, arguments));
+        function_context.add_symbol(symbol->name, Interpreter::execute(context, arguments));
     } else if (parameters->type == Expression::Tuple) {
         auto p_tuple = std::static_pointer_cast<Tuple>(parameters);
 
@@ -55,9 +55,9 @@ void setReferences(Context & context, FunctionContext & function_context, std::s
             if (p_tuple->objects.size() == a_tuple->objects.size()) {
                 size_t size = p_tuple->objects.size();
                 for (size_t i = 0; i < size; i++)
-                    setReferences(context, function_context, p_tuple->objects[i], a_tuple->objects[i]);
+                    set_references(context, function_context, p_tuple->objects[i], a_tuple->objects[i]);
             } else throw FunctionArgumentsError();
-        } else setReferences(function_context, parameters, Interpreter::execute(context, arguments));
+        } else set_references(function_context, parameters, Interpreter::execute(context, arguments));
     } else if (parameters->type == Expression::FunctionCall) {
         auto p_function = std::static_pointer_cast<FunctionCall>(parameters);
 
@@ -68,39 +68,39 @@ void setReferences(Context & context, FunctionContext & function_context, std::s
             function_definition->parameters = p_function->object;
             function_definition->object = arguments;
 
-            auto object = context.newObject();
+            auto object = context.new_object();
             auto f = new CustomFunction(function_definition);
-            for (auto symbol : function_definition->object->usedSymbols)
-                ((CustomFunction*) f)->externSymbols[symbol] = context.getSymbol(symbol);
+            for (auto symbol : function_definition->object->symbols)
+                ((CustomFunction*) f)->extern_symbols[symbol] = context.get_symbol(symbol);
             object->functions.push_front(f);
 
-            function_context.addSymbol(symbol->name, Reference(object));
+            function_context.add_symbol(symbol->name, Reference(object));
         } else throw FunctionArgumentsError();
     } else throw FunctionArgumentsError();
 }
 
-Reference Interpreter::callFunction(Context & context, std::list<Function*> functions, std::shared_ptr<Expression> arguments, std::shared_ptr<Position> position) {
+Reference Interpreter::call_function(Context & context, std::list<Function*> functions, std::shared_ptr<Expression> arguments, std::shared_ptr<Position> position) {
     for (auto function : functions) {
         try {
             FunctionContext function_context(context, position);
-            if (position != nullptr) function_context.addSymbol("system_position", context.newObject(position->path));
+            if (position != nullptr) function_context.add_symbol("system_position", context.new_object(position->path));
 
-            for (auto & symbol : function->externSymbols)
-                function_context.addSymbol(symbol.first, symbol.second);
+            for (auto & symbol : function->extern_symbols)
+                function_context.add_symbol(symbol.first, symbol.second);
 
             if (function->type == Function::Custom) {
-                setReferences(context, function_context, ((CustomFunction*) function)->pointer->parameters, arguments);
+                set_references(context, function_context, ((CustomFunction*) function)->pointer->parameters, arguments);
 
                 Object* filter;
                 if (((CustomFunction*) function)->pointer->filter != nullptr)
-                    filter = execute(function_context, ((CustomFunction*) function)->pointer->filter).toObject(context);
+                    filter = execute(function_context, ((CustomFunction*) function)->pointer->filter).to_object(context);
                 else filter = nullptr;
 
                 if (filter == nullptr || (filter->type == Object::Bool && filter->data.b))
                     return execute(function_context, ((CustomFunction*) function)->pointer->object);
                 else throw FunctionArgumentsError();
             } else {
-                setReferences(context, function_context, ((SystemFunction*) function)->parameters, arguments);
+                set_references(context, function_context, ((SystemFunction*) function)->parameters, arguments);
                 
                 return ((SystemFunction*) function)->pointer(function_context);
             }
@@ -115,7 +115,7 @@ Reference Interpreter::callFunction(Context & context, std::list<Function*> func
     while (c != old_c) {
         if (c->position != nullptr) c->position->notify();
         old_c = c;
-        c = c->getParent();
+        c = c->get_parent();
     }
     throw InterpreterError();
 }
@@ -125,28 +125,28 @@ Reference Interpreter::execute(Context & context, std::shared_ptr<Expression> ex
     if (expression->type == Expression::FunctionCall) {
         auto function_call = std::static_pointer_cast<FunctionCall>(expression);
 
-        auto func = execute(context, function_call->function).toObject(context);
-        return callFunction(context, func->functions, function_call->object, function_call->position);
+        auto func = execute(context, function_call->function).to_object(context);
+        return call_function(context, func->functions, function_call->object, function_call->position);
     } else if (expression->type == Expression::FunctionDefinition) {
         auto function_definition = std::static_pointer_cast<FunctionDefinition>(expression);
-        auto object = context.newObject();
+        auto object = context.new_object();
         auto f = new CustomFunction(function_definition);
-        for (auto symbol : function_definition->object->usedSymbols)
-            if (context.hasSymbol(symbol))
-                f->externSymbols[symbol] = context.getSymbol(symbol);
+        for (auto symbol : function_definition->object->symbols)
+            if (context.has_symbol(symbol))
+                f->extern_symbols[symbol] = context.get_symbol(symbol);
         if (function_definition->filter != nullptr)
-            for (auto symbol : function_definition->filter->usedSymbols)
-                if (context.hasSymbol(symbol))
-                    f->externSymbols[symbol] = context.getSymbol(symbol);
+            for (auto symbol : function_definition->filter->symbols)
+                if (context.has_symbol(symbol))
+                    f->extern_symbols[symbol] = context.get_symbol(symbol);
         object->functions.push_front(f);
         
         return Reference(object);
     } else if (expression->type == Expression::Property) {
         auto property = std::static_pointer_cast<Property>(expression);
         
-        auto object = execute(context, property->object).toObject(context);
-        auto & field = object->fields[property->name];
-        if (field == nullptr) field = context.newObject();
+        auto object = execute(context, property->object).to_object(context);
+        auto & field = object->properties[property->name];
+        if (field == nullptr) field = context.new_object();
         return Reference(object, &field);
     } else if (expression->type == Expression::Symbol) {
         auto symbol = std::static_pointer_cast<Symbol>(expression)->name;
@@ -177,17 +177,17 @@ Reference Interpreter::execute(Context & context, std::shared_ptr<Expression> ex
                 }
             } else first = false;
 
-            return context.newObject(str);
+            return context.new_object(str);
         }
-        if (symbol == "true") return Reference(context.newObject(true));
-        if (symbol == "false") return Reference(context.newObject(false));
+        if (symbol == "true") return Reference(context.new_object(true));
+        if (symbol == "false") return Reference(context.new_object(false));
         try {
-            return Reference(context.newObject(std::stol(symbol)));
+            return Reference(context.new_object(std::stol(symbol)));
         } catch (std::invalid_argument const& ex1) {
             try {
-                return Reference(context.newObject(std::stod(symbol)));
+                return Reference(context.new_object(std::stod(symbol)));
             } catch (std::invalid_argument const& ex2) {
-                return context.getSymbol(symbol);
+                return context.get_symbol(symbol);
             }
         }
     } else if (expression->type == Expression::Tuple) {
@@ -199,17 +199,17 @@ Reference Interpreter::execute(Context & context, std::shared_ptr<Expression> ex
             reference = Reference(n);
             for (int i = 0; i < (int) n; i++)
                 reference.tuple[i] = execute(context, tuple->objects[i]);
-        } else reference = Reference(context.newObject());
+        } else reference = Reference(context.new_object());
         return reference;
     } else return Reference();
 }
 
 
 void addFunction(Context & context, std::string symbol, std::shared_ptr<Expression> parameters, Reference (*function)(FunctionContext&)) {
-    context.getSymbol(symbol).toObject(context)->functions.push_front(new SystemFunction(parameters, function));
+    context.get_symbol(symbol).to_object(context)->functions.push_front(new SystemFunction(parameters, function));
 }
 
-void Interpreter::setStandardContext(Context & context) {
+void Interpreter::set_standard_context(Context & context) {
     Array::initiate(context);
     Base::initiate(context);
     Math::initiate(context);
@@ -223,18 +223,18 @@ Reference Interpreter::run(Context & context, std::string const& path, std::stri
         symbols.push_back(it->first);
 
     std::vector<StandardParser::ParserError> errors;
-    auto tree = StandardParser::getTree(errors, path, code, symbols);
-    //std::cout << tree->toString() << std::endl;
+    auto tree = StandardParser::get_tree(errors, path, code, symbols);
+    //std::cout << tree->to_string() << std::endl;
     if (errors.empty()) {
         try {
             return Interpreter::execute(context, tree);
         } catch (InterpreterError & e) {
-            return Reference(context.newObject());
+            return Reference(context.new_object());
         }
     } else {
         for (auto & e : errors)
             std::cerr << e.message << " in file \"" << e.position.path << "\" at line " << e.position.line << ", column " << e.position.column << "." << std::endl;
-        return Reference(context.newObject());
+        return Reference(context.new_object());
     }
 }
 

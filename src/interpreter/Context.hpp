@@ -1,5 +1,5 @@
-#ifndef INTERPRETER_CONTEXT_HPP_
-#define INTERPRETER_CONTEXT_HPP_
+#ifndef __INTERPRETER_CONTEXT_HPP__
+#define __INTERPRETER_CONTEXT_HPP__
 
 #include <map>
 #include <set>
@@ -7,6 +7,7 @@
 
 #include "Reference.hpp"
 
+#include "../parser/expression/Expression.hpp"
 #include "../parser/Position.hpp"
 
 struct GlobalContext;
@@ -17,34 +18,34 @@ struct Context {
     std::shared_ptr<Position> position;
     std::map<std::string, Reference> symbols;
 
-    virtual GlobalContext* getGlobal() = 0;
-    virtual Context* getParent() = 0;
+    virtual GlobalContext* get_global() = 0;
+    virtual Context* get_parent() = 0;
 
-    Object* newObject();
-    Object* newObject(Object const& object);
-    Object* newObject(void* ptr);
-    Object* newObject(bool b);
-    Object* newObject(long i);
-    Object* newObject(double f);
-    Object* newObject(char c);
-    Object* newObject(size_t tuple_size);
-    Object* newObject(std::string const& str);
+    Object* new_object();
+    Object* new_object(Object const& object);
+    Object* new_object(void* ptr);
+    Object* new_object(bool b);
+    Object* new_object(long i);
+    Object* new_object(double f);
+    Object* new_object(char c);
+    Object* new_object(size_t tuple_size);
+    Object* new_object(std::string const& str);
 
-    void addSymbol(std::string const& symbol, Reference const& reference);
-    Reference getSymbol(std::string const& symbol);
-    bool hasSymbol(std::string const& symbol) const;
+    bool has_symbol(std::string const& symbol) const;
+    void add_symbol(std::string const& symbol, Reference const& reference);
+    Reference get_symbol(std::string const& symbol);
 
 };
 
 struct GlobalContext: public Context {
 
-    std::set<std::string> files;
+    std::map<std::string, std::shared_ptr<Expression>> files;
     std::list<Object> objects;
     std::list<Object*> references;
-    std::list<void*> cpointers;
+    std::list<void*> c_pointers;
 
-    virtual GlobalContext* getGlobal();
-    virtual Context* getParent();
+    virtual GlobalContext* get_global();
+    virtual Context* get_parent();
 
     ~GlobalContext();
 
@@ -56,8 +57,8 @@ struct FunctionContext: public Context {
 
     FunctionContext(Context & parent, std::shared_ptr<Position> position);
 
-    virtual GlobalContext* getGlobal();
-    virtual Context* getParent();
+    virtual GlobalContext* get_global();
+    virtual Context* get_parent();
 
 };
 

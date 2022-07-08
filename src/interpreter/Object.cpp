@@ -10,15 +10,18 @@ Object::Object() {
 Object::Object(Object const& object) {
     for (auto f : object.functions) {
         Function* function;
-        if (f->type == Function::Custom)
-            function = new CustomFunction(((CustomFunction*) f)->pointer);
-        else
-            function = new SystemFunction(((SystemFunction*) f)->parameters, ((SystemFunction*) f)->pointer);
-        function->externSymbols = f->externSymbols;
+        switch (f->type) {
+        case Function::Custom:
+            function = new CustomFunction((CustomFunction) (*(CustomFunction*) f));
+            break;
+        case Function::System:
+            function = new SystemFunction((SystemFunction) (*(SystemFunction*) f));
+            break;
+        }
         functions.push_front(function);
     }
 
-    fields = object.fields;
+    properties = object.properties;
 
     type = object.type;
     if (type == CPointer) data.ptr = object.data.ptr;
@@ -83,7 +86,7 @@ Object::~Object() {
         free(data.a);
 }
 
-std::string Object::toString() const {
+std::string Object::to_string() const {
     if (type > 0) {
         std::string str;
 

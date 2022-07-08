@@ -1,5 +1,5 @@
-#ifndef INTERPRETER_REFERENCE_HPP_
-#define INTERPRETER_REFERENCE_HPP_
+#ifndef __INTERPRETER_REFERENCE_HPP__
+#define __INTERPRETER_REFERENCE_HPP__
 
 #include "Object.hpp"
 
@@ -19,24 +19,24 @@ struct Reference {
     long type;
 
     union {
-        Object* * symbolReference;
+        Object** symbol_reference;
         struct {
             Object* parent;
-            Object* * reference;
-        } propertyReference;
+            Object** reference;
+        } property_reference;
         struct {
             Object* array;
             unsigned long i;
-        } arrayReference;
+        } array_reference;
         Object* pointer;
-        Reference * tuple;
+        Reference *tuple;
     };
 
     Reference();
 
     Reference(Reference const& reference);
 
-    Reference(Object** const& reference);
+    Reference(Object** const& symbol_reference);
 
     Reference(Object* const& parent, Object** const& reference);
 
@@ -48,10 +48,10 @@ struct Reference {
 
     ~Reference();
 
-    bool isReference() const;
-    Object* & getReference() const;
+    bool is_reference() const;
+    Object* & get_reference() const;
 
-    Object* toObject(Context & context) const;
+    Object* to_object(Context & context) const;
 
     Reference& operator=(Reference const& reference);
 
