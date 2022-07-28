@@ -119,7 +119,7 @@
 		},
 		"base-functions": {
 			"name": "support.function",
-			"match": "\\b(if|else|while|for|from|to|step|using|include)\\b"
+			"match": "\\b(if|else|while|for|from|to|step|try|throw|catch|using|include)\\b"
 		}
 	},
 	"scopeName": "source.fl"

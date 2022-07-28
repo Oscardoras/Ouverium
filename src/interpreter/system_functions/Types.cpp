@@ -25,7 +25,7 @@ namespace Types {
         else if (type == context.get_symbol("Float").to_object(context)) return Reference(context.new_object(object->type == Object::Float));
         else if (type == context.get_symbol("Bool").to_object(context)) return Reference(context.new_object(object->type == Object::Bool));
         else if (type == context.get_symbol("Array").to_object(context)) return Reference(context.new_object(object->type >= 0));
-        else throw FunctionArgumentsError();
+        else throw Interpreter::FunctionArgumentsError();
     }
 
     void initiate(Context & context) {

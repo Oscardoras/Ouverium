@@ -13,4 +13,4 @@ print(str);
 words := get_words(str);
 words->foreach(x |-> {
     print(x, "\n")
-})
+});

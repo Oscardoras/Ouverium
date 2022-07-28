@@ -16,10 +16,13 @@ std::string expression_to_string(Expression const * const expression, int n) {
 
     if (expression == nullptr) return "NULL\n";
 
+    /*
     if (n == 0) {
         s += "global symbols :\n";
-        for (std::string name : expression->symbols) s += tabu(1) + " " + name + "\n";
+        for (std::string name : expression->symbols)
+            s += tabu(1) + name + "\n";
     }
+    */
 
     if (expression->type == Expression::FunctionCall) {
         FunctionCall * functionCall = (FunctionCall *) expression;
@@ -36,9 +39,12 @@ std::string expression_to_string(Expression const * const expression, int n) {
         s += tabu(n) + "parameters : " + expression_to_string(functionDefinition->parameters.get(), n);
         s += tabu(n) + "filter : " + expression_to_string(functionDefinition->filter.get(), n);
         s += tabu(n) + "object : " + expression_to_string(functionDefinition->object.get(), n);
+        /*
         s += tabu(n) + "symbols :\n";
         n++;
-        for (std::string name : functionDefinition->object->symbols) s += tabu(n) + " " + name + "\n";
+        for (std::string name : functionDefinition->object->symbols)
+           *s += tabu(n) + name + "\n";
+        */
     } else if (expression->type == Expression::Property) {
         Property * property = (Property *) expression;
         
@@ -59,10 +65,6 @@ std::string expression_to_string(Expression const * const expression, int n) {
     }
 
     return s;
-}
-
-Expression::Expression() {
-    escaped = false;
 }
 
 std::string Expression::to_string() const {

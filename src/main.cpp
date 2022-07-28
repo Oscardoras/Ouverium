@@ -9,7 +9,6 @@
 int main(int argc, char ** argv) {
     if (argc == 1) {
         GlobalContext context;
-        Interpreter::set_standard_context(context);
 
         std::string code;
         std::string line;
@@ -17,11 +16,16 @@ int main(int argc, char ** argv) {
             if (line.length() > 0) {
                 code += line + '\n';
                 try {
-                    auto r = Interpreter::run(context, ".", code);
+                    std::vector<std::string> symbols;
+                    for (auto const& symbol : context.symbols)
+                        symbols.push_back(symbol.first);
+
+                    auto expression = StandardParser::get_tree(code, ".", symbols);
+                    auto r = Interpreter::run(context, expression);
                     if (Interpreter::print(std::cout, r.to_object(context)))
                         std::cout << std::endl;
                     code = "";
-                } catch (StandardParser::IncompleteError & e) {}
+                } catch (StandardParser::IncompleteCode & e) {}
             }
     } else if (argc == 2) {
         std::ifstream src(argv[1]);
@@ -32,10 +36,14 @@ int main(int argc, char ** argv) {
                 code += line + '\n';
             
             GlobalContext context;
-            Interpreter::set_standard_context(context);
             try {
-                Interpreter::run(context, argv[1], code);
-            } catch (StandardParser::IncompleteError & e) {
+                std::vector<std::string> symbols;
+                for (auto const& symbol : context.symbols)
+                    symbols.push_back(symbol.first);
+
+                auto expression = StandardParser::get_tree(code, argv[1], symbols);
+                auto r = Interpreter::run(context, expression);
+            } catch (StandardParser::IncompleteCode & e) {
                 std::cerr << "incomplete code, you must finish the last expression in file \"" << argv[1] << "\"" << std::endl;
             }
         } else std::cerr << "Error: unable to load the source file " << argv[1] << "." << std::endl;

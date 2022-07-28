@@ -109,7 +109,7 @@ GlobalContext::~GlobalContext() {
     for (auto it = objects.begin(); it != objects.end(); it++) {
         auto finalize = it->properties.find("finalize");
         if (finalize != it->properties.end())
-            Interpreter::call_function(*get_global(), finalize->second->functions, std::make_shared<Tuple>(), nullptr);
+            Interpreter::call_function(*get_global(), nullptr, finalize->second->functions, std::make_shared<Tuple>());
     }
 
     for (auto it = c_pointers.begin(); it != c_pointers.end(); it++)

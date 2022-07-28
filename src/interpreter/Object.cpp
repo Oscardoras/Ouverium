@@ -1,3 +1,5 @@
+#include <exception>
+
 #include "Function.hpp"
 #include "Interpreter.hpp"
 
@@ -93,9 +95,9 @@ std::string Object::to_string() const {
         for (long i = 1; i <= type; i++) {
             auto o = data.a[i].o;
             if (o->type == Object::Char) str.push_back(o->data.c);
-            else throw InterpreterError();
+            else throw std::exception();
         }
 
         return str;
-    } else throw InterpreterError();
+    } else throw std::exception();
 }

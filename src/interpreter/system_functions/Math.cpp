@@ -46,7 +46,7 @@ namespace Math {
         auto a = context.get_symbol("a").to_object(context);
         
         if (a->type == Object::Bool) return Reference(context.new_object(!a->data.b));
-        else throw FunctionArgumentsError();
+        else throw Interpreter::FunctionArgumentsError();
     }
 
     Reference logical_and(FunctionContext & context) {
@@ -55,12 +55,12 @@ namespace Math {
 
         if (a->type == Object::Bool)
             if (a->data.b) {
-                auto r = Interpreter::call_function(*context.get_parent(), b->functions, std::make_shared<Tuple>(), nullptr).to_object(context);
+                auto r = Interpreter::call_function(*context.get_parent(), nullptr, b->functions, std::make_shared<Tuple>()).to_object(context);
                 if (r->type == Object::Bool)
                     return Reference(context.new_object(r->data.b));
-                else throw FunctionArgumentsError();
+                else throw Interpreter::FunctionArgumentsError();
             } else return Reference(context.new_object(false));
-        else throw FunctionArgumentsError();
+        else throw Interpreter::FunctionArgumentsError();
     }
 
     Reference logical_or(FunctionContext & context) {
@@ -69,12 +69,12 @@ namespace Math {
 
         if (a->type == Object::Bool)
             if (!a->data.b) {
-                auto r = Interpreter::call_function(*context.get_parent(), b->functions, std::make_shared<Tuple>(), nullptr).to_object(context);
+                auto r = Interpreter::call_function(*context.get_parent(), nullptr, b->functions, std::make_shared<Tuple>()).to_object(context);
                 if (r->type == Object::Bool)
                     return Reference(context.new_object(r->data.b));
-                else throw FunctionArgumentsError();
+                else throw Interpreter::FunctionArgumentsError();
             } else return Reference(context.new_object(true));
-        else throw FunctionArgumentsError();
+        else throw Interpreter::FunctionArgumentsError();
     }
 
     Reference addition(FunctionContext & context) {
@@ -85,7 +85,7 @@ namespace Math {
             return Reference(context.new_object(a->data.i + b->data.i));
         else if (a->type == Object::Float && b->type == Object::Float)
             return Reference(context.new_object(a->data.f + b->data.f));
-        else throw FunctionArgumentsError();
+        else throw Interpreter::FunctionArgumentsError();
     }
 
     Reference opposite(FunctionContext & context) {
@@ -95,7 +95,7 @@ namespace Math {
             return Reference(context.new_object(-a->data.i));
         else if (a->type == Object::Float)
             return Reference(context.new_object(-a->data.f));
-        else throw FunctionArgumentsError();
+        else throw Interpreter::FunctionArgumentsError();
     }
 
     Reference substraction(FunctionContext & context) {
@@ -106,7 +106,7 @@ namespace Math {
             return Reference(context.new_object(a->data.i - b->data.i));
         else if (a->type == Object::Float && b->type == Object::Float)
             return Reference(context.new_object(a->data.f - b->data.f));
-        else throw FunctionArgumentsError();
+        else throw Interpreter::FunctionArgumentsError();
     }
 
     Reference multiplication(FunctionContext & context) {
@@ -117,7 +117,7 @@ namespace Math {
             return Reference(context.new_object(a->data.i * b->data.i));
         else if (a->type == Object::Float && b->type == Object::Float)
             return Reference(context.new_object(a->data.f * b->data.f));
-        else throw FunctionArgumentsError();
+        else throw Interpreter::FunctionArgumentsError();
     }
 
     Reference division(FunctionContext & context) {
@@ -128,7 +128,7 @@ namespace Math {
             return Reference(context.new_object(a->data.i / b->data.i));
         else if (a->type == Object::Float && b->type == Object::Float && b->data.f != 0)
             return Reference(context.new_object(a->data.f / b->data.f));
-        else throw FunctionArgumentsError();
+        else throw Interpreter::FunctionArgumentsError();
     }
 
     Reference modulo(FunctionContext & context) {
@@ -137,7 +137,7 @@ namespace Math {
             
         if (a->type == Object::Int && b->type == Object::Int)
             return Reference(context.new_object(a->data.i % b->data.i));
-        else throw FunctionArgumentsError();
+        else throw Interpreter::FunctionArgumentsError();
     }
 
     Reference strictly_inf(FunctionContext & context) {
@@ -150,7 +150,7 @@ namespace Math {
             return Reference(context.new_object(a->data.f < b->data.f));
         else if (a->type == Object::Char && b->type == Object::Char)
             return Reference(context.new_object(a->data.c < b->data.c));
-        else throw FunctionArgumentsError();
+        else throw Interpreter::FunctionArgumentsError();
     }
 
     Reference strictly_sup(FunctionContext & context) {
@@ -163,7 +163,7 @@ namespace Math {
             return Reference(context.new_object(a->data.f > b->data.f));
         else if (a->type == Object::Char && b->type == Object::Char)
             return Reference(context.new_object(a->data.c > b->data.c));
-        else throw FunctionArgumentsError();
+        else throw Interpreter::FunctionArgumentsError();
     }
     
     Reference inf_equals(FunctionContext & context) {
@@ -176,7 +176,7 @@ namespace Math {
             return Reference(context.new_object(a->data.f <= b->data.f));
         else if (a->type == Object::Char && b->type == Object::Char)
             return Reference(context.new_object(a->data.c <= b->data.c));
-        else throw FunctionArgumentsError();
+        else throw Interpreter::FunctionArgumentsError();
     }
 
     Reference sup_equals(FunctionContext & context) {
@@ -189,7 +189,7 @@ namespace Math {
             return Reference(context.new_object(a->data.f >= b->data.f));
         else if (a->type == Object::Char && b->type == Object::Char)
             return Reference(context.new_object(a->data.c >= b->data.c));
-        else throw FunctionArgumentsError();
+        else throw Interpreter::FunctionArgumentsError();
     }
 
     Reference increment(FunctionContext & context) {
@@ -198,7 +198,7 @@ namespace Math {
         if (a.get_reference()->type == Object::Int) {
             a.get_reference() = context.new_object(a.get_reference()->data.i+1);
             return a;
-        } else throw FunctionArgumentsError();
+        } else throw Interpreter::FunctionArgumentsError();
     }
 
     Reference decrement(FunctionContext & context) {
@@ -207,7 +207,7 @@ namespace Math {
         if (a.get_reference()->type == Object::Int) {
             a.get_reference() = context.new_object(a.get_reference()->data.i-1);
             return a;
-        } else throw FunctionArgumentsError();
+        } else throw Interpreter::FunctionArgumentsError();
     }
 
     Reference add(FunctionContext & context) {
@@ -218,7 +218,7 @@ namespace Math {
             a->data.i += b->data.i;
         else if (a->type == Object::Float && b->type == Object::Float)
             a->data.f += b->data.f;
-        else throw FunctionArgumentsError();
+        else throw Interpreter::FunctionArgumentsError();
 
         return Reference(context.new_object());
     }
@@ -231,7 +231,7 @@ namespace Math {
             a->data.i -= b->data.i;
         else if (a->type == Object::Float && b->type == Object::Float)
             a->data.f -= b->data.f;
-        else throw FunctionArgumentsError();
+        else throw Interpreter::FunctionArgumentsError();
 
         return Reference(context.new_object());
     }
@@ -244,7 +244,7 @@ namespace Math {
             a->data.i *= b->data.i;
         else if (a->type == Object::Float && b->type == Object::Float)
             a->data.f *= b->data.f;
-        else throw FunctionArgumentsError();
+        else throw Interpreter::FunctionArgumentsError();
 
         return Reference(context.new_object());
     }
@@ -257,7 +257,7 @@ namespace Math {
             a->data.i /= b->data.i;
         else if (a->type == Object::Float && b->type == Object::Float && b->data.i != 0)
             a->data.f /= b->data.f;
-        else throw FunctionArgumentsError();
+        else throw Interpreter::FunctionArgumentsError();
 
         return Reference(context.new_object());
     }

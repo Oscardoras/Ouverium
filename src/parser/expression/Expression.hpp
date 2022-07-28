@@ -19,10 +19,7 @@ struct Expression {
     } type;
 
     std::shared_ptr<Position> position;
-    bool escaped;
     std::vector<std::string> symbols;
-
-    Expression();
 
     std::string to_string() const;
 

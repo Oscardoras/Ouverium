@@ -118,8 +118,8 @@ namespace Streams {
             context.get_global()->c_pointers.push_back(object->data.ptr);
 
             return Reference(object);
-        } catch (InterpreterError & e) {
-            throw FunctionArgumentsError();
+        } catch (std::exception & e) {
+            throw Interpreter::FunctionArgumentsError();
         }
     }
     Reference output_file(FunctionContext & context) {
@@ -132,8 +132,8 @@ namespace Streams {
             context.get_global()->c_pointers.push_back(object->data.ptr);
 
             return Reference(object);
-        } catch (InterpreterError & e) {
-            throw FunctionArgumentsError();
+        } catch (std::exception & e) {
+            throw Interpreter::FunctionArgumentsError();
         }
     }
 

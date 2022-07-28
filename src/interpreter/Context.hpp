@@ -44,6 +44,8 @@ struct GlobalContext: public Context {
     std::list<Object*> references;
     std::list<void*> c_pointers;
 
+    GlobalContext();
+
     virtual GlobalContext* get_global();
     virtual Context* get_parent();
 

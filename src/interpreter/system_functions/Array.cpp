@@ -17,7 +17,7 @@ namespace Array {
         
         if (array->type >= 0)
             return Reference(context.new_object((long) array->type));
-        else throw FunctionArgumentsError();
+        else throw Interpreter::FunctionArgumentsError();
     }
 
     std::shared_ptr<Expression> get_array_element() {
@@ -39,7 +39,7 @@ namespace Array {
 
         if (i->type == Object::Int && i->data.i >= 0 && i->data.i < array->type)
             return Reference(array, i->data.i);
-        else throw FunctionArgumentsError();
+        else throw Interpreter::FunctionArgumentsError();
     }
 
     std::shared_ptr<Expression> get_array_capacity() {
@@ -52,7 +52,7 @@ namespace Array {
 
         if (array->type == 0) return context.new_object((long) 0);
         else if (array->type > 0) return context.new_object((long) array->data.a[0].c);
-        else throw FunctionArgumentsError();
+        else throw Interpreter::FunctionArgumentsError();
     }
 
     std::shared_ptr<Expression> set_array_capacity() {
@@ -85,7 +85,7 @@ namespace Array {
             }
 
             return context.new_object();
-        } else throw FunctionArgumentsError();
+        } else throw Interpreter::FunctionArgumentsError();
     }
 
     std::shared_ptr<Expression> add_array_element() {
@@ -130,7 +130,7 @@ namespace Array {
         if (array->type > 0) {
             array->type--;
             return Reference(array, array->type);
-        } else throw FunctionArgumentsError();
+        } else throw Interpreter::FunctionArgumentsError();
     }
 
     void initiate(Context & context) {

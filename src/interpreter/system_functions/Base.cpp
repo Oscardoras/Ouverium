@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <exception>
 #include <iostream>
 #include <filesystem>
 #include <fstream>
@@ -59,16 +60,16 @@ namespace Base {
                                             if (condition->data.b)
                                                 return Interpreter::execute(*parent, tuple->objects[i+3]).to_object(context);
                                             else i += 4;
-                                        } else throw FunctionArgumentsError();
-                                    } else throw FunctionArgumentsError();
+                                        } else throw Interpreter::FunctionArgumentsError();
+                                    } else throw Interpreter::FunctionArgumentsError();
                                 } else return s;
-                            } else throw FunctionArgumentsError();
+                            } else throw Interpreter::FunctionArgumentsError();
                         }
                         return Reference(context.new_object());
                     }
-                } else throw FunctionArgumentsError();
-            } else throw FunctionArgumentsError();
-        } else throw FunctionArgumentsError();
+                } else throw Interpreter::FunctionArgumentsError();
+            } else throw Interpreter::FunctionArgumentsError();
+        } else throw Interpreter::FunctionArgumentsError();
     }
 
     std::shared_ptr<Expression> while_statement() {
@@ -97,13 +98,13 @@ namespace Base {
         auto condition_functions = context.get_symbol("condition").to_object(context)->functions;
         auto block_functions = context.get_symbol("block").to_object(context)->functions;
         while (true) {
-            auto condition = Interpreter::call_function(*parent, condition_functions, std::make_shared<Tuple>(), nullptr).to_object(context);
+            auto condition = Interpreter::call_function(*parent, nullptr, condition_functions, std::make_shared<Tuple>()).to_object(context);
 
             if (condition->type == Object::Bool) {
                 if (condition->data.b) {
-                    result = Interpreter::call_function(*parent, block_functions, std::make_shared<Tuple>(), nullptr);
+                    result = Interpreter::call_function(*parent, nullptr, block_functions, std::make_shared<Tuple>());
                 } else break;
-            } else throw FunctionArgumentsError();
+            } else throw Interpreter::FunctionArgumentsError();
         }
         
         if (result.type == Reference::Pointer && result.pointer == nullptr)
@@ -153,14 +154,14 @@ namespace Base {
         auto end = context.get_symbol("end").to_object(context);
         auto block_functions = context.get_symbol("block").to_object(context)->functions;
 
-        if (from_s == context.get_symbol("from_s").to_object(context) && begin->type == Object::Int && to_s == context.get_symbol("to_s").to_object(context) && end->type == Object::Int ) {
+        if (from_s == context.get_symbol("from").to_object(context) && begin->type == Object::Int && to_s == context.get_symbol("to").to_object(context) && end->type == Object::Int) {
             for (long i = begin->data.i; i < end->data.i; i++) {
                 variable.get_reference() = context.new_object(i);
-                Interpreter::call_function(*parent, block_functions, std::make_shared<Tuple>(), nullptr);
+                Interpreter::call_function(*parent, nullptr, block_functions, std::make_shared<Tuple>());
             }
             
             return Reference(context.new_object());
-        } else throw FunctionArgumentsError();
+        } else throw Interpreter::FunctionArgumentsError();
     }
 
     std::shared_ptr<Expression> for_step_statement() {
@@ -215,21 +216,94 @@ namespace Base {
         auto step = context.get_symbol("step").to_object(context);
         auto block_functions = context.get_symbol("block").to_object(context)->functions;
 
-        if (from_s == context.get_symbol("from_s").to_object(context) && begin->type == Object::Int && to_s == context.get_symbol("to_s").to_object(context) && end->type == Object::Int && step_s == context.get_symbol("step_s").to_object(context) && step->type == Object::Int) {
+        if (from_s == context.get_symbol("from").to_object(context) && begin->type == Object::Int && to_s == context.get_symbol("to").to_object(context) && end->type == Object::Int && step_s == context.get_symbol("step").to_object(context) && step->type == Object::Int) {
             if (step->data.i > 0)
                 for (long i = begin->data.i; i < end->data.i; i += step->data.i) {
                     variable.get_reference() = context.new_object(i);
-                    Interpreter::call_function(*parent, block_functions, std::make_shared<Tuple>(), nullptr);
+                    Interpreter::call_function(*parent, nullptr, block_functions, std::make_shared<Tuple>());
                 }
             else if (step->data.i < 0)
                 for (long i = begin->data.i; i > end->data.i; i += step->data.i) {
                     variable.get_reference() = context.new_object(i);
-                    Interpreter::call_function(*parent, block_functions, std::make_shared<Tuple>(), nullptr);
+                    Interpreter::call_function(*parent, nullptr, block_functions, std::make_shared<Tuple>());
                 }
-            else throw FunctionArgumentsError();
+            else throw Interpreter::FunctionArgumentsError();
             
             return Reference(context.new_object());
-        } else throw FunctionArgumentsError();
+        } else throw Interpreter::FunctionArgumentsError();
+    }
+
+    struct Exception {
+        Reference reference;
+        std::shared_ptr<Position> position;
+    };
+
+    std::shared_ptr<Expression> try_statement() {
+        auto tuple = std::make_shared<Tuple>();
+
+        auto try_block = std::make_shared<FunctionCall>();
+        auto function_name = std::make_shared<Symbol>();
+        function_name->name = "try_block";
+        try_block->function = function_name;
+        try_block->object = std::make_shared<Tuple>();
+        tuple->objects.push_back(try_block);
+
+        auto catch_s = std::make_shared<Symbol>();
+        catch_s->name = "catch_s";
+        tuple->objects.push_back(catch_s);
+
+        auto catch_function = std::make_shared<Symbol>();
+        catch_function->name = "catch_function";
+        tuple->objects.push_back(catch_function);
+
+        return tuple;
+    }
+    Reference try_statement(FunctionContext & context) {
+        auto parent = context.get_parent();
+
+        auto try_block = context.get_symbol("try_block").to_object(context);
+        auto catch_s = context.get_symbol("catch_s").to_object(context);
+        auto catch_function = context.get_symbol("catch_function").to_object(context);
+
+        if (catch_s == context.get_symbol("catch").to_object(context)) {
+            try {
+                return Interpreter::call_function(*parent, nullptr, try_block->functions, std::make_shared<Tuple>());
+            } catch (Exception & ex) {
+                try {
+                    return Interpreter::call_function(*parent, nullptr, catch_function->functions, ex.reference);
+                } catch (Interpreter::Error & e) {
+                    throw ex;
+                }
+            }
+        } else throw Interpreter::FunctionArgumentsError();
+    }
+
+    std::shared_ptr<Expression> throw_statement() {
+        auto throw_expression = std::make_shared<Symbol>();
+        throw_expression->name = "throw_expression";
+        return throw_expression;
+    }
+    Reference throw_statement(FunctionContext & context) {
+        Exception ex;
+        ex.reference = context.get_symbol("throw_expression");
+        ex.position = context.position;
+        ex.position->get_stack_trace(*context.get_parent());
+        throw ex;
+    }
+
+    std::string get_canonical_path(FunctionContext & context) {
+        std::string path;
+        std::string system_position;
+        try {
+            path = context.get_symbol("path").to_object(context)->to_string();
+            system_position = context.get_symbol("system_position").to_object(context)->to_string();
+        } catch (std::exception & e) {
+            throw Interpreter::FunctionArgumentsError();
+        }
+        if (path[0] != '/')
+            path = system_position.substr(0, system_position.find_last_of("/")+1) + path;
+        std::filesystem::path p(path);
+        return std::filesystem::canonical(p).string();
     }
 
     std::shared_ptr<Expression> path() {
@@ -239,64 +313,57 @@ namespace Base {
     }
 
     Reference include(FunctionContext & context) {
-        std::string path;
-        std::string system_position;
-        try {
-            path = context.get_symbol("path").to_object(context)->to_string();
-            system_position = context.get_symbol("system_position").to_object(context)->to_string();
-        } catch (InterpreterError & e) {
-            throw FunctionArgumentsError();
-        }
-        if (path[0] != '/')
-            path = system_position.substr(0, system_position.find_last_of("/")+1) + path;
+        std::string path = get_canonical_path(context);
+
+        auto global = context.get_global();
+        std::vector<std::string> symbols;
+        for (auto it = global->symbols.begin(); it != global->symbols.end(); it++)
+            symbols.push_back(it->first);
 
         std::ifstream file(path);
-
         std::string code;
         std::string line;
         while (std::getline(file, line))
             code += line + '\n';
-
+        
         try {
-            return Interpreter::run(*context.get_global(), path, code);
-        } catch (StandardParser::IncompleteError & e) {
+            auto expression = StandardParser::get_tree(code, path, symbols);
+            return Interpreter::run(*global, expression);
+        } catch (StandardParser::IncompleteCode & e) {
             std::cerr << "incomplete code, you must finish the last expression in file \"" << path << "\"" << std::endl;
             return Reference(context.new_object());
         }
     }
 
     Reference use(FunctionContext & context) {
-        std::string path;
-        std::string system_position;
-        try {
-            path = context.get_symbol("path").to_object(context)->to_string();
-            system_position = context.get_symbol("system_position").to_object(context)->to_string();
-        } catch (InterpreterError & e) {
-            throw FunctionArgumentsError();
-        }
-        if (path[0] != '/')
-            path = system_position.substr(0, system_position.find_last_of("/")+1) + path;
-        std::filesystem::path p(path);
-        path = std::filesystem::canonical(p).string();
+        std::string path = get_canonical_path(context);
 
-        auto & files = context.get_global()->files;
-        if (files.find(path) == files.end()) {
-            files[path] = nullptr;
+        auto global = context.get_global();
+        if (global->files.find(path) == global->files.end()) {
+            std::vector<std::string> symbols;
+            for (auto it = global->symbols.begin(); it != global->symbols.end(); it++)
+                symbols.push_back(it->first);
 
             std::ifstream file(path);
-
-            std::string code = "";
-            std::string line = "";
+            std::string code;
+            std::string line;
             while (std::getline(file, line))
                 code += line + '\n';
-
+            
             try {
-                return Interpreter::run(*context.get_global(), path, code);
-            } catch (StandardParser::IncompleteError & e) {
+                auto expression = StandardParser::get_tree(code, path, symbols);
+                global->files[path] = expression;
+
+                for (auto const& symbol : expression->symbols)
+                    global->get_symbol(symbol);
+                    
+                return Interpreter::run(*global, expression);
+            } catch (StandardParser::IncompleteCode & e) {
                 std::cerr << "incomplete code, you must finish the last expression in file \"" << path << "\"" << std::endl;
                 return Reference(context.new_object());
             }
-        } else return Reference(context.new_object());
+        } else
+            return Reference(context.new_object());
     }
 
     std::shared_ptr<Expression> copy() {
@@ -316,7 +383,7 @@ namespace Base {
             return Reference(context.new_object(object->data.i));
         else if (object->type == Object::Bool)
             return Reference(context.new_object(object->data.b));
-        else throw FunctionArgumentsError();
+        else throw Interpreter::FunctionArgumentsError();
     }
     Reference copy_pointer(FunctionContext & context) {
         return Reference(context.get_symbol("object").to_object(context));
@@ -326,7 +393,7 @@ namespace Base {
         if (var.type > 0) {
             if (var.type == object->type)
                 for (long i = 0; i < var.type; i++) assign1(cache, var.tuple[i], object->data.a[i+1].o);
-            else throw InterpreterError();
+            else throw std::exception();
         } else cache.push_back(object);
     }
 
@@ -357,8 +424,8 @@ namespace Base {
         return tuple;
     }
     Reference assign(FunctionContext & context) {
-        auto var = Interpreter::call_function(context, context.get_symbol("var").to_object(context)->functions, std::make_shared<Tuple>(), nullptr);
-        auto object = Interpreter::call_function(context, context.get_symbol("object").to_object(context)->functions, std::make_shared<Tuple>(), nullptr).to_object(context);
+        auto var = Interpreter::call_function(context, nullptr, context.get_symbol("var").to_object(context)->functions, std::make_shared<Tuple>());
+        auto object = Interpreter::call_function(context, nullptr, context.get_symbol("object").to_object(context)->functions, std::make_shared<Tuple>()).to_object(context);
 
         std::vector<Object*> cache;
         assign1(cache, var, object);
@@ -502,6 +569,12 @@ namespace Base {
         for_step_s->extern_symbols["to"] = context.get_symbol("to");
         for_step_s->extern_symbols["step"] = context.get_symbol("step");
         context.get_symbol("for").to_object(context)->functions.push_front(for_step_s);
+
+        auto try_s = new SystemFunction(try_statement(), try_statement);
+        try_s->extern_symbols["catch"] = context.get_symbol("catch");
+        context.get_symbol("try").to_object(context)->functions.push_front(try_s);
+
+        context.get_symbol("throw").to_object(context)->functions.push_front(new SystemFunction(throw_statement(), throw_statement));
 
         context.get_symbol("include").to_object(context)->functions.push_front(new SystemFunction(path(), include));
         context.get_symbol("using").to_object(context)->functions.push_front(new SystemFunction(path(), use));

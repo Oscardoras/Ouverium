@@ -13,7 +13,7 @@ Char->is_digit : c \ (c ~ Char) |-> {
 };
 
 Char->is_alpha : c \ (c ~ Char) |-> {
-    (Char "A" <= c & c <= Char "Z") | (Char "a" <= c & c <= Char "z")
+    Char "A" <= c & c <= Char "Z" | Char "a" <= c & c <= Char "z"
 };
 
 Char->is_alphanum : c \ (c ~ Char) |-> {

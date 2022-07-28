@@ -10,18 +10,19 @@
 #include "../parser/expression/Tuple.hpp"
 
 
-struct InterpreterError {};
-struct FunctionArgumentsError {};
 
 namespace Interpreter {
+    
+    struct Error {};
+    struct FunctionArgumentsError: public Error {};
 
-    Reference call_function(Context & context, std::list<Function*> function, std::shared_ptr<Expression> arguments, std::shared_ptr<Position> position);
+    Reference call_function(Context & context, std::shared_ptr<Position> position, std::list<Function*> function, Reference reference);
+
+    Reference call_function(Context & context, std::shared_ptr<Position> position, std::list<Function*> function, std::shared_ptr<Expression> arguments);
 
     Reference execute(Context & context, std::shared_ptr<Expression> expression);
 
-    void set_standard_context(Context & context);
-
-    Reference run(Context & context, std::string const& path, std::string const& code);
+    Reference run(Context & context, std::shared_ptr<Expression> expression);
 
     bool print(std::ostream & stream, Object* object);
 
