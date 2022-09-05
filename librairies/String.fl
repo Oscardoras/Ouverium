@@ -88,6 +88,23 @@ String : c \ (is c Char) |-> {
     string->index_of(substring) >= 0
 };
 
+(+) : (str1, str2) \ (is str1 Array & is str2 Array) |-> {
+    str := String();
+
+    (l1,l2) := (Array->lenght(str1), Array->lenght(str2));
+    l := l1+l2;
+    str->set_capacity(l);
+
+    for i from 0 to l1 {
+        str->add_last(Array->get(str1, i))
+    };
+    i := 0;
+    for i from 0 to l2 {
+        str->add_last(Array->get(str2, i))
+    };
+    
+    str
+};
 (+) : (str1, str2) \ (str1 ~ String & str2 ~ String) |-> {
     str := String();
 

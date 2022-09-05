@@ -36,13 +36,6 @@ namespace Types {
         f->extern_symbols["Bool"] = context.get_symbol("Bool");
         f->extern_symbols["Array"] = context.get_symbol("Array");
         context.get_symbol("is").to_object(context)->functions.push_front(f);
-
-        f = new SystemFunction(is_type(), is_type);
-        f->extern_symbols["Char"] = context.get_symbol("Char");
-        f->extern_symbols["Int"] = context.get_symbol("Int");
-        f->extern_symbols["Float"] = context.get_symbol("Float");
-        f->extern_symbols["Bool"] = context.get_symbol("Bool");
-        f->extern_symbols["Array"] = context.get_symbol("Array");
         context.get_symbol("~").to_object(context)->functions.push_front(f);
     }
 

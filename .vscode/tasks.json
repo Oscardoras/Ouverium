@@ -18,7 +18,8 @@
                 "${workspaceFolder}/src/interpreter/Object.cpp",
                 "${workspaceFolder}/src/interpreter/Reference.cpp",
                 "-o",
-                "${workspaceFolder}/interpreter"
+                "${workspaceFolder}/interpreter",
+                "-pg"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
