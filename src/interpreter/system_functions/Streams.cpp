@@ -1,7 +1,7 @@
 #include <iostream>
 #include <fstream>
 
-#include "../Interpreter.hpp"
+#include "Streams.hpp"
 
 
 namespace Streams {
@@ -137,7 +137,7 @@ namespace Streams {
         }
     }
 
-    void initiate(Context & context) {
+    void init(Context & context) {
         context.get_symbol("print").to_object(context)->functions.push_front(new SystemFunction(print(), print));
         context.get_symbol("scan").to_object(context)->functions.push_front(new SystemFunction(scan(), scan));
         context.get_symbol("InputFile").to_object(context)->functions.push_front(new SystemFunction(path(), input_file));

@@ -1,1 +1,5 @@
-Char->is_alpha(c) | Char->is_digit(c)
+print(a ~ TestType, "\n");
+
+a :~ TestType;
+
+print(a ~ TestType, "\n");

@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+struct Context;
 struct Function;
 
 
@@ -54,6 +55,7 @@ struct Object {
 
     ~Object();
 
+    Object* &get_property(std::string name, Context & context);
     std::string to_string() const;
 
 };

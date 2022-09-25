@@ -2,7 +2,7 @@
 #include <iostream>
 #include <fstream>
 
-#include "../Interpreter.hpp"
+#include "Array.hpp"
 
 
 namespace Array {
@@ -106,6 +106,7 @@ namespace Array {
         auto element = context.get_symbol("element").to_object(context);
 
         if (array->type <= 0) {
+            array->type = 0;
             array->data.a = (Object::Data::ArrayElement *) malloc(sizeof(Object::Data::ArrayElement) * 2);
             array->data.a[0].c = 1;
         } else if ((long) array->data.a[0].c <= array->type) {
@@ -133,7 +134,7 @@ namespace Array {
         } else throw Interpreter::FunctionArgumentsError();
     }
 
-    void initiate(Context & context) {
+    void init(Context & context) {
         auto array = context.get_symbol("Array").to_object(context);
 
         array->properties["lenght"] = context.new_object();

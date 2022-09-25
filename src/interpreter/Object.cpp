@@ -88,6 +88,12 @@ Object::~Object() {
         free(data.a);
 }
 
+Object* &Object::get_property(std::string name, Context & context) {
+    auto & field = properties[name];
+    if (field == nullptr) field = context.new_object();
+    return field;
+}
+
 std::string Object::to_string() const {
     if (type > 0) {
         std::string str;

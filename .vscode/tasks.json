@@ -14,12 +14,16 @@
                 "${workspaceFolder}/src/parser/expression/Expression.cpp",
                 "${workspaceFolder}/src/parser/Standard.cpp",
                 "${workspaceFolder}/src/interpreter/Context.cpp",
+                "${workspaceFolder}/src/interpreter/system_functions/Array.cpp",
+                "${workspaceFolder}/src/interpreter/system_functions/Base.cpp",
+                "${workspaceFolder}/src/interpreter/system_functions/Math.cpp",
+                "${workspaceFolder}/src/interpreter/system_functions/Streams.cpp",
+                "${workspaceFolder}/src/interpreter/system_functions/Types.cpp",
                 "${workspaceFolder}/src/interpreter/Interpreter.cpp",
                 "${workspaceFolder}/src/interpreter/Object.cpp",
                 "${workspaceFolder}/src/interpreter/Reference.cpp",
                 "-o",
                 "${workspaceFolder}/interpreter",
-                "-pg"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"

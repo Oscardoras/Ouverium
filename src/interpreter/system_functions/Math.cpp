@@ -2,7 +2,7 @@
 #include <iostream>
 #include <fstream>
 
-#include "../Interpreter.hpp"
+#include "Math.hpp"
 
 
 namespace Math {
@@ -262,7 +262,7 @@ namespace Math {
         return Reference(context.new_object());
     }
 
-    void initiate(Context & context) {
+    void init(Context & context) {
         context.get_symbol("!").to_object(context)->functions.push_front(new SystemFunction(a(), logical_not));
         context.get_symbol("&").to_object(context)->functions.push_front(new SystemFunction(a_b(), logical_and));
         context.get_symbol("|").to_object(context)->functions.push_front(new SystemFunction(a_b(), logical_or));

@@ -4,7 +4,7 @@
 #include <filesystem>
 #include <fstream>
 
-#include "../Interpreter.hpp"
+#include "Base.hpp"
 #include "../../parser/Standard.hpp"
 
 
@@ -232,11 +232,6 @@ namespace Base {
             return Reference(context.new_object());
         } else throw Interpreter::FunctionArgumentsError();
     }
-
-    struct Exception {
-        Reference reference;
-        std::shared_ptr<Position> position;
-    };
 
     std::shared_ptr<Expression> try_statement() {
         auto tuple = std::make_shared<Tuple>();
@@ -549,7 +544,7 @@ namespace Base {
         return Reference(context.new_object(a != b));
     }
 
-    void initiate(Context & context) {
+    void init(Context & context) {
         context.get_symbol(";").to_object(context)->functions.push_front(new SystemFunction(separator(), separator));
 
         auto if_s = new SystemFunction(if_statement(), if_statement);

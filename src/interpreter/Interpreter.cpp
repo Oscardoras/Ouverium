@@ -1,13 +1,14 @@
 #include <stdexcept>
+#include <iostream>
 
 #include "Function.hpp"
 #include "Interpreter.hpp"
 
-#include "system_functions/Array.cpp"
-#include "system_functions/Base.cpp"
-#include "system_functions/Math.cpp"
-#include "system_functions/Streams.cpp"
-#include "system_functions/Types.cpp"
+#include "system_functions/Array.hpp"
+#include "system_functions/Base.hpp"
+#include "system_functions/Math.hpp"
+#include "system_functions/Streams.hpp"
+#include "system_functions/Types.hpp"
 
 #include "../parser/expression/Expression.hpp"
 #include "../parser/expression/FunctionCall.hpp"
@@ -20,11 +21,11 @@
 
 
 GlobalContext::GlobalContext() {
-    Array::initiate(*this);
-    Base::initiate(*this);
-    Math::initiate(*this);
-    Streams::initiate(*this);
-    Types::initiate(*this);
+    Array::init(*this);
+    Base::init(*this);
+    Math::init(*this);
+    Streams::init(*this);
+    Types::init(*this);
 }
 
 
@@ -194,9 +195,7 @@ Reference Interpreter::execute(Context & context, std::shared_ptr<Expression> ex
         auto property = std::static_pointer_cast<Property>(expression);
         
         auto object = execute(context, property->object).to_object(context);
-        auto & field = object->properties[property->name];
-        if (field == nullptr) field = context.new_object();
-        return Reference(object, &field);
+        return Reference(object, &object->get_property(property->name, context));
     } else if (expression->type == Expression::Symbol) {
         auto symbol = std::static_pointer_cast<Symbol>(expression)->name;
 
@@ -267,16 +266,16 @@ Reference Interpreter::run(Context & context, std::shared_ptr<Expression> expres
 
 bool Interpreter::print(std::ostream & stream, Object* object) {
     if (object->type == Object::Bool) {
-        stream << object->data.b;
+        std::cout << object->data.b;
         return true;
     } else if (object->type == Object::Int) {
-        stream << object->data.i;
+        std::cout << object->data.i;
         return true;
     } else if (object->type == Object::Float) {
-        stream << object->data.f;
+        std::cout << object->data.f;
         return true;
     } else if (object->type == Object::Char) {
-        stream << object->data.c;
+        std::cout << object->data.c;
         return true;
     } else if (object->type > 0) {
         bool printed = false;
