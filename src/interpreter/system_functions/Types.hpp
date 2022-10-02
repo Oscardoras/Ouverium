@@ -10,7 +10,7 @@ namespace Types {
     
     Reference is_type(FunctionContext & context);
 
-    Reference is_type(FunctionContext & context);
+    Reference set_type(FunctionContext & context);
 
     void init(Context & context);
 
