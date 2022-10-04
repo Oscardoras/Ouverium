@@ -15,15 +15,68 @@ namespace ArrayList {
 
         FunctionContext function_context(context, context.position);
         function_context.add_symbol("object", array);
+        function_context.add_symbol("type", context.get_symbol("Iterable"));
+        Types::set_type(function_context);
+        function_context.add_symbol("type", context.get_symbol("List"));
+        Types::set_type(function_context);
         function_context.add_symbol("type", context.get_symbol("ArrayList"));
         Types::set_type(function_context);
 
-        array_object->functions.push_front(new SystemFunction(get_array_element(), get_array_element));
-        array_object->get_property("foreach", context)->functions.push_front(new SystemFunction(foreach(), foreach));
-        array_object->get_property("lenght", context)->functions.push_front(new SystemFunction(std::make_shared<Tuple>(), lenght));
-        array_object->get_property("is_empty", context)->functions.push_front(new SystemFunction(std::make_shared<Tuple>(), is_empty));
-        array_object->get_property("get_capacity", context)->functions.push_front(new SystemFunction(std::make_shared<Tuple>(), get_capacity));
-        array_object->get_property("set_capacity", context)->functions.push_front(new SystemFunction(set_capacity(), set_capacity));
+        auto f = new SystemFunction(get_array_element(), get_array_element);
+        f->extern_symbols["this"] = array;
+        array_object->functions.push_front(f);
+
+        f = new SystemFunction(foreach(), foreach);
+        f->extern_symbols["this"] = array;
+        array_object->get_property("foreach", context)->functions.push_front(f);
+
+        f = new SystemFunction(std::make_shared<Tuple>(), lenght);
+        f->extern_symbols["this"] = array;
+        array_object->get_property("lenght", context)->functions.push_front(f);
+
+        f = new SystemFunction(std::make_shared<Tuple>(), is_empty);
+        f->extern_symbols["this"] = array;
+        array_object->get_property("is_empty", context)->functions.push_front(f);
+
+        f = new SystemFunction(std::make_shared<Tuple>(), get_capacity);
+        f->extern_symbols["this"] = array;
+        array_object->get_property("get_capacity", context)->functions.push_front(f);
+
+        f = new SystemFunction(set_capacity(), set_capacity);
+        f->extern_symbols["this"] = array;
+        array_object->get_property("set_capacity", context)->functions.push_front(f);
+
+        f = new SystemFunction(std::make_shared<Tuple>(), get_first);
+        f->extern_symbols["this"] = array;
+        array_object->get_property("get_first", context)->functions.push_front(f);
+
+        f = new SystemFunction(std::make_shared<Tuple>(), get_last);
+        f->extern_symbols["this"] = array;
+        array_object->get_property("get_last", context)->functions.push_front(f);
+
+        f = new SystemFunction(add_element(), add_first);
+        f->extern_symbols["this"] = array;
+        array_object->get_property("add_first", context)->functions.push_front(f);
+
+        f = new SystemFunction(add_element(), add_last);
+        f->extern_symbols["this"] = array;
+        array_object->get_property("add_last", context)->functions.push_front(f);
+
+        f = new SystemFunction(std::make_shared<Tuple>(), remove_first);
+        f->extern_symbols["this"] = array;
+        array_object->get_property("remove_first", context)->functions.push_front(f);
+
+        f = new SystemFunction(std::make_shared<Tuple>(), remove_last);
+        f->extern_symbols["this"] = array;
+        array_object->get_property("remove_last", context)->functions.push_front(f);
+
+        f = new SystemFunction(insert(), insert);
+        f->extern_symbols["this"] = array;
+        array_object->get_property("insert", context)->functions.push_front(f);
+
+        f = new SystemFunction(get_array_element(), remove);
+        f->extern_symbols["this"] = array;
+        array_object->get_property("remove", context)->functions.push_front(f);
 
         return array;
     }
@@ -36,7 +89,7 @@ namespace ArrayList {
     Reference get_array_element(FunctionContext & context) {
         FunctionContext function_context(context, context.position);
         function_context.add_symbol("array", context.get_symbol("this"));
-        function_context.add_symbol("i", context.get_symbol("i"));
+        function_context.add_symbol("i", context.get_symbol("index"));
 
         return Array::get_array_element(function_context);
     }
@@ -219,15 +272,12 @@ namespace ArrayList {
         } else throw Interpreter::FunctionArgumentsError();
     }
 
-    Reference iterator_first(FunctionContext & context);
-
-    Reference iterator_last(FunctionContext & context);
-
-    Reference iterator(FunctionContext & context);
-
-    std::shared_ptr<Expression> iterator_index();
-    Reference iterator_index(FunctionContext & context);
-
-    void init(Context & context);
+    void init(Context & context) {
+        auto f = new SystemFunction(array_list(), array_list);
+        f->extern_symbols["ArrayList"] = context.get_symbol("ArrayList");
+        f->extern_symbols["List"] = context.get_symbol("List");
+        f->extern_symbols["Iterable"] = context.get_symbol("Iterable");
+        context.get_symbol("ArrayList").to_object(context)->functions.push_front(f);
+    }
 
 }

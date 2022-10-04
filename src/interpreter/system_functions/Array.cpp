@@ -137,18 +137,12 @@ namespace Array {
     void init(Context & context) {
         auto array = context.get_symbol("Array").to_object(context);
 
-        array->properties["lenght"] = context.new_object();
-        array->properties["lenght"]->functions.push_front(new SystemFunction(get_array_size(), get_array_size));
-        array->properties["get_capacity"] = context.new_object();
-        array->properties["get_capacity"]->functions.push_front(new SystemFunction(get_array_capacity(), get_array_capacity));
-        array->properties["set_capacity"] = context.new_object();
-        array->properties["set_capacity"]->functions.push_front(new SystemFunction(set_array_capacity(), set_array_capacity));
-        array->properties["get"] = context.new_object();
-        array->properties["get"]->functions.push_front(new SystemFunction(get_array_element(), get_array_element));
-        array->properties["add"] = context.new_object();
-        array->properties["add"]->functions.push_front(new SystemFunction(add_array_element(), add_array_element));
-        array->properties["remove"] = context.new_object();
-        array->properties["remove"]->functions.push_front(new SystemFunction(remove_array_element(), remove_array_element));
+        array->get_property("lenght", context)->functions.push_front(new SystemFunction(get_array_size(), get_array_size));
+        array->get_property("get_capacity", context)->functions.push_front(new SystemFunction(get_array_capacity(), get_array_capacity));
+        array->get_property("set_capacity", context)->functions.push_front(new SystemFunction(set_array_capacity(), set_array_capacity));
+        array->get_property("get", context)->functions.push_front(new SystemFunction(get_array_element(), get_array_element));
+        array->get_property("add", context)->functions.push_front(new SystemFunction(add_array_element(), add_array_element));
+        array->get_property("remove", context)->functions.push_front(new SystemFunction(remove_array_element(), remove_array_element));
     }
 
 }

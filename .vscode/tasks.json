@@ -15,6 +15,7 @@
                 "${workspaceFolder}/src/parser/Standard.cpp",
                 "${workspaceFolder}/src/interpreter/Context.cpp",
                 "${workspaceFolder}/src/interpreter/system_functions/Array.cpp",
+                "${workspaceFolder}/src/interpreter/system_functions/ArrayList.cpp",
                 "${workspaceFolder}/src/interpreter/system_functions/Base.cpp",
                 "${workspaceFolder}/src/interpreter/system_functions/Math.cpp",
                 "${workspaceFolder}/src/interpreter/system_functions/Streams.cpp",

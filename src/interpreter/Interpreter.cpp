@@ -5,6 +5,7 @@
 #include "Interpreter.hpp"
 
 #include "system_functions/Array.hpp"
+#include "system_functions/ArrayList.hpp"
 #include "system_functions/Base.hpp"
 #include "system_functions/Math.hpp"
 #include "system_functions/Streams.hpp"
@@ -22,6 +23,7 @@
 
 GlobalContext::GlobalContext() {
     Array::init(*this);
+    ArrayList::init(*this);
     Base::init(*this);
     Math::init(*this);
     Streams::init(*this);

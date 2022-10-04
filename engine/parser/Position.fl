@@ -1,6 +1,3 @@
-using "../../librairies/Type.fl";
-
-
 Position : this |-> {
     this :~ Position;
 

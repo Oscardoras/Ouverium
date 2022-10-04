@@ -1,6 +1,3 @@
-using "data_structure/ArrayList.fl";
-
-
 Char : this \ (this ~ Char) |-> {
     this
 };
