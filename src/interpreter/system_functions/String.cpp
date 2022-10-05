@@ -1,8 +1,67 @@
-#include "ArrayList.hpp"
+#include "String.hpp"
 #include "Types.hpp"
 
 
-namespace ArrayList {
+namespace String {
+
+    std::shared_ptr<Expression> string() {
+        auto array = std::make_shared<Symbol>();
+        array->name = "this";
+        return array;
+    }
+    Reference char_constructor(FunctionContext & context) {
+        auto array = context.get_symbol("this");
+        auto array_object = array.to_object(context);
+
+        if (array_object.type == Object::Char) {
+            return array;
+        } else if (array_object.type == 1 && array_object.data.a[1].o.type == Object::Char) {
+            return Reference(array_object, 0);
+        } else throw Interpreter::FunctionArgumentsError();
+    }
+
+    std::shared_ptr<Expression> char_is() {
+        auto c = std::make_shared<Symbol>();
+        c->name = "c";
+        return c;
+    }
+
+    Reference char_is_digit(FunctionContext & context) {
+        auto c = context.get_symbol("c").to_object(context);
+        return Reference(context.new_object('0' <= c.data.c && c.data.c <= '9'));
+    }
+
+    Reference char_is_alpha(FunctionContext & context) {
+        auto c = context.get_symbol("c").to_object(context);
+        return Reference(context.new_object(
+            'A' <= c.data.c && c.data.c <= 'Z' && 'a' <= c.data.c && c.data.c <= 'z'
+        ));
+    }
+    Reference char_is_alphanum(FunctionContext & context) {
+        auto b1 = String::char_is_digit(context).to_object(context).data.b;
+        auto b2 = String::char_is_alpha(context).to_object(context).data.b;
+        return Reference(context.new_object(b1 || b2));
+    }
+
+    Reference string(FunctionContext & context);
+
+    std::shared_ptr<Expression> index_of();
+    Reference index_of(FunctionContext & context);
+
+    std::shared_ptr<Expression> substring();
+    Reference substring(FunctionContext & context);
+
+    std::shared_ptr<Expression> includes();
+    Reference includes(FunctionContext & context);
+
+    std::shared_ptr<Expression> concat();
+    Reference concat(FunctionContext & context);
+
+    std::shared_ptr<Expression> assign_concat();
+    Reference assign_concat(FunctionContext & context);
+
+    void init(Context & context);
+
 
     std::shared_ptr<Expression> array_list() {
         auto array = std::make_shared<Symbol>();
