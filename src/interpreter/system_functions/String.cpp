@@ -45,11 +45,38 @@ namespace String {
 
     Reference string(FunctionContext & context);
 
-    std::shared_ptr<Expression> index_of();
-    Reference index_of(FunctionContext & context);
+    std::shared_ptr<Expression> index_of() {
+        auto substring = std::make_shared<Symbol>();
+        substring->name = "substring";
+        return substring;
+    }
+    Reference index_of(FunctionContext & context) {
+        auto array = context.get_symbol("array").to_object(context)->to_string();
+        auto substring = context.get_symbol("substring").to_object(context)->to_string();
 
-    std::shared_ptr<Expression> substring();
-    Reference substring(FunctionContext & context);
+        return Reference(context.new_object((long) array.find_first_of(substring)));
+    }
+
+    std::shared_ptr<Expression> substring() {
+        auto tuple = std::make_shared<Tuple>();
+
+        auto begin = std::make_shared<Symbol>();
+        begin->name = "begin";
+        tuple->objects.push_back(begin);
+
+        auto len = std::make_shared<Symbol>();
+        len->name = "len";
+        tuple->objects.push_back(len);
+
+        return tuple;
+    }
+    Reference substring(FunctionContext & context) {
+        auto array = context.get_symbol("array").to_object(context)->to_string();
+        auto begin = context.get_symbol("begin").to_object(context).data.i;
+        auto len = context.get_symbol("len").to_object(context).data.i;
+
+        return Reference(context.new_object(array.substr(begin, len)));
+    }
 
     std::shared_ptr<Expression> includes();
     Reference includes(FunctionContext & context);
