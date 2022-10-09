@@ -12,9 +12,9 @@ struct FunctionDefinition: public Expression {
         type = Type::FunctionDefinition;
     }
 
-    std::shared_ptr<Expression> parameters;
-    std::shared_ptr<Expression> filter;
-    std::shared_ptr<Expression> object;
+    std::unique_ptr<Expression> parameters;
+    std::unique_ptr<Expression> filter;
+    std::unique_ptr<Expression> object;
 
 };
 

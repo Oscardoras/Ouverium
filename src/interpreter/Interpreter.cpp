@@ -9,6 +9,7 @@
 #include "system_functions/Base.hpp"
 #include "system_functions/Math.hpp"
 #include "system_functions/Streams.hpp"
+#include "system_functions/String.hpp"
 #include "system_functions/Types.hpp"
 
 #include "../parser/expression/Expression.hpp"
@@ -27,38 +28,39 @@ GlobalContext::GlobalContext() {
     Base::init(*this);
     Math::init(*this);
     Streams::init(*this);
+    String::init(*this);
     Types::init(*this);
 }
 
 
-void set_references(FunctionContext & function_context, std::shared_ptr<Expression> parameters, Reference reference) {
-    if (parameters->type == Expression::Symbol) {
-        auto symbol = std::static_pointer_cast<Symbol>(parameters);
+void set_references(FunctionContext & function_context, Expression const& parameters, Reference const& reference) {
+    if (parameters.type == Expression::Symbol) {
+        auto const& symbol = (Symbol const&) parameters;
 
-        function_context.add_symbol(symbol->name, reference);
-    } else if (parameters->type == Expression::Tuple) {
-        auto tuple = std::static_pointer_cast<Tuple>(parameters);
+        function_context.add_symbol(symbol.name, reference);
+    } else if (parameters.type == Expression::Tuple) {
+        auto const& tuple = (Tuple const&) parameters;
 
-        if (reference.type == (long) tuple->objects.size()) {
-            for (size_t i = 0; i < tuple->objects.size(); i++)
-                set_references(function_context, tuple->objects[i], reference.tuple[i]);
+        if (reference.type == (long) tuple.objects.size()) {
+            for (size_t i = 0; i < tuple.objects.size(); i++)
+                set_references(function_context, *tuple.objects[i], reference.tuple[i]);
         } else {
             auto object = reference.to_object(function_context);
-            if (object->type == (long) tuple->objects.size()) {
-                for (unsigned long i = 1; i <= tuple->objects.size(); i++)
-                    set_references(function_context, tuple->objects[i], Reference(&object->data.a[i].o));
+            if (object->type == (long) tuple.objects.size()) {
+                for (unsigned long i = 1; i <= tuple.objects.size(); i++)
+                    set_references(function_context, *tuple.objects[i], Reference(&object->data.a[i].o));
             } else throw Interpreter::FunctionArgumentsError();
         }
     } else throw Interpreter::FunctionArgumentsError();
 }
 
-void set_references(Context & context, FunctionContext & function_context, std::map<std::shared_ptr<Expression>, Reference> & computed, std::shared_ptr<Expression> parameters, std::shared_ptr<Expression> arguments) {
-    if (parameters->type == Expression::Symbol) {
-        auto symbol = std::static_pointer_cast<Symbol>(parameters);
+void set_references(Context & context, FunctionContext & function_context, std::map<Expression const * const, Reference> & computed, Expression const& parameters, Expression const * const arguments) {
+    if (parameters.type == Expression::Symbol) {
+        auto const& symbol = (Symbol const&) parameters;
 
         auto it = computed.find(arguments);
-        auto reference = it != computed.end() ? it->second : (computed[arguments] = Interpreter::execute(context, arguments));
-        function_context.add_symbol(symbol->name, reference);
+        auto reference = it != computed.end() ? it->second : (computed[arguments] = Interpreter::execute(context, *arguments));
+        function_context.add_symbol(symbol.name, reference);
     } else if (parameters->type == Expression::Tuple) {
         auto p_tuple = std::static_pointer_cast<Tuple>(parameters);
 
@@ -68,7 +70,7 @@ void set_references(Context & context, FunctionContext & function_context, std::
             if (p_tuple->objects.size() == a_tuple->objects.size()) {
                 size_t size = p_tuple->objects.size();
                 for (size_t i = 0; i < size; i++)
-                    set_references(context, function_context, computed, p_tuple->objects[i], a_tuple->objects[i]);
+                    set_references(context, function_context, computed, *p_tuple->objects[i], a_tuple->objects[i]);
             } else throw Interpreter::FunctionArgumentsError();
         } else {
             auto it = computed.find(arguments);
@@ -122,7 +124,7 @@ Reference Interpreter::call_function(Context & context, std::shared_ptr<Position
                 else continue;
             } else {
                 set_references(function_context, ((SystemFunction*) function)->parameters, object);
-                
+
                 return ((SystemFunction*) function)->pointer(function_context);
             }
         } catch (FunctionArgumentsError & e) {}
@@ -158,7 +160,7 @@ Reference Interpreter::call_function(Context & context, std::shared_ptr<Position
                 else throw FunctionArgumentsError();
             } else {
                 set_references(context, function_context, computed, ((SystemFunction*) function)->parameters, arguments);
-                
+
                 return ((SystemFunction*) function)->pointer(function_context);
             }
 
@@ -173,7 +175,7 @@ Reference Interpreter::call_function(Context & context, std::shared_ptr<Position
 }
 
 
-Reference Interpreter::execute(Context & context, std::shared_ptr<Expression> expression) {
+Reference Interpreter::execute(Context & context, Expression const& expression) {
     if (expression->type == Expression::FunctionCall) {
         auto function_call = std::static_pointer_cast<FunctionCall>(expression);
 
@@ -191,11 +193,11 @@ Reference Interpreter::execute(Context & context, std::shared_ptr<Expression> ex
                 if (context.has_symbol(symbol))
                     f->extern_symbols[symbol] = context.get_symbol(symbol);
         object->functions.push_front(f);
-        
+
         return Reference(object);
     } else if (expression->type == Expression::Property) {
         auto property = std::static_pointer_cast<Property>(expression);
-        
+
         auto object = execute(context, property->object).to_object(context);
         return Reference(object, &object->get_property(property->name, context));
     } else if (expression->type == Expression::Symbol) {

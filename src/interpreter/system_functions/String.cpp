@@ -13,10 +13,10 @@ namespace String {
         auto array = context.get_symbol("this");
         auto array_object = array.to_object(context);
 
-        if (array_object.type == Object::Char) {
+        if (array_object->type == Object::Char) {
             return array;
-        } else if (array_object.type == 1 && array_object.data.a[1].o.type == Object::Char) {
-            return Reference(array_object, 0);
+        } else if (array_object->type == 1 && array_object->data.a[1].o->type == Object::Char) {
+            return Reference(array_object, (unsigned long) 0);
         } else throw Interpreter::FunctionArgumentsError();
     }
 
@@ -28,22 +28,42 @@ namespace String {
 
     Reference char_is_digit(FunctionContext & context) {
         auto c = context.get_symbol("c").to_object(context);
-        return Reference(context.new_object('0' <= c.data.c && c.data.c <= '9'));
+        return Reference(context.new_object('0' <= c->data.c && c->data.c <= '9'));
     }
 
     Reference char_is_alpha(FunctionContext & context) {
         auto c = context.get_symbol("c").to_object(context);
         return Reference(context.new_object(
-            'A' <= c.data.c && c.data.c <= 'Z' && 'a' <= c.data.c && c.data.c <= 'z'
+            'A' <= c->data.c && c->data.c <= 'Z' && 'a' <= c->data.c && c->data.c <= 'z'
         ));
     }
     Reference char_is_alphanum(FunctionContext & context) {
-        auto b1 = String::char_is_digit(context).to_object(context).data.b;
-        auto b2 = String::char_is_alpha(context).to_object(context).data.b;
+        auto b1 = String::char_is_digit(context).to_object(context)->data.b;
+        auto b2 = String::char_is_alpha(context).to_object(context)->data.b;
         return Reference(context.new_object(b1 || b2));
     }
 
-    Reference string(FunctionContext & context);
+    Reference string(FunctionContext & context) {
+        auto array = context.get_symbol("this");
+        auto array_object = array.to_object(context);
+
+        FunctionContext function_context(context, context.position);
+        function_context.add_symbol("this", array);
+        ArrayList::array_list(function_context);
+        function_context.add_symbol("object", array);
+        function_context.add_symbol("type", context.get_global()->get_symbol("String"));
+        Types::set_type(function_context);
+
+        auto f = new SystemFunction(index_of(), index_of);
+        f->extern_symbols["this"] = array;
+        array_object->get_property("index_of", context)->functions.push_front(f);
+
+        f = new SystemFunction(substring(), substring);
+        f->extern_symbols["this"] = array;
+        array_object->get_property("substring", context)->functions.push_front(f);
+
+        return array;
+    }
 
     std::shared_ptr<Expression> index_of() {
         auto substring = std::make_shared<Symbol>();
@@ -51,10 +71,14 @@ namespace String {
         return substring;
     }
     Reference index_of(FunctionContext & context) {
-        auto array = context.get_symbol("array").to_object(context)->to_string();
-        auto substring = context.get_symbol("substring").to_object(context)->to_string();
+        try {
+            auto array = context.get_symbol("this").to_object(context)->to_string();
+            auto substring = context.get_symbol("substring").to_object(context)->to_string();
 
-        return Reference(context.new_object((long) array.find_first_of(substring)));
+            return Reference(context.new_object((long) array.find_first_of(substring)));
+        } catch (std::exception & ex) {
+            throw Interpreter::FunctionArgumentsError();
+        }
     }
 
     std::shared_ptr<Expression> substring() {
@@ -71,296 +95,126 @@ namespace String {
         return tuple;
     }
     Reference substring(FunctionContext & context) {
-        auto array = context.get_symbol("array").to_object(context)->to_string();
-        auto begin = context.get_symbol("begin").to_object(context).data.i;
-        auto len = context.get_symbol("len").to_object(context).data.i;
+        try {
+            auto array = context.get_symbol("this").to_object(context)->to_string();
+            auto begin = context.get_symbol("begin").to_object(context)->data.i;
+            auto len = context.get_symbol("len").to_object(context)->data.i;
 
-        return Reference(context.new_object(array.substr(begin, len)));
-    }
-
-    std::shared_ptr<Expression> includes();
-    Reference includes(FunctionContext & context);
-
-    std::shared_ptr<Expression> concat();
-    Reference concat(FunctionContext & context);
-
-    std::shared_ptr<Expression> assign_concat();
-    Reference assign_concat(FunctionContext & context);
-
-    void init(Context & context);
-
-
-    std::shared_ptr<Expression> array_list() {
-        auto array = std::make_shared<Symbol>();
-        array->name = "this";
-        return array;
-    }
-    Reference array_list(FunctionContext & context) {
-        auto array = context.get_symbol("this");
-        auto array_object = array.to_object(context);
-
-        FunctionContext function_context(context, context.position);
-        function_context.add_symbol("object", array);
-        function_context.add_symbol("type", context.get_symbol("Iterable"));
-        Types::set_type(function_context);
-        function_context.add_symbol("type", context.get_symbol("List"));
-        Types::set_type(function_context);
-        function_context.add_symbol("type", context.get_symbol("ArrayList"));
-        Types::set_type(function_context);
-
-        auto f = new SystemFunction(get_array_element(), get_array_element);
-        f->extern_symbols["this"] = array;
-        array_object->functions.push_front(f);
-
-        f = new SystemFunction(foreach(), foreach);
-        f->extern_symbols["this"] = array;
-        array_object->get_property("foreach", context)->functions.push_front(f);
-
-        f = new SystemFunction(std::make_shared<Tuple>(), lenght);
-        f->extern_symbols["this"] = array;
-        array_object->get_property("lenght", context)->functions.push_front(f);
-
-        f = new SystemFunction(std::make_shared<Tuple>(), is_empty);
-        f->extern_symbols["this"] = array;
-        array_object->get_property("is_empty", context)->functions.push_front(f);
-
-        f = new SystemFunction(std::make_shared<Tuple>(), get_capacity);
-        f->extern_symbols["this"] = array;
-        array_object->get_property("get_capacity", context)->functions.push_front(f);
-
-        f = new SystemFunction(set_capacity(), set_capacity);
-        f->extern_symbols["this"] = array;
-        array_object->get_property("set_capacity", context)->functions.push_front(f);
-
-        f = new SystemFunction(std::make_shared<Tuple>(), get_first);
-        f->extern_symbols["this"] = array;
-        array_object->get_property("get_first", context)->functions.push_front(f);
-
-        f = new SystemFunction(std::make_shared<Tuple>(), get_last);
-        f->extern_symbols["this"] = array;
-        array_object->get_property("get_last", context)->functions.push_front(f);
-
-        f = new SystemFunction(add_element(), add_first);
-        f->extern_symbols["this"] = array;
-        array_object->get_property("add_first", context)->functions.push_front(f);
-
-        f = new SystemFunction(add_element(), add_last);
-        f->extern_symbols["this"] = array;
-        array_object->get_property("add_last", context)->functions.push_front(f);
-
-        f = new SystemFunction(std::make_shared<Tuple>(), remove_first);
-        f->extern_symbols["this"] = array;
-        array_object->get_property("remove_first", context)->functions.push_front(f);
-
-        f = new SystemFunction(std::make_shared<Tuple>(), remove_last);
-        f->extern_symbols["this"] = array;
-        array_object->get_property("remove_last", context)->functions.push_front(f);
-
-        f = new SystemFunction(insert(), insert);
-        f->extern_symbols["this"] = array;
-        array_object->get_property("insert", context)->functions.push_front(f);
-
-        f = new SystemFunction(get_array_element(), remove);
-        f->extern_symbols["this"] = array;
-        array_object->get_property("remove", context)->functions.push_front(f);
-
-        return array;
-    }
-
-    std::shared_ptr<Expression> get_array_element() {
-        auto index = std::make_shared<Symbol>();
-        index->name = "index";
-        return index;
-    }
-    Reference get_array_element(FunctionContext & context) {
-        FunctionContext function_context(context, context.position);
-        function_context.add_symbol("array", context.get_symbol("this"));
-        function_context.add_symbol("i", context.get_symbol("index"));
-
-        return Array::get_array_element(function_context);
-    }
-
-    std::shared_ptr<Expression> foreach() {
-        auto function = std::make_shared<Symbol>();
-        function->name = "function";
-        return function;
-    }
-    Reference foreach(FunctionContext & context) {
-        auto array = context.get_symbol("this").to_object(context);
-        auto function = context.get_symbol("function").to_object(context);
-
-        for (long i = 1; i < array->type; i++) {
-            Interpreter::call_function(context, context.position, function->functions, std::make_shared<Tuple>());
-        }
-
-        return Reference(context.new_object());
-    }
-
-    Reference lenght(FunctionContext & context) {
-        FunctionContext function_context(context, context.position);
-        function_context.add_symbol("array", context.get_symbol("this"));
-
-        return Array::get_array_size(function_context);
-    }
-
-    Reference is_empty(FunctionContext & context) {
-        FunctionContext function_context(context, context.position);
-        function_context.add_symbol("array", context.get_symbol("this"));
-
-        return Reference(context.new_object(Array::get_array_size(function_context).to_object(context)->data.i == 0));
-    }
-
-    Reference get_capacity(FunctionContext & context) {
-        FunctionContext function_context(context, context.position);
-        function_context.add_symbol("array", context.get_symbol("this"));
-
-        return Array::get_array_capacity(function_context);
-    }
-
-    std::shared_ptr<Expression> set_capacity() {
-        auto capacity = std::make_shared<Symbol>();
-        capacity->name = "capacity";
-        return capacity;
-    }
-    Reference set_capacity(FunctionContext & context) {
-        FunctionContext function_context(context, context.position);
-        function_context.add_symbol("array", context.get_symbol("this"));
-        function_context.add_symbol("capacity", context.get_symbol("capacity"));
-
-        return Array::set_array_capacity(function_context);
-    }
-
-    Reference get_first(FunctionContext & context) {
-        auto array = context.get_symbol("this").to_object(context);
-
-        return Reference(array, (unsigned long) 0);
-    }
-
-    Reference get_last(FunctionContext & context) {
-        auto array = context.get_symbol("this").to_object(context);
-
-        return Reference(array, array->type-1);
-    }
-
-    std::shared_ptr<Expression> add_element() {
-        auto element = std::make_shared<Symbol>();
-        element->name = "element";
-        return element;
-    }
-
-    Reference add_first(FunctionContext & context) {
-        auto array = context.get_symbol("this");
-        auto array_object = array.to_object(context);
-        auto element = context.get_symbol("element");
-
-        if (array_object->type > 0) {
             FunctionContext function_context(context, context.position);
-            function_context.add_symbol("array", array);
-            function_context.get_symbol("element").get_reference() = array_object->data.a[array_object->type].o;
-            Array::add_array_element(function_context);
-
-            for (long i = array_object->type-1; i > 1; i--)
-                array_object->data.a[i+1].o = array_object->data.a[i-1+1].o;
-            
-            array_object->data.a[1].o = element.to_object(context);
-            return Reference(array_object, (unsigned long) 0);
-        } else {
-            FunctionContext function_context(context, context.position);
-            function_context.add_symbol("array", array);
-            function_context.add_symbol("element", element);
-            return Array::add_array_element(function_context);
+            function_context.add_symbol("this", Reference(context.new_object(array.substr(begin, len))));
+            return string(function_context);
+        } catch (std::exception & ex) {
+            throw Interpreter::FunctionArgumentsError();
         }
     }
 
-    Reference add_last(FunctionContext & context) {
-        FunctionContext function_context(context, context.position);
-        function_context.add_symbol("array", context.get_symbol("this"));
-        function_context.add_symbol("element", context.get_symbol("element"));
-        return Array::add_array_element(function_context);
-    }
-
-    Reference remove_first(FunctionContext & context) {
-        auto array = context.get_symbol("this");
-        auto array_object = array.to_object(context);
-
-        for (long i = 0; i < array_object->type-1; i++)
-            array_object->data.a[i+1].o = array_object->data.a[i+1+1].o;
-        
-        FunctionContext function_context(context, context.position);
-        function_context.add_symbol("array", array);
-        return Array::remove_array_element(function_context);
-    }
-
-    Reference remove_last(FunctionContext & context) {
-        auto array = context.get_symbol("this");
-
-        FunctionContext function_context(context, context.position);
-        function_context.add_symbol("array", array);
-        return Array::remove_array_element(function_context);
-    }
-
-    std::shared_ptr<Expression> insert() {
+    std::shared_ptr<Expression> includes() {
         auto tuple = std::make_shared<Tuple>();
 
-        auto index = std::make_shared<Symbol>();
-        index->name = "index";
-        tuple->objects.push_back(index);
+        auto substring = std::make_shared<Symbol>();
+        substring->name = "substring";
+        tuple->objects.push_back(substring);
 
-        auto element = std::make_shared<Symbol>();
-        element->name = "element";
-        tuple->objects.push_back(element);
+        auto string = std::make_shared<Symbol>();
+        string->name = "string";
+        tuple->objects.push_back(string);
 
         return tuple;
     }
-    Reference insert(FunctionContext & context) {
-        auto array = context.get_symbol("this");
-        auto array_object = array.to_object(context);
-        auto index = context.get_symbol("index").to_object(context);
-        auto element = context.get_symbol("element").to_object(context);
+    Reference includes(FunctionContext & context) {
+        FunctionContext function_context(context, context.position);
+        function_context.add_symbol("this", context.get_symbol("string"));
+        function_context.add_symbol("substring", context.get_symbol("substring"));
 
-        if (index->type == Object::Int && 0 <= index->data.i && index->data.i < array_object->type) {
-
-            FunctionContext function_context(context, context.position);
-            function_context.add_symbol("array", array);
-            function_context.get_symbol("element").get_reference() = array_object->data.a[array_object->type].o;
-            Array::add_array_element(function_context);
-
-            for (long i = array_object->type-1; i > index->data.i; i--)
-                array_object->data.a[i+1].o = array_object->data.a[i-1+1].o;
-            
-            array_object->data.a[index->data.i+1].o = element;
-            return Reference(array_object, (unsigned long) index->data.i);
-
-        } else throw Interpreter::FunctionArgumentsError();
+        return Reference(context.new_object(String::index_of(function_context).to_object(context)->data.i >= 0));
     }
 
-    Reference remove(FunctionContext & context) {
-        auto array = context.get_symbol("this");
-        auto array_object = array.to_object(context);
-        auto index = context.get_symbol("index").to_object(context);
+    std::shared_ptr<Expression> concat() {
+        auto tuple = std::make_shared<Tuple>();
 
-        if (index->type == Object::Int && 0 <= index->data.i && index->data.i < array_object->type) {
+        auto str1 = std::make_shared<Symbol>();
+        str1->name = "str1";
+        tuple->objects.push_back(str1);
 
-            auto tmp = array_object->data.a[index->data.i+1].o;
+        auto str2 = std::make_shared<Symbol>();
+        str2->name = "str2";
+        tuple->objects.push_back(str2);
 
-            for (long i = index->data.i; i > array_object->type-1; i++)
-                array_object->data.a[i+1].o = array_object->data.a[i+1+1].o;
+        return tuple;
+    }
+    Reference concat(FunctionContext & context) {
+        auto str1 = context.get_symbol("str1").to_object(context);
+        auto str2 = context.get_symbol("str2").to_object(context);
 
-            FunctionContext function_context(context, context.position);
-            function_context.add_symbol("array", array);
-            Array::remove_array_element(function_context);
-            
-            return Reference(tmp);
+        Reference r;
+        if (str1->type >= 0 && str2->type >= 0) {
+            try {
+                r = Reference(context.new_object(str1->to_string() + str2->to_string()));
+            } catch (std::exception & ex) {
+                throw Interpreter::FunctionArgumentsError();
+            }
+        } else if (str1->type == Object::Char && str2->type >= 0) {
+            try {
+                r = Reference(context.new_object(str1->data.c + str2->to_string()));
+            } catch (std::exception & ex) {
+                throw Interpreter::FunctionArgumentsError();
+            }
+        } else if (str1->type >= 0 && str2->type == Object::Char) {
+            try {
+                r = Reference(context.new_object(str1->data.c + str2->to_string()));
+            } catch (std::exception & ex) {
+                throw Interpreter::FunctionArgumentsError();
+            }
+        } else if (str1->type == Object::Char && str2->type == Object::Char)
+            r = Reference(context.new_object("" + str1->data.c + str2->data.c));
+        else throw Interpreter::FunctionArgumentsError();
 
+        FunctionContext function_context(context, context.position);
+        function_context.add_symbol("this", r);
+        return string(function_context);
+    }
+
+    Reference assign_concat(FunctionContext & context) {
+        auto str1 = context.get_symbol("str1").to_object(context);
+        auto str2 = context.get_symbol("str2").to_object(context);
+
+        if (str1->type >= 0) {
+            if (str2->type >= 0) {
+                FunctionContext function_context(context, context.position);
+                function_context.add_symbol("array", str1);
+                function_context.add_symbol("capacity", Reference(context.new_object(str1->type + str2->type)));
+                Array::set_array_capacity(function_context);
+
+                for (long i = 0; i < str2->type; i++)
+                    str1->data.a[str1->type+i+1].o = str2->data.a[i+1].o;
+                str1->type += str2->type;
+            } else if (str1->type >= 0 && str2->type == Object::Char) {
+                FunctionContext function_context(context, context.position);
+                function_context.add_symbol("this", str1);
+                function_context.add_symbol("capacity", Reference(context.new_object(str1->type + 1)));
+                Array::set_array_capacity(function_context);
+
+                str1->type++;
+                str1->data.a[str1->type].o = str2;
+            } else throw Interpreter::FunctionArgumentsError();
         } else throw Interpreter::FunctionArgumentsError();
+
+        FunctionContext function_context(context, context.position);
+        function_context.add_symbol("this", Reference(str1));
+        return string(function_context);
     }
 
     void init(Context & context) {
-        auto f = new SystemFunction(array_list(), array_list);
-        f->extern_symbols["ArrayList"] = context.get_symbol("ArrayList");
-        f->extern_symbols["List"] = context.get_symbol("List");
-        f->extern_symbols["Iterable"] = context.get_symbol("Iterable");
-        context.get_symbol("ArrayList").to_object(context)->functions.push_front(f);
+        context.get_symbol("Char").to_object(context)->functions.push_front(new SystemFunction(string(), char_constructor));
+        context.get_symbol("Char").to_object(context)->get_property("is_digit", context)->functions.push_front(new SystemFunction(char_is(), char_is_digit));
+        context.get_symbol("Char").to_object(context)->get_property("is_alpha", context)->functions.push_front(new SystemFunction(char_is(), char_is_alpha));
+        context.get_symbol("Char").to_object(context)->get_property("is_alphanum", context)->functions.push_front(new SystemFunction(char_is(), char_is_alphanum));
+
+        context.get_symbol("String").to_object(context)->functions.push_front(new SystemFunction(string(), string));
+
+        context.get_symbol("+").to_object(context)->functions.push_front(new SystemFunction(concat(), concat));
+        context.get_symbol("~").to_object(context)->functions.push_front(new SystemFunction(includes(), includes));
+        context.get_symbol(":+").to_object(context)->functions.push_front(new SystemFunction(concat(), assign_concat));
     }
 
 }

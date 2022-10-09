@@ -95,7 +95,7 @@ Object* &Object::get_property(std::string name, Context & context) {
 }
 
 std::string Object::to_string() const {
-    if (type > 0) {
+    if (type >= 0) {
         std::string str;
 
         for (long i = 1; i <= type; i++) {

@@ -7,10 +7,10 @@ struct Context;
 
 
 struct Position {
-    std::string path;
-    
-    virtual void get_stack_trace(Context & context) = 0;
-    virtual void error() = 0;
+    std::string path; // The file path.
+
+    virtual void store_stack_trace(Context & context) = 0; // Stores a stack trace from a context.
+    virtual void notify_error() = 0; // Prints an error.
 };
 
 

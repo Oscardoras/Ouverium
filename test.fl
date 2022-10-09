@@ -13,7 +13,7 @@ while (file->has()) {
 print(str);
 
 words := get_words(str);
-print(words->lenght(), "\n");
+print("Longueur : ", words->lenght(), "\n");
 words->foreach(x |-> {
     print(x, "\n")
 });

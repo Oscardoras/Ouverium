@@ -23,9 +23,9 @@ struct Function {
 
 struct CustomFunction: public Function {
 
-    std::shared_ptr<FunctionDefinition> pointer;
+    FunctionDefinition* pointer;
 
-    inline CustomFunction(std::shared_ptr<FunctionDefinition> pointer) {
+    inline CustomFunction(FunctionDefinition* pointer) {
         type = Custom;
         this->pointer = pointer;
     }
@@ -34,10 +34,10 @@ struct CustomFunction: public Function {
 
 struct SystemFunction: public Function {
 
-    std::shared_ptr<Expression> parameters;
+    FunctionDefinition* parameters;
     Reference (*pointer)(FunctionContext&);
 
-    inline SystemFunction(std::shared_ptr<Expression> parameters, Reference (*pointer)(FunctionContext&)) {
+    inline SystemFunction(FunctionDefinition* parameters, Reference (*pointer)(FunctionContext&)) {
         type = System;
         this->parameters = parameters;
         this->pointer = pointer;

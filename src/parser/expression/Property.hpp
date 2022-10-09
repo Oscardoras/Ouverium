@@ -9,7 +9,7 @@ struct Property: public Expression {
         type = Type::Property;
     }
 
-    std::shared_ptr<Expression> object;
+    std::unique_ptr<Expression> object;
     std::string name;
 
 };

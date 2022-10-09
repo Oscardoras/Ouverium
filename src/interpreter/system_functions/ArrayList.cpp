@@ -15,11 +15,11 @@ namespace ArrayList {
 
         FunctionContext function_context(context, context.position);
         function_context.add_symbol("object", array);
-        function_context.add_symbol("type", context.get_symbol("Iterable"));
+        function_context.add_symbol("type", context.get_global()->get_symbol("Iterable"));
         Types::set_type(function_context);
-        function_context.add_symbol("type", context.get_symbol("List"));
+        function_context.add_symbol("type", context.get_global()->get_symbol("List"));
         Types::set_type(function_context);
-        function_context.add_symbol("type", context.get_symbol("ArrayList"));
+        function_context.add_symbol("type", context.get_global()->get_symbol("ArrayList"));
         Types::set_type(function_context);
 
         auto f = new SystemFunction(get_array_element(), get_array_element);
@@ -175,7 +175,7 @@ namespace ArrayList {
 
             for (long i = array_object->type-1; i > 1; i--)
                 array_object->data.a[i+1].o = array_object->data.a[i-1+1].o;
-            
+
             array_object->data.a[1].o = element.to_object(context);
             return Reference(array_object, (unsigned long) 0);
         } else {
@@ -199,7 +199,7 @@ namespace ArrayList {
 
         for (long i = 0; i < array_object->type-1; i++)
             array_object->data.a[i+1].o = array_object->data.a[i+1+1].o;
-        
+
         FunctionContext function_context(context, context.position);
         function_context.add_symbol("array", array);
         return Array::remove_array_element(function_context);
@@ -241,7 +241,7 @@ namespace ArrayList {
 
             for (long i = array_object->type-1; i > index->data.i; i--)
                 array_object->data.a[i+1].o = array_object->data.a[i-1+1].o;
-            
+
             array_object->data.a[index->data.i+1].o = element;
             return Reference(array_object, (unsigned long) index->data.i);
 
@@ -263,18 +263,14 @@ namespace ArrayList {
             FunctionContext function_context(context, context.position);
             function_context.add_symbol("array", array);
             Array::remove_array_element(function_context);
-            
+
             return Reference(tmp);
 
         } else throw Interpreter::FunctionArgumentsError();
     }
 
     void init(Context & context) {
-        auto f = new SystemFunction(array_list(), array_list);
-        f->extern_symbols["ArrayList"] = context.get_symbol("ArrayList");
-        f->extern_symbols["List"] = context.get_symbol("List");
-        f->extern_symbols["Iterable"] = context.get_symbol("Iterable");
-        context.get_symbol("ArrayList").to_object(context)->functions.push_front(f);
+        context.get_symbol("ArrayList").to_object(context)->functions.push_front(new SystemFunction(array_list(), array_list));
     }
 
 }

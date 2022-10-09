@@ -10,8 +10,8 @@ struct FunctionCall: public Expression {
         type = Type::FunctionCall;
     }
 
-    std::shared_ptr<Expression> function;
-    std::shared_ptr<Expression> object;
+    std::unique_ptr<Expression> function;
+    std::unique_ptr<Expression> object;
 
 };
 

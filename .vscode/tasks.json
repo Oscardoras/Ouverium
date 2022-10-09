@@ -19,6 +19,7 @@
                 "${workspaceFolder}/src/interpreter/system_functions/Base.cpp",
                 "${workspaceFolder}/src/interpreter/system_functions/Math.cpp",
                 "${workspaceFolder}/src/interpreter/system_functions/Streams.cpp",
+                "${workspaceFolder}/src/interpreter/system_functions/String.cpp",
                 "${workspaceFolder}/src/interpreter/system_functions/Types.cpp",
                 "${workspaceFolder}/src/interpreter/Interpreter.cpp",
                 "${workspaceFolder}/src/interpreter/Object.cpp",
