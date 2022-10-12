@@ -184,24 +184,24 @@ namespace StandardParser {
 
     ParserError::ParserError(std::string const& message, TextPosition const& position): message(message), position(position) {}
 
-    std::unique_ptr<Expression> expressions_to_expression(std::vector<ParserError> & errors, std::vector<std::unique_ptr<Expression>> expressions, std::unique_ptr<Expression> expression, bool is_function, std::vector<Expression*> const& escaped) {
+    std::shared_ptr<Expression> expressions_to_expression(std::vector<ParserError> & errors, std::vector<std::shared_ptr<Expression>> expressions, std::shared_ptr<Expression> expression, bool is_function, std::vector<Expression*> const& escaped) {
         if (expressions.empty()) {
             return expression;
         } else {
-            expressions.push_back(std::move(expression));
+            expressions.push_back(expression);
 
             if (is_function) {
-                auto function_call = std::make_unique<FunctionCall>();
+                auto function_call = std::make_shared<FunctionCall>();
                 function_call->position = expressions[0]->position;
-                function_call->function = std::move(expressions[0]);
+                function_call->function = expressions[0];
 
                 if (expressions.size() != 2) {
-                    auto tuple = std::make_unique<Tuple>();
+                    auto tuple = std::make_shared<Tuple>();
                     tuple->position = function_call->position;
                     for (unsigned long i = 1; i < expressions.size(); i++)
-                        tuple->objects.push_back(std::move(expressions[i]));
-                    function_call->object = std::move(tuple);
-                } else function_call->object = std::move(expressions[1]);
+                        tuple->objects.push_back(expressions[i]);
+                    function_call->object = tuple;
+                } else function_call->object = expressions[1];
 
                 return function_call;
             } else {
@@ -235,16 +235,16 @@ namespace StandardParser {
                             auto symbol = (Symbol*) it->get();
                             if (std::find(op.begin(), op.end(), symbol->name) != op.end() && std::find(escaped.begin(), escaped.end(), symbol) == escaped.end()) {
                                 if (expressions.begin() <= it-1 && it+1 < expressions.end()) {
-                                    auto function_call = std::make_unique<FunctionCall>();
+                                    auto function_call = std::make_shared<FunctionCall>();
                                     function_call->position = symbol->position;
-                                    function_call->function = std::move(*it);
-                                    auto tuple = std::make_unique<Tuple>();
+                                    function_call->function = *it;
+                                    auto tuple = std::make_shared<Tuple>();
                                     tuple->position = function_call->position;
-                                    tuple->objects.push_back(std::move(*(it-1)));
-                                    tuple->objects.push_back(std::move(*(it+1)));
-                                    function_call->object = std::move(tuple);
+                                    tuple->objects.push_back(*(it-1));
+                                    tuple->objects.push_back(*(it+1));
+                                    function_call->object = tuple;
 
-                                    *(it-1) = std::move(function_call);
+                                    *(it-1) = function_call;
                                     it = expressions.erase(it);
                                     it = expressions.erase(it);
                                 } else errors.push_back(ParserError("operator " + symbol->name + " must be placed between two expressions", *std::static_pointer_cast<TextPosition>(symbol->position)));
@@ -253,15 +253,15 @@ namespace StandardParser {
                     }
                 }
 
-                return std::move(expressions[0]);
+                return expressions[0];
             }
         }
     }
 
-    std::unique_ptr<Expression> get_expression(std::vector<ParserError> & errors, std::vector<Word> const& words, unsigned long &i, std::vector<Expression*> & escaped, bool in_tuple, bool in_function, bool in_operator, bool priority) {
+    std::shared_ptr<Expression> get_expression(std::vector<ParserError> & errors, std::vector<Word> const& words, unsigned long &i, std::vector<Expression*> & escaped, bool in_tuple, bool in_function, bool in_operator, bool priority) {
         if (i >= words.size()) throw IncompleteCode();
 
-        std::unique_ptr<Expression> expression = nullptr;
+        std::shared_ptr<Expression> expression = nullptr;
 
         if (words[i].word == "(") {
             i++;
@@ -270,7 +270,7 @@ namespace StandardParser {
             if (words[i].word == ")") i++;
             else errors.push_back(ParserError(") expected", words[i].position));
         } else if (words[i].word == ")") {
-            expression = std::make_unique<Tuple>();
+            expression = std::make_shared<Tuple>();
             if (words[i-1].word != "(") {
                 errors.push_back(ParserError(") unexpected", words[i].position));
                 return expression;
@@ -284,7 +284,7 @@ namespace StandardParser {
             if (words[i].word == "]") i++;
             else errors.push_back(ParserError("] expected", words[i].position));
         } else if (words[i].word == "]") {
-            expression = std::make_unique<Tuple>();
+            expression = std::make_shared<Tuple>();
             if (words[i-1].word != "[") {
                 errors.push_back(ParserError("] unexpected", words[i].position));
                 return expression;
@@ -298,25 +298,25 @@ namespace StandardParser {
             if (words[i].word == "}") i++;
             else errors.push_back(ParserError("} expected", words[i].position));
         } else if (words[i].word == "}") {
-            expression = std::make_unique<Tuple>();
+            expression = std::make_shared<Tuple>();
             if (words[i-1].word != "{") {
                 errors.push_back(ParserError("} unexpected", words[i].position));
                 return expression;
             }
             escaped.push_back(expression.get());
-            expression->position = std::make_unique<TextPosition>(words[i-1].position);
+            expression->position = std::make_shared<TextPosition>(words[i-1].position);
         } else {
-            std::unique_ptr<Symbol> symbol = std::make_unique<Symbol>();
+            std::shared_ptr<Symbol> symbol = std::make_shared<Symbol>();
             symbol->position = std::make_shared<TextPosition>(words[i].position);
             symbol->name = words[i].word;
-            expression = std::move(symbol);
+            expression = symbol;
             if (is_system(words[i].word))
                 errors.push_back(ParserError(words[i].word + " is reserved", words[i].position));
             i++;
         }
 
         auto is_function = false;
-        std::vector<std::unique_ptr<Expression>> expressions;
+        std::vector<std::shared_ptr<Expression>> expressions;
         while (i < words.size()) {
 
             if (words[i].word == ")") break;
@@ -325,12 +325,12 @@ namespace StandardParser {
 
             if (words[i].word == "->") {
                 while (words[i].word == "->") {
-                    auto property = std::make_unique<Property>();
+                    auto property = std::make_shared<Property>();
                     property->position = std::make_shared<TextPosition>(words[i].position);
-                    property->object = std::move(expression);
+                    property->object = expression;
                     i++;
                     property->name = words[i].word;
-                    expression = std::move(property);
+                    expression = property;
                     if (is_system(words[i].word))
                         errors.push_back(ParserError(words[i].word + " is reserved", words[i].position));
                     i++;
@@ -339,9 +339,9 @@ namespace StandardParser {
             }
             if (words[i].word == ",") {
                 if (!in_tuple && priority) {
-                    auto tuple = std::make_unique<Tuple>();
+                    auto tuple = std::make_shared<Tuple>();
                     tuple->position = std::make_shared<TextPosition>(words[i].position);
-                    tuple->objects.push_back(expressions_to_expression(errors, expressions, std::move(expression), is_function, escaped));
+                    tuple->objects.push_back(expressions_to_expression(errors, expressions, expression, is_function, escaped));
                     while (words[i].word == ",") {
                         i++;
                         tuple->objects.push_back(get_expression(errors, words, i, escaped, true, false, false, true));
@@ -355,12 +355,12 @@ namespace StandardParser {
                     auto filter = get_expression(errors, words, i, escaped, false, false, false, false);
                     if (words[i].word == "|->") {
                         i++;
-                        auto function_definition = std::make_unique<FunctionDefinition>();
+                        auto function_definition = std::make_shared<FunctionDefinition>();
                         function_definition->position = std::make_shared<TextPosition>(words[i-1].position);
-                        function_definition->parameters = std::move(expression);
-                        function_definition->filter = std::move(filter);
+                        function_definition->parameters = expression;
+                        function_definition->filter = filter;
                         function_definition->object = get_expression(errors, words, i, escaped, in_tuple, in_function, in_operator, false);
-                        expression = std::move(function_definition);
+                        expression = function_definition;
                         continue;
                     } else {
                         errors.push_back(ParserError("|-> expected", words[i].position));
@@ -371,12 +371,12 @@ namespace StandardParser {
             if (words[i].word == "|->") {
                 if (priority) {
                     i++;
-                    auto function_definition = std::make_unique<FunctionDefinition>();
+                    auto function_definition = std::make_shared<FunctionDefinition>();
                     function_definition->position = std::make_shared<TextPosition>(words[i-1].position);
-                    function_definition->parameters = std::move(expression);
+                    function_definition->parameters = expression;
                     function_definition->filter = nullptr;
                     function_definition->object = get_expression(errors, words, i, escaped, in_tuple, in_function, in_operator, false);
-                    expression = std::move(function_definition);
+                    expression = function_definition;
                     continue;
                 } else break;
             }
@@ -384,13 +384,13 @@ namespace StandardParser {
                 auto symbol = (Symbol*) expression.get();
 
                 if (is_operator(symbol->name) && std::find(escaped.begin(), escaped.end(), symbol) == escaped.end()) {
-                    auto function_call = std::make_unique<FunctionCall>();
+                    auto function_call = std::make_shared<FunctionCall>();
                     function_call->position = symbol->position;
 
-                    function_call->function = std::move(expression);
+                    function_call->function = expression;
                     function_call->object = get_expression(errors, words, i, escaped, in_tuple, in_function, in_operator, false);
 
-                    expression = std::move(function_call);
+                    expression = function_call;
                     continue;
                 }
             }
@@ -399,18 +399,18 @@ namespace StandardParser {
                     if (in_operator) break;
                     else {
                         if (is_function) {
-                            expression = expressions_to_expression(errors, expressions, std::move(expression), is_function, escaped);
+                            expression = expressions_to_expression(errors, expressions, expression, is_function, escaped);
                             expressions.clear();
                             is_function = false;
                         }
                         expressions.push_back(expression);
-                        auto symbol = std::make_unique<Symbol>();
+                        auto symbol = std::make_shared<Symbol>();
                         symbol->position = std::make_shared<TextPosition>(words[i].position);
                         symbol->name = words[i].word;
-                        expressions.push_back(std::move(symbol));
+                        expressions.push_back(symbol);
                         i++;
                         if (i >= words.size() || words[i].word == ")" || words[i].word == "]" || words[i].word == "}")
-                            expression = std::make_unique<Tuple>();
+                            expression = std::make_shared<Tuple>();
                         else
                             expression = get_expression(errors, words, i, escaped, in_tuple, in_function, true, false);
                         continue;
@@ -426,7 +426,7 @@ namespace StandardParser {
 
         }
 
-        return expressions_to_expression(errors, expressions, std::move(expression), is_function, escaped);
+        return expressions_to_expression(errors, expressions, expression, is_function, escaped);
     }
 
     void find_symbols(Expression* expression, Expression* parent) {

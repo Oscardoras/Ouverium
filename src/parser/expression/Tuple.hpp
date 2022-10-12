@@ -12,7 +12,7 @@ struct Tuple: public Expression {
         type = Type::Tuple;
     }
 
-    std::vector<std::unique_ptr<Expression>> objects;
+    std::vector<std::shared_ptr<Expression>> objects;
 
 };
 
