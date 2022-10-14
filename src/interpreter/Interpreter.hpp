@@ -16,13 +16,13 @@ namespace Interpreter {
     struct Error {};
     struct FunctionArgumentsError: public Error {};
 
-    Reference call_function(Context & context, std::shared_ptr<Position> position, std::list<Function*> function, Reference reference);
+    Reference call_function(Context & context, std::shared_ptr<Position> position, std::list<Function*> function, Reference const& reference);
 
-    Reference call_function(Context & context, std::shared_ptr<Position> position, std::list<Function*> function, Expression const * const arguments);
+    Reference call_function(Context & context, std::shared_ptr<Position> position, std::list<Function*> function, std::shared_ptr<Expression> arguments);
 
-    Reference execute(Context & context, Expression const& expression);
+    Reference execute(Context & context, std::shared_ptr<Expression> expression);
 
-    Reference run(Context & context, Expression const& expression);
+    Reference run(Context & context, std::shared_ptr<Expression> expression);
 
     bool print(std::ostream & stream, Object* object);
 

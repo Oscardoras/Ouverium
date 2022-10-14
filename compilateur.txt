@@ -1,0 +1,12 @@
+Créer l'arbre
+
+ANALYSE :
+Faire une cartographie des symboles
+Faire une cartographie des données
+
+Faire l'exécution inverse du code
+
+COMPILATION :
+Créer le garbage collector
+Faire la liste des fonctions
+Effectuer le remplacement

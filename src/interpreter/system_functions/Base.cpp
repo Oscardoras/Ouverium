@@ -106,7 +106,7 @@ namespace Base {
                 } else break;
             } else throw Interpreter::FunctionArgumentsError();
         }
-        
+
         if (result.type == Reference::Pointer && result.pointer == nullptr)
             return Reference(context.new_object());
         else return result;
@@ -159,7 +159,7 @@ namespace Base {
                 variable.get_reference() = context.new_object(i);
                 Interpreter::call_function(*parent, nullptr, block_functions, std::make_shared<Tuple>());
             }
-            
+
             return Reference(context.new_object());
         } else throw Interpreter::FunctionArgumentsError();
     }
@@ -228,7 +228,7 @@ namespace Base {
                     Interpreter::call_function(*parent, nullptr, block_functions, std::make_shared<Tuple>());
                 }
             else throw Interpreter::FunctionArgumentsError();
-            
+
             return Reference(context.new_object());
         } else throw Interpreter::FunctionArgumentsError();
     }
@@ -282,7 +282,7 @@ namespace Base {
         Exception ex;
         ex.reference = context.get_symbol("throw_expression");
         ex.position = context.position;
-        ex.position->get_stack_trace(*context.get_parent());
+        ex.position->store_stack_trace(*context.get_parent());
         throw ex;
     }
 
@@ -320,7 +320,7 @@ namespace Base {
         std::string line;
         while (std::getline(file, line))
             code += line + '\n';
-        
+
         try {
             auto expression = StandardParser::get_tree(code, path, symbols);
             return Interpreter::run(*global, expression);
@@ -344,14 +344,14 @@ namespace Base {
             std::string line;
             while (std::getline(file, line))
                 code += line + '\n';
-            
+
             try {
                 auto expression = StandardParser::get_tree(code, path, symbols);
                 global->files[path] = expression;
 
                 for (auto const& symbol : expression->symbols)
                     global->get_symbol(symbol);
-                    
+
                 return Interpreter::run(*global, expression);
             } catch (StandardParser::IncompleteCode & e) {
                 std::cerr << "incomplete code, you must finish the last expression in file \"" << path << "\"" << std::endl;
@@ -519,14 +519,14 @@ namespace Base {
     Reference equals(FunctionContext & context) {
         auto a = context.get_symbol("a").to_object(context);
         auto b = context.get_symbol("b").to_object(context);
-        
+
         return Reference(context.new_object(equals(a, b)));
     }
 
     Reference not_equals(FunctionContext & context) {
         auto a = context.get_symbol("a").to_object(context);
         auto b = context.get_symbol("b").to_object(context);
-        
+
         return Reference(context.new_object(!equals(a, b)));
     }
 

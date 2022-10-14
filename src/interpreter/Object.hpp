@@ -12,7 +12,7 @@ struct Function;
 
 
 struct Object {
-    
+
     std::map<std::string, Object*> properties;
 
     std::list<Function*> functions;
@@ -26,7 +26,7 @@ struct Object {
         None = 0
         //Array > 0
     };
-    
+
     long type;
 
     union Data {
