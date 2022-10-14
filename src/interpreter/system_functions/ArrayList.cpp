@@ -103,8 +103,8 @@ namespace ArrayList {
         auto array = context.get_symbol("this").to_object(context);
         auto function = context.get_symbol("function").to_object(context);
 
-        for (long i = 1; i < array->type; i++) {
-            Interpreter::call_function(context, context.position, function->functions, std::make_shared<Tuple>());
+        for (long i = 1; i <= array->type; i++) {
+            Interpreter::call_function(context, context.position, function->functions, Reference(array->data.a[i].o));
         }
 
         return Reference(context.new_object());
