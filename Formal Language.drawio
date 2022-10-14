@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e" pages="4">
     <diagram id="5_BCksHGUc6veGD5Rrwg" name="Presentation">
-        <mxGraphModel dx="1876" dy="497" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="1817" dy="750" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="-pB6dK3asgWXY20V-I0a-0"/>
                 <mxCell id="-pB6dK3asgWXY20V-I0a-1" parent="-pB6dK3asgWXY20V-I0a-0"/>
@@ -384,11 +384,11 @@
         </mxGraphModel>
     </diagram>
     <diagram id="6xVNYjhvSVKtVNiQVoSr" name="Compilation">
-        <mxGraphModel dx="1876" dy="452" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="1817" dy="750" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="Kdm36r-lZKiSKA6P0850-0"/>
                 <mxCell id="Kdm36r-lZKiSKA6P0850-1" parent="Kdm36r-lZKiSKA6P0850-0"/>
-                <mxCell id="DMPNHopfa1UGwHoZ_fDU-0" value="&lt;div style=&quot;text-align: justify&quot;&gt;&lt;b style=&quot;font-size: 24px&quot;&gt;Compilation&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify&quot;&gt;Le compilateur tente de créer le programme le plus optimisé possible en ne considérant que les tâches &quot;utiles&quot; et en pré-calculant le plus de chose possible. Ainsi, il va partir des instructions qui ont réellement une utilité puis remonter l'arbre afin de prendre en compte toutes les assertions préalablement nécessaire au calcul. Si un calcul peut être effectué immédiatement (i.e. ne dépendant pas de paramètre inconnu), il le sera affin d'accélérer le calcul lors de l'exécution.&lt;/div&gt;&lt;div style=&quot;text-align: justify&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify&quot;&gt;La parallélisation est automatique. En effet tout calcul dont on a pas directement besoin du résultat dans la suite du thread est lancé dans un nouveau thread pour potentiellement être parallélisé. Il existe également une API pour lancer une fonction dans un nouveau thread.&lt;/div&gt;" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;fontColor=#000000;" parent="Kdm36r-lZKiSKA6P0850-1" vertex="1">
+                <mxCell id="DMPNHopfa1UGwHoZ_fDU-0" value="&lt;div style=&quot;text-align: justify&quot;&gt;&lt;b style=&quot;font-size: 24px&quot;&gt;Compilation&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify&quot;&gt;Le compilateur tente de créer le programme le plus optimisé possible en ne considérant que les tâches &quot;utiles&quot; et en pré-calculant le plus de choses possible. Ainsi, il va partir des instructions qui ont réellement une utilité puis remonter l'arbre afin de prendre en compte toutes les assertions préalablement nécessaire au calcul. Si un calcul peut être effectué immédiatement (i.e. ne dépendant pas de paramètre inconnu), il le sera affin d'accélérer le calcul lors de l'exécution.&lt;/div&gt;&lt;div style=&quot;text-align: justify&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify&quot;&gt;La parallélisation est automatique. En effet tout calcul dont on a pas directement besoin du résultat dans la suite du thread est lancé dans un nouveau thread pour potentiellement être parallélisé. Il existe également une API pour lancer une fonction dans un nouveau thread.&lt;/div&gt;" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;fontColor=#000000;" parent="Kdm36r-lZKiSKA6P0850-1" vertex="1">
                     <mxGeometry x="-760" y="40" width="470" height="230" as="geometry"/>
                 </mxCell>
             </root>
