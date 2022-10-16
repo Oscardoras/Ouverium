@@ -122,11 +122,16 @@ namespace String {
         return tuple;
     }
     Reference includes(FunctionContext & context) {
-        FunctionContext function_context(context, context.position);
-        function_context.add_symbol("this", context.get_symbol("string"));
-        function_context.add_symbol("substring", context.get_symbol("substring"));
+        auto string = context.get_symbol("string");
+        auto substring = context.get_symbol("substring");
 
-        return Reference(context.new_object(String::index_of(function_context).to_object(context)->data.i >= 0));
+        if (Types::check_type(context, substring.to_object(context), context.get_global()->get_symbol("String").to_object(context))) {
+            FunctionContext function_context(context, context.position);
+            function_context.add_symbol("this", string);
+            function_context.add_symbol("substring", substring);
+
+            return Reference(context.new_object(String::index_of(function_context).to_object(context)->data.i >= 0));
+        } else throw Interpreter::FunctionArgumentsError();
     }
 
     std::shared_ptr<Expression> concat() {

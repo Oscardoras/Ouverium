@@ -10,24 +10,37 @@ void GC_init() {
     GC_list = NULL;
 }
 
-void* GC_alloc_object(unsigned long size) {
-    GC_Element* ptr = malloc(size + sizeof(GC_Element));
+void* GC_alloc_object(unsigned long size, void (*iterator)(GC_Element*)) {
+    GC_Element* ptr = malloc(sizeof(GC_Element) + size);
     ptr->next = GC_list;
-    ptr->white = false;
+    ptr->iterated = false;
+    ptr->iterator = iterator;
     GC_list = ptr;
-    return &ptr->data;
+    return ptr + 1;
 }
 
-void GC_collect(void* *roots) {
+void GC_collect(GC_Element* *roots) {
     for (; *roots != NULL; roots++) {
+        (*roots)->iterated = true;
+        (*roots)->iterator(*roots);
+    }
 
+    for (GC_Element** ptr = &GC_list; *ptr != NULL;) {
+        if (!(*ptr)->iterated) {
+            GC_Element* next = (*ptr)->next;
+            free(*ptr);
+            *ptr = next;
+        } else {
+            (*ptr)->iterated = false;
+            ptr = &(*ptr)->next;
+        }
     }
 }
 
 void GC_end() {
     for (GC_Element* ptr = GC_list; ptr != NULL;) {
-        GC_Element* tmp = ptr->next;
+        GC_Element* next = ptr->next;
         free(ptr);
-        ptr = tmp;
+        ptr = next;
     }
 }

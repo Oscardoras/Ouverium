@@ -4,6 +4,22 @@
 
 namespace Types {
 
+    bool check_type(Context & context, Object* object, Object* type) {
+        if (type == context.get_symbol("Char").to_object(context)) return object->type == Object::Char;
+        else if (type == context.get_symbol("Int").to_object(context)) return object->type == Object::Int;
+        else if (type == context.get_symbol("Float").to_object(context)) return object->type == Object::Float;
+        else if (type == context.get_symbol("Bool").to_object(context)) return object->type == Object::Bool;
+        else if (type == context.get_symbol("Array").to_object(context)) return object->type >= 0;
+        else {
+            auto array = object->get_property("_types", context);
+            for (long i = 1; i <= array->type; i++) {
+                if (array->data.a[i].o == type)
+                    return true;
+            }
+            return false;
+        }
+    }
+
     std::shared_ptr<Expression> getset_type() {
         auto tuple = std::make_shared<Tuple>();
 
@@ -22,19 +38,7 @@ namespace Types {
         auto object = context.get_symbol("object").to_object(context);
         auto type = context.get_symbol("type").to_object(context);
 
-        if (type == context.get_symbol("Char").to_object(context)) return Reference(context.new_object(object->type == Object::Char));
-        else if (type == context.get_symbol("Int").to_object(context)) return Reference(context.new_object(object->type == Object::Int));
-        else if (type == context.get_symbol("Float").to_object(context)) return Reference(context.new_object(object->type == Object::Float));
-        else if (type == context.get_symbol("Bool").to_object(context)) return Reference(context.new_object(object->type == Object::Bool));
-        else if (type == context.get_symbol("Array").to_object(context)) return Reference(context.new_object(object->type >= 0));
-        else {
-            auto array = object->get_property("_types", context);
-            for (long i = 1; i <= array->type; i++) {
-                if (array->data.a[i].o == type)
-                    return Reference(context.new_object(true));
-            }
-            return Reference(context.new_object(false));
-        }
+        return Reference(context.new_object(check_type(context, object, type)));
     }
 
     Reference set_type(FunctionContext & context) {
@@ -42,7 +46,7 @@ namespace Types {
         auto type = context.get_symbol("type").to_object(context);
 
         auto array = object.to_object(context)->get_property("_types", context);
-        
+
         FunctionContext function_context(context, context.position);
         function_context.get_symbol("array").get_reference() = array;
         function_context.get_symbol("element").get_reference() = type;
