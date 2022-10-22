@@ -5,7 +5,11 @@
 
 namespace CTranslator {
 
-    std::map<std::shared_ptr<Expression>, std::vector<Symbol>> get_symbols(std::shared_ptr<Expression> tree) {
+    std::vector<Function> get_functions(std::shared_ptr<Expression> tree) {
+
+    }
+
+    Environment get_environment(std::shared_ptr<Expression> tree) {
 
     }
 

@@ -1,5 +1,8 @@
-print(a ~ TestType, "\n");
-
-a :~ TestType;
-
-print(a ~ TestType, "\n");
+euclide : (a,b) |-> {
+    (a1,b1) := (a,b);
+    while (b1 != 0) {
+        (a1,b1) := (b1, a1 % b1)
+    };
+    a1
+};
+print(euclide(30, 20), "\n");
