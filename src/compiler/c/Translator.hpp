@@ -1,6 +1,8 @@
 #ifndef __COMPILER_C_TRANSLATOR_HPP_
 #define __COMPILER_C_TRANSLATOR_HPP_
 
+#include <list>
+
 #include "../../parser/expression/Expression.hpp"
 #include "../../parser/expression/FunctionCall.hpp"
 #include "../../parser/expression/FunctionDefinition.hpp"
@@ -17,8 +19,30 @@ namespace CTranslator {
 
     struct Object {
         std::shared_ptr<Expression> creation;
-        bool is_is_stack;
-        std::vector<std::string> properties;
+        bool is_stack;
+
+        std::map<std::string, std::reference_wrapper<Object>> properties;
+
+        std::list<std::reference_wrapper<Function>> functions;
+
+        enum ObjectType {
+            CPointer = -5,
+            Char,
+            Float,
+            Int,
+            Bool,
+            None = 0
+            //Array > 0
+        };
+
+        union Data {
+            void* ptr;
+            char c;
+            double f;
+            long i;
+            bool b;
+            std::reference_wrapper<Object> *a;
+        } data;
     };
 
     struct Function {
@@ -31,6 +55,10 @@ namespace CTranslator {
         std::vector<Symbol> global_variables;
         std::vector<Function> functions;
     };
+
+    Environment get_environment(std::shared_ptr<Expression> tree);
+
+    void execute(std::shared_ptr<Expression> tree, Environment & environment, std::vector<Object> & objects);
 
 }
 

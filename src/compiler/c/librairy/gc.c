@@ -1,3 +1,4 @@
+#include <pthread.h>
 #include <stdbool.h>
 #include <stdlib.h>
 
@@ -12,6 +13,14 @@ void GC_init() {
 
 void* GC_alloc_object(unsigned long size, void (*iterator)(GC_Element*)) {
     GC_Element* ptr = malloc(sizeof(GC_Element) + size);
+
+    if (ptr == NULL) {
+
+        ptr = malloc(sizeof(GC_Element) + size);
+        if (ptr == NULL)
+            return NULL;
+    }
+
     ptr->next = GC_list;
     ptr->iterated = false;
     ptr->iterator = iterator;
