@@ -183,6 +183,7 @@ Reference Interpreter::execute(Context & context, std::shared_ptr<Expression> ex
         return call_function(context, function_call->position, func->functions, function_call->object);
     } else if (expression->type == Expression::FunctionDefinition) {
         auto function_definition = std::static_pointer_cast<FunctionDefinition>(expression);
+        
         auto object = context.new_object();
         auto f = new CustomFunction(function_definition);
         for (auto symbol : function_definition->object->symbols)

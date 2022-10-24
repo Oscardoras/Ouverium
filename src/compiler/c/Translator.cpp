@@ -68,8 +68,31 @@ namespace CTranslator {
         return env;
     }
 
+    void execute(Function & function, Environment & environment) {
+
+    }
+
     void execute(std::shared_ptr<Expression> tree, Environment & environment, std::vector<Object> & objects) {
-        
+        if (tree->type == Expression::FunctionCall) {
+            auto function_call = std::static_pointer_cast<FunctionCall>(tree);
+
+
+        } else if (tree->type == Expression::FunctionDefinition) {
+            auto function_definition = std::static_pointer_cast<FunctionDefinition>(tree);
+
+            auto object = context.new_object();
+            auto f = new CustomFunction(function_definition);
+            for (auto symbol : function_definition->object->symbols)
+                if (context.has_symbol(symbol))
+                    f->extern_symbols[symbol] = context.get_symbol(symbol);
+            if (function_definition->filter != nullptr)
+                for (auto symbol : function_definition->filter->symbols)
+                    if (context.has_symbol(symbol))
+                        f->extern_symbols[symbol] = context.get_symbol(symbol);
+            object->functions.push_front(f);
+
+            return Reference(object);
+        }
     }
 
 }
