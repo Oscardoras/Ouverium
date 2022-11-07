@@ -1,3 +1,10 @@
+BESOINS:
+Déterminer les types
+Déterminer les fonctions
+Déterminer le code utile
+Pré-calculer le code
+
+
 Créer l'arbre
 
 ANALYSE :

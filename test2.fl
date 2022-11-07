@@ -1,8 +1,12 @@
-euclide : (a,b) |-> {
-    (a1,b1) := (a,b);
-    while (b1 != 0) {
-        (a1,b1) := (b1, a1 % b1)
-    };
-    a1
+f : () |-> {
+    variable := 1;
+    g : (x |-> {
+        () |-> {
+            print(x, "\n");
+        }
+    })($variable);
+    variable := 2;
+    g
 };
-print(euclide(30, 20), "\n");
+
+(f())();

@@ -4,23 +4,16 @@
 #include "Interpreter.hpp"
 
 
-Object::Object() {   
-    type = None;
-    referenced = false;
-}
-
 Object::Object(Object const& object) {
-    for (auto f : object.functions) {
-        Function* function;
+    for (auto & f : object.functions) {
         switch (f->type) {
         case Function::Custom:
-            function = new CustomFunction((CustomFunction) (*(CustomFunction*) f));
+            functions.push_front(std::make_unique<CustomFunction>(*f));
             break;
         case Function::System:
-            function = new SystemFunction((SystemFunction) (*(SystemFunction*) f));
+            functions.push_front(std::make_unique<SystemFunction>(*f));
             break;
         }
-        functions.push_front(function);
     }
 
     properties = object.properties;
@@ -32,7 +25,7 @@ Object::Object(Object const& object) {
     else if (type == Int) data.i = object.data.i;
     else if (type == Bool) data.b = object.data.b;
     else if (type > 0) {
-        data.a = (Object::Data::ArrayElement *) std::malloc(sizeof(Object::Data::ArrayElement) * (type+1));
+        data.a = (Object::Data::ArrayElement *) std::malloc(sizeof(Object::Data::ArrayElement) * (object.data.a[0].c+1));
         data.a[0].c = (long) object.data.a[0].c;
         for (long i = 1; i <= type; i++)
             data.a[i].o = object.data.a[i].o;
@@ -78,14 +71,6 @@ Object::Object(size_t tuple_size) {
         data.a[0].c = type;
     }
     referenced = false;
-}
-
-Object::~Object() {
-    for (auto f : functions)
-        delete f;
-    
-    if (type > 0)
-        free(data.a);
 }
 
 Object* &Object::get_property(std::string name, Context & context) {

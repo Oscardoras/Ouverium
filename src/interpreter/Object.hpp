@@ -15,7 +15,7 @@ struct Object {
 
     std::map<std::string, Object*> properties;
 
-    std::list<Function*> functions;
+    std::list<std::unique_ptr<Function>> functions;
 
     enum ObjectType {
         CPointer = -5,

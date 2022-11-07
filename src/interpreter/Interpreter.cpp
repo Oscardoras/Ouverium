@@ -92,17 +92,17 @@ void set_references(Context & context, FunctionContext & function_context, std::
             function_definition->object = arguments;
 
             auto object = context.new_object();
-            auto f = new CustomFunction(function_definition);
+            auto f = std::make_unique<CustomFunction>(function_definition);
             for (auto symbol : function_definition->object->symbols)
-                ((CustomFunction*) f)->extern_symbols[symbol] = context.get_symbol(symbol);
-            object->functions.push_front(f);
+                f->extern_symbols[symbol] = context.get_symbol(symbol);
+            object->functions.push_front(std::move(f));
 
             function_context.add_symbol(symbol->name, Reference(object));
         } else throw Interpreter::FunctionArgumentsError();
     } else throw Interpreter::FunctionArgumentsError();
 }
 
-Reference Interpreter::call_function(Context & context, std::shared_ptr<Position> position, std::list<Function*> function, Reference const& reference) {
+Reference Interpreter::call_function(Context & context, std::shared_ptr<Position> position, std::list<std::unique_ptr<Function>> function, Reference const& reference) {
     Object* object = reference.to_object(context);
 
     for (auto const& function : function) {
@@ -112,20 +112,20 @@ Reference Interpreter::call_function(Context & context, std::shared_ptr<Position
                 function_context.add_symbol(symbol.first, symbol.second);
 
             if (function->type == Function::Custom) {
-                set_references(function_context, ((CustomFunction*) function)->pointer->parameters, object);
+                set_references(function_context, ((CustomFunction*) function.get())->pointer->parameters, object);
 
                 Object* filter;
-                if (((CustomFunction*) function)->pointer->filter != nullptr)
-                    filter = Interpreter::execute(function_context, ((CustomFunction*) function)->pointer->filter).to_object(context);
+                if (((CustomFunction*) function.get())->pointer->filter != nullptr)
+                    filter = Interpreter::execute(function_context, ((CustomFunction*) function.get())->pointer->filter).to_object(context);
                 else filter = nullptr;
 
                 if (filter == nullptr || (filter->type == Object::Bool && filter->data.b))
-                    return Interpreter::execute(function_context, ((CustomFunction*) function)->pointer->object);
+                    return Interpreter::execute(function_context, ((CustomFunction*) function.get())->pointer->object);
                 else continue;
             } else {
-                set_references(function_context, ((SystemFunction*) function)->parameters, object);
+                set_references(function_context, ((SystemFunction*) function.get())->parameters, object);
 
-                return ((SystemFunction*) function)->pointer(function_context);
+                return ((SystemFunction*) function.get())->pointer(function_context);
             }
         } catch (FunctionArgumentsError & e) {}
     }
@@ -137,31 +137,32 @@ Reference Interpreter::call_function(Context & context, std::shared_ptr<Position
     throw Error();
 }
 
-Reference Interpreter::call_function(Context & context, std::shared_ptr<Position> position, std::list<Function*> functions, std::shared_ptr<Expression> arguments) {
+Reference Interpreter::call_function(Context & context, std::shared_ptr<Position> position, std::list<std::unique_ptr<Function>> const& functions, std::shared_ptr<Expression> arguments) {
     std::map<std::shared_ptr<Expression>, Reference> computed;
 
     for (auto const& function : functions) {
         try {
             FunctionContext function_context(context, position);
-            if (position != nullptr) function_context.add_symbol("system_position", context.new_object(position->path));
+            if (position != nullptr)
+                function_context.add_symbol("system_position", context.new_object(position->path));
             for (auto & symbol : function->extern_symbols)
                 function_context.add_symbol(symbol.first, symbol.second);
 
             if (function->type == Function::Custom) {
-                set_references(context, function_context, computed, ((CustomFunction*) function)->pointer->parameters, arguments);
+                set_references(context, function_context, computed, ((CustomFunction*) function.get())->pointer->parameters, arguments);
 
                 Object* filter;
-                if (((CustomFunction*) function)->pointer->filter != nullptr)
-                    filter = execute(function_context, ((CustomFunction*) function)->pointer->filter).to_object(context);
+                if (((CustomFunction*) function.get())->pointer->filter != nullptr)
+                    filter = execute(function_context, ((CustomFunction*) function.get())->pointer->filter).to_object(context);
                 else filter = nullptr;
 
                 if (filter == nullptr || (filter->type == Object::Bool && filter->data.b))
-                    return execute(function_context, ((CustomFunction*) function)->pointer->object);
+                    return execute(function_context, ((CustomFunction*) function.get())->pointer->object);
                 else throw FunctionArgumentsError();
             } else {
-                set_references(context, function_context, computed, ((SystemFunction*) function)->parameters, arguments);
+                set_references(context, function_context, computed, ((SystemFunction*) function.get())->parameters, arguments);
 
-                return ((SystemFunction*) function)->pointer(function_context);
+                return ((SystemFunction*) function.get())->pointer(function_context);
             }
 
         } catch (FunctionArgumentsError & e) {}
@@ -183,9 +184,9 @@ Reference Interpreter::execute(Context & context, std::shared_ptr<Expression> ex
         return call_function(context, function_call->position, func->functions, function_call->object);
     } else if (expression->type == Expression::FunctionDefinition) {
         auto function_definition = std::static_pointer_cast<FunctionDefinition>(expression);
-        
+
         auto object = context.new_object();
-        auto f = new CustomFunction(function_definition);
+        auto f = std::make_unique<CustomFunction>(function_definition);
         for (auto symbol : function_definition->object->symbols)
             if (context.has_symbol(symbol))
                 f->extern_symbols[symbol] = context.get_symbol(symbol);
@@ -193,7 +194,7 @@ Reference Interpreter::execute(Context & context, std::shared_ptr<Expression> ex
             for (auto symbol : function_definition->filter->symbols)
                 if (context.has_symbol(symbol))
                     f->extern_symbols[symbol] = context.get_symbol(symbol);
-        object->functions.push_front(f);
+        object->functions.push_front(std::move(f));
 
         return Reference(object);
     } else if (expression->type == Expression::Property) {
