@@ -117,7 +117,7 @@ namespace CTranslator {
         } else throw Interpreter::FunctionArgumentsError();
     }
 
-    Reference execute(Context & context, std::shared_ptr<Expression> expression, std::map<std::shared_ptr<FunctionCall>, std::variant<std::shared_ptr<FunctionDefinition>, Reference (*)(FunctionContext&)>> & links) {
+    Reference execute(Context & context, std::shared_ptr<Expression> expression, Links & links) {
         if (expression->type == Expression::FunctionCall) {
             auto function_call = std::static_pointer_cast<FunctionCall>(expression);
 
@@ -235,6 +235,17 @@ namespace CTranslator {
             } else reference = Reference(context.new_object());
             return reference;
         } else return Reference();
+    }
+
+    std::vector<std::shared_ptr<CStructures::Instruction>> get_instructions(std::shared_ptr<Expression> expression, Types & types, Links & links) {
+        if (expression->type == Expression::FunctionCall) {
+            auto function_call = std::static_pointer_cast<FunctionCall>(expression);
+
+            auto & functions = links[function_call];
+            if (functions.size() == 1) {
+                
+            }
+        }
     }
 
 }

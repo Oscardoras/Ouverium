@@ -4,6 +4,8 @@
 #include <list>
 #include <variant>
 
+#include "Structures.hpp"
+
 #include "../../interpreter/Interpreter.hpp"
 
 #include "../../parser/expression/Expression.hpp"
@@ -50,14 +52,19 @@ namespace CTranslator {
 
     };
 
-    struct Execution {
-        Reference reference;
-        bool complete;
+    using FunctionPointer = std::variant<std::shared_ptr<FunctionDefinition>, Reference (*)(FunctionContext&)>;
+    using Links = std::map<std::shared_ptr<FunctionCall>, std::vector<FunctionPointer>>;
+    struct Type {
+        std::map<std::string, std::shared_ptr<Type>> properties;
+        Object::ObjectType type;
     };
+    using Types = std::map<std::shared_ptr<Expression>, std::shared_ptr<Type>>;
 
     GlobalEnvironment get_environment(std::shared_ptr<Expression> tree);
 
     void execute(std::shared_ptr<Expression> tree);
+
+    std::vector<std::shared_ptr<CStructures::Instruction>> get_instructions(std::shared_ptr<Expression> expression, Types & types, Links & links);
 
 }
 
