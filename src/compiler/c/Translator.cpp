@@ -243,8 +243,47 @@ namespace CTranslator {
 
             auto & functions = links[function_call];
             if (functions.size() == 1) {
-                
+
             }
+        }
+    }
+
+    std::shared_ptr<CStructures::Expression> get_expression(std::shared_ptr<Expression> expression, Types & types, Links & links) {
+        if (expression->type == Expression::FunctionCall) {
+            auto function_call = std::static_pointer_cast<FunctionCall>(expression);
+
+            auto & functions = links[function_call];
+            if (functions.size() == 1) {
+                try {
+                    auto f = std::get<std::shared_ptr<FunctionDefinition>>(functions[0]);
+                    return std::make_shared<CStructures::FunctionCall>(CStructures::FunctionCall {
+                        .function = get_expression(function_call->function, types, links)
+                    });
+                } catch (std::bad_variant_access const& e) {
+
+                }
+            }
+        } else if (expression->type == Expression::FunctionDefinition) {
+
+        } else if (expression->type == Expression::Property) {
+            auto property = std::static_pointer_cast<Property>(expression);
+
+            auto o = get_expression(property->object, types, links);
+            return std::make_shared<CStructures::Property>(CStructures::Property {
+                .object = o,
+                .name = property->name,
+                .pointer = types[property]->pointer
+            });
+        } else if (expression->type == Expression::Symbol) {
+            auto symbol = std::static_pointer_cast<Symbol>(expression);
+
+            return std::make_shared<CStructures::VariableCall>(CStructures::VariableCall {.name = symbol->name});
+        } else if (expression->type == Expression::Tuple) {
+            auto tuple = std::static_pointer_cast<Tuple>(expression);
+
+            auto list = std::make_shared<CStructures::List>(CStructures::List {});
+            for (auto const& o : tuple->objects)
+                list->objects.push_back(get_expression(o, types, links));
         }
     }
 

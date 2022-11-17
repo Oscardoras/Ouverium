@@ -55,6 +55,7 @@ namespace CTranslator {
     using FunctionPointer = std::variant<std::shared_ptr<FunctionDefinition>, Reference (*)(FunctionContext&)>;
     using Links = std::map<std::shared_ptr<FunctionCall>, std::vector<FunctionPointer>>;
     struct Type {
+        bool pointer;
         std::map<std::string, std::shared_ptr<Type>> properties;
         Object::ObjectType type;
     };
@@ -65,6 +66,7 @@ namespace CTranslator {
     void execute(std::shared_ptr<Expression> tree);
 
     std::vector<std::shared_ptr<CStructures::Instruction>> get_instructions(std::shared_ptr<Expression> expression, Types & types, Links & links);
+    std::shared_ptr<CStructures::Expression> get_expression(std::shared_ptr<Expression> expression, Types & types, Links & links);
 
 }
 

@@ -45,6 +45,16 @@ namespace CStructures {
         std::vector<std::shared_ptr<Expression>> parameters;
     };
 
+    struct Property: public Expression {
+        std::shared_ptr<Expression> object;
+        std::string name;
+        bool pointer;
+    };
+
+    struct List: public Expression {
+        std::vector<std::shared_ptr<Expression>> objects;
+    };
+
 }
 
 
