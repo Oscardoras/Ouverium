@@ -264,7 +264,9 @@ namespace CTranslator {
                 }
             }
         } else if (expression->type == Expression::FunctionDefinition) {
-
+            return std::make_shared<CStructures::FunctionDefinition>(CStructures::FunctionDefinition {
+                .function = get_expression(function_call->function, types, links)
+            });
         } else if (expression->type == Expression::Property) {
             auto property = std::static_pointer_cast<Property>(expression);
 
