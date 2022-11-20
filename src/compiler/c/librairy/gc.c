@@ -11,7 +11,7 @@ void GC_init() {
     GC_list = NULL;
 }
 
-void* GC_alloc_object(unsigned long size, void (*iterator)(GC_Element*)) {
+void* GC_alloc_object(unsigned long size, void (*iterator)(void*)) {
     GC_Element* ptr = malloc(sizeof(GC_Element) + size);
 
     if (ptr == NULL) {
@@ -28,10 +28,14 @@ void* GC_alloc_object(unsigned long size, void (*iterator)(GC_Element*)) {
     return ptr + 1;
 }
 
+void GC_iterate(GC_Element* element) {
+    element->iterated = true;
+    element->iterator(element + 1);
+}
+
 void GC_collect(GC_Element* *roots) {
     for (; *roots != NULL; roots++) {
-        (*roots)->iterated = true;
-        (*roots)->iterator(*roots);
+        GC_iterate(*roots);
     }
 
     for (GC_Element** ptr = &GC_list; *ptr != NULL;) {
@@ -51,5 +55,21 @@ void GC_end() {
         GC_Element* next = ptr->next;
         free(ptr);
         ptr = next;
+    }
+}
+
+GC_FunctionBody GC_eval_function(GC_Function* function, void* args) {
+    for (GC_Function* ptr = function; ptr != NULL; ptr = ptr->next) {
+        if (function->filter == NULL || function->filter(function+1, args)) {
+            function->body(function+1, args);
+            break;
+        }
+    }
+}
+
+void GC_Array_iterator(void* element) {
+    GC_Array* array = (GC_Array*) element;
+    for (unsigned long i = 0; i < array->size; i++) {
+        GC_iterate(array->tab[i]);
     }
 }
