@@ -15,9 +15,6 @@ namespace CStructures {
     struct If: public Instruction {
         std::shared_ptr<Expression> condition;
         std::vector<std::shared_ptr<Instruction>> body;
-    };
-
-    struct IfElse: public If {
         std::vector<std::shared_ptr<Instruction>> alternative;
     };
 

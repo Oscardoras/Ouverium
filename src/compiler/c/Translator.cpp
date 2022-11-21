@@ -33,6 +33,35 @@ namespace CTranslator {
             }
             break;
 
+        case (long) (Reference (*)(FunctionContext & context)) Base::if_statement:
+            if (arguments->type == Expression::Tuple) {
+                auto tuple = std::static_pointer_cast<Tuple>(arguments);
+
+                if (tuple->objects.size() >= 2) {
+                    int i = 0;
+                    auto structure = std::make_shared<CStructures::If>();
+                    r.push_back(structure);
+                    structure->condition = get_expression(tuple->objects[i++], meta);
+                    structure->body = get_instructions(tuple->objects[i++], meta);
+
+                    while (i+2 < tuple->objects.size()) {
+                        i++;
+                        auto tmp = std::make_shared<CStructures::If>();
+                        tmp->condition = get_expression(tuple->objects[i++], meta);
+                        tmp->body = get_instructions(tuple->objects[i++], meta);
+                        structure->alternative.push_back(tmp);
+                        structure = tmp;
+                    };
+
+                    if (i+1 < tuple->objects.size()) {
+                        i++;
+                        structure->alternative = get_instructions(tuple->objects[i++], meta);
+                    }
+                }
+
+            }
+            break;
+
         default:
             break;
         }

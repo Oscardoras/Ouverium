@@ -117,11 +117,11 @@ namespace Analyzer {
         } else throw Interpreter::FunctionArgumentsError();
     }
 
-    Reference execute(Context & context, std::shared_ptr<Expression> expression, Links & links) {
+    Reference execute(Context & context, std::shared_ptr<Expression> expression, MetaData & meta) {
         if (expression->type == Expression::FunctionCall) {
             auto function_call = std::static_pointer_cast<FunctionCall>(expression);
 
-            auto func = execute(context, function_call->function, links).to_object(context);
+            auto func = execute(context, function_call->function, meta).to_object(context);
 
             std::map<std::shared_ptr<Expression>, Reference> computed;
 
@@ -138,19 +138,19 @@ namespace Analyzer {
 
                         Object* filter;
                         if (((CustomFunction*) function.get())->pointer->filter != nullptr)
-                            filter = execute(function_context, ((CustomFunction*) function.get())->pointer->filter, links).to_object(context);
+                            filter = execute(function_context, ((CustomFunction*) function.get())->pointer->filter, meta).to_object(context);
                         else filter = nullptr;
 
                         if (filter == nullptr || (filter->type == Object::Bool && filter->data.b)) {
-                            auto r = execute(function_context, ((CustomFunction*) function.get())->pointer->object, links);
-                            links[function_call] = ((CustomFunction*) function.get())->pointer;
+                            auto r = execute(function_context, ((CustomFunction*) function.get())->pointer->object, meta);
+                            meta.links[function_call] = ((CustomFunction*) function.get())->pointer;
                             return r;
                         } else throw Interpreter::FunctionArgumentsError();
                     } else {
                         set_references(context, function_context, computed, ((SystemFunction*) function.get())->parameters, function_call->object);
 
                         auto r = ((SystemFunction*) function.get())->pointer(function_context);
-                        links[function_call] = ((SystemFunction*) function.get())->pointer;
+                        meta.links[function_call] = ((SystemFunction*) function.get())->pointer;
                         return r;
                     }
 
@@ -179,7 +179,7 @@ namespace Analyzer {
         } else if (expression->type == Expression::Property) {
             auto property = std::static_pointer_cast<Property>(expression);
 
-            auto object = execute(context, property->object, links).to_object(context);
+            auto object = execute(context, property->object, meta).to_object(context);
             return Reference(object, &object->get_property(property->name, context));
         } else if (expression->type == Expression::Symbol) {
             auto symbol = std::static_pointer_cast<Symbol>(expression)->name;
@@ -231,7 +231,7 @@ namespace Analyzer {
             if (n > 0) {
                 reference = Reference(n);
                 for (int i = 0; i < (int) n; i++)
-                    reference.tuple[i] = execute(context, tuple->objects[i], links);
+                    reference.tuple[i] = execute(context, tuple->objects[i], meta);
             } else reference = Reference(context.new_object());
             return reference;
         } else return Reference();
