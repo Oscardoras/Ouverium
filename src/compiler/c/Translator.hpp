@@ -11,7 +11,7 @@
 
 namespace CTranslator {
 
-    std::vector<std::shared_ptr<CStructures::Instruction>> eval_system_function(Reference (*function)(FunctionContext&), std::shared_ptr<Expression> arguments, Analyzer::MetaData & meta);
+    std::vector<std::shared_ptr<CStructures::Instruction>> eval_system_function(Interpreter::Reference (*function)(Interpreter::FunctionContext&), std::shared_ptr<Expression> arguments, Analyzer::MetaData & meta);
 
     std::vector<std::shared_ptr<CStructures::Instruction>> get_instructions(std::shared_ptr<Expression> expression, Analyzer::MetaData & meta);
     std::shared_ptr<CStructures::Expression> get_expression(std::shared_ptr<Expression> expression, Analyzer::MetaData & meta);

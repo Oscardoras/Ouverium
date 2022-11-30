@@ -6,12 +6,7 @@
 
 #include "../interpreter/Interpreter.hpp"
 
-#include "../parser/expression/Expression.hpp"
-#include "../parser/expression/FunctionCall.hpp"
-#include "../parser/expression/FunctionDefinition.hpp"
-#include "../parser/expression/Property.hpp"
-#include "../parser/expression/Symbol.hpp"
-#include "../parser/expression/Tuple.hpp"
+#include "../Expressions.hpp"
 
 
 namespace Analyzer {
@@ -32,9 +27,9 @@ namespace Analyzer {
         std::vector<FunctionEnvironment> functions;
     };
 
-    struct CompilerContext: public GlobalContext {
+    struct CompilerContext: public Interpreter::GlobalContext {
 
-        std::vector<Object*> incomplete;
+        std::vector<Interpreter::Object*> incomplete;
 
         CompilerContext();
 
@@ -42,11 +37,11 @@ namespace Analyzer {
 
     };
 
-    using FunctionPointer = std::variant<std::shared_ptr<FunctionDefinition>, Reference (*)(FunctionContext&)>;
+    using FunctionPointer = std::variant<std::shared_ptr<FunctionDefinition>, Interpreter::Reference (*)(Interpreter::FunctionContext&)>;
     struct Type {
         bool pointer;
         std::map<std::string, std::shared_ptr<Type>> properties;
-        Object::ObjectType type;
+        Interpreter::Object::ObjectType type;
     };
     struct MetaData {
         std::map<std::shared_ptr<Expression>, std::shared_ptr<Type>> types;

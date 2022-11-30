@@ -18,8 +18,8 @@ namespace CTranslator {
     std::vector<std::shared_ptr<CStructures::Instruction>> eval_system_function(Reference (*function)(FunctionContext&), std::shared_ptr<Expression> arguments, Analyzer::MetaData & meta) {
         std::vector<std::shared_ptr<CStructures::Instruction>> r;
 
-        switch ((long) function) {
-        case (long) (Reference (*)(FunctionContext & context)) Base::separator:
+        switch (function) {
+        case Base::separator:
             if (arguments->type == Expression::Tuple) {
                 auto tuple = std::static_pointer_cast<Tuple>(arguments);
 
@@ -33,7 +33,7 @@ namespace CTranslator {
             }
             break;
 
-        case (long) (Reference (*)(FunctionContext & context)) Base::if_statement:
+        case Base::if_statement:
             if (arguments->type == Expression::Tuple) {
                 auto tuple = std::static_pointer_cast<Tuple>(arguments);
 
@@ -62,7 +62,7 @@ namespace CTranslator {
             }
             break;
 
-        case (long) (Reference (*)(FunctionContext & context)) Base::while_statement:
+        case Base::while_statement:
             if (arguments->type == Expression::Tuple) {
                 auto tuple = std::static_pointer_cast<Tuple>(arguments);
 
@@ -159,7 +159,9 @@ namespace CTranslator {
                 }
             } else {
                 auto r = std::make_shared<CStructures::FunctionCall>(CStructures::FunctionCall {
-                    .function = std::make_shared<CStructures::VariableCall>(CStructures::VariableCall { .name = "GC_eval_function" })
+                    .function = std::make_shared<CStructures::VariableCall>(CStructures::VariableCall {
+                        .name = "GC_eval_function"
+                    })
                 });
 
                 r->parameters.push_back(get_expression(function_call->function, meta));
