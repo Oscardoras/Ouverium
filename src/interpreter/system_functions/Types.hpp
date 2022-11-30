@@ -4,17 +4,19 @@
 #include "../Interpreter.hpp"
 
 
-namespace Types {
+namespace Interpreter {
 
-    bool check_type(Context & context, Object* object, Object* type);
+    namespace Types {
 
-    std::shared_ptr<Expression> getset_type();
+        bool check_type(Context & context, Object* object, Object* type);
 
-    Reference is_type(FunctionContext & context);
+        Reference is_type(FunctionContext & context);
 
-    Reference set_type(FunctionContext & context);
+        Reference set_type(FunctionContext & context);
 
-    void init(Context & context);
+        void init(Context & context);
+
+    }
 
 }
 

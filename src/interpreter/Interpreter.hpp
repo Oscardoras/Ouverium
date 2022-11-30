@@ -3,22 +3,15 @@
 
 #include "Function.hpp"
 
-#include "../parser/expression/FunctionCall.hpp"
-#include "../parser/expression/FunctionDefinition.hpp"
-#include "../parser/expression/Property.hpp"
-#include "../parser/expression/Symbol.hpp"
-#include "../parser/expression/Tuple.hpp"
-
-
 
 namespace Interpreter {
 
     struct Error {};
     struct FunctionArgumentsError: public Error {};
 
-    Reference call_function(Context & context, std::shared_ptr<Position> position, std::list<Function*> function, Reference const& reference);
+    Reference call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<std::unique_ptr<Function>> const& functions, Reference const& reference);
 
-    Reference call_function(Context & context, std::shared_ptr<Position> position, std::list<Function*> function, std::shared_ptr<Expression> arguments);
+    Reference call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<std::unique_ptr<Function>> const& functions, std::shared_ptr<Expression> arguments);
 
     Reference execute(Context & context, std::shared_ptr<Expression> expression);
 

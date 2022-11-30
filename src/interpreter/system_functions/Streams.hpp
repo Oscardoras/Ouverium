@@ -4,31 +4,32 @@
 #include "../Interpreter.hpp"
 
 
-namespace Streams {
+namespace Interpreter {
 
-    std::shared_ptr<Expression> print();
-    Reference print(FunctionContext & context);
+    namespace Streams {
 
-    std::shared_ptr<Expression> scan();
-    Reference scan(FunctionContext & context);
+        Reference print(FunctionContext & context);
 
-    Reference read(FunctionContext & context);
+        Reference scan(FunctionContext & context);
 
-    Reference has(FunctionContext & context);
+        Reference read(FunctionContext & context);
 
-    void setInputStream(Context & context, Object & object);
+        Reference has(FunctionContext & context);
 
-    Reference write(FunctionContext & context);
+        void setInputStream(Context & context, Object & object);
 
-    Reference flush(FunctionContext & context);
+        Reference write(FunctionContext & context);
 
-    void setOutputStream(Context & context, Object & object);
+        Reference flush(FunctionContext & context);
 
-    std::shared_ptr<Expression> path();
-    Reference input_file(FunctionContext & context);
-    Reference output_file(FunctionContext & context);
+        void setOutputStream(Context & context, Object & object);
 
-    void init(Context & context);
+        Reference input_file(FunctionContext & context);
+        Reference output_file(FunctionContext & context);
+
+        void init(Context & context);
+
+    }
 
 }
 

@@ -59,6 +59,7 @@
         "numbers": "cpp",
         "ranges": "cpp",
         "pthread.h": "c",
-        "variant": "cpp"
+        "variant": "cpp",
+        "climits": "cpp"
     }
 }

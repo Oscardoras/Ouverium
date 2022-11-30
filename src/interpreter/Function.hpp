@@ -7,43 +7,55 @@
 
 #include "Context.hpp"
 
-#include "../parser/expression/FunctionDefinition.hpp"
 
+namespace Interpreter {
 
-struct Function {
+    struct Function {
 
-    enum FunctionType {
-        Custom,
-        System
-    } type;
+        enum FunctionType {
+            Custom,
+            System
+        } type;
 
-    std::map<std::string, Reference> extern_symbols;
+        std::map<std::string, Reference> extern_symbols;
 
-};
+        inline Function() = default;
 
-struct CustomFunction: public Function {
+        inline Function(Function const& function) = default;
 
-    std::shared_ptr<FunctionDefinition> pointer;
+        virtual ~Function() = default;
 
-    inline CustomFunction(std::shared_ptr<FunctionDefinition> pointer) {
-        type = Custom;
-        this->pointer = pointer;
-    }
+    };
 
-};
+    struct CustomFunction: public Function {
 
-struct SystemFunction: public Function {
+        std::shared_ptr<FunctionDefinition> pointer;
 
-    std::shared_ptr<Expression> parameters;
-    Reference (*pointer)(FunctionContext&);
+        inline CustomFunction(CustomFunction const& function) = default;
 
-    inline SystemFunction(std::shared_ptr<Expression> parameters, Reference (*pointer)(FunctionContext&)) {
-        type = System;
-        this->parameters = parameters;
-        this->pointer = pointer;
-    }
+        inline CustomFunction(std::shared_ptr<FunctionDefinition> pointer) {
+            type = Custom;
+            this->pointer = pointer;
+        }
 
-};
+    };
+
+    struct SystemFunction: public Function {
+
+        std::shared_ptr<Expression> parameters;
+        Reference (*pointer)(FunctionContext&);
+
+        inline SystemFunction(SystemFunction const& function) = default;
+
+        inline SystemFunction(std::shared_ptr<Expression> parameters, Reference (*pointer)(FunctionContext&)) {
+            type = System;
+            this->parameters = parameters;
+            this->pointer = pointer;
+        }
+
+    };
+
+}
 
 
 #endif

@@ -4,51 +4,51 @@
 #include "../Interpreter.hpp"
 
 
-namespace Math {
+namespace Interpreter {
 
-    std::shared_ptr<Expression> a();
-    std::shared_ptr<Expression> ab();
-    std::shared_ptr<Expression> a_b();
+    namespace Math {
 
-    Reference logical_not(FunctionContext & context);
+        Reference logical_not(FunctionContext & context);
 
-    Reference logical_and(FunctionContext & context);
+        Reference logical_and(FunctionContext & context);
 
-    Reference logical_or(FunctionContext & context);
+        Reference logical_or(FunctionContext & context);
 
-    Reference addition(FunctionContext & context);
+        Reference addition(FunctionContext & context);
 
-    Reference opposite(FunctionContext & context);
+        Reference opposite(FunctionContext & context);
 
-    Reference substraction(FunctionContext & context);
+        Reference substraction(FunctionContext & context);
 
-    Reference multiplication(FunctionContext & context);
+        Reference multiplication(FunctionContext & context);
 
-    Reference division(FunctionContext & context);
+        Reference division(FunctionContext & context);
 
-    Reference modulo(FunctionContext & context);
+        Reference modulo(FunctionContext & context);
 
-    Reference strictly_inf(FunctionContext & context);
+        Reference strictly_inf(FunctionContext & context);
 
-    Reference strictly_sup(FunctionContext & context);
-    
-    Reference inf_equals(FunctionContext & context);
+        Reference strictly_sup(FunctionContext & context);
 
-    Reference sup_equals(FunctionContext & context);
+        Reference inf_equals(FunctionContext & context);
 
-    Reference increment(FunctionContext & context);
+        Reference sup_equals(FunctionContext & context);
 
-    Reference decrement(FunctionContext & context);
+        Reference increment(FunctionContext & context);
 
-    Reference add(FunctionContext & context);
+        Reference decrement(FunctionContext & context);
 
-    Reference remove(FunctionContext & context);
+        Reference add(FunctionContext & context);
 
-    Reference mutiply(FunctionContext & context);
+        Reference remove(FunctionContext & context);
 
-    Reference divide(FunctionContext & context);
+        Reference mutiply(FunctionContext & context);
 
-    void init(Context & context);
+        Reference divide(FunctionContext & context);
+
+        void init(Context & context);
+
+    }
 
 }
 

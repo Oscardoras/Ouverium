@@ -4,35 +4,39 @@
 #include "ArrayList.hpp"
 
 
-namespace String {
+namespace Interpreter {
 
-    std::shared_ptr<Expression> string();
-    Reference char_constructor(FunctionContext & context);
+    namespace String {
 
-    std::shared_ptr<Expression> char_is();
+        std::shared_ptr<Expression> string_p();
+        Reference char_constructor(FunctionContext & context);
 
-    Reference char_is_digit(FunctionContext & context);
-    Reference char_is_alpha(FunctionContext & context);
-    Reference char_is_alphanum(FunctionContext & context);
+        std::shared_ptr<Expression> char_is_p();
 
-    Reference string(FunctionContext & context);
+        Reference char_is_digit(FunctionContext & context);
+        Reference char_is_alpha(FunctionContext & context);
+        Reference char_is_alphanum(FunctionContext & context);
 
-    std::shared_ptr<Expression> index_of();
-    Reference index_of(FunctionContext & context);
+        Reference string(FunctionContext & context);
 
-    std::shared_ptr<Expression> substring();
-    Reference substring(FunctionContext & context);
+        std::shared_ptr<Expression> index_of_p();
+        Reference index_of(FunctionContext & context);
 
-    std::shared_ptr<Expression> includes();
-    Reference includes(FunctionContext & context);
+        std::shared_ptr<Expression> substring_p();
+        Reference substring(FunctionContext & context);
 
-    std::shared_ptr<Expression> concat();
-    Reference concat(FunctionContext & context);
+        std::shared_ptr<Expression> includes_p();
+        Reference includes(FunctionContext & context);
 
-    std::shared_ptr<Expression> assign_concat();
-    Reference assign_concat(FunctionContext & context);
+        std::shared_ptr<Expression> concat_p();
+        Reference concat(FunctionContext & context);
 
-    void init(Context & context);
+        std::shared_ptr<Expression> assign_concat_p();
+        Reference assign_concat(FunctionContext & context);
+
+        void init(Context & context);
+
+    }
 
 }
 

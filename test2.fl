@@ -1,12 +1,9 @@
 f : () |-> {
-    variable := 1;
-    g : (x |-> {
-        () |-> {
-            print(x, "\n");
-        }
-    })($variable);
     variable := 2;
+    (g : (x) |-> {
+        print(x);
+    })($variable);
     g
 };
 
-(f())();
+(f())(3);

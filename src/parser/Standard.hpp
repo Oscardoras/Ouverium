@@ -3,44 +3,46 @@
 
 #include <list>
 
-#include "expression/Expression.hpp"
-
-#include "Position.hpp"
+#include "../Expressions.hpp"
 
 
-namespace StandardParser {
+namespace Parser {
 
-    struct TextPosition: public Position {
-        unsigned int line;
-        unsigned int column;
-        std::string stack_trace;
+    namespace Standard {
 
-        TextPosition(TextPosition const&) = default;
-        TextPosition(std::string const& path, unsigned int line, unsigned int column);
+        struct TextPosition: public Position {
+            unsigned int line;
+            unsigned int column;
+            std::string stack_trace;
 
-        virtual void store_stack_trace(Context & context) override;
-        virtual void notify_error() override;
-    };
+            TextPosition(TextPosition const&) = default;
+            TextPosition(std::string const& path, unsigned int line, unsigned int column);
 
-    struct Word {
-        std::string word;
-        TextPosition position;
+            virtual void store_stack_trace(Interpreter::Context & context) override;
+            virtual void notify_error() override;
+        };
 
-        Word(std::string const& word, TextPosition const& position);
-    };
+        struct Word {
+            std::string word;
+            TextPosition position;
 
-    std::vector<Word> get_words(std::string const& path, std::string const& code);
+            Word(std::string const& word, TextPosition const& position);
+        };
 
-    struct ParserError {
-        std::string message;
-        TextPosition position;
+        std::vector<Word> get_words(std::string const& path, std::string const& code);
 
-        ParserError(std::string const& message, TextPosition const& position);
-    };
+        struct ParserError {
+            std::string message;
+            TextPosition position;
 
-    struct IncompleteCode {};
+            ParserError(std::string const& message, TextPosition const& position);
+        };
 
-    std::shared_ptr<Expression> get_tree(std::string const& code, std::string const& path, std::vector<std::string> symbols);
+        struct IncompleteCode {};
+
+        std::shared_ptr<Expression> get_tree(std::string const& code, std::string const& path, std::vector<std::string> symbols);
+
+    }
 
 }
 

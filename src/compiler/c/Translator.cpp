@@ -62,6 +62,57 @@ namespace CTranslator {
             }
             break;
 
+        case (long) (Reference (*)(FunctionContext & context)) Base::while_statement:
+            if (arguments->type == Expression::Tuple) {
+                auto tuple = std::static_pointer_cast<Tuple>(arguments);
+
+                if (tuple->objects.size() == 2) {
+                    auto condition = tuple->objects[0];
+                    auto body = tuple->objects[1];
+
+                    r.push_back(std::make_shared<CStructures::While>(CStructures::While {
+                        .condition = get_expression(condition, meta),
+                        .body = get_instructions(body, meta)
+                    }));
+                }
+
+            }
+            break;
+
+        case (long) (Reference (*)(FunctionContext & context)) Base::while_statement:
+            if (arguments->type == Expression::Tuple) {
+                auto tuple = std::static_pointer_cast<Tuple>(arguments);
+
+                if (tuple->objects.size() == 2) {
+                    auto condition = tuple->objects[0];
+                    auto body = tuple->objects[1];
+
+                    r.push_back(std::make_shared<CStructures::While>(CStructures::While {
+                        .condition = get_expression(condition, meta),
+                        .body = get_instructions(body, meta)
+                    }));
+                }
+
+            }
+            break;
+
+        case (long) (Reference (*)(FunctionContext & context)) Base::while_statement:
+            if (arguments->type == Expression::Tuple) {
+                auto tuple = std::static_pointer_cast<Tuple>(arguments);
+
+                if (tuple->objects.size() == 2) {
+                    auto condition = tuple->objects[0];
+                    auto body = tuple->objects[1];
+
+                    r.push_back(std::make_shared<CStructures::While>(CStructures::While {
+                        .condition = get_expression(condition, meta),
+                        .body = get_instructions(body, meta)
+                    }));
+                }
+
+            }
+            break;
+
         default:
             break;
         }

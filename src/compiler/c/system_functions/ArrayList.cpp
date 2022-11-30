@@ -156,12 +156,6 @@ namespace ArrayList {
         return Reference(array, array->type-1);
     }
 
-    std::shared_ptr<Expression> add_element() {
-        auto element = std::make_shared<Symbol>();
-        element->name = "element";
-        return element;
-    }
-
     Reference add_first(FunctionContext & context) {
         auto array = context.get_symbol("this");
         auto array_object = array.to_object(context);

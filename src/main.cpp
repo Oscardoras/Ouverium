@@ -8,7 +8,7 @@
 
 int main(int argc, char ** argv) {
     if (argc == 1) {
-        GlobalContext context;
+        Interpreter::GlobalContext context;
 
         std::string code;
         std::string line;
@@ -20,12 +20,12 @@ int main(int argc, char ** argv) {
                     for (auto const& symbol : context.symbols)
                         symbols.push_back(symbol.first);
 
-                    auto expression = StandardParser::get_tree(code, ".", symbols);
+                    auto expression = Parser::Standard::get_tree(code, ".", symbols);
                     auto r = Interpreter::run(context, expression);
                     if (Interpreter::print(std::cout, r.to_object(context)))
                         std::cout << std::endl;
                     code = "";
-                } catch (StandardParser::IncompleteCode & e) {}
+                } catch (Parser::Standard::IncompleteCode & e) {}
             }
     } else if (argc == 2) {
         std::ifstream src(argv[1]);
@@ -34,20 +34,20 @@ int main(int argc, char ** argv) {
             std::string line;
             while (std::getline(src, line))
                 code += line + '\n';
-            
-            GlobalContext context;
+
+            Interpreter::GlobalContext context;
             try {
                 std::vector<std::string> symbols;
                 for (auto const& symbol : context.symbols)
                     symbols.push_back(symbol.first);
 
-                auto expression = StandardParser::get_tree(code, argv[1], symbols);
+                auto expression = Parser::Standard::get_tree(code, argv[1], symbols);
                 auto r = Interpreter::run(context, expression);
-            } catch (StandardParser::IncompleteCode & e) {
+            } catch (Parser::Standard::IncompleteCode & e) {
                 std::cerr << "incomplete code, you must finish the last expression in file \"" << argv[1] << "\"" << std::endl;
             }
         } else std::cerr << "Error: unable to load the source file " << argv[1] << "." << std::endl;
     } else std::cerr << "Error: please give the name of the source and the name of the destination." << std::endl;
-	
+
 	return 0;
 }

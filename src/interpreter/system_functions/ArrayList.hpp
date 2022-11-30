@@ -4,55 +4,53 @@
 #include "Array.hpp"
 
 
-namespace ArrayList {
+namespace Interpreter {
 
-    std::shared_ptr<Expression> array_list();
-    Reference array_list(FunctionContext & context);
+    namespace ArrayList {
 
-    std::shared_ptr<Expression> get_array_element();
-    Reference get_array_element(FunctionContext & context);
+        Reference array_list(FunctionContext & context);
 
-    std::shared_ptr<Expression> foreach();
-    Reference foreach(FunctionContext & context);
+        Reference get_array_element(FunctionContext & context);
 
-    Reference lenght(FunctionContext & context);
+        Reference foreach(FunctionContext & context);
 
-    Reference is_empty(FunctionContext & context);
+        Reference lenght(FunctionContext & context);
 
-    Reference get_capacity(FunctionContext & context);
+        Reference is_empty(FunctionContext & context);
 
-    std::shared_ptr<Expression> set_capacity();
-    Reference set_capacity(FunctionContext & context);
+        Reference get_capacity(FunctionContext & context);
 
-    Reference get_first(FunctionContext & context);
+        Reference set_capacity(FunctionContext & context);
 
-    Reference get_last(FunctionContext & context);
+        Reference get_first(FunctionContext & context);
 
-    std::shared_ptr<Expression> add_element();
-    Reference add_first(FunctionContext & context);
-    Reference add_last(FunctionContext & context);
+        Reference get_last(FunctionContext & context);
 
-    Reference remove_first(FunctionContext & context);
+        Reference add_first(FunctionContext & context);
 
-    Reference remove_last(FunctionContext & context);
+        Reference add_last(FunctionContext & context);
 
-    std::shared_ptr<Expression> insert();
-    Reference insert(FunctionContext & context);
+        Reference remove_first(FunctionContext & context);
 
-    Reference remove(FunctionContext & context);
+        Reference remove_last(FunctionContext & context);
 
-/*
-    Reference iterator_first(FunctionContext & context);
+        Reference insert(FunctionContext & context);
 
-    Reference iterator_last(FunctionContext & context);
+        Reference remove(FunctionContext & context);
 
-    Reference iterator(FunctionContext & context);
+    /*
+        Reference iterator_first(FunctionContext & context);
 
-    std::shared_ptr<Expression> iterator_index();
-    Reference iterator_index(FunctionContext & context);
-*/
+        Reference iterator_last(FunctionContext & context);
 
-    void init(Context & context);
+        Reference iterator(FunctionContext & context);
+
+        Reference iterator_index(FunctionContext & context);
+    */
+
+        void init(Context & context);
+
+    }
 
 }
 
