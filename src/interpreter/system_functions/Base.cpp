@@ -155,7 +155,7 @@ namespace Interpreter {
             std::string system_position;
             try {
                 path = context.get_symbol("path").to_object(context)->to_string();
-                system_position = context.get_symbol("system_position").to_object(context)->to_string();
+                system_position = context.position->path;
             } catch (std::exception & e) {
                 throw Interpreter::FunctionArgumentsError();
             }
@@ -237,30 +237,19 @@ namespace Interpreter {
             return Reference(context.get_symbol("object").to_object(context));
         }
 
-        void assign1(std::vector<Object*> & cache, Reference const& var, Object* const& object) {
-            if (var.type > 0) {
-                if (var.type == object->type)
-                    for (long i = 0; i < var.type; i++) assign1(cache, var.tuple[i], object->data.a[i+1].o);
-                else throw std::exception();
-            } else cache.push_back(object);
-        }
-
-        void assign2(Context & context, std::vector<Object*>::iterator & it, Reference const& var) {
-            if (var.is_reference()) var.get_reference() = *it++;
-            else if (var.type > 0) {
-                for (long i = 0; i < var.type; i++) assign2(context, it, var.tuple[i]);
-            }
+        void assignation(Reference const& var, Object* const& object) {
+            if (var.is_reference()) var.get_reference() = object;
+            else if (var.type == object->type)
+                for (long i = 0; i < var.type; i++)
+                    assignation(var.tuple[i], object->data.a[i+1].o);
+            else throw Interpreter::FunctionArgumentsError();
         }
 
         Reference assign(FunctionContext & context) {
             auto var = Interpreter::call_function(context, nullptr, context.get_symbol("var").to_object(context)->functions, std::make_shared<Tuple>());
-            auto object = Interpreter::call_function(context, nullptr, context.get_symbol("object").to_object(context)->functions, std::make_shared<Tuple>()).to_object(context);
+            auto object = context.get_symbol("object").to_object(context);
 
-            std::vector<Object*> cache;
-            assign1(cache, var, object);
-            auto it = cache.begin();
-            assign2(context, it, var);
-
+            assignation(var, object);
             return var;
         }
 
@@ -435,10 +424,7 @@ namespace Interpreter {
                     std::make_shared<Symbol>("var"),
                     std::make_shared<Tuple>()
                 ),
-                std::make_shared<FunctionCall>(
-                    std::make_shared<Symbol>("object"),
-                    std::make_shared<Tuple>()
-                )
+                std::make_shared<Symbol>("object")
             }), assign));
             context.get_symbol(":").to_object(context)->functions.push_front(std::make_unique<SystemFunction>(std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
                 std::make_shared<Symbol>("var"),

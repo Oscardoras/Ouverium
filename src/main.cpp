@@ -25,7 +25,7 @@ int main(int argc, char ** argv) {
                     if (Interpreter::print(std::cout, r.to_object(context)))
                         std::cout << std::endl;
                     code = "";
-                } catch (Parser::Standard::IncompleteCode & e) {}
+                } catch (Parser::Standard::IncompleteCode const& e) {}
             }
     } else if (argc == 2) {
         std::ifstream src(argv[1]);
