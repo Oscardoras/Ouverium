@@ -15,179 +15,164 @@
 
 namespace CTranslator {
 
-    std::vector<std::shared_ptr<CStructures::Instruction>> eval_system_function(Reference (*function)(FunctionContext&), std::shared_ptr<Expression> arguments, Analyzer::MetaData & meta) {
-        std::vector<std::shared_ptr<CStructures::Instruction>> r;
-
-        switch (function) {
-        case Base::separator:
-            if (arguments->type == Expression::Tuple) {
-                auto tuple = std::static_pointer_cast<Tuple>(arguments);
-
+    std::shared_ptr<Structures::Expression> eval_system_function(Interpreter::Reference (*function)(Interpreter::FunctionContext&), std::shared_ptr<Expression> arguments, Analyzer::MetaData & meta, Instructions & instructions) {
+        switch ((unsigned long) function) {
+        case (unsigned long) Interpreter::Base::separator:
+            if (auto tuple = std::dynamic_pointer_cast<Tuple>(arguments)) {
                 for (auto const& o : tuple->objects) {
-                    auto v = get_instructions(o, meta);
-                    r.insert(r.end(), v.begin(), v.end());
+                    get_instructions(o, meta, instructions);
                 }
             } else {
-                auto v = get_instructions(arguments, meta);
-                r.insert(r.end(), v.begin(), v.end());
+                get_instructions(arguments, meta, instructions);
             }
             break;
 
-        case Base::if_statement:
-            if (arguments->type == Expression::Tuple) {
-                auto tuple = std::static_pointer_cast<Tuple>(arguments);
-
+        case (unsigned long) Interpreter::Base::if_statement:
+            if (auto tuple = std::dynamic_pointer_cast<Tuple>(arguments)) {
                 if (tuple->objects.size() >= 2) {
                     int i = 0;
-                    auto structure = std::make_shared<CStructures::If>();
-                    r.push_back(structure);
-                    structure->condition = get_expression(tuple->objects[i++], meta);
-                    structure->body = get_instructions(tuple->objects[i++], meta);
+                    auto structure = std::make_shared<Structures::If>();
+                    structure->condition = get_expression(tuple->objects[i++], meta, instructions);
+                    get_instructions(tuple->objects[i++], meta, structure->body);
 
                     while (i+2 < tuple->objects.size()) {
                         i++;
-                        auto tmp = std::make_shared<CStructures::If>();
-                        tmp->condition = get_expression(tuple->objects[i++], meta);
-                        tmp->body = get_instructions(tuple->objects[i++], meta);
+                        auto tmp = std::make_shared<Structures::If>();
+                        tmp->condition = get_expression(tuple->objects[i++], meta, structure->alternative);
+                        get_instructions(tuple->objects[i++], meta, tmp->body);
                         structure->alternative.push_back(tmp);
                         structure = tmp;
                     };
 
                     if (i+1 < tuple->objects.size()) {
                         i++;
-                        structure->alternative = get_instructions(tuple->objects[i++], meta);
+                        get_instructions(tuple->objects[i++], meta, structure->alternative);
                     }
-                }
 
+                    instructions.push_back(structure);
+                }
             }
             break;
 
-        case Base::while_statement:
-            if (arguments->type == Expression::Tuple) {
-                auto tuple = std::static_pointer_cast<Tuple>(arguments);
-
+        case (unsigned long) Interpreter::Base::while_statement:
+            if (auto tuple = std::dynamic_pointer_cast<Tuple>(arguments)) {
                 if (tuple->objects.size() == 2) {
                     auto condition = tuple->objects[0];
                     auto body = tuple->objects[1];
 
-                    r.push_back(std::make_shared<CStructures::While>(CStructures::While {
-                        .condition = get_expression(condition, meta),
-                        .body = get_instructions(body, meta)
-                    }));
+                    auto structure = std::make_shared<Structures::While>(Structures::While {
+                        .condition = get_expression(condition, meta, instructions),
+                    });
+                    get_instructions(body, meta, structure->body);
+                    instructions.push_back(structure);
                 }
-
             }
             break;
 
-        case (long) (Reference (*)(FunctionContext & context)) Base::while_statement:
-            if (arguments->type == Expression::Tuple) {
-                auto tuple = std::static_pointer_cast<Tuple>(arguments);
+        case (unsigned long) Interpreter::Base::copy_pointer:
 
-                if (tuple->objects.size() == 2) {
-                    auto condition = tuple->objects[0];
-                    auto body = tuple->objects[1];
-
-                    r.push_back(std::make_shared<CStructures::While>(CStructures::While {
-                        .condition = get_expression(condition, meta),
-                        .body = get_instructions(body, meta)
-                    }));
-                }
-
-            }
             break;
 
-        case (long) (Reference (*)(FunctionContext & context)) Base::while_statement:
-            if (arguments->type == Expression::Tuple) {
-                auto tuple = std::static_pointer_cast<Tuple>(arguments);
-
+        case (unsigned long) Interpreter::Base::assign:
+            if (auto tuple = std::dynamic_pointer_cast<Tuple>(arguments)) {
                 if (tuple->objects.size() == 2) {
-                    auto condition = tuple->objects[0];
-                    auto body = tuple->objects[1];
+                    auto var = get_expression(tuple->objects[0], meta, instructions);
+                    auto object = get_expression(tuple->objects[1], meta, instructions);
 
-                    r.push_back(std::make_shared<CStructures::While>(CStructures::While {
-                        .condition = get_expression(condition, meta),
-                        .body = get_instructions(body, meta)
-                    }));
+                    if (auto r_value = std::dynamic_pointer_cast<Structures::RValue>(var)) {
+                        return std::make_shared<Structures::Affectation>(Structures::Affectation {
+                            .r_value = r_value,
+                            .value = object
+                        });
+                    } else if (auto var_tuple = std::dynamic_pointer_cast<Tuple>(tuple->objects[0])) {
+                        if (auto object_tuple = std::dynamic_pointer_cast<Tuple>(tuple->objects[1])) {
+                            if (var_tuple->objects.size() == object_tuple->objects.size()) {
+                                for (unsigned long i = 0; i < var_tuple->objects.size(); i++) {
+                                    instructions.push_back(std::make_shared<Structures::Affectation>(Structures::Affectation {
+                                        .r_value = std::make_shared<Structures::VariableCall>(Structures::VariableCall {
+                                            .name = "tmp_" +
+                                        }),
+                                        .value = get_expression(object_tuple->objects[i], meta, instructions)
+                                    }));
+                                }
+                                for (unsigned long i = 0; i < var_tuple->objects.size(); i++) {
+                                    instructions.push_back(std::make_shared<Structures::Affectation>(Structures::Affectation {
+                                        .r_value = get_expression(var_tuple->objects[i], meta, instructions),
+                                        .value = std::make_shared<Structures::VariableCall>(Structures::VariableCall {
+                                            .name = "tmp_" +
+                                        })
+                                    }));
+                                }
+                            }
+                        }
+                    }
+
+                    return var;
                 }
-
             }
             break;
 
         default:
             break;
         }
-
-        return r;
     }
 
-    std::vector<std::shared_ptr<CStructures::Instruction>> get_instructions(std::shared_ptr<Expression> expression, Analyzer::MetaData & meta) {
-        if (expression->type == Expression::FunctionCall) {
-            auto function_call = std::static_pointer_cast<FunctionCall>(expression);
-
-            auto & functions = meta.links[function_call];
-            if (functions.size() == 1) {
-
-            }
-        }
+    void get_instructions(std::shared_ptr<Expression> expression, Analyzer::MetaData & meta, Instructions & instructions) {
+        if (auto exp = std::dynamic_pointer_cast<Structures::Instruction>(get_expression(expression, meta, instructions)))
+            instructions.push_back(exp);
     }
 
-    std::shared_ptr<CStructures::Expression> get_expression(std::shared_ptr<Expression> expression, Analyzer::MetaData & meta) {
-        if (expression->type == Expression::FunctionCall) {
-            auto function_call = std::static_pointer_cast<FunctionCall>(expression);
-
+    std::shared_ptr<Structures::Expression> get_expression(std::shared_ptr<Expression> expression, Analyzer::MetaData & meta, Instructions & instructions) {
+        if (auto function_call = std::dynamic_pointer_cast<FunctionCall>(expression)) {
             auto & link = meta.links[function_call];
             if (link.size() == 1) {
                 try {
                     auto f = std::get<std::shared_ptr<FunctionDefinition>>(link[0]);
 
-                    auto r = std::make_shared<CStructures::FunctionCall>(CStructures::FunctionCall {
-                        .function = get_expression(function_call->function, meta)
+                    auto r = std::make_shared<Structures::FunctionCall>(Structures::FunctionCall {
+                        .function = get_expression(function_call->function, meta, instructions)
                     });
 
-                    if (f->parameters->type == Expression::Tuple) {
-                        if (function_call->object->type == Expression::Tuple) {
-                            for (auto const& o : std::static_pointer_cast<Tuple>(function_call->object)->objects)
-                                r->parameters.push_back(get_expression(o, meta));
+                    if (std::dynamic_pointer_cast<Tuple>(f->parameters)) {
+                        if (auto args = std::dynamic_pointer_cast<Tuple>(function_call->arguments)) {
+                            for (auto const& o : args->objects)
+                                r->parameters.push_back(get_expression(o, meta, instructions));
                         }
                     } else {
-                        r->parameters.push_back(get_expression(function_call->object, meta));
+                        r->parameters.push_back(get_expression(function_call->arguments, meta, instructions));
                     }
 
                     return r;
                 } catch (std::bad_variant_access const& e) {
-
+                    return eval_system_function(std::get<Interpreter::Reference (*)(Interpreter::FunctionContext&)>(link[0]), function_call->arguments, meta, instructions);
                 }
             } else {
-                auto r = std::make_shared<CStructures::FunctionCall>(CStructures::FunctionCall {
-                    .function = std::make_shared<CStructures::VariableCall>(CStructures::VariableCall {
+                auto r = std::make_shared<Structures::FunctionCall>(Structures::FunctionCall {
+                    .function = std::make_shared<Structures::VariableCall>(Structures::VariableCall {
                         .name = "GC_eval_function"
                     })
                 });
 
-                r->parameters.push_back(get_expression(function_call->function, meta));
-                r->parameters.push_back(get_expression(function_call->object, meta));
+                r->parameters.push_back(get_expression(function_call->function, meta, instructions));
+                r->parameters.push_back(get_expression(function_call->arguments, meta, instructions));
 
                 return r;
             }
-        } else if (expression->type == Expression::Property) {
-            auto property = std::static_pointer_cast<Property>(expression);
-
-            auto o = get_expression(property->object, meta);
-            return std::make_shared<CStructures::Property>(CStructures::Property {
+        } else if (auto property = std::dynamic_pointer_cast<Property>(expression)) {
+            auto o = get_expression(property->object, meta, instructions);
+            return std::make_shared<Structures::Property>(Structures::Property {
                 .object = o,
                 .name = property->name,
                 .pointer = meta.types[property]->pointer
             });
-        } else if (expression->type == Expression::Symbol) {
-            auto symbol = std::static_pointer_cast<Symbol>(expression);
-
-            return std::make_shared<CStructures::VariableCall>(CStructures::VariableCall {.name = symbol->name});
-        } else if (expression->type == Expression::Tuple) {
-            auto tuple = std::static_pointer_cast<Tuple>(expression);
-
-            auto list = std::make_shared<CStructures::List>(CStructures::List {});
+        } else if (auto symbol = std::dynamic_pointer_cast<Symbol>(expression)) {
+            return std::make_shared<Structures::VariableCall>(Structures::VariableCall {
+                .name = symbol->name
+            });
+        } else if (auto tuple = std::dynamic_pointer_cast<Tuple>(expression)) {
+            auto list = std::make_shared<Structures::List>(Structures::List {});
             for (auto const& o : tuple->objects)
-                list->objects.push_back(get_expression(o, meta));
+                list->objects.push_back(get_expression(o, meta, instructions));
         }
     }
 

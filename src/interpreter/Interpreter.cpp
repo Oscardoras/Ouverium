@@ -53,8 +53,7 @@ namespace Interpreter {
         } else if (auto p_tuple = std::dynamic_pointer_cast<Tuple>(parameters)) {
             if (auto a_tuple = std::dynamic_pointer_cast<Tuple>(arguments)) {
                 if (p_tuple->objects.size() == a_tuple->objects.size()) {
-                    size_t size = p_tuple->objects.size();
-                    for (size_t i = 0; i < size; i++)
+                    for (size_t i = 0; i < p_tuple->objects.size(); i++)
                         set_references(context, function_context, computed, p_tuple->objects[i], a_tuple->objects[i]);
                 } else throw Interpreter::FunctionArgumentsError();
             } else {
@@ -63,12 +62,10 @@ namespace Interpreter {
                 set_references(function_context, parameters, reference);
             }
         } else if (auto p_function = std::dynamic_pointer_cast<FunctionCall>(parameters)) {
-            if (std::dynamic_pointer_cast<Symbol>(p_function->function)) {
+            if (auto symbol = std::dynamic_pointer_cast<Symbol>(p_function->function)) {
                 auto it = computed.find(arguments);
                 if (it != computed.end())
                     throw Interpreter::FunctionArgumentsError();
-
-                auto symbol = std::static_pointer_cast<Symbol>(p_function->function);
 
                 auto function_definition = std::make_shared<FunctionDefinition>();
                 function_definition->parameters = p_function->arguments;
@@ -126,8 +123,6 @@ namespace Interpreter {
         for (auto const& function : functions) {
             try {
                 FunctionContext function_context(context, position);
-                if (position != nullptr)
-                    function_context.add_symbol("system_position", context.new_object(position->path));
                 for (auto & symbol : function->extern_symbols)
                     function_context.add_symbol(symbol.first, symbol.second);
 
@@ -236,7 +231,7 @@ namespace Interpreter {
         try {
             return Interpreter::execute(context, expression);
         } catch (Base::Exception & ex) {
-            ex.position->notify_error();
+            ex.position->notify_error("An exception occured");
             return Reference(context.new_object());
         } catch (Error & e) {
             return Reference(context.new_object());
