@@ -33,6 +33,21 @@ typedef struct GC_Array {
 } GC_Array;
 
 void GC_Array_iterator(void*);
+void GC_Array_set_capacity(GC_Array* array, unsigned long capacity);
+void GC_Array_add_element(GC_Array* array, void* element);
+
+
+typedef union GC_Reference {
+    void* ptr;
+    struct {
+        void* object;
+        void* property;
+    } property;
+    struct {
+        void* object;
+        unsigned long i;
+    } array;
+} GC_Reference;
 
 
 #endif

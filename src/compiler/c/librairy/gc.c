@@ -73,3 +73,8 @@ void GC_Array_iterator(void* element) {
         GC_iterate(array->tab[i]);
     }
 }
+
+void GC_Array_set_capacity(GC_Array* array, unsigned long capacity) {
+    array->tab = realloc(array->tab, capacity);
+    array->capacity = capacity;
+}
