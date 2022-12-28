@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e" pages="4">
     <diagram id="5_BCksHGUc6veGD5Rrwg" name="Presentation">
-        <mxGraphModel dx="1817" dy="750" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="1413" dy="252" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="-pB6dK3asgWXY20V-I0a-0"/>
                 <mxCell id="-pB6dK3asgWXY20V-I0a-1" parent="-pB6dK3asgWXY20V-I0a-0"/>
@@ -11,7 +11,7 @@
         </mxGraphModel>
     </diagram>
     <diagram id="95ChfJcYz4LJRr9AhdbQ" name="Formal Language">
-        <mxGraphModel dx="1049" dy="497" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="586" dy="252" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="v-T4cHczStaTHuqniMII-0"/>
                 <mxCell id="v-T4cHczStaTHuqniMII-1" parent="v-T4cHczStaTHuqniMII-0"/>
@@ -118,7 +118,7 @@
         </mxGraphModel>
     </diagram>
     <diagram id="7qtP2vkIdBDaocniMC-Y" name="Librairy">
-        <mxGraphModel dx="1876" dy="1666" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="1413" dy="1421" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="p-0mZmFyRT7mjJ0cYZxc-0"/>
                 <mxCell id="p-0mZmFyRT7mjJ0cYZxc-1" parent="p-0mZmFyRT7mjJ0cYZxc-0"/>
@@ -373,18 +373,18 @@
         </mxGraphModel>
     </diagram>
     <diagram name="Request / Response" id="FlWuthka48MUiZwYv4-S">
-        <mxGraphModel dx="1876" dy="750" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="1413" dy="252" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="FoDYW3rtUhIle951Fva--0"/>
                 <mxCell id="FoDYW3rtUhIle951Fva--1" parent="FoDYW3rtUhIle951Fva--0"/>
-                <mxCell id="FoDYW3rtUhIle951Fva--2" value="&lt;div style=&quot;text-align: justify&quot;&gt;&lt;b style=&quot;font-size: 24px&quot;&gt;Requête &amp;amp; Response&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify&quot;&gt;Le client commence par appeller la fonction &lt;b&gt;useProtocol&lt;/b&gt; à laquelle il passe la liste des protocoles qu'il veut utiliser par ordre de priorité. Cette fonction renvoie un objet qui contient deux champs : &lt;b&gt;protocol&lt;/b&gt; pour le protocole finallement retenu (undéfini si aucun protocole n'est retenu) et &lt;b&gt;data&lt;/b&gt;&amp;nbsp;qui permet l'échange en tant que tel et dont le type est simplement défini par la définition du protocol. Le serveur répond en définissant la valeur de &lt;b&gt;protocol&lt;/b&gt;.&lt;/div&gt;" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;fontColor=#000000;" parent="FoDYW3rtUhIle951Fva--1" vertex="1">
+                <mxCell id="FoDYW3rtUhIle951Fva--2" value="&lt;div style=&quot;text-align: justify&quot;&gt;&lt;b style=&quot;font-size: 24px&quot;&gt;Requête &amp;amp; Response&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;text-align: justify&quot;&gt;Le client commence par appeller la fonction &lt;b&gt;use_protocol&lt;/b&gt; à laquelle il passe la liste des protocoles qu'il veut utiliser par ordre de priorité. Cette fonction renvoie un objet qui contient deux champs : &lt;b&gt;protocol&lt;/b&gt; pour le protocole finallement retenu (undéfini si aucun protocole n'est retenu) et &lt;b&gt;data&lt;/b&gt;&amp;nbsp;qui permet l'échange en tant que tel et dont le type est simplement défini par la définition du protocol. Le serveur répond en définissant la valeur de &lt;b&gt;protocol&lt;/b&gt;.&lt;/div&gt;" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;fillColor=#fff2cc;strokeColor=#d6b656;align=left;verticalAlign=top;fontColor=#000000;" parent="FoDYW3rtUhIle951Fva--1" vertex="1">
                     <mxGeometry x="-760" y="40" width="570" height="210" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>
     </diagram>
     <diagram id="6xVNYjhvSVKtVNiQVoSr" name="Compilation">
-        <mxGraphModel dx="1817" dy="750" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+        <mxGraphModel dx="1413" dy="252" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
             <root>
                 <mxCell id="Kdm36r-lZKiSKA6P0850-0"/>
                 <mxCell id="Kdm36r-lZKiSKA6P0850-1" parent="Kdm36r-lZKiSKA6P0850-0"/>
