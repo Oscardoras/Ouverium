@@ -18,6 +18,12 @@ namespace Analyzer {
         inline M(T const& t) {
             push_back(t);
         }
+        template<typename U> inline M(M<U> const& m) {
+            M<T> r;
+            for (auto const& e : m)
+                r.push_back(e);
+            return r;
+        }
     };
 
     class Object;
@@ -26,7 +32,7 @@ namespace Analyzer {
         using Variant::Variant;
         bool defined = true;
     };
-    
+
     struct Function;
     struct Object {
         std::shared_ptr<Expression> creation;
@@ -47,6 +53,9 @@ namespace Analyzer {
         Data to_data(Context & context) const;
         Data& to_reference(Context & context) const;
     };
+
+    M<Data> to_data(M<Reference> const& m, Context & context);
+    M<std::reference_wrapper<Data>> to_reference(M<Reference> const& m, Context & context);
 
     class GlobalContext;
     class Context {
@@ -96,6 +105,7 @@ namespace Analyzer {
 
     struct FunctionArgumentsError {};
 
+    M<Reference> call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<std::shared_ptr<Function>> const& functions, std::shared_ptr<Expression> arguments);
     M<Reference> execute(Context & context, std::shared_ptr<Expression> expression);
 
 

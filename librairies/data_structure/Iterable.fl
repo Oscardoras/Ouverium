@@ -5,6 +5,7 @@ Iterable : this |-> {
     this :~ Iterable;
 
     this->foreach : function |-> {};
+    this->filter : function |-> {};
 
     this->iterator : () |-> {};
 

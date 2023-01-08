@@ -17,6 +17,16 @@ ArrayList : this |-> {
         ()
     };
 
+    this->filter : function |-> {
+        list := ArrayList();
+        this->foreach(object |-> {
+            if (function(object)) {
+                list->add_last(object)
+            }
+        });
+        list
+    };
+
     this->lenght : () |-> {
         Array->lenght(this)
     };
@@ -117,7 +127,7 @@ ArrayList->Iterator : (this, list, index) |-> {
     };
 
     this->previous : () \ (this->has_previous()) |-> {
-        --this->_index; 
+        --this->_index;
         this->iterable[this->_index]
     };
 

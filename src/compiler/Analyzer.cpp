@@ -12,11 +12,7 @@ namespace Analyzer {
         if (field.empty())
             field.push_back(context.new_object());
 
-        M<std::reference_wrapper<Data>> m;
-        for (auto & data : field)
-            m.push_back(data);
-        
-        return m;
+        return M<std::reference_wrapper<Data>>(field);
     }
 
     Data Reference::to_data(Context & context) const {
@@ -26,12 +22,8 @@ namespace Analyzer {
             return reference->get();
         else if (auto tuple = std::get_if<std::vector<M<Reference>>>(this)) {
             std::vector<M<Data>> array;
-            for (auto o : *tuple) {
-                M<Data> m;
-                for (auto ref : o)
-                    m.push_back(ref.to_data(context));
-                array.push_back(m);
-            }
+            for (auto o : *tuple)
+                array.push_back(Analyzer::to_data(o, context));
             return Data(context.new_object(array));
         } else return Data(nullptr);
     }
@@ -76,11 +68,24 @@ namespace Analyzer {
 
     M<std::reference_wrapper<Data>> Context::operator[](std::string const& symbol) {
         auto it = symbols.find(symbol);
-        if (it == symbols.end()) {
+        if (it == symbols.end())
             symbols.emplace(symbol, new_reference(Data(new_object())));
-        }
 
         return symbols.at(symbol);
+    }
+
+    M<Data> to_data(M<Reference> m, Context & context) {
+        M<Data> r;
+        for (auto ref : m)
+            m.push_back(ref.to_data(context));
+        return r;
+    }
+
+    M<std::reference_wrapper<Data>> to_reference(M<Reference> m, Context & context) {
+        M<Data> r;
+        for (auto ref : m)
+            m.push_back(ref.to_reference(context));
+        return r;
     }
 
     bool Context::has_symbol(std::string const& symbol) {
@@ -97,10 +102,7 @@ namespace Analyzer {
 
     void set_references(Context & function_context, std::shared_ptr<Expression> parameters, M<Reference> const& reference) {
         if (auto symbol = std::dynamic_pointer_cast<Symbol>(parameters)) {
-            M<std::reference_wrapper<Data>> m;
-            for (auto ref : reference)
-                m.push_back(ref.to_reference(function_context));
-            function_context[symbol->name] = m;
+            function_context[symbol->name] = to_reference(reference, function_context);
         } else if (auto tuple = std::dynamic_pointer_cast<Tuple>(parameters)) {
             bool success = false;
             for (auto ref : reference) {
@@ -114,10 +116,7 @@ namespace Analyzer {
                     if (auto object = std::get_if<Object*>(&object_ptr)) {
                         if ((*object)->array.size() == tuple->objects.size()) {
                             for (size_t i = 0; i < tuple->objects.size(); i++) {
-                                M<Reference> m;
-                                for (auto data : (*object)->array[i])
-                                    m.push_back(data);
-                                set_references(function_context, tuple->objects[i], m);
+                                set_references(function_context, tuple->objects[i], (*object)->array[i]);
                             }
                         } else continue;
                     } else continue;
@@ -133,10 +132,7 @@ namespace Analyzer {
         if (auto symbol = std::dynamic_pointer_cast<Symbol>(parameters)) {
             auto it = computed.find(arguments);
             auto reference = it != computed.end() ? it->second : (computed[arguments] = execute(context, arguments));
-            M<std::reference_wrapper<Data>> m;
-            for (auto ref : reference)
-                m.push_back(ref.to_reference(context));
-            function_context[symbol->name] = m;
+            function_context[symbol->name] = to_reference(reference, context);
         } else if (auto p_tuple = std::dynamic_pointer_cast<Tuple>(parameters)) {
             if (auto a_tuple = std::dynamic_pointer_cast<Tuple>(arguments)) {
                 if (p_tuple->objects.size() == a_tuple->objects.size()) {
@@ -165,8 +161,45 @@ namespace Analyzer {
         } else throw FunctionArgumentsError();
     }
 
-    M<Reference> call_reference(Context function_context, std::map<std::string, Analyzer::M<std::reference_wrapper<Analyzer::Data>>>::iterator it) {
+    using It =std::map<std::string, M<std::reference_wrapper<Data>>>::iterator;
 
+    void call_reference(M<Reference> & result, std::shared_ptr<Analyzer::Function> function, Context function_context, It const it, It const end) {
+        if (it != end) {
+            bool success = false;
+            for (auto const& m : it->second) {
+                function_context[it->first] = m;
+                It copy = it;
+                try {
+                    call_reference(result, function, function_context, copy++, end);
+                    success = true;
+                } catch (FunctionArgumentsError & e) {}
+            }
+            if (!success)
+                throw FunctionArgumentsError();
+        } else {
+            M<Reference> r;
+
+            if (auto custom = std::get_if<std::shared_ptr<FunctionDefinition>>(&function->ptr)) {
+                bool filter = false;
+                if ((*custom)->filter != nullptr) {
+                    auto f = execute(function_context, (*custom)->filter);
+                    for (auto reference : f)
+                        if (auto c = std::get_if<bool>(&reference.to_data(function_context))) {
+                            if (*c) filter = true;
+                        } else {
+                            if ((*custom)->filter->position != nullptr)
+                                (*custom)->filter->position->notify_error("The expression must be a boolean");
+                        }
+                } else filter = true;
+
+                if (filter)
+                    r = execute(function_context, (*custom)->body);
+                else throw FunctionArgumentsError();
+            } else if (auto system = std::get_if<SystemFunction>(&function->ptr))
+                r = (*system).pointer(function_context);
+
+            result.insert(result.end(), r.begin(), r.end());
+        }
     }
 
     M<Reference> call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<std::shared_ptr<Function>> const& functions, std::shared_ptr<Expression> arguments) {
@@ -178,30 +211,14 @@ namespace Analyzer {
                 for (auto & symbol : function->extern_symbols)
                     function_context[symbol.first] = symbol.second;
 
-                if (auto custom = std::get_if<std::shared_ptr<FunctionDefinition>>(&function->ptr)) {
+                if (auto custom = std::get_if<std::shared_ptr<FunctionDefinition>>(&function->ptr))
                     set_references(context, function_context, computed, (*custom)->parameters, arguments);
-
-                    bool filter = false;
-                    if ((*custom)->filter != nullptr) {
-                        auto f = execute(function_context, (*custom)->filter);
-                        for (auto reference : f)
-                            if (auto c = std::get_if<bool>(&reference.to_data(context))) {
-                                if (*c) filter = true;
-                            } else {
-                                if ((*custom)->filter->position != nullptr)
-                                    (*custom)->filter->position->notify_error("The expression must be a boolean");
-                            }
-                    } else filter = true;
-
-                    if (filter)
-                        return execute(function_context, (*custom)->body);
-                    else throw FunctionArgumentsError();
-                } else if (auto system = std::get_if<SystemFunction>(&function->ptr)) {
+                else if (auto system = std::get_if<SystemFunction>(&function->ptr))
                     set_references(context, function_context, computed, (*system).parameters, arguments);
 
-                    return (*system).pointer(function_context);
-                }
-
+                M<Reference> result;
+                call_reference(result, function, function_context, function_context.begin(), function_context.end());
+                return result;
             } catch (FunctionArgumentsError & e) {}
         }
 
@@ -216,7 +233,7 @@ namespace Analyzer {
             auto f = execute(context, function_call->function);
             if (f.empty())
                 f.push_back(Data(context.new_object()));
-            
+
             for (auto reference : f) {
                 auto data = reference.to_data(context);
                 std::list<std::shared_ptr<Function>> functions;
@@ -245,10 +262,10 @@ namespace Analyzer {
             auto r = execute(context, property->object);
             for (auto reference : r) {
                 auto data = reference.to_data(context);
-                if (auto object = std::get_if<Object*>(&data))
-                    for (auto ref : (*object)->get_property(context, property->name))
-                        m.push_back(ref);
-                else
+                if (auto object = std::get_if<Object*>(&data)) {
+                    auto field = (*object)->get_property(context, property->name);
+                    m.insert(m.end(), field.begin(), field.end());
+                } else
                     m.push_back(Data(context.new_object()));
             }
 
@@ -290,10 +307,7 @@ namespace Analyzer {
                 try {
                     return M<Reference>(Data(std::stod(symbol->name)));
                 } catch (std::invalid_argument const& ex2) {
-                    M<Reference> m;
-                    for (auto reference : context[symbol->name])
-                        m.push_back(reference);
-                    return m;
+                    return context[symbol->name];
                 }
             }
         } else if (auto tuple = std::dynamic_pointer_cast<Tuple>(expression)) {

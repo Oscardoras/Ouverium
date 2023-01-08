@@ -28,6 +28,16 @@ LinkedList : this |-> {
         ()
     };
 
+    this->filter : function |-> {
+        list := LinkedList();
+        this->foreach(object |-> {
+            if (function(object)) {
+                list->add_last(object)
+            }
+        });
+        list
+    };
+
     this->lenght : () |-> {
         this->_lenght
     };
@@ -103,7 +113,7 @@ LinkedList : this |-> {
             cell := cell->next;
             ++i
         };
-        
+
         tmp->object := element;
         tmp->previous := cell->previous;
         tmp->next := cell;
@@ -198,7 +208,7 @@ LinkedList->Iterator : (this, list, cell) |-> {
         } else {
             this->iterable->last := cell->previous
         };
-        
+
         this->_cell->object
     };
 

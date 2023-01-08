@@ -15,7 +15,7 @@ List : this |-> {
 
     this->add_first : () |-> {};
     this->add_last : () |-> {};
-    
+
     this->remove_first : () \ (!this->is_empty()) |-> {};
     this->remove_last : () \ (!this->is_empty()) |-> {};
 
