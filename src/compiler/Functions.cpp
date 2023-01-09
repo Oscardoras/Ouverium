@@ -87,6 +87,24 @@ namespace Analyzer {
             return m;
         }
 
+        void assignation(Reference const& var, Data const& data) {
+            if (auto ref = std::get_if<std::reference_wrapper<Data>>(&var))
+                ref->get() = data;
+            else if (auto tuple = std::get_if<std::vector<M<Reference>>>(&var))
+                if (auto object = std::get_if<Object*>(&data))
+                    for (long i = 0; i < tuple->size(); i++)
+                        assignation((*tuple)[i], data.a[i+1].o);
+            else throw Interpreter::FunctionArgumentsError();
+        }
+
+        Reference assign(FunctionContext & context) {
+            auto var = Interpreter::call_function(context, nullptr, context.get_symbol("var").to_object(context)->functions, std::make_shared<Tuple>());
+            auto object = context.get_symbol("object").to_object(context);
+
+            assignation(var, object);
+            return var;
+        }
+
     }
 
 }
