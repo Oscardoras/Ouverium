@@ -94,7 +94,7 @@ namespace Analyzer {
 
     struct SystemFunction {
         std::shared_ptr<Expression> parameters;
-        M<Reference> (*pointer)(Context&);
+        M<Reference> (*pointer)(Context&, bool);
     };
     using FunctionPointer = std::variant<std::shared_ptr<FunctionDefinition>, SystemFunction>;
     struct Function {
@@ -105,8 +105,8 @@ namespace Analyzer {
 
     struct FunctionArgumentsError {};
 
-    M<Reference> call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<std::shared_ptr<Function>> const& functions, std::shared_ptr<Expression> arguments);
-    M<Reference> execute(Context & context, std::shared_ptr<Expression> expression);
+    M<Reference> call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, std::list<std::shared_ptr<Function>> const& functions, std::shared_ptr<Expression> arguments);
+    M<Reference> execute(Context & context, bool potential, std::shared_ptr<Expression> expression);
 
 
     struct Symbol {
