@@ -10,30 +10,57 @@
 
 namespace Analyzer {
 
+    class Function;
+    class Object;
+    class Data;
+    class Reference;
+    class Context;
+    class GlobalContext;
+
     template<typename T>
     class M: public std::list<T> {
-        public:
+    public:
         inline M() = default;
-        inline M(std::list<T> const& l): std::list<T>(l);
         inline M(T const& t) {
-            push_back(t);
+            this->push_back(t);
         }
         template<typename U> inline M(M<U> const& m) {
-            M<T> r;
-            for (auto const& e : m)
-                r.push_back(e);
-            return r;
+            for (U const& e : m)
+                this->push_back(T(e));
+        }
+
+        template<typename U> M<U> to(U (T::*to_method)(Context &) const, Context & context) const {
+            M<U> m;
+            for (T const& e : *this)
+                m.push_back((e.*to_method)(context));
+            return m;
+        }
+        template<typename U> M<U> to(M<U> (T::*to_method)(Context &) const, Context & context) const {
+            M<U> m;
+            for (T const& e : *this) {
+                M<U> r = (e.*to_method)(context);
+                m.insert(m.end(), r.begin(), r.end());
+            }
+            return m;
         }
     };
 
-    class Object;
-    using Variant = std::variant<Object*, bool, char, long, double>;
-    struct Data: public Variant {
-        using Variant::Variant;
+    struct Data: public std::variant<Object*, bool, char, long, double> {
+        using std::variant<Object*, bool, char, long, double>::variant;
         bool defined = true;
     };
 
-    struct Function;
+    using SymbolReference = std::reference_wrapper<M<Data>>;
+    class Reference: public std::variant<M<Data>, SymbolReference, std::vector<M<Reference>>> {
+        public:
+        inline Reference(M<Data> data): std::variant<M<Data>, SymbolReference, std::vector<M<Reference>>>(data) {}
+        inline Reference(SymbolReference reference) : std::variant<M<Data>, SymbolReference, std::vector<M<Reference>>>(reference) {}
+        inline Reference(std::vector<M<Reference>> const& tuple) : std::variant<M<Data>, SymbolReference, std::vector<M<Reference>>>(tuple) {}
+
+        M<Data> to_data(Context & context) const;
+        SymbolReference to_symbol_reference(Context & context) const;
+    };
+
     struct Object {
         std::shared_ptr<Expression> creation;
 
@@ -41,30 +68,16 @@ namespace Analyzer {
         std::list<std::shared_ptr<Function>> functions;
         std::vector<M<Data>> array;
 
-        std::reference_wrapper<M<Data>> get_property(Context & context, std::string name);
+        SymbolReference get_property(Context & context, std::string name);
     };
 
-    class Reference: public std::variant<M<Data>, std::reference_wrapper<M<Data>>, std::vector<M<Reference>>> {
-        public:
-        inline Reference(M<Data> data): std::variant<M<Data>, std::reference_wrapper<M<Data>>, std::vector<M<Reference>>>(data) {}
-        inline Reference(std::reference_wrapper<M<Data>> reference) : std::variant<M<Data>, std::reference_wrapper<M<Data>>, std::vector<M<Reference>>>(reference) {}
-        inline Reference(std::vector<M<Reference>> const& tuple) : std::variant<M<Data>, std::reference_wrapper<M<Data>>, std::vector<M<Reference>>>(tuple) {}
-
-        M<Data> to_data(Context & context) const;
-        M<Data>& to_reference(Context & context) const;
-    };
-
-    M<Data> to_data(M<Reference> const& m, Context & context);
-    std::reference_wrapper<M<Data>> to_reference(M<Reference> const& m, Context & context);
-
-    class GlobalContext;
     class Context {
         protected:
         std::reference_wrapper<Context> parent;
-        std::map<std::string, std::reference_wrapper<M<Data>>> symbols;
+        std::map<std::string, M<SymbolReference>> symbols;
 
         public:
-        Context(Context& parent);
+        Context(Context & parent);
 
         Context& get_parent();
         virtual GlobalContext& get_global();
@@ -72,9 +85,9 @@ namespace Analyzer {
         Object* new_object();
         Object* new_object(std::vector<M<Data>> const& array);
         Object* new_object(std::string const& data);
-        M<Data>& new_reference(M<Data> data);
+        SymbolReference new_reference(M<Data> data);
 
-        std::reference_wrapper<M<Data>> operator[](std::string const& symbol);
+        M<SymbolReference> operator[](std::string const& symbol);
         bool has_symbol(std::string const& symbol);
         inline auto begin() {
             return symbols.begin();
@@ -98,7 +111,7 @@ namespace Analyzer {
     };
     using FunctionPointer = std::variant<std::shared_ptr<FunctionDefinition>, SystemFunction>;
     struct Function {
-        std::map<std::string, std::reference_wrapper<M<Data>>> extern_symbols;
+        std::map<std::string, M<SymbolReference>> extern_symbols;
         FunctionPointer ptr;
     };
 

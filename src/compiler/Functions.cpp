@@ -125,6 +125,19 @@ namespace Analyzer {
             return var;
         }
 
+        M<Reference> function_definition(Context & context, bool potential) {
+            auto var = context["var"];
+            auto object = context["object"];
+
+            for (auto it = object->functions.rbegin(); it != object->functions.rend(); it++) {
+                if ((*it)->type == Function::Custom) {
+                    var->functions.push_front(std::make_unique<CustomFunction>((CustomFunction&) **it));
+                } else var->functions.push_front(std::make_unique<SystemFunction>((SystemFunction&) **it));
+            }
+
+            return context.get_symbol("var");
+        }
+
     }
 
 }

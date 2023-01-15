@@ -18,21 +18,21 @@ namespace Analyzer {
     M<Data> Reference::to_data(Context & context) const {
         if (auto object_ptr = std::get_if<M<Data>>(this))
             return *object_ptr;
-        else if (auto reference = std::get_if<std::reference_wrapper<M<Data>>>(this))
+        else if (auto reference = std::get_if<SymbolReference>(this))
             return reference->get();
         else if (auto tuple = std::get_if<std::vector<M<Reference>>>(this)) {
             std::vector<M<Data>> array;
             for (auto o : *tuple)
-                array.push_back(Analyzer::to_data(o, context));
+                array.push_back(o.to(&Reference::to_data, context));
             return Data(context.new_object(array));
         } else return Data(nullptr);
     }
 
-    M<Data>& Reference::to_reference(Context & context) const {
+    SymbolReference Reference::to_symbol_reference(Context & context) const {
         if (auto data = std::get_if<M<Data>>(this))
             return context.new_reference(*data);
-        else if (auto reference = std::get_if<std::reference_wrapper<M<Data>>>(this))
-            return reference->get();
+        else if (auto reference = std::get_if<SymbolReference>(this))
+            return *reference;
         else if (auto tuple = std::get_if<std::vector<M<Reference>>>(this)) {
             return context.new_reference(to_data(context));
         } else return *((M<Data>*) nullptr);
@@ -61,28 +61,17 @@ namespace Analyzer {
         return &objects.back();
     }
 
-    M<Data>& Context::new_reference(M<Data> data) {
+    SymbolReference Context::new_reference(M<Data> data) {
         get_global().references.push_back(data);
         return get_global().references.back();
     }
 
-    std::reference_wrapper<M<Data>> Context::operator[](std::string const& symbol) {
+    M<SymbolReference> Context::operator[](std::string const& symbol) {
         auto it = symbols.find(symbol);
         if (it == symbols.end())
             symbols.emplace(symbol, new_reference(Data(new_object())));
 
         return symbols.at(symbol);
-    }
-
-    M<Data> to_data(M<Reference> m, Context & context) {
-        M<Data> r;
-        for (auto ref : m)
-            m.push_back(ref.to_data(context));
-        return r;
-    }
-
-    std::reference_wrapper<M<Data>> to_reference(M<Reference> m, Context & context) {
-        return context.new_reference(to_data(m, context));
     }
 
     bool Context::has_symbol(std::string const& symbol) {
@@ -99,7 +88,7 @@ namespace Analyzer {
 
     void set_references(Context & function_context, std::shared_ptr<Expression> parameters, M<Reference> const& reference) {
         if (auto symbol = std::dynamic_pointer_cast<Symbol>(parameters)) {
-            function_context[symbol->name] = to_reference(reference, function_context);
+            function_context[symbol->name] = reference.to(&Reference::to_symbol_reference, function_context);
         } else if (auto tuple = std::dynamic_pointer_cast<Tuple>(parameters)) {
             bool success = false;
             for (auto ref : reference) {
@@ -131,7 +120,7 @@ namespace Analyzer {
         if (auto symbol = std::dynamic_pointer_cast<Symbol>(parameters)) {
             auto it = computed.find(arguments);
             auto reference = it != computed.end() ? it->second : (computed[arguments] = execute(context, potential, arguments));
-            function_context[symbol->name] = to_reference(reference, context);
+            function_context[symbol->name] = reference.to(&Reference::to_symbol_reference, context);
         } else if (auto p_tuple = std::dynamic_pointer_cast<Tuple>(parameters)) {
             if (auto a_tuple = std::dynamic_pointer_cast<Tuple>(arguments)) {
                 if (p_tuple->objects.size() == a_tuple->objects.size()) {
@@ -155,18 +144,18 @@ namespace Analyzer {
                     f->extern_symbols[symbol] = context[symbol];
                 object->functions.push_front(f);
 
-                function_context[symbol->name] = std::reference_wrapper<M<Data>>(context.new_reference(Data(object)));
+                function_context[symbol->name] = SymbolReference(context.new_reference(Data(object)));
             } else throw FunctionArgumentsError();
         } else throw FunctionArgumentsError();
     }
 
-    using It = std::map<std::string, std::reference_wrapper<M<Data>>>::iterator;
+    using It = std::map<std::string, M<SymbolReference>>::iterator;
 
     void call_reference(M<Reference> & result, bool potential, std::shared_ptr<Analyzer::Function> function, Context function_context, It const it, It const end) {
         if (it != end) {
             bool success = false;
-            for (auto const& m : it->second.get()) {
-                function_context[it->first].get() = M<Data>(m);
+            for (auto const& m1 : it->second) {
+                function_context[it->first] = M<Data>(m1.get());
                 It copy = it;
                 try {
                     call_reference(result, potential, function, function_context, copy++, end);
