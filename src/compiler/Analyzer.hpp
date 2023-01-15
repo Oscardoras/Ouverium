@@ -41,27 +41,27 @@ namespace Analyzer {
         std::list<std::shared_ptr<Function>> functions;
         std::vector<M<Data>> array;
 
-        M<std::reference_wrapper<Data>> get_property(Context & context, std::string name);
+        std::reference_wrapper<M<Data>> get_property(Context & context, std::string name);
     };
 
-    class Reference: public std::variant<Data, std::reference_wrapper<Data>, std::vector<M<Reference>>> {
+    class Reference: public std::variant<M<Data>, std::reference_wrapper<M<Data>>, std::vector<M<Reference>>> {
         public:
-        inline Reference(Data data): std::variant<Data, std::reference_wrapper<Data>, std::vector<M<Reference>>>(data) {}
-        inline Reference(std::reference_wrapper<Data> reference) : std::variant<Data, std::reference_wrapper<Data>, std::vector<M<Reference>>>(reference) {}
-        inline Reference(std::vector<M<Reference>> const& tuple) : std::variant<Data, std::reference_wrapper<Data>, std::vector<M<Reference>>>(tuple) {}
+        inline Reference(M<Data> data): std::variant<M<Data>, std::reference_wrapper<M<Data>>, std::vector<M<Reference>>>(data) {}
+        inline Reference(std::reference_wrapper<M<Data>> reference) : std::variant<M<Data>, std::reference_wrapper<M<Data>>, std::vector<M<Reference>>>(reference) {}
+        inline Reference(std::vector<M<Reference>> const& tuple) : std::variant<M<Data>, std::reference_wrapper<M<Data>>, std::vector<M<Reference>>>(tuple) {}
 
-        Data to_data(Context & context) const;
-        Data& to_reference(Context & context) const;
+        M<Data> to_data(Context & context) const;
+        M<Data>& to_reference(Context & context) const;
     };
 
     M<Data> to_data(M<Reference> const& m, Context & context);
-    M<std::reference_wrapper<Data>> to_reference(M<Reference> const& m, Context & context);
+    std::reference_wrapper<M<Data>> to_reference(M<Reference> const& m, Context & context);
 
     class GlobalContext;
     class Context {
         protected:
         std::reference_wrapper<Context> parent;
-        std::map<std::string, M<std::reference_wrapper<Data>>> symbols;
+        std::map<std::string, std::reference_wrapper<M<Data>>> symbols;
 
         public:
         Context(Context& parent);
@@ -72,9 +72,9 @@ namespace Analyzer {
         Object* new_object();
         Object* new_object(std::vector<M<Data>> const& array);
         Object* new_object(std::string const& data);
-        Data& new_reference(Data data);
+        M<Data>& new_reference(M<Data> data);
 
-        M<std::reference_wrapper<Data>> operator[](std::string const& symbol);
+        std::reference_wrapper<M<Data>> operator[](std::string const& symbol);
         bool has_symbol(std::string const& symbol);
         inline auto begin() {
             return symbols.begin();
@@ -86,7 +86,7 @@ namespace Analyzer {
     class GlobalContext: public Context {
         public:
         std::list<Object> objects;
-        std::list<Data> references;
+        std::list<M<Data>> references;
 
         GlobalContext();
         virtual GlobalContext& get_global();
@@ -98,7 +98,7 @@ namespace Analyzer {
     };
     using FunctionPointer = std::variant<std::shared_ptr<FunctionDefinition>, SystemFunction>;
     struct Function {
-        std::map<std::string, M<std::reference_wrapper<Data>>> extern_symbols;
+        std::map<std::string, std::reference_wrapper<M<Data>>> extern_symbols;
         FunctionPointer ptr;
     };
 

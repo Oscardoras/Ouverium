@@ -7,18 +7,18 @@
 
 namespace Analyzer {
 
-    M<std::reference_wrapper<Data>> Object::get_property(Context & context, std::string name) {
+    std::reference_wrapper<M<Data>> Object::get_property(Context & context, std::string name) {
         auto & field = properties[name];
         if (field.empty())
             field.push_back(context.new_object());
 
-        return M<std::reference_wrapper<Data>>(field);
+        return field;
     }
 
-    Data Reference::to_data(Context & context) const {
-        if (auto object_ptr = std::get_if<Data>(this))
+    M<Data> Reference::to_data(Context & context) const {
+        if (auto object_ptr = std::get_if<M<Data>>(this))
             return *object_ptr;
-        else if (auto reference = std::get_if<std::reference_wrapper<Data>>(this))
+        else if (auto reference = std::get_if<std::reference_wrapper<M<Data>>>(this))
             return reference->get();
         else if (auto tuple = std::get_if<std::vector<M<Reference>>>(this)) {
             std::vector<M<Data>> array;
@@ -28,14 +28,14 @@ namespace Analyzer {
         } else return Data(nullptr);
     }
 
-    Data& Reference::to_reference(Context & context) const {
-        if (auto data = std::get_if<Data>(this))
+    M<Data>& Reference::to_reference(Context & context) const {
+        if (auto data = std::get_if<M<Data>>(this))
             return context.new_reference(*data);
-        else if (auto reference = std::get_if<std::reference_wrapper<Data>>(this))
+        else if (auto reference = std::get_if<std::reference_wrapper<M<Data>>>(this))
             return reference->get();
         else if (auto tuple = std::get_if<std::vector<M<Reference>>>(this)) {
             return context.new_reference(to_data(context));
-        } else return *((Data*) nullptr);
+        } else return *((M<Data>*) nullptr);
     }
 
     Context::Context(Context& parent): parent(parent) {}
@@ -61,12 +61,12 @@ namespace Analyzer {
         return &objects.back();
     }
 
-    Data& Context::new_reference(Data data) {
+    M<Data>& Context::new_reference(M<Data> data) {
         get_global().references.push_back(data);
         return get_global().references.back();
     }
 
-    M<std::reference_wrapper<Data>> Context::operator[](std::string const& symbol) {
+    std::reference_wrapper<M<Data>> Context::operator[](std::string const& symbol) {
         auto it = symbols.find(symbol);
         if (it == symbols.end())
             symbols.emplace(symbol, new_reference(Data(new_object())));
@@ -81,11 +81,8 @@ namespace Analyzer {
         return r;
     }
 
-    M<std::reference_wrapper<Data>> to_reference(M<Reference> m, Context & context) {
-        M<Data> r;
-        for (auto ref : m)
-            m.push_back(ref.to_reference(context));
-        return r;
+    std::reference_wrapper<M<Data>> to_reference(M<Reference> m, Context & context) {
+        return context.new_reference(to_data(m, context));
     }
 
     bool Context::has_symbol(std::string const& symbol) {
@@ -112,14 +109,16 @@ namespace Analyzer {
                             set_references(function_context, tuple->objects[i], (*reference_tuple)[i]);
                     else continue;
                 } else {
-                    auto object_ptr = ref.to_data(function_context);
-                    if (auto object = std::get_if<Object*>(&object_ptr)) {
-                        if ((*object)->array.size() == tuple->objects.size()) {
-                            for (size_t i = 0; i < tuple->objects.size(); i++) {
-                                set_references(function_context, tuple->objects[i], (*object)->array[i]);
-                            }
+                    auto data = ref.to_data(function_context);
+                    for (auto d : data) {
+                        if (auto object = std::get_if<Object*>(&d)) {
+                            if ((*object)->array.size() == tuple->objects.size()) {
+                                for (size_t i = 0; i < tuple->objects.size(); i++) {
+                                    set_references(function_context, tuple->objects[i], (*object)->array[i]);
+                                }
+                            } else continue;
                         } else continue;
-                    } else continue;
+                    }
                 }
                 success = true;
             }
@@ -156,18 +155,18 @@ namespace Analyzer {
                     f->extern_symbols[symbol] = context[symbol];
                 object->functions.push_front(f);
 
-                function_context[symbol->name] = M<std::reference_wrapper<Data>>(context.new_reference(object));
+                function_context[symbol->name] = std::reference_wrapper<M<Data>>(context.new_reference(Data(object)));
             } else throw FunctionArgumentsError();
         } else throw FunctionArgumentsError();
     }
 
-    using It =std::map<std::string, M<std::reference_wrapper<Data>>>::iterator;
+    using It = std::map<std::string, std::reference_wrapper<M<Data>>>::iterator;
 
     void call_reference(M<Reference> & result, bool potential, std::shared_ptr<Analyzer::Function> function, Context function_context, It const it, It const end) {
         if (it != end) {
             bool success = false;
-            for (auto const& m : it->second) {
-                function_context[it->first] = m;
+            for (auto const& m : it->second.get()) {
+                function_context[it->first].get() = M<Data>(m);
                 It copy = it;
                 try {
                     call_reference(result, potential, function, function_context, copy++, end);
@@ -184,11 +183,13 @@ namespace Analyzer {
                 if ((*custom)->filter != nullptr) {
                     auto f = execute(function_context, potential, (*custom)->filter);
                     for (auto reference : f)
-                        if (auto c = std::get_if<bool>(&reference.to_data(function_context))) {
-                            if (*c) filter = true;
-                        } else {
-                            if ((*custom)->filter->position != nullptr)
-                                (*custom)->filter->position->notify_error("The expression must be a boolean");
+                        for (auto data : reference.to_data(function_context)) {
+                            if (auto c = std::get_if<bool>(&data)) {
+                                if (*c) filter = true;
+                            } else {
+                                if ((*custom)->filter->position != nullptr)
+                                    (*custom)->filter->position->notify_error("The expression must be a boolean");
+                            }
                         }
                 } else filter = true;
 
@@ -231,16 +232,16 @@ namespace Analyzer {
             M<Reference> m;
 
             auto f = execute(context, potential, function_call->function);
-            if (f.empty())
-                f.push_back(Data(context.new_object()));
 
             for (auto reference : f) {
                 auto data = reference.to_data(context);
-                std::list<std::shared_ptr<Function>> functions;
-                if (auto object = std::get_if<Object*>(&data))
-                    functions = (*object)->functions;
-                auto result = call_function(context, potential, function_call->position, functions, function_call->arguments);
-                m.insert(m.end(), result.begin(), result.end());
+                for (auto d : data) {
+                    std::list<std::shared_ptr<Function>> functions;
+                    if (auto object = std::get_if<Object*>(&d))
+                        functions = (*object)->functions;
+                    auto result = call_function(context, potential, function_call->position, functions, function_call->arguments);
+                    m.insert(m.end(), result.begin(), result.end());
+                }
             }
 
             return m;
@@ -262,11 +263,13 @@ namespace Analyzer {
             auto r = execute(context, potential, property->object);
             for (auto reference : r) {
                 auto data = reference.to_data(context);
-                if (auto object = std::get_if<Object*>(&data)) {
-                    auto field = (*object)->get_property(context, property->name);
-                    m.insert(m.end(), field.begin(), field.end());
-                } else
-                    m.push_back(Data(context.new_object()));
+                for (auto d : data) {
+                    if (auto object = std::get_if<Object*>(&d)) {
+                        auto field = (*object)->get_property(context, property->name);
+                        m.insert(m.end(), field.get().begin(), field.get().end());
+                    } else
+                        m.push_back(M<Data>(context.new_object()));
+                }
             }
 
             return m;
@@ -297,17 +300,17 @@ namespace Analyzer {
                     }
                 } else first = false;
 
-                return M<Reference>(Data(context.new_object(str)));
+                return M<Data>(context.new_object(str));
             }
-            if (symbol->name == "true") return M<Reference>(Data(true));
-            if (symbol->name == "false") return M<Reference>(Data(false));
+            if (symbol->name == "true") return M<Data>(true);
+            if (symbol->name == "false") return M<Data>(false);
             try {
-                return M<Reference>(Data(std::stol(symbol->name)));
+                return M<Data>(std::stol(symbol->name));
             } catch (std::invalid_argument const& ex1) {
                 try {
-                    return M<Reference>(Data(std::stod(symbol->name)));
+                    return M<Data>(std::stod(symbol->name));
                 } catch (std::invalid_argument const& ex2) {
-                    return context[symbol->name];
+                    return M<Data>(context[symbol->name]);
                 }
             }
         } else if (auto tuple = std::dynamic_pointer_cast<Tuple>(expression)) {
@@ -315,7 +318,7 @@ namespace Analyzer {
             for (auto e : tuple->objects)
                 v.push_back(execute(context, potential, e));
             return Reference(v);
-        } else return Reference(Data(context.new_object()));
+        } else return M<Data>(context.new_object());
     }
 
     /*

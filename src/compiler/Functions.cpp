@@ -5,12 +5,12 @@ namespace Analyzer {
 
     namespace Functions {
 
-        inline auto get_function(Analyzer::M<std::reference_wrapper<Analyzer::Data>> reference) {
-            return std::get<Object*>(reference.begin()->get())->functions;
+        inline auto get_function(std::reference_wrapper<M<Data>> reference) {
+            return std::get<Object*>(*reference.get().begin())->functions;
         }
 
         M<Reference> separator(Context & context, bool potential) {
-            return context["b"];
+            return Reference(context["b"]);
         }
 
         void if_function(M<Reference> & m, Context & context, bool potential, std::shared_ptr<Tuple> const& tuple, size_t i) {
@@ -40,15 +40,15 @@ namespace Analyzer {
             if (FALSE) {
                 if (i+3 < tuple->objects.size()) {
                     auto else_s = to_data(execute(parent, potential || !defined, tuple->objects[i+2]), context);
-                    if (M<std::reference_wrapper<Data>>(else_s) == context["else"]) {
+                    if (else_s == context["else"].get()) {
                         auto s = to_data(execute(parent, potential || !defined, tuple->objects[i+3]), context);
                         if (i+4 == tuple->objects.size())
                             m.insert(m.end(), s.begin(), s.end());
-                        else if (i+6 < tuple->objects.size() && M<std::reference_wrapper<Data>>(s) == context["if"])
+                        else if (i+6 < tuple->objects.size() && s == context["if"].get())
                             if_function(m, context, potential || !defined, tuple, i+4);
                         else throw FunctionArgumentsError();
                     } else throw FunctionArgumentsError();
-                } else m.push_back(Reference(context.new_object()));
+                } else m.push_back(M<Data>(context.new_object()));
             }
         }
 
@@ -97,28 +97,31 @@ namespace Analyzer {
             }
 
             if (m.empty())
-                m.push_back(Data(context.new_object()));
+                m.push_back(M<Data>(context.new_object()));
             return m;
         }
 
         void assignation(M<Reference> const& var, M<Data> const& data, bool potential) {
             for (auto reference : var) {
-                if (auto ref = std::get_if<std::reference_wrapper<Data>>(&reference))
+                if (auto ref = std::get_if<std::reference_wrapper<M<Data>>>(&reference))
                     if (potential)
+                        ref->get().insert(ref->get().end(), data.begin(), data.end());
+                    else
                         ref->get() = data;
-                else if (auto tuple = std::get_if<std::vector<M<Reference>>>(&var))
-                    if (auto object = std::get_if<Object*>(&data))
-                        for (long i = 0; i < tuple->size(); i++)
-                            assignation((*tuple)[i], data.a[i+1].o);
-                else throw Interpreter::FunctionArgumentsError();
+                else if (auto tuple = std::get_if<std::vector<M<Reference>>>(&reference))
+                    for (auto d : data)
+                        if (auto object = std::get_if<Object*>(&d)) {
+                            for (long i = 0; i < tuple->size(); i++)
+                                assignation((*tuple)[i], (*object)->array[i+1], potential);
+                        } else throw FunctionArgumentsError();
             }
         }
 
         M<Reference> assign(Context & context, bool potential) {
-            auto var = Interpreter::call_function(context, nullptr, context.get_symbol("var").to_object(context)->functions, std::make_shared<Tuple>());
-            auto object = context.get_symbol("object").to_object(context);
+            auto var = call_function(context, potential, nullptr, get_function(context["var"]), std::make_shared<Tuple>());
+            auto object = to_data(M<Reference>(context["object"]), context);
 
-            assignation(var, object);
+            assignation(var, object, potential);
             return var;
         }
 
