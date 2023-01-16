@@ -129,18 +129,13 @@ namespace Analyzer {
             auto var = context["var"];
             auto function = M<Reference>(context["object"]).to(&Reference::to_data, context);
 
-            for (auto ref : var) {
-                for (auto data : function) if (auto object = std::get_if<Object*>(&data)) {
-                    for (auto it = (*object)->functions.rbegin(); it != (*object)->functions.rend(); it++) {
-                        if (auto custom = std::get_if<std::shared_ptr<FunctionDefinition>>(&(*it)->ptr)) {
-                            var->functions.push_front(std::make_unique<CustomFunction>((CustomFunction&) **it));
-                        } else var->functions.push_front(std::make_unique<SystemFunction>((SystemFunction&) **it));
-                        ref.
-                    }
-                }
-            }
+            for (auto var_ref : var)
+                for (auto var_data : var_ref.get()) if (auto var_object = std::get_if<Object*>(&var_data))
+                    for (auto function_data : function) if (auto function_object = std::get_if<Object*>(&function_data))
+                        for (auto it = (*function_object)->functions.rbegin(); it != (*function_object)->functions.rend(); it++)
+                            (*var_object)->functions.push_front(*it);
 
-            return context.get_symbol("var");
+            return var;
         }
 
     }

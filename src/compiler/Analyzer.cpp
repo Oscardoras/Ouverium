@@ -61,6 +61,16 @@ namespace Analyzer {
         return &objects.back();
     }
 
+    Object* Context::new_object(std::string const& str) {
+        long l = str.length();
+        auto & objects = get_global().objects;
+        objects.push_back(Object());
+        auto object = &objects.back();
+        for (auto c : str)
+            object->array.push_back(Data(c));
+        return object;
+    }
+
     SymbolReference Context::new_reference(M<Data> data) {
         get_global().references.push_back(data);
         return get_global().references.back();

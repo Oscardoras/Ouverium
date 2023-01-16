@@ -113,6 +113,7 @@ namespace Analyzer {
     struct Function {
         std::map<std::string, M<SymbolReference>> extern_symbols;
         FunctionPointer ptr;
+        inline Function(FunctionPointer const& ptr): ptr(ptr) {}
     };
 
 
