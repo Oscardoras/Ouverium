@@ -7,6 +7,16 @@ List : this |-> {
 
     this : index \ (index ~ Int & 0 <= index & index < this->lenght()) |-> {};
 
+    this->filter : (constructor, function) |-> {
+        list := constructor();
+        this->foreach(object |-> {
+            if (function(object)) {
+                list->add_last(object)
+            }
+        });
+        list
+    };
+
     this->lenght : () |-> {};
     this->is_empty : () |-> {};
 

@@ -11,20 +11,16 @@ ArrayList : this |-> {
 
     this->foreach : function |-> {
         l := Array->lenght(this);
+        list := ArrayList();
+        list->set_capacity(l);
         for i from 0 to l {
-            function(Array->get(this, i))
+            list.add_last(function(Array->get(this, i)))
         };
-        ()
+        list
     };
 
     this->filter : function |-> {
-        list := ArrayList();
-        this->foreach(object |-> {
-            if (function(object)) {
-                list->add_last(object)
-            }
-        });
-        list
+        this->filter(ArrayList, function)
     };
 
     this->lenght : () |-> {

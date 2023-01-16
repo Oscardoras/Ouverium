@@ -155,7 +155,7 @@ namespace Analyzer {
         if (it != end) {
             bool success = false;
             for (auto const& m1 : it->second) {
-                function_context[it->first] = M<Data>(m1.get());
+                function_context[it->first] = SymbolReference(m1.get());
                 It copy = it;
                 try {
                     call_reference(result, potential, function, function_context, copy++, end);
@@ -214,6 +214,7 @@ namespace Analyzer {
 
         if (position != nullptr)
             position->notify_error("The arguments given to the function don't match");
+        return Reference(Data(context.new_object()));
     }
 
     M<Reference> execute(Context & context, bool potential, std::shared_ptr<Expression> expression) {
@@ -299,7 +300,7 @@ namespace Analyzer {
                 try {
                     return M<Data>(std::stod(symbol->name));
                 } catch (std::invalid_argument const& ex2) {
-                    return M<Data>(context[symbol->name]);
+                    return context[symbol->name];
                 }
             }
         } else if (auto tuple = std::dynamic_pointer_cast<Tuple>(expression)) {

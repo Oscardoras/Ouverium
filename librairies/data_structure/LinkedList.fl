@@ -20,22 +20,17 @@ LinkedList : this |-> {
     };
 
     this->foreach : function |-> {
+        list := LinkedList();
         cell := this->_first;
         while (cell != ()) {
-            function(cell->object);
+            list->add_last(function(cell->object));
             cell := cell->next
         };
-        ()
+        list
     };
 
     this->filter : function |-> {
-        list := LinkedList();
-        this->foreach(object |-> {
-            if (function(object)) {
-                list->add_last(object)
-            }
-        });
-        list
+        this->filter(LinkedList, function)
     };
 
     this->lenght : () |-> {
