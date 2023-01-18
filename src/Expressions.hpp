@@ -31,6 +31,10 @@ struct Expression {
     */
     std::string to_string() const;
 
+protected:
+
+    Expression() = default;
+
 };
 
 struct FunctionCall: public Expression {
@@ -86,6 +90,9 @@ struct Tuple: public Expression {
     std::vector<std::shared_ptr<Expression>> objects;
 
     Tuple() {}
+
+    Tuple(std::initializer_list<std::shared_ptr<Expression>> l):
+        objects(l) {}
 
     Tuple(std::vector<std::shared_ptr<Expression>> objects):
         objects(objects) {}

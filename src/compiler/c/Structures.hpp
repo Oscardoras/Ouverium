@@ -11,7 +11,7 @@ namespace CTranslator {
     namespace Structures {
 
         struct Expression {};
-        struct RValue: public Expression {};
+        struct LValue: public Expression {};
         struct Instruction {};
 
 
@@ -32,11 +32,11 @@ namespace CTranslator {
         };
 
         struct Affectation: public Expression, public Instruction {
-            std::shared_ptr<RValue> r_value;
+            std::shared_ptr<LValue> lvalue;
             std::shared_ptr<Expression> value;
         };
 
-        struct VariableCall: public RValue {
+        struct VariableCall: public LValue {
             std::string name;
         };
 
@@ -49,7 +49,7 @@ namespace CTranslator {
             std::string name;
         };
 
-        struct Property: public RValue {
+        struct Property: public LValue {
             std::shared_ptr<Expression> object;
             std::string name;
             bool pointer;

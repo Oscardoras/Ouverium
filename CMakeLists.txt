@@ -8,6 +8,7 @@ enable_testing()
 
 FILE(GLOB_RECURSE app_sources
     src/main.cpp
+    src/Utils.cpp src/Utils.hpp
     src/Expressions.cpp src/Expressions.hpp
     src/parser/*
     src/interpreter/*

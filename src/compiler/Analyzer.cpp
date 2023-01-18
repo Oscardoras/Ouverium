@@ -4,6 +4,8 @@
 
 #include "Analyzer.hpp"
 
+#include "../Utils.hpp"
+
 
 namespace Analyzer {
 
@@ -76,7 +78,7 @@ namespace Analyzer {
         return get_global().references.back();
     }
 
-    M<SymbolReference> Context::operator[](std::string const& symbol) {
+    M<SymbolReference>& Context::operator[](std::string const& symbol) {
         auto it = symbols.find(symbol);
         if (it == symbols.end())
             symbols.emplace(symbol, new_reference(Data(new_object())));
@@ -98,7 +100,9 @@ namespace Analyzer {
 
     void set_references(Context & function_context, std::shared_ptr<Expression> parameters, M<Reference> const& reference) {
         if (auto symbol = std::dynamic_pointer_cast<Symbol>(parameters)) {
-            function_context[symbol->name] = reference.to(&Reference::to_symbol_reference, function_context);
+            auto & lvalue = function_context[symbol->name];
+            auto rvalue = reference.to(&Reference::to_symbol_reference, function_context);
+            lvalue.insert(lvalue.end(), rvalue.begin(), rvalue.end());
         } else if (auto tuple = std::dynamic_pointer_cast<Tuple>(parameters)) {
             bool success = false;
             for (auto ref : reference) {
@@ -130,7 +134,9 @@ namespace Analyzer {
         if (auto symbol = std::dynamic_pointer_cast<Symbol>(parameters)) {
             auto it = computed.find(arguments);
             auto reference = it != computed.end() ? it->second : (computed[arguments] = execute(context, potential, arguments));
-            function_context[symbol->name] = reference.to(&Reference::to_symbol_reference, context);
+            auto & lvalue = function_context[symbol->name];
+            auto rvalue = reference.to(&Reference::to_symbol_reference, context);
+            lvalue.insert(lvalue.end(), rvalue.begin(), rvalue.end());
         } else if (auto p_tuple = std::dynamic_pointer_cast<Tuple>(parameters)) {
             if (auto a_tuple = std::dynamic_pointer_cast<Tuple>(arguments)) {
                 if (p_tuple->objects.size() == a_tuple->objects.size()) {
@@ -260,6 +266,7 @@ namespace Analyzer {
             return Reference(Data(object));
         } else if (auto property = std::dynamic_pointer_cast<Property>(expression)) {
             M<Reference> m;
+            
             auto r = execute(context, potential, property->object);
             for (auto reference : r) {
                 auto data = reference.to_data(context);
@@ -274,44 +281,17 @@ namespace Analyzer {
 
             return m;
         } else if (auto symbol = std::dynamic_pointer_cast<Symbol>(expression)) {
-            if (symbol->name[0] == '\"') {
-                std::string str;
-
-                bool escape = false;
-                bool first = true;
-                for (char c : symbol->name) if (!first) {
-                    if (!escape) {
-                        if (c == '\"') break;
-                        else if (c == '\\') escape = true;
-                        else str += c;
-                    } else {
-                        escape = false;
-                        if (c == 'b') str += '\b';
-                        if (c == 'e') str += '\e';
-                        if (c == 'f') str += '\f';
-                        if (c == 'n') str += '\n';
-                        if (c == 'r') str += '\r';
-                        if (c == 't') str += '\t';
-                        if (c == 'v') str += '\v';
-                        if (c == '\\') str += '\\';
-                        if (c == '\'') str += '\'';
-                        if (c == '\"') str += '\"';
-                        if (c == '?') str += '\?';
-                    }
-                } else first = false;
-
-                return M<Data>(context.new_object(str));
-            }
-            if (symbol->name == "true") return M<Data>(true);
-            if (symbol->name == "false") return M<Data>(false);
-            try {
-                return M<Data>(std::stol(symbol->name));
-            } catch (std::invalid_argument const& ex1) {
-                try {
-                    return M<Data>(std::stod(symbol->name));
-                } catch (std::invalid_argument const& ex2) {
-                    return context[symbol->name];
-                }
+            auto data = get_symbol(symbol->name);
+            if (auto b = std::get_if<bool>(&data)) {
+                return M<Data>(*b);
+            } else if (auto l = std::get_if<long>(&data)) {
+                return M<Data>(*l);
+            } else if (auto d = std::get_if<double>(&data)) {
+                return M<Data>(*d);
+            } else if (auto str = std::get_if<std::string>(&data)) {
+                return M<Data>(context.new_object(*str));
+            } else {
+                return context[symbol->name];
             }
         } else if (auto tuple = std::dynamic_pointer_cast<Tuple>(expression)) {
             std::vector<M<Reference>> v;

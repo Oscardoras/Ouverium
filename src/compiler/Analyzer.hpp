@@ -24,18 +24,21 @@ namespace Analyzer {
         inline M(T const& t) {
             this->push_back(t);
         }
-        template<typename U> inline M(M<U> const& m) {
+        template<typename U>
+        inline M(M<U> const& m) {
             for (U const& e : m)
                 this->push_back(T(e));
         }
 
-        template<typename U> M<U> to(U (T::*to_method)(Context &) const, Context & context) const {
+        template<typename U>
+        M<U> to(U (T::*to_method)(Context &) const, Context & context) const {
             M<U> m;
             for (T const& e : *this)
                 m.push_back((e.*to_method)(context));
             return m;
         }
-        template<typename U> M<U> to(M<U> (T::*to_method)(Context &) const, Context & context) const {
+        template<typename U>
+        M<U> to(M<U> (T::*to_method)(Context &) const, Context & context) const {
             M<U> m;
             for (T const& e : *this) {
                 M<U> r = (e.*to_method)(context);
@@ -87,7 +90,7 @@ namespace Analyzer {
         Object* new_object(std::string const& data);
         SymbolReference new_reference(M<Data> data);
 
-        M<SymbolReference> operator[](std::string const& symbol);
+        M<SymbolReference>& operator[](std::string const& symbol);
         bool has_symbol(std::string const& symbol);
         inline auto begin() {
             return symbols.begin();
