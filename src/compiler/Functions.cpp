@@ -16,7 +16,7 @@ namespace Analyzer {
         void if_function(M<Reference> & m, Context & context, bool potential, std::shared_ptr<Tuple> const& tuple, size_t i) {
             auto & parent = context.get_parent();
 
-            auto conditions = execute(parent, potential, tuple->objects[i]).to(&Reference::to_data, context);
+            auto conditions = execute(parent, potential, tuple->objects[i]).to_data(context);
             bool TRUE = false;
             bool FALSE = false;
             bool defined = true;
@@ -39,12 +39,12 @@ namespace Analyzer {
             }
             if (FALSE) {
                 if (i+3 < tuple->objects.size()) {
-                    auto else_s = execute(parent, potential || !defined, tuple->objects[i+2]).to(&Reference::to_data, context);
-                    if (else_s == M<Reference>(context["else"]).to(&Reference::to_data, context)) {
-                        auto s = execute(parent, potential || !defined, tuple->objects[i+3]).to(&Reference::to_data, context);
+                    auto else_s = execute(parent, potential || !defined, tuple->objects[i+2]).to_data(context);
+                    if (else_s == M<Reference>(context["else"]).to_data(context)) {
+                        auto s = execute(parent, potential || !defined, tuple->objects[i+3]).to_data(context);
                         if (i+4 == tuple->objects.size())
                             m.insert(m.end(), s.begin(), s.end());
-                        else if (i+6 < tuple->objects.size() && s == M<Reference>(context["if"]).to(&Reference::to_data, context))
+                        else if (i+6 < tuple->objects.size() && s == M<Reference>(context["if"]).to_data(context))
                             if_function(m, context, potential || !defined, tuple, i+4);
                         else throw FunctionArgumentsError();
                     } else throw FunctionArgumentsError();
@@ -69,7 +69,7 @@ namespace Analyzer {
             auto condition = get_function(context["condition"]);
             auto block = get_function(context["block"]);
             while (true) {
-                auto c = call_function(context.get_parent(), potential, nullptr, condition, std::make_shared<Tuple>()).to(&Reference::to_data, context);
+                auto c = call_function(context.get_parent(), potential, nullptr, condition, std::make_shared<Tuple>()).to_data(context);
                 enum { UNKNOWN, UNDEFINED, TRUE, FALSE } status;
                 for (auto d : c) {
                     if (auto b = std::get_if<bool>(&d)) {
@@ -119,7 +119,7 @@ namespace Analyzer {
 
         M<Reference> assign(Context & context, bool potential) {
             auto var = call_function(context, potential, nullptr, get_function(context["var"]), std::make_shared<Tuple>());
-            auto object = M<Reference>(context["object"]).to(&Reference::to_data, context);
+            auto object = M<Reference>(context["object"]).to_data(context);
 
             assignation(var, object, potential);
             return var;
@@ -127,7 +127,7 @@ namespace Analyzer {
 
         M<Reference> function_definition(Context & context, bool potential) {
             auto var = context["var"];
-            auto function = M<Reference>(context["object"]).to(&Reference::to_data, context);
+            auto function = M<Reference>(context["object"]).to_data(context);
 
             for (auto var_ref : var)
                 for (auto var_data : var_ref.get()) if (auto var_object = std::get_if<Object*>(&var_data))

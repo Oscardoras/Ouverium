@@ -9,6 +9,22 @@
 
 namespace Analyzer {
 
+    M<Data> M<Reference>::to_data(Context & context) const {
+        M<Data> m;
+        for (auto const& e : *this) {
+            auto data = e.to_data(context);
+            m.insert(m.end(), data.begin(), data.end());
+        }
+        return m;
+    }
+
+    M<SymbolReference> M<Reference>::to_symbol_reference(Context & context) const {
+        M<SymbolReference> m;
+        for (auto const& e : *this)
+            m.push_back(e.to_symbol_reference(context));
+        return m;
+    }
+
     std::reference_wrapper<M<Data>> Object::get_property(Context & context, std::string name) {
         auto & field = properties[name];
         if (field.empty())
@@ -25,7 +41,7 @@ namespace Analyzer {
         else if (auto tuple = std::get_if<std::vector<M<Reference>>>(this)) {
             std::vector<M<Data>> array;
             for (auto o : *tuple)
-                array.push_back(o.to(&Reference::to_data, context));
+                array.push_back(o.to_data(context));
             return Data(context.new_object(array));
         } else return Data(nullptr);
     }
@@ -101,7 +117,7 @@ namespace Analyzer {
     void set_references(Context & function_context, std::shared_ptr<Expression> parameters, M<Reference> const& reference) {
         if (auto symbol = std::dynamic_pointer_cast<Symbol>(parameters)) {
             auto & lvalue = function_context[symbol->name];
-            auto rvalue = reference.to(&Reference::to_symbol_reference, function_context);
+            auto rvalue = reference.to_symbol_reference(function_context);
             lvalue.insert(lvalue.end(), rvalue.begin(), rvalue.end());
         } else if (auto tuple = std::dynamic_pointer_cast<Tuple>(parameters)) {
             bool success = false;
@@ -135,7 +151,7 @@ namespace Analyzer {
             auto it = computed.find(arguments);
             auto reference = it != computed.end() ? it->second : (computed[arguments] = execute(context, potential, arguments));
             auto & lvalue = function_context[symbol->name];
-            auto rvalue = reference.to(&Reference::to_symbol_reference, context);
+            auto rvalue = reference.to_symbol_reference(context);
             lvalue.insert(lvalue.end(), rvalue.begin(), rvalue.end());
         } else if (auto p_tuple = std::dynamic_pointer_cast<Tuple>(parameters)) {
             if (auto a_tuple = std::dynamic_pointer_cast<Tuple>(arguments)) {
@@ -266,7 +282,7 @@ namespace Analyzer {
             return Reference(Data(object));
         } else if (auto property = std::dynamic_pointer_cast<Property>(expression)) {
             M<Reference> m;
-            
+
             auto r = execute(context, potential, property->object);
             for (auto reference : r) {
                 auto data = reference.to_data(context);
