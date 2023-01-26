@@ -8,45 +8,52 @@ namespace Interpreter {
 
     class Context;
 
+    using SymbolReference = Data*;
+
     struct Reference {
 
-        enum ReferenceType {
-            SymbolReference = -3,
-            PropertyReference = -2,
-            ArrayReference = -1,
-            Pointer = 0
-            //Tuple > 0
-        };
-        long type;
+        enum class Type {
+            Symbol,
+            Property,
+            Array,
+            Data,
+            Tuple
+        } type;
 
         union {
-            Object** symbol_reference;
+            SymbolReference symbol_reference;
             struct {
                 Object* parent;
-                Object** reference;
+                Data* reference;
             } property_reference;
             struct {
                 Object* array;
-                unsigned long i;
+                size_t i;
             } array_reference;
-            Object* pointer;
-            Reference *tuple;
+            Data data;
+            struct {
+                Reference *tuple;
+                size_t size;
+            } tuple_reference;
         };
 
+        private:
         Reference();
+
+        public:
         Reference(Reference const& reference);
-        Reference(Object** const& symbol_reference);
-        Reference(Object* const& parent, Object** const& reference);
-        Reference(Object* const& array, unsigned long const& i);
-        Reference(Object* const& pointer);
-        Reference(size_t const& tuple_size);
+        Reference(SymbolReference symbol_reference);
+        Reference(Object* parent, Data* reference);
+        Reference(Object* array, size_t i);
+        Reference(Data data);
+        Reference(size_t tuple_size);
 
         ~Reference();
 
         bool is_reference() const;
-        Object*& get_reference() const;
+        Data& get_reference() const;
 
-        Object* to_object(Context & context) const;
+        Data to_data(Context & context) const;
 
         Reference& operator=(Reference const& reference);
 

@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+#include "Data.hpp"
+
 
 namespace Interpreter {
 
@@ -16,42 +18,15 @@ namespace Interpreter {
     struct Object {
 
         std::map<std::string, Object*> properties;
-
         std::list<std::unique_ptr<Function>> functions;
+        union ArrayElement {
+            size_t c;
+            Data o;
+        } *array = nullptr;
 
-        enum ObjectType {
-            CPointer = -5,
-            Char,
-            Float,
-            Int,
-            Bool,
-            None = 0
-            //Array > 0
-        };
-        long type;
+        bool referenced = false;
 
-        union Data {
-            void* ptr;
-            char c;
-            double f;
-            long i;
-            bool b;
-            union ArrayElement {
-                size_t c;
-                Object* o;
-            } *a;
-        } data;
-
-        bool referenced;
-
-        Object();
-        Object(Object const& object);
-
-        Object(bool b);
-        Object(void* ptr);
-        Object(long i);
-        Object(double f);
-        Object(char c);
+        Object() = default;
         Object(size_t tuple_size);
 
         ~Object();

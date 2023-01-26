@@ -4,31 +4,27 @@
 
 namespace Interpreter {
 
-    Reference::Reference() {
-        type = Pointer;
-        pointer = nullptr;
-    }
+    Reference::Reference():
+    type(Type::Data), data(Data(nullptr)) {}
 
-    Reference::Reference(Reference const& reference) {
-        type = reference.type;
-
-        if (type == SymbolReference) symbol_reference = reference.symbol_reference;
-        else if (type == PropertyReference) property_reference = reference.property_reference;
-        else if (type == ArrayReference) array_reference = reference.array_reference;
-        else if (type == Pointer) pointer = reference.pointer;
+    Reference::Reference(Reference const& reference):
+    type(reference.type) {
+        if (type == Type::Symbol) symbol_reference = reference.symbol_reference;
+        else if (type == Type::Property) property_reference = reference.property_reference;
+        else if (type == Type::Array) array_reference = reference.array_reference;
+        else if (type == Type::Data) data = reference.data;
         else {
-            tuple = new Reference[type];
-            for (long i = 0; i < type; i++)
-                tuple[i] = reference.tuple[i];
+            tuple_reference.size = reference.tuple_reference.size;
+            tuple_reference.tuple = new Reference[tuple_reference.size];
+            for (size_t i = 0; i < tuple_reference.size; i++)
+                tuple_reference.tuple[i] = reference.tuple_reference.tuple[i];
         }
     }
 
-    Reference::Reference(Object** const& symbol_reference) {
-        type = SymbolReference;
-        this->symbol_reference = symbol_reference;
-    }
+    Reference::Reference(SymbolReference symbol_reference):
+    type(Type::Symbol), symbol_reference(symbol_reference) {}
 
-    Reference::Reference(Object* const& parent, Object** const& reference) {
+    Reference::Reference(Object* parent, Data* reference) {
         type = PropertyReference;
         property_reference.parent = parent;
         property_reference.reference = reference;
@@ -45,9 +41,10 @@ namespace Interpreter {
         this->pointer = pointer;
     }
 
-    Reference::Reference(size_t const& tuple_size) {
-        type = tuple_size;
-        tuple = new Reference[tuple_size];
+    Reference::Reference(size_t tuple_size):
+    tuple_reference.size(tuple_size) {
+        if (tuple_reference > 0)
+            tuple_reference.tuple = new Reference[tuple_size];
     }
 
     Reference::~Reference() {
