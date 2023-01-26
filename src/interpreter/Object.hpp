@@ -19,19 +19,12 @@ namespace Interpreter {
 
         std::map<std::string, Object*> properties;
         std::list<std::unique_ptr<Function>> functions;
-        union ArrayElement {
-            size_t c;
-            Data o;
-        } *array = nullptr;
+
+        std::vector<Data> array;
 
         bool referenced = false;
 
-        Object() = default;
-        Object(size_t tuple_size);
-
-        ~Object();
-
-        Object*& get_property(std::string name, Context & context);
+        Object* & get_property(std::string name, Context & context);
         std::string to_string() const;
 
     };

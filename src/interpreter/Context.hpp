@@ -26,17 +26,11 @@ namespace Interpreter {
 
         Object* new_object();
         Object* new_object(Object const& object);
-        Object* new_object(void* ptr);
-        Object* new_object(bool b);
-        Object* new_object(long i);
-        Object* new_object(double f);
-        Object* new_object(char c);
-        Object* new_object(size_t tuple_size);
         Object* new_object(std::string const& str);
 
         bool has_symbol(std::string const& symbol) const;
-        void add_symbol(std::string const& symbol, Reference const& reference);
-        Reference get_symbol(std::string const& symbol);
+
+        SymbolReference operator[](std::string const& symbol);
 
     };
 

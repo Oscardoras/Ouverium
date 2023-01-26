@@ -7,55 +7,25 @@
 namespace Interpreter {
 
     class Context;
+    class Reference;
 
     using SymbolReference = Data*;
+    struct PropertyReference {
+        Object* parent;
+        Data* reference;
+    };
+    struct ArrayReference {
+        Object* array;
+        size_t i;
+    };
+    using TupleReference = std::vector<Reference>;
 
-    struct Reference {
+    struct Reference : public std::variant<Data, SymbolReference, PropertyReference, ArrayReference, TupleReference> {
 
-        enum class Type {
-            Symbol,
-            Property,
-            Array,
-            Data,
-            Tuple
-        } type;
-
-        union {
-            SymbolReference symbol_reference;
-            struct {
-                Object* parent;
-                Data* reference;
-            } property_reference;
-            struct {
-                Object* array;
-                size_t i;
-            } array_reference;
-            Data data;
-            struct {
-                Reference *tuple;
-                size_t size;
-            } tuple_reference;
-        };
-
-        private:
-        Reference();
-
-        public:
-        Reference(Reference const& reference);
-        Reference(SymbolReference symbol_reference);
-        Reference(Object* parent, Data* reference);
-        Reference(Object* array, size_t i);
-        Reference(Data data);
-        Reference(size_t tuple_size);
-
-        ~Reference();
-
-        bool is_reference() const;
-        Data& get_reference() const;
+        using std::variant<Data, SymbolReference, PropertyReference, ArrayReference, TupleReference>::variant;
 
         Data to_data(Context & context) const;
-
-        Reference& operator=(Reference const& reference);
+        SymbolReference to_symbol_reference(Context & context);
 
     };
 

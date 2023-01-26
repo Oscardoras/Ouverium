@@ -12,7 +12,7 @@ namespace Interpreter {
 
     struct Function {
 
-        enum FunctionType {
+        enum class Type {
             Custom,
             System
         } type;
