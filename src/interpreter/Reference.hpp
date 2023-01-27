@@ -1,6 +1,8 @@
 #ifndef __INTERPRETER_REFERENCE_HPP__
 #define __INTERPRETER_REFERENCE_HPP__
 
+#include <functional>
+
 #include "Object.hpp"
 
 
@@ -9,14 +11,22 @@ namespace Interpreter {
     class Context;
     class Reference;
 
-    using SymbolReference = Data*;
+    using SymbolReference = std::reference_wrapper<Data>;
     struct PropertyReference {
-        Object* parent;
-        Data* reference;
+        std::reference_wrapper<Object> parent;
+        std::reference_wrapper<Data> reference;
+
+        inline Data & get() const {
+            return reference;
+        }
     };
     struct ArrayReference {
-        Object* array;
+        std::reference_wrapper<Object> array;
         size_t i;
+
+        inline Data & get() const {
+            return array.get().array[i];
+        }
     };
     using TupleReference = std::vector<Reference>;
 
@@ -25,7 +35,7 @@ namespace Interpreter {
         using std::variant<Data, SymbolReference, PropertyReference, ArrayReference, TupleReference>::variant;
 
         Data to_data(Context & context) const;
-        SymbolReference to_symbol_reference(Context & context);
+        Data & to_symbol_reference(Context & context) const;
 
     };
 

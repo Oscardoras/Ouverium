@@ -32,14 +32,18 @@ namespace Interpreter {
         if (auto symbol = std::dynamic_pointer_cast<Symbol>(parameters)) {
             function_context.add_symbol(symbol->name, reference);
         } else if (auto tuple = std::dynamic_pointer_cast<Tuple>(parameters)) {
-            if (reference.type == (long) tuple->objects.size()) {
-                for (size_t i = 0; i < tuple->objects.size(); i++)
-                    set_references(function_context, tuple->objects[i], reference.tuple[i]);
+            if (auto tuple_reference = std::get_if<TupleReference>(&reference)) {
+                if (tuple_reference->size() == tuple->objects.size()) {
+                    for (size_t i = 0; i < tuple->objects.size(); i++)
+                        set_references(function_context, tuple->objects[i], tuple_reference[i]);
+                } else throw Interpreter::FunctionArgumentsError();
             } else {
-                auto object = reference.to_object(function_context);
-                if (object->type == (long) tuple->objects.size()) {
-                    for (unsigned long i = 1; i <= tuple->objects.size(); i++)
-                        set_references(function_context, tuple->objects[i], Reference(&object->data.a[i].o));
+                auto data = reference.to_data(function_context);
+                if (auto object = std::get_if<Object*>(&data)) {
+                    if ((*object)->array.size() == tuple->objects.size()) {
+                        for (size_t i = 0; i < tuple->objects.size(); i++)
+                            set_references(function_context, tuple->objects[i], ArrayReference{**object, i});
+                    } else throw Interpreter::FunctionArgumentsError();
                 } else throw Interpreter::FunctionArgumentsError();
             }
         } else throw Interpreter::FunctionArgumentsError();

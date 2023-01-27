@@ -19,18 +19,23 @@ namespace Interpreter {
     struct Context {
 
         std::shared_ptr<Parser::Position> position;
-        std::map<std::string, Reference> symbols;
+        std::map<std::string, SymbolReference> symbols;
 
-        virtual GlobalContext& get_global() = 0;
-        virtual Context& get_parent() = 0;
+        inline Context(std::shared_ptr<Parser::Position> position = nullptr):
+        position(position) {}
+
+        virtual GlobalContext & get_global() = 0;
+        virtual Context & get_parent() = 0;
 
         Object* new_object();
         Object* new_object(Object const& object);
         Object* new_object(std::string const& str);
 
-        bool has_symbol(std::string const& symbol) const;
+        Data & new_reference(Data data = Data{});
 
-        SymbolReference operator[](std::string const& symbol);
+        bool has_symbol(std::string const& symbol) const;
+        Data & add_symbol(std::string const& symbol, Reference const& reference);
+        Data & operator[](std::string const& symbol);
 
     };
 
@@ -38,13 +43,13 @@ namespace Interpreter {
 
         std::map<std::string, std::shared_ptr<Expression>> files;
         std::list<Object> objects;
-        std::list<Object*> references;
+        std::list<Data> references;
         std::list<void*> c_pointers;
 
         GlobalContext();
 
-        virtual GlobalContext& get_global();
-        virtual Context& get_parent();
+        virtual GlobalContext & get_global();
+        virtual Context & get_parent();
 
         ~GlobalContext();
 
@@ -54,10 +59,11 @@ namespace Interpreter {
 
         std::reference_wrapper<Context> parent;
 
-        FunctionContext(Context & parent, std::shared_ptr<Parser::Position> position);
+        inline FunctionContext(Context & parent, std::shared_ptr<Parser::Position> position = nullptr):
+        Context(position), parent(parent) {}
 
-        virtual GlobalContext& get_global();
-        virtual Context& get_parent();
+        virtual GlobalContext & get_global();
+        virtual Context & get_parent();
 
     };
 

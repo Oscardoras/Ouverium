@@ -10,49 +10,19 @@
 
 namespace Interpreter {
 
-    struct Function {
-
-        enum class Type {
-            Custom,
-            System
-        } type;
-
-        std::map<std::string, Reference> extern_symbols;
-
-        inline Function() = default;
-
-        inline Function(Function const& function) = default;
-
-        virtual ~Function() = default;
-
-    };
-
-    struct CustomFunction: public Function {
-
+    struct CustomFunction {
         std::shared_ptr<FunctionDefinition> pointer;
-
-        inline CustomFunction(CustomFunction const& function) = default;
-
-        inline CustomFunction(std::shared_ptr<FunctionDefinition> pointer) {
-            type = Custom;
-            this->pointer = pointer;
-        }
-
     };
 
-    struct SystemFunction: public Function {
-
+    struct SystemFunction {
         std::shared_ptr<Expression> parameters;
         Reference (*pointer)(FunctionContext&);
+    };
 
-        inline SystemFunction(SystemFunction const& function) = default;
+    struct Function: public std::variant<CustomFunction, SystemFunction> {
+        std::map<std::string, Reference> extern_symbols;
 
-        inline SystemFunction(std::shared_ptr<Expression> parameters, Reference (*pointer)(FunctionContext&)) {
-            type = System;
-            this->parameters = parameters;
-            this->pointer = pointer;
-        }
-
+        using std::variant<CustomFunction, SystemFunction>::variant;
     };
 
 }

@@ -9,9 +9,9 @@ namespace Interpreter {
     struct Error {};
     struct FunctionArgumentsError: public Error {};
 
-    Reference call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<std::unique_ptr<Function>> const& functions, Reference const& reference);
+    Reference call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, Reference const& reference);
 
-    Reference call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<std::unique_ptr<Function>> const& functions, std::shared_ptr<Expression> arguments);
+    Reference call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, std::shared_ptr<Expression> arguments);
 
     Reference execute(Context & context, std::shared_ptr<Expression> expression);
 

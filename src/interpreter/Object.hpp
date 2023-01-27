@@ -17,14 +17,14 @@ namespace Interpreter {
 
     struct Object {
 
-        std::map<std::string, Object*> properties;
-        std::list<std::unique_ptr<Function>> functions;
+        std::map<std::string, Data> properties;
+        std::list<Function> functions;
 
         std::vector<Data> array;
 
         bool referenced = false;
 
-        Object* & get_property(std::string name, Context & context);
+        Data & get_property(std::string name, Context & context);
         std::string to_string() const;
 
     };

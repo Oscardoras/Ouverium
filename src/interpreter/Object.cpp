@@ -6,9 +6,9 @@
 
 namespace Interpreter {
 
-    Object* & Object::get_property(std::string name, Context & context) {
+    Data & Object::get_property(std::string name, Context & context) {
         auto & field = properties[name];
-        if (field == nullptr) field = context.new_object();
+        if (field == Data(nullptr)) field = context.new_object();
         return field;
     }
 

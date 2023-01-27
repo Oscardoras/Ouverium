@@ -18,56 +18,26 @@ namespace Interpreter {
         return &objects.back();
     }
 
-    Object* Context::new_object(bool b) {
-        auto & objects = get_global().objects;
-        objects.push_back(Object(b));
-        return &objects.back();
-    }
-
-    Object* Context::new_object(void* ptr) {
-        auto & objects = get_global().objects;
-        objects.push_back(Object(ptr));
-        return &objects.back();
-    }
-
-    Object* Context::new_object(long i) {
-        auto & objects = get_global().objects;
-        objects.push_back(Object(i));
-        return &objects.back();
-    }
-
-    Object* Context::new_object(double f) {
-        auto & objects = get_global().objects;
-        objects.push_back(Object(f));
-        return &objects.back();
-    }
-
-    Object* Context::new_object(char c) {
-        auto & objects = get_global().objects;
-        objects.push_back(Object(c));
-        return &objects.back();
-    }
-
-    Object* Context::new_object(size_t tuple_size) {
-        auto & objects = get_global().objects;
-        objects.push_back(Object(tuple_size));
-        return &objects.back();
-    }
-
     Object* Context::new_object(std::string const& str) {
-        long l = str.length();
         auto & objects = get_global().objects;
-        objects.push_back(Object(str.size()));
+        objects.push_back(Object());
         auto object = &objects.back();
-        for (long i = 0; i < l; i++)
-            object->data.a[i+1].o = new_object(str[i]);
+        for (auto c : str)
+            object->array.push_back(c);
         return object;
+    }
+
+    Data & Context::new_reference(Data data) {
+        auto & references = get_global().references;
+        references.push_back(data);
+        return references.back();
     }
 
     bool Context::has_symbol(std::string const& symbol) const {
         return symbols.find(symbol) != symbols.end();
     }
 
+/*
     void Context::add_symbol(std::string const& symbol, Reference const& reference) {
         auto & references = get_global().references;
 
@@ -81,27 +51,30 @@ namespace Interpreter {
             symbols[symbol] = Reference(&references.back());
         } else symbols[symbol] = reference;
     }
+*/
 
-    Reference Context::get_symbol(std::string const& symbol) {
-        auto & ref = symbols[symbol];
+    Data & Context::add_symbol(std::string const& symbol, Reference const& reference) {
+        auto it = symbols.find(symbol);
+        if (it == symbols.end())
+            symbols.emplace(symbol, reference.to_symbol_reference(*this));
 
-        if (ref.type == Reference::Pointer && ref.pointer == nullptr) {
-            auto & references = get_global().references;
+        return symbols.at(symbol);
+    }
 
-            ref.type = Reference::SymbolReference;
-            references.push_back(new_object());
-            ref.symbol_reference = &references.back();
-        }
+    Data & Context::operator[](std::string const& symbol) {
+        auto it = symbols.find(symbol);
+        if (it == symbols.end())
+            symbols.emplace(symbol, new_reference(new_object()));
 
-        return ref;
+        return symbols.at(symbol);
     }
 
 
-    GlobalContext& GlobalContext::get_global() {
+    GlobalContext & GlobalContext::get_global() {
         return *this;
     }
 
-    Context& GlobalContext::get_parent() {
+    Context & GlobalContext::get_parent() {
         return *this;
     }
 
@@ -109,7 +82,8 @@ namespace Interpreter {
         for (auto it = objects.begin(); it != objects.end(); it++) {
             auto finalize = it->properties.find("finalize");
             if (finalize != it->properties.end())
-                call_function(get_global(), nullptr, finalize->second->functions, std::make_shared<Tuple>());
+                if (auto object = std::get_if<Object*>(&finalize->second))
+                    call_function(get_global(), nullptr, (*object)->functions, std::make_shared<Tuple>());
         }
 
         for (auto it = c_pointers.begin(); it != c_pointers.end(); it++)
@@ -117,15 +91,11 @@ namespace Interpreter {
     }
 
 
-    FunctionContext::FunctionContext(Context & parent, std::shared_ptr<Parser::Position> position): parent(parent) {
-        this->position = position;
-    }
-
-    GlobalContext& FunctionContext::get_global() {
+    GlobalContext & FunctionContext::get_global() {
         return parent.get().get_global();
     }
 
-    Context& FunctionContext::get_parent() {
+    Context & FunctionContext::get_parent() {
         return parent;
     }
 
