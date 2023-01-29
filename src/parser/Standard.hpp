@@ -19,7 +19,7 @@ namespace Parser {
             TextPosition(std::string const& path, unsigned int line, unsigned int column);
 
             virtual void store_stack_trace(Interpreter::Context & context) override;
-            virtual void notify_error(std::string const& message) override;
+            virtual void notify_error(std::string const& message, bool print_stack_trace) override;
         };
 
         struct Word {

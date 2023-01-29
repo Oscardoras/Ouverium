@@ -36,6 +36,9 @@ namespace Interpreter {
         bool has_symbol(std::string const& symbol) const;
         Data & add_symbol(std::string const& symbol, Reference const& reference);
         Data & operator[](std::string const& symbol);
+        inline auto & get_function(std::string const& symbol) {
+            return std::get<Object*>(operator[](symbol))->functions;
+        }
 
     };
 

@@ -26,7 +26,7 @@ namespace Parser {
          * Prints an error.
          * @param message a message to notify.
         */
-        virtual void notify_error(std::string const& message = "An error occured") = 0;
+        virtual void notify_error(std::string const& message = "An error occured", bool print_stack_trace = true) = 0;
     };
 
 }

@@ -30,9 +30,9 @@ namespace Parser {
             }
         }
 
-        void TextPosition::notify_error(std::string const& message) {
+        void TextPosition::notify_error(std::string const& message, bool print_stack_trace) {
             std::cerr << message << std::endl;
-            std::cerr << stack_trace;
+            if (print_stack_trace) std::cerr << stack_trace;
         }
 
         Word::Word(std::string const& word, TextPosition const& position): word(word), position(position) {}

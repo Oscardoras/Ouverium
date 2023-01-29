@@ -22,7 +22,7 @@ int main(int argc, char ** argv) {
 
                     auto expression = Parser::Standard::get_tree(code, ".", symbols);
                     auto r = Interpreter::run(context, expression);
-                    if (Interpreter::print(std::cout, r.to_object(context)))
+                    if (Interpreter::print(std::cout, r.to_data(context)))
                         std::cout << std::endl;
                     code = "";
                 } catch (Parser::Standard::IncompleteCode const& e) {}

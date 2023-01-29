@@ -44,7 +44,7 @@ namespace Interpreter {
 
         Reference function_definition(FunctionContext & context);
 
-        bool equals(Object* a, Object* b);
+        bool equals(Data a, Data b);
 
         Reference equals(FunctionContext & context);
 

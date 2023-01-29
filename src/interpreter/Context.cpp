@@ -37,22 +37,6 @@ namespace Interpreter {
         return symbols.find(symbol) != symbols.end();
     }
 
-/*
-    void Context::add_symbol(std::string const& symbol, Reference const& reference) {
-        auto & references = get_global().references;
-
-        if (reference.type == Reference::Pointer) {
-            references.push_back(reference.pointer);
-            symbols[symbol] = Reference(&references.back());
-        } else if (reference.type > 0) {
-            references.push_back(new_object((size_t) reference.type));
-            for (long i = 0; i < reference.type; i++)
-                references.back()->data.a[i+1].o = reference.tuple[i].to_object(*this);
-            symbols[symbol] = Reference(&references.back());
-        } else symbols[symbol] = reference;
-    }
-*/
-
     Data & Context::add_symbol(std::string const& symbol, Reference const& reference) {
         auto it = symbols.find(symbol);
         if (it == symbols.end())

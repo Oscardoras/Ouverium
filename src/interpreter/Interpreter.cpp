@@ -14,6 +14,8 @@
 
 #include "../parser/Standard.hpp"
 
+#include "../Utils.hpp"
+
 
 namespace Interpreter {
 
@@ -76,83 +78,87 @@ namespace Interpreter {
                 function_definition->body = arguments;
 
                 auto object = context.new_object();
-                auto f = std::make_unique<CustomFunction>(function_definition);
+                object->functions.push_front(CustomFunction{function_definition});
+                auto & f = object->functions.back();
                 for (auto symbol : function_definition->body->symbols)
-                    f->extern_symbols[symbol] = context.get_symbol(symbol);
-                object->functions.push_front(std::move(f));
+                    f.extern_symbols[symbol] = context[symbol];
 
                 function_context.add_symbol(symbol->name, Reference(object));
             } else throw Interpreter::FunctionArgumentsError();
         } else throw Interpreter::FunctionArgumentsError();
     }
 
-    Reference call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<std::unique_ptr<Function>> const& functions, Reference const& reference) {
-        Object* object = reference.to_object(context);
+    Reference call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, Reference const& reference) {
+        Data data = reference.to_data(context);
 
         for (auto const& function : functions) {
             try {
                 FunctionContext function_context(context, nullptr);
-                for (auto & symbol : function->extern_symbols)
+                for (auto & symbol : function.extern_symbols)
                     function_context.add_symbol(symbol.first, symbol.second);
 
-                if (function->type == Function::Custom) {
-                    set_references(function_context, ((CustomFunction*) function.get())->pointer->parameters, object);
+                if (auto custom_function = std::get_if<CustomFunction>(&function)) {
+                    set_references(function_context, custom_function->pointer->parameters, data);
 
-                    Object* filter;
-                    if (((CustomFunction*) function.get())->pointer->filter != nullptr)
-                        filter = Interpreter::execute(function_context, ((CustomFunction*) function.get())->pointer->filter).to_object(context);
+                    Data filter;
+                    if (custom_function->pointer->filter != nullptr)
+                        filter = Interpreter::execute(function_context, custom_function->pointer->filter).to_data(context);
                     else filter = nullptr;
 
-                    if (filter == nullptr || (filter->type == Object::Bool && filter->data.b))
-                        return Interpreter::execute(function_context, ((CustomFunction*) function.get())->pointer->body);
-                    else continue;
-                } else {
-                    set_references(function_context, ((SystemFunction*) function.get())->parameters, object);
+                    if (auto b = std::get_if<bool>(&filter)) {
+                        if (*b)
+                            return Interpreter::execute(function_context, custom_function->pointer->body);
+                        else continue;
+                    } else FunctionArgumentsError();
+                } else if (auto system_function = std::get_if<SystemFunction>(&function)) {
+                    set_references(function_context, system_function->parameters, data);
 
-                    return ((SystemFunction*) function.get())->pointer(function_context);
-                }
+                    return system_function->pointer(function_context);
+                } else return Reference();
             } catch (FunctionArgumentsError & e) {}
         }
 
         if (position != nullptr) {
             position->store_stack_trace(context);
-            position->notify_error();
+            position->notify_error("Error: cannot find a function matching with the arguments");
         }
         throw Error();
     }
 
-    Reference call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<std::unique_ptr<Function>> const& functions, std::shared_ptr<Expression> arguments) {
+    Reference call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, std::shared_ptr<Expression> arguments) {
         std::map<std::shared_ptr<Expression>, Reference> computed;
 
         for (auto const& function : functions) {
             try {
                 FunctionContext function_context(context, position);
-                for (auto & symbol : function->extern_symbols)
+                for (auto & symbol : function.extern_symbols)
                     function_context.add_symbol(symbol.first, symbol.second);
 
-                if (function->type == Function::Custom) {
-                    set_references(context, function_context, computed, ((CustomFunction*) function.get())->pointer->parameters, arguments);
+                if (auto custom_function = std::get_if<CustomFunction>(&function)) {
+                    set_references(context, function_context, computed, custom_function->pointer->parameters, arguments);
 
-                    Object* filter;
-                    if (((CustomFunction*) function.get())->pointer->filter != nullptr)
-                        filter = execute(function_context, ((CustomFunction*) function.get())->pointer->filter).to_object(context);
+                    Data filter;
+                    if (custom_function->pointer->filter != nullptr)
+                        filter = execute(function_context, custom_function->pointer->filter).to_data(context);
                     else filter = nullptr;
 
-                    if (filter == nullptr || (filter->type == Object::Bool && filter->data.b))
-                        return execute(function_context, ((CustomFunction*) function.get())->pointer->body);
-                    else throw FunctionArgumentsError();
-                } else {
-                    set_references(context, function_context, computed, ((SystemFunction*) function.get())->parameters, arguments);
+                    if (auto b = std::get_if<bool>(&filter)) {
+                        if (*b)
+                            return Interpreter::execute(function_context, custom_function->pointer->body);
+                        else continue;
+                    } else FunctionArgumentsError();
+                } else if (auto system_function = std::get_if<SystemFunction>(&function)) {
+                    set_references(context, function_context, computed, system_function->parameters, arguments);
 
-                    return ((SystemFunction*) function.get())->pointer(function_context);
-                }
+                    return system_function->pointer(function_context);
+                } else return Reference();
 
             } catch (FunctionArgumentsError & e) {}
         }
 
         if (position != nullptr) {
             position->store_stack_trace(context);
-            position->notify_error();
+            position->notify_error("Error: cannot find a function matching with the arguments");
         }
         throw Error();
     }
@@ -160,73 +166,51 @@ namespace Interpreter {
 
     Reference execute(Context & context, std::shared_ptr<Expression> expression) {
         if (auto function_call = std::dynamic_pointer_cast<FunctionCall>(expression)) {
-            auto func = execute(context, function_call->function).to_object(context);
-            return call_function(context, function_call->position, func->functions, function_call->arguments);
+            auto data = execute(context, function_call->function).to_data(context);
+            if (auto object = std::get_if<Object*>(&data))
+                return call_function(context, function_call->position, (*object)->functions, function_call->arguments);
+            else
+                return call_function(context, function_call->position, std::list<Function>{}, function_call->arguments);
         } else if (auto function_definition = std::dynamic_pointer_cast<FunctionDefinition>(expression)) {
             auto object = context.new_object();
-            auto f = std::make_unique<CustomFunction>(function_definition);
+            object->functions.push_front(CustomFunction{});
+            auto & f = object->functions.back();
+
             for (auto symbol : function_definition->body->symbols)
                 if (context.has_symbol(symbol))
-                    f->extern_symbols[symbol] = context.get_symbol(symbol);
+                    f.extern_symbols[symbol] = context[symbol];
             if (function_definition->filter != nullptr)
                 for (auto symbol : function_definition->filter->symbols)
                     if (context.has_symbol(symbol))
-                        f->extern_symbols[symbol] = context.get_symbol(symbol);
-            object->functions.push_front(std::move(f));
+                        f.extern_symbols[symbol] = context[symbol];
 
             return Reference(object);
         } else if (auto property = std::dynamic_pointer_cast<Property>(expression)) {
-            auto object = execute(context, property->object).to_object(context);
-            return Reference(object, &object->get_property(property->name, context));
+            auto data = execute(context, property->object).to_data(context);
+            if (auto object = std::get_if<Object*>(&data))
+                return PropertyReference{**object, (*object)->get_property(property->name, context)};
+            else
+                return Reference(context.new_object());
         } else if (auto symbol = std::dynamic_pointer_cast<Symbol>(expression)) {
-            if (symbol->name[0] == '\"') {
-                std::string str;
-
-                bool escape = false;
-                bool first = true;
-                for (char c : symbol->name) if (!first) {
-                    if (!escape) {
-                        if (c == '\"') break;
-                        else if (c == '\\') escape = true;
-                        else str += c;
-                    } else {
-                        escape = false;
-                        if (c == 'b') str += '\b';
-                        if (c == 'e') str += '\e';
-                        if (c == 'f') str += '\f';
-                        if (c == 'n') str += '\n';
-                        if (c == 'r') str += '\r';
-                        if (c == 't') str += '\t';
-                        if (c == 'v') str += '\v';
-                        if (c == '\\') str += '\\';
-                        if (c == '\'') str += '\'';
-                        if (c == '\"') str += '\"';
-                        if (c == '?') str += '\?';
-                    }
-                } else first = false;
-
-                return context.new_object(str);
-            }
-            if (symbol->name == "true") return Reference(context.new_object(true));
-            if (symbol->name == "false") return Reference(context.new_object(false));
-            try {
-                return Reference(context.new_object(std::stol(symbol->name)));
-            } catch (std::invalid_argument const& ex1) {
-                try {
-                    return Reference(context.new_object(std::stod(symbol->name)));
-                } catch (std::invalid_argument const& ex2) {
-                    return context.get_symbol(symbol->name);
-                }
+            auto data = get_symbol(symbol->name);
+            if (auto b = std::get_if<bool>(&data)) {
+                return Reference(Data(*b));
+            } else if (auto l = std::get_if<long>(&data)) {
+                return Reference(Data(*l));
+            } else if (auto d = std::get_if<double>(&data)) {
+                return Reference(Data(*d));
+            } else if (auto str = std::get_if<std::string>(&data)) {
+                return Reference(context.new_object(*str));
+            } else {
+                return context[symbol->name];
             }
         } else if (auto tuple = std::dynamic_pointer_cast<Tuple>(expression)) {
-            auto n = tuple->objects.size();
-            Reference reference;
-            if (n > 0) {
-                reference = Reference(n);
-                for (int i = 0; i < (int) n; i++)
-                    reference.tuple[i] = execute(context, tuple->objects[i]);
-            } else reference = Reference(context.new_object());
-            return reference;
+            if (!tuple->objects.empty()) {
+                TupleReference tuple_reference;
+                for (auto e : tuple->objects)
+                    tuple_reference.push_back(execute(context, e));
+                return tuple_reference;
+            } else return Reference(context.new_object());
         } else return Reference();
     }
 
@@ -242,23 +226,23 @@ namespace Interpreter {
         }
     }
 
-    bool print(std::ostream & stream, Object* object) {
-        if (object->type == Object::Bool) {
-            std::cout << object->data.b;
+    bool print(std::ostream & stream, Data data) {
+        if (auto c = std::get_if<char>(&data)) {
+            std::cout << *c;
             return true;
-        } else if (object->type == Object::Int) {
-            std::cout << object->data.i;
+        } else if (auto f = std::get_if<double>(&data)) {
+            std::cout << *f;
             return true;
-        } else if (object->type == Object::Float) {
-            std::cout << object->data.f;
+        } else if (auto i = std::get_if<long>(&data)) {
+            std::cout << *i;
             return true;
-        } else if (object->type == Object::Char) {
-            std::cout << object->data.c;
+        } else if (auto b = std::get_if<bool>(&data)) {
+            std::cout << *b;
             return true;
-        } else if (object->type > 0) {
+        } else if (auto object = std::get_if<Object*>(&data)) {
             bool printed = false;
-            for (long i = 1; i <= object->type; i++)
-                if (print(stream, object->data.a[i].o)) printed = true;
+            for (auto d : (*object)->array)
+                if (print(stream, d)) printed = true;
             return printed;
         } else return false;
     }

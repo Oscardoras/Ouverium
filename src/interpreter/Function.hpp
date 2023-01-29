@@ -20,7 +20,7 @@ namespace Interpreter {
     };
 
     struct Function: public std::variant<CustomFunction, SystemFunction> {
-        std::map<std::string, Reference> extern_symbols;
+        std::map<std::string, SymbolReference> extern_symbols;
 
         using std::variant<CustomFunction, SystemFunction>::variant;
     };

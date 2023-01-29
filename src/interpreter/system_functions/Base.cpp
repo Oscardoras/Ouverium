@@ -5,6 +5,7 @@
 #include <fstream>
 
 #include "Base.hpp"
+
 #include "../../parser/Standard.hpp"
 
 
@@ -13,34 +14,32 @@ namespace Interpreter {
     namespace Base {
 
         Reference separator(FunctionContext & context) {
-            return Reference(context.get_symbol("b"));
+            return Reference(context["b"]);
         }
 
         Reference if_statement(FunctionContext & context) {
-            auto function = ((CustomFunction&) **context.get_symbol("function").to_object(context)->functions.begin()).pointer->body;
+            auto function = std::get<CustomFunction>(*std::get<Object*>(context["function"])->functions.begin()).pointer->body;
 
             if (auto tuple = std::dynamic_pointer_cast<Tuple>(function)) {
                 if (tuple->objects.size() >= 2) {
                     auto & parent = context.get_parent();
 
-                    auto first_condition = Interpreter::execute(parent, tuple->objects[0]).to_object(context);
-                    if (first_condition->type == Object::Bool) {
-                        if (first_condition->data.b)
-                            return Interpreter::execute(parent, tuple->objects[1]).to_object(context);
+                    auto first_condition = Interpreter::execute(parent, tuple->objects[0]).to_data(context);
+                    if (auto b = std::get_if<bool>(&first_condition)) {
+                        if (*b)
+                            return Interpreter::execute(parent, tuple->objects[1]);
                         else {
                             unsigned long i = 2;
                             while (i < tuple->objects.size()) {
-                                auto else_s = Interpreter::execute(parent, tuple->objects[i]).to_object(context);
-                                if (else_s == context.get_symbol("else").to_object(context) && i+1 < tuple->objects.size()) {
-                                    auto s = Interpreter::execute(parent, tuple->objects[i+1]).to_object(context);
-                                    if (s == context.get_symbol("if").to_object(context)) {
-                                        if (i+3 < tuple->objects.size()) {
-                                            auto condition = Interpreter::execute(parent, tuple->objects[i+2]).to_object(context);
-                                            if (condition->type == Object::Bool) {
-                                                if (condition->data.b)
-                                                    return Interpreter::execute(parent, tuple->objects[i+3]).to_object(context);
-                                                else i += 4;
-                                            } else throw Interpreter::FunctionArgumentsError();
+                                auto else_s = Interpreter::execute(parent, tuple->objects[i]).to_data(context);
+                                if (else_s == context["else"] && i+1 < tuple->objects.size()) {
+                                    auto s = Interpreter::execute(parent, tuple->objects[i+1]).to_data(context);
+                                    if (s == context["if"] && i+3 < tuple->objects.size()) {
+                                        auto condition = Interpreter::execute(parent, tuple->objects[i+2]).to_data(context);
+                                        if (b = std::get_if<bool>(&condition)) {
+                                            if (*b)
+                                                return Interpreter::execute(parent, tuple->objects[i+3]);
+                                            else i += 4;
                                         } else throw Interpreter::FunctionArgumentsError();
                                     } else return s;
                                 } else throw Interpreter::FunctionArgumentsError();
@@ -55,86 +54,101 @@ namespace Interpreter {
         Reference while_statement(FunctionContext & context) {
             auto & parent = context.get_parent();
             Reference result;
+            bool resulted = false;
 
-            auto condition = context.get_symbol("condition").to_object(context);
-            auto block = context.get_symbol("block").to_object(context);
-            while (true) {
-                auto c = Interpreter::call_function(parent, nullptr, condition->functions, std::make_shared<Tuple>()).to_object(context);
+            auto condition = context["condition"];
+            auto block = context["block"];
+            if (auto object_condition = std::get_if<Object*>(&condition)) {
+                if (auto object_block = std::get_if<Object*>(&block)) {
 
-                if (c->type == Object::Bool) {
-                    if (c->data.b) {
-                        result = Interpreter::call_function(parent, nullptr, block->functions, std::make_shared<Tuple>());
-                    } else break;
+                    while (true) {
+                        auto c = Interpreter::call_function(parent, nullptr, (*object_condition)->functions, std::make_shared<Tuple>()).to_data(context);
+
+                        if (auto b = std::get_if<bool>(&c)) {
+                            if (b) {
+                                result = Interpreter::call_function(parent, nullptr, (*object_block)->functions, std::make_shared<Tuple>());
+                                resulted = true;
+                            } else break;
+                        } else throw Interpreter::FunctionArgumentsError();
+                    }
+
                 } else throw Interpreter::FunctionArgumentsError();
-            }
+            } else throw Interpreter::FunctionArgumentsError();
 
-            if (result.type == Reference::Pointer && result.pointer == nullptr)
-                return Reference(context.new_object());
-            else return result;
+            if (resulted) return result;
+            else return Reference(context.new_object());
         }
 
         Reference for_statement(FunctionContext & context) {
-            auto & parent = context.get_parent();
+            auto & variable = context["variable"];
+            auto & from_s = context["from_s"];
+            auto & begin = context["begin"];
+            auto & to_s = context["to_s"];
+            auto & end = context["end"];
+            auto & block = context["block"];
 
-            auto variable = context.get_symbol("variable");
-            auto from_s = context.get_symbol("from_s").to_object(context);
-            auto begin = context.get_symbol("begin").to_object(context);
-            auto to_s = context.get_symbol("to_s").to_object(context);
-            auto end = context.get_symbol("end").to_object(context);
-            auto block = context.get_symbol("block").to_object(context);
+            if (from_s == context["from"] && to_s == context["to"]) {
+                if (auto begin_int = std::get_if<long>(&begin)) {
+                    if (auto end_int = std::get_if<long>(&end)) {
 
-            if (from_s == context.get_symbol("from").to_object(context) && begin->type == Object::Int && to_s == context.get_symbol("to").to_object(context) && end->type == Object::Int) {
-                for (long i = begin->data.i; i < end->data.i; i++) {
-                    variable.get_reference() = context.new_object(i);
-                    Interpreter::call_function(parent, nullptr, block->functions, std::make_shared<Tuple>());
-                }
+                        for (long i = *begin_int; i < *end_int; i++) {
+                            variable = i;
+                            Interpreter::call_function(context.get_parent(), nullptr, std::get<Object*>(block)->functions, std::make_shared<Tuple>());
+                        }
+                        return Reference(context.new_object());
 
-                return Reference(context.new_object());
+                    } else throw Interpreter::FunctionArgumentsError();
+                } else throw Interpreter::FunctionArgumentsError();
             } else throw Interpreter::FunctionArgumentsError();
         }
 
         Reference for_step_statement(FunctionContext & context) {
             auto & parent = context.get_parent();
 
-            auto variable = context.get_symbol("variable");
-            auto from_s = context.get_symbol("from_s").to_object(context);
-            auto begin = context.get_symbol("begin").to_object(context);
-            auto to_s = context.get_symbol("to_s").to_object(context);
-            auto end = context.get_symbol("end").to_object(context);
-            auto step_s = context.get_symbol("step_s").to_object(context);
-            auto step = context.get_symbol("step").to_object(context);
-            auto block = context.get_symbol("block").to_object(context);
+            auto variable = context["variable"];
+            auto from_s = context["from_s"];
+            auto begin = context["begin"];
+            auto to_s = context["to_s"];
+            auto end = context["end"];
+            auto step_s = context["step_s"];
+            auto step = context["step"];
+            auto block = context["block"];
 
-            if (from_s == context.get_symbol("from").to_object(context) && begin->type == Object::Int && to_s == context.get_symbol("to").to_object(context) && end->type == Object::Int && step_s == context.get_symbol("step").to_object(context) && step->type == Object::Int) {
-                if (step->data.i > 0)
-                    for (long i = begin->data.i; i < end->data.i; i += step->data.i) {
-                        variable.get_reference() = context.new_object(i);
-                        Interpreter::call_function(parent, nullptr, block->functions, std::make_shared<Tuple>());
-                    }
-                else if (step->data.i < 0)
-                    for (long i = begin->data.i; i > end->data.i; i += step->data.i) {
-                        variable.get_reference() = context.new_object(i);
-                        Interpreter::call_function(parent, nullptr, block->functions, std::make_shared<Tuple>());
-                    }
-                else throw Interpreter::FunctionArgumentsError();
+            if (from_s == context["from"] && to_s == context["to"] && step_s == context["step"]) {
+                if (auto begin_int = std::get_if<long>(&begin)) {
+                    if (auto end_int = std::get_if<long>(&end)) {
+                        if (auto step_int = std::get_if<long>(&step)) {
 
-                return Reference(context.new_object());
+                            if (*step_int > 0)
+                                for (long i = *begin_int; i < *end_int; i += *step_int) {
+                                    variable = i;
+                                    Interpreter::call_function(parent, nullptr, std::get<Object*>(block)->functions, std::make_shared<Tuple>());
+                                }
+                            else if (*step_int < 0)
+                                for (long i = *begin_int; i > *end_int; i += *step_int) {
+                                    variable = i;
+                                    Interpreter::call_function(parent, nullptr, std::get<Object*>(block)->functions, std::make_shared<Tuple>());
+                                }
+                            else throw Interpreter::FunctionArgumentsError();
+                            return Reference(context.new_object());
+
+                        } else throw Interpreter::FunctionArgumentsError();
+                    } else throw Interpreter::FunctionArgumentsError();
+                } else throw Interpreter::FunctionArgumentsError();
             } else throw Interpreter::FunctionArgumentsError();
         }
 
         Reference try_statement(FunctionContext & context) {
-            auto & parent = context.get_parent();
+            auto try_block = context["try_block"];
+            auto catch_s = context["catch_s"];
+            auto catch_function = context["catch_function"];
 
-            auto try_block = context.get_symbol("try_block").to_object(context);
-            auto catch_s = context.get_symbol("catch_s").to_object(context);
-            auto catch_function = context.get_symbol("catch_function").to_object(context);
-
-            if (catch_s == context.get_symbol("catch").to_object(context)) {
+            if (catch_s == context["catch"]) {
                 try {
-                    return Interpreter::call_function(parent, nullptr, try_block->functions, std::make_shared<Tuple>());
+                    return Interpreter::call_function(context.get_parent(), nullptr, std::get<Object*>(try_block)->functions, std::make_shared<Tuple>());
                 } catch (Exception & ex) {
                     try {
-                        return Interpreter::call_function(parent, nullptr, catch_function->functions, ex.reference);
+                        return Interpreter::call_function(context.get_parent(), nullptr, std::get<Object*>(catch_function)->functions, ex.reference);
                     } catch (Interpreter::Error & e) {
                         throw ex;
                     }
@@ -144,31 +158,34 @@ namespace Interpreter {
 
         Reference throw_statement(FunctionContext & context) {
             Exception ex;
-            ex.reference = context.get_symbol("throw_expression");
+            ex.reference = context["throw_expression"];
             ex.position = context.position;
             ex.position->store_stack_trace(context.get_parent());
             throw ex;
         }
 
         std::string get_canonical_path(FunctionContext & context) {
-            std::string path;
-            std::string system_position;
-            try {
-                path = context.get_symbol("path").to_object(context)->to_string();
-                system_position = context.position->path;
-            } catch (std::exception & e) {
-                throw Interpreter::FunctionArgumentsError();
-            }
-            if (path[0] != '/')
-                path = system_position.substr(0, system_position.find_last_of("/")+1) + path;
-            std::filesystem::path p(path);
-            return std::filesystem::canonical(p).string();
+            if (auto object = std::get_if<Object*>(&context["path"])) {
+                try {
+
+                    auto path = (*object)->to_string();
+                    auto system_position = context.position->path;
+
+                    if (path[0] != '/')
+                        path = system_position.substr(0, system_position.find_last_of("/")+1) + path;
+                    std::filesystem::path p(path);
+                    return std::filesystem::canonical(p).string();
+
+                } catch (std::exception & e) {
+                    throw Interpreter::FunctionArgumentsError();
+                }
+            } else throw Interpreter::FunctionArgumentsError();
         }
 
         Reference include(FunctionContext & context) {
             std::string path = get_canonical_path(context);
 
-            auto global = context.get_global();
+            auto & global = context.get_global();
             std::vector<std::string> symbols;
             for (auto it = global.symbols.begin(); it != global.symbols.end(); it++)
                 symbols.push_back(it->first);
@@ -181,17 +198,18 @@ namespace Interpreter {
 
             try {
                 auto expression = Parser::Standard::get_tree(code, path, symbols);
-                return Interpreter::run(global, expression);
+                return Interpreter::execute(global, expression);
             } catch (Parser::Standard::IncompleteCode & e) {
-                std::cerr << "incomplete code, you must finish the last expression in file \"" << path << "\"" << std::endl;
-                return Reference(context.new_object());
+                context.position->store_stack_trace(context.get_parent());
+                context.position->notify_error("incomplete code, you must finish the last expression in file \"" + path + "\"");
+                throw Error();
             }
         }
 
         Reference use(FunctionContext & context) {
             std::string path = get_canonical_path(context);
 
-            auto global = context.get_global();
+            auto & global = context.get_global();
             if (global.files.find(path) == global.files.end()) {
                 std::vector<std::string> symbols;
                 for (auto it = global.symbols.begin(); it != global.symbols.end(); it++)
@@ -208,65 +226,68 @@ namespace Interpreter {
                     global.files[path] = expression;
 
                     for (auto const& symbol : expression->symbols)
-                        global.get_symbol(symbol);
+                        global[symbol];
 
-                    return Interpreter::run(global, expression);
+                    return Interpreter::execute(global, expression);
                 } catch (Parser::Standard::IncompleteCode & e) {
-                    std::cerr << "incomplete code, you must finish the last expression in file \"" << path << "\"" << std::endl;
-                    return Reference(context.new_object());
+                    context.position->store_stack_trace(context.get_parent());
+                    context.position->notify_error("incomplete code, you must finish the last expression in file \"" + path + "\"");
+                    throw Error();
                 }
             } else
                 return Reference(context.new_object());
         }
 
         Reference copy(FunctionContext & context) {
-            auto object = context.get_symbol("object").to_object(context);
+            auto data = context["data"];
 
-            if (object->type == Object::Char)
-                return Reference(context.new_object(object->data.c));
-            else if (object->type == Object::Float)
-                return Reference(context.new_object(object->data.f));
-            else if (object->type == Object::Int)
-                return Reference(context.new_object(object->data.i));
-            else if (object->type == Object::Bool)
-                return Reference(context.new_object(object->data.b));
-            else throw Interpreter::FunctionArgumentsError();
+            if (auto object = std::get_if<Object*>(&data))
+                throw Interpreter::FunctionArgumentsError();
+            else return data;
         }
 
         Reference copy_pointer(FunctionContext & context) {
-            return Reference(context.get_symbol("object").to_object(context));
+            return Reference(context["data"]);
         }
 
-        void assignation(Reference const& var, Object* const& object) {
-            if (var.is_reference()) var.get_reference() = object;
-            else if (var.type == object->type)
-                for (long i = 0; i < var.type; i++)
-                    assignation(var.tuple[i], object->data.a[i+1].o);
-            else throw Interpreter::FunctionArgumentsError();
-        }
-
-        Reference assign(FunctionContext & context) {
-            auto var = Interpreter::call_function(context, nullptr, context.get_symbol("var").to_object(context)->functions, std::make_shared<Tuple>());
-            auto object = context.get_symbol("object").to_object(context);
-
-            assignation(var, object);
+        Reference assignation(Reference var, Data d) {
+            if (auto data = std::get_if<Data>(&var)) return *data;
+            else if (auto symbol_reference = std::get_if<SymbolReference>(&var)) symbol_reference->get() = d;
+            else if (auto property_reference = std::get_if<PropertyReference>(&var)) property_reference->get() = d;
+            else if (auto array_reference = std::get_if<ArrayReference>(&var)) array_reference->get() = d;
+            else if (auto tuple_reference = std::get_if<TupleReference>(&var)) {
+                if (auto object = std::get_if<Object*>(&d)) {
+                    if (tuple_reference->size() == (*object)->array.size()) {
+                        for (size_t i = 0; i < tuple_reference->size(); i++)
+                            assignation((*tuple_reference)[i], (*object)->array[i]);
+                    } else throw Interpreter::FunctionArgumentsError();
+                } else throw Interpreter::FunctionArgumentsError();
+            } else throw Interpreter::FunctionArgumentsError();
             return var;
         }
 
-        Reference function_definition(FunctionContext & context) {
-            auto var = context.get_symbol("var").to_object(context);
-            auto object = context.get_symbol("object").to_object(context);
+        Reference assign(FunctionContext & context) {
+            auto var = Interpreter::call_function(context, nullptr, std::get<Object*>(context["var"])->functions, std::make_shared<Tuple>());
+            auto data = context["data"];
 
-            for (auto it = object->functions.rbegin(); it != object->functions.rend(); it++) {
-                if ((*it)->type == Function::Custom) {
-                    var->functions.push_front(std::make_unique<CustomFunction>((CustomFunction&) **it));
-                } else var->functions.push_front(std::make_unique<SystemFunction>((SystemFunction&) **it));
-            }
-
-            return context.get_symbol("var");
+            return assignation(var, data);
         }
 
-        bool equals(Object* a, Object* b) {
+        Reference function_definition(FunctionContext & context) {
+            try {
+                auto var = std::get<Object*>(context["var"]);
+                auto object = std::get<Object*>(context["data"]);
+
+                for (auto it = object->functions.rbegin(); it != object->functions.rend(); it++)
+                    var->functions.push_front(*it);
+
+                return context["var"];
+            } catch (std::bad_variant_access & e) {
+                throw Interpreter::FunctionArgumentsError();
+            }
+        }
+
+        bool equals(Data a, Data b) {
             if (a->type == b->type) {
                 if (a->type >= 0) {
                     for (auto const& element : a->properties) {
@@ -313,38 +334,37 @@ namespace Interpreter {
         }
 
         Reference equals(FunctionContext & context) {
-            auto a = context.get_symbol("a").to_object(context);
-            auto b = context.get_symbol("b").to_object(context);
+            auto a = context["a"];
+            auto b = context["b"];
 
-            return Reference(context.new_object(equals(a, b)));
+            return Reference(Data(equals(a, b)));
         }
 
         Reference not_equals(FunctionContext & context) {
-            auto a = context.get_symbol("a").to_object(context);
-            auto b = context.get_symbol("b").to_object(context);
+            auto a = context["a"];
+            auto b = context["b"];
 
-            return Reference(context.new_object(!equals(a, b)));
+            return Reference(Data(!equals(a, b)));
         }
 
         Reference check_pointers(FunctionContext & context) {
-            auto a = context.get_symbol("a").to_object(context);
-            auto b = context.get_symbol("b").to_object(context);
+            auto a = context["a"];
+            auto b = context["b"];
 
-            return Reference(context.new_object(a == b));
+            return Reference(Data(a == b));
         }
 
         Reference not_check_pointers(FunctionContext & context) {
-            auto a = context.get_symbol("a").to_object(context);
-            auto b = context.get_symbol("b").to_object(context);
-
-            return Reference(context.new_object(a != b));
+            auto a = context["a"];
+            auto b = context["b"];
+            return Reference(Data(a != b));
         }
 
         void init(Context & context) {
-            context.get_symbol(";").to_object(context)->functions.push_front(std::make_unique<SystemFunction>(std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
+            context.get_function(";").push_front(SystemFunction{std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
                 std::make_shared<Symbol>("a"),
                 std::make_shared<Symbol>("b")
-            }), separator));
+            }), separator});
 
             auto if_s = std::make_unique<SystemFunction>(std::make_shared<FunctionCall>(
                 std::make_shared<Symbol>("function"),
