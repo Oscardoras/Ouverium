@@ -288,6 +288,11 @@ namespace Interpreter {
         }
 
         bool equals(Data a, Data b) {
+            if (auto a_object = std::get_if<Object*>(&a)) {
+                if (auto b_object = std::get_if<Object*>(&b)) {
+
+                } else return false;
+            }
             if (a->type == b->type) {
                 if (a->type >= 0) {
                     for (auto const& element : a->properties) {
