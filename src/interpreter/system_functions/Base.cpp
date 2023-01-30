@@ -13,6 +13,10 @@ namespace Interpreter {
 
     namespace Base {
 
+        auto separator_args = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
+            std::make_shared<Symbol>("a"),
+            std::make_shared<Symbol>("b")
+        });
         Reference separator(FunctionContext & context) {
             return Reference(context["b"]);
         }
@@ -289,53 +293,22 @@ namespace Interpreter {
 
         bool equals(Data a, Data b) {
             if (auto a_object = std::get_if<Object*>(&a)) {
-                if (auto b_object = std::get_if<Object*>(&b)) {
-
-                } else return false;
-            }
-            if (a->type == b->type) {
-                if (a->type >= 0) {
-                    for (auto const& element : a->properties) {
-                        auto it = b->properties.find(element.first);
-                        if (it != b->properties.end()) {
-                            if (!equals(element.second, it->second))
-                                return false;
-                        } else return false;
-                    }
-
-                    auto ita = a->functions.begin();
-                    auto itb = b->functions.begin();
-                    while (ita != a->functions.end()) {
-                        if (itb != b->functions.end()) {
-                            if ((*ita)->type == Function::Custom) {
-                                if (((CustomFunction&) **ita).pointer != ((CustomFunction&) **itb).pointer)
-                                    return false;
-                            } else
-                                if (((SystemFunction&) **ita).pointer != ((SystemFunction&) **itb).pointer)
-                                    return false;
-                        } else return false;
-
-                        ita++;
-                        itb++;
-                    }
-
-                    for (long i = 1; i <= a->type; i++) {
-                        if (!equals(a->data.a[i].o, b->data.a[i].o))
-                            return false;
-                    }
-                    return true;
-                } else if (a->type == Object::Bool)
-                    return a->data.b == b->data.b;
-                else if (a->type == Object::Int)
-                    return a->data.i == b->data.i;
-                else if (a->type == Object::Float)
-                    return a->data.f == b->data.f;
-                else if (a->type == Object::Char)
-                    return a->data.c == b->data.c;
-                else if (a->type == Object::CPointer)
-                    return a->data.ptr == b->data.ptr;
-                else return true;
-            } else return false;
+                if (auto b_object = std::get_if<Object*>(&b))
+                    return (*a_object)->properties == (*b_object)->properties && (*a_object)->array == (*b_object)->array;
+                else return false;
+            } else if (auto a_char = std::get_if<char>(&a)) {
+                if (auto b_char = std::get_if<char>(&b)) return *a_char == *b_char;
+                else return false;
+            } else if (auto a_float = std::get_if<double>(&a)) {
+                if (auto b_float = std::get_if<double>(&b)) return *a_float == *b_float;
+                else return false;
+            } else if (auto a_int = std::get_if<long>(&a)) {
+                if (auto b_int = std::get_if<long>(&b)) return *a_int == *b_int;
+                else return false;
+            } else if (auto a_bool = std::get_if<bool>(&a)) {
+                if (auto b_bool = std::get_if<bool>(&b)) return *a_bool == *b_bool;
+                else return false;
+            } else throw FunctionArgumentsError();
         }
 
         Reference equals(FunctionContext & context) {
@@ -366,20 +339,17 @@ namespace Interpreter {
         }
 
         void init(Context & context) {
-            context.get_function(";").push_front(SystemFunction{std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
-                std::make_shared<Symbol>("a"),
-                std::make_shared<Symbol>("b")
-            }), separator});
+            context.get_function(";").push_front(SystemFunction{separator_args, separator});
 
-            auto if_s = std::make_unique<SystemFunction>(std::make_shared<FunctionCall>(
+            Function if_s = SystemFunction{std::make_shared<FunctionCall>(
                 std::make_shared<Symbol>("function"),
                 std::make_shared<Tuple>()
-            ), if_statement);
-            if_s->extern_symbols["if"] = context.get_symbol("if");
-            if_s->extern_symbols["else"] = context.get_symbol("else");
-            context.get_symbol("if").to_object(context)->functions.push_front(std::move(if_s));
+            ), if_statement};
+            if_s.extern_symbols["if"] = context["if"];
+            if_s.extern_symbols["else"] = context["else"];
+            context.get_function("if").push_front(if_s);
 
-            context.get_symbol("while").to_object(context)->functions.push_front(std::make_unique<SystemFunction>(std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
+            context.get_function("while").push_front(SystemFunction{std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
                 std::make_shared<FunctionCall>(
                     std::make_shared<Symbol>("condition"),
                     std::make_shared<Tuple>()
@@ -388,9 +358,9 @@ namespace Interpreter {
                     std::make_shared<Symbol>("block"),
                     std::make_shared<Tuple>()
                 )
-            }), while_statement));
+            }), while_statement});
 
-            auto for_s = std::make_unique<SystemFunction>(std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
+            Function for_s = SystemFunction{std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
                 std::make_shared<Symbol>("variable"),
                 std::make_shared<Symbol>("from_s"),
                 std::make_shared<Symbol>("begin"),
@@ -400,12 +370,12 @@ namespace Interpreter {
                     std::make_shared<Symbol>("block"),
                     std::make_shared<Tuple>()
                 )
-            }), for_statement);
-            for_s->extern_symbols["from"] = context.get_symbol("from");
-            for_s->extern_symbols["to"] = context.get_symbol("to");
-            context.get_symbol("for").to_object(context)->functions.push_front(std::move(for_s));
+            }), for_statement};
+            for_s.extern_symbols["from"] = context["from"];
+            for_s.extern_symbols["to"] = context["to"];
+            context.get_function("for").push_front(for_s);
 
-            auto for_step_s = std::make_unique<SystemFunction>(std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
+            Function for_step_s = SystemFunction{std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
                 std::make_shared<Symbol>("variable"),
                 std::make_shared<Symbol>("from_s"),
                 std::make_shared<Symbol>("begin"),
@@ -417,48 +387,48 @@ namespace Interpreter {
                     std::make_shared<Symbol>("block"),
                     std::make_shared<Tuple>()
                 )
-            }), for_step_statement);
-            for_step_s->extern_symbols["from"] = context.get_symbol("from");
-            for_step_s->extern_symbols["to"] = context.get_symbol("to");
-            for_step_s->extern_symbols["step"] = context.get_symbol("step");
-            context.get_symbol("for").to_object(context)->functions.push_front(std::move(for_step_s));
+            }), for_step_statement};
+            for_step_s.extern_symbols["from"] = context["from"];
+            for_step_s.extern_symbols["to"] = context["to"];
+            for_step_s.extern_symbols["step"] = context["step"];
+            context.get_function("for").push_front(for_step_s);
 
-            auto try_s = std::make_unique<SystemFunction>(std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
+            Function try_s = SystemFunction{std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
                 std::make_shared<FunctionCall>(
                     std::make_shared<Symbol>("try_block"),
                     std::make_shared<Tuple>()
                 ),
                 std::make_shared<Symbol>("catch_s"),
                 std::make_shared<Symbol>("catch_function"),
-            }), try_statement);
-            try_s->extern_symbols["catch"] = context.get_symbol("catch");
-            context.get_symbol("try").to_object(context)->functions.push_front(std::move(try_s));
+            }), try_statement};
+            try_s.extern_symbols["catch"] = context["catch"];
+            context.get_function("try").push_front(try_s);
 
             auto equality = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
                 std::make_shared<Symbol>("a"),
                 std::make_shared<Symbol>("b")
             });
 
-            context.get_symbol("throw").to_object(context)->functions.push_front(std::make_unique<SystemFunction>(std::make_shared<Symbol>("throw_expression"), throw_statement));
-            context.get_symbol("include").to_object(context)->functions.push_front(std::make_unique<SystemFunction>(std::make_shared<Symbol>("path"), include));
-            context.get_symbol("using").to_object(context)->functions.push_front(std::make_unique<SystemFunction>(std::make_shared<Symbol>("path"), use));
-            context.get_symbol("$").to_object(context)->functions.push_front(std::make_unique<SystemFunction>(std::make_shared<Symbol>("object"), copy));
-            context.get_symbol("$==").to_object(context)->functions.push_front(std::make_unique<SystemFunction>(std::make_shared<Symbol>("object"), copy_pointer));
-            context.get_symbol(":=").to_object(context)->functions.push_front(std::make_unique<SystemFunction>(std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
+            context.get_function("throw").push_front(SystemFunction{std::make_shared<Symbol>("throw_expression"), throw_statement});
+            context.get_function("include").push_front(SystemFunction{std::make_shared<Symbol>("path"), include});
+            context.get_function("using").push_front(SystemFunction{std::make_shared<Symbol>("path"), use});
+            context.get_function("$").push_front(SystemFunction{std::make_shared<Symbol>("object"), copy});
+            context.get_function("$==").push_front(SystemFunction{std::make_shared<Symbol>("object"), copy_pointer});
+            context.get_function(":=").push_front(SystemFunction{std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
                 std::make_shared<FunctionCall>(
                     std::make_shared<Symbol>("var"),
                     std::make_shared<Tuple>()
                 ),
                 std::make_shared<Symbol>("object")
-            }), assign));
-            context.get_symbol(":").to_object(context)->functions.push_front(std::make_unique<SystemFunction>(std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
+            }), assign});
+            context.get_function(":").push_front(SystemFunction{std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
                 std::make_shared<Symbol>("var"),
                 std::make_shared<Symbol>("object")
-            }), function_definition));
-            context.get_symbol("==").to_object(context)->functions.push_front(std::make_unique<SystemFunction>(equality, (Reference (*)(FunctionContext & context)) equals));
-            context.get_symbol("!=").to_object(context)->functions.push_front(std::make_unique<SystemFunction>(equality, not_equals));
-            context.get_symbol("===").to_object(context)->functions.push_front(std::make_unique<SystemFunction>(equality, check_pointers));
-            context.get_symbol("!==").to_object(context)->functions.push_front(std::make_unique<SystemFunction>(equality, not_check_pointers));
+            }), function_definition});
+            context.get_function("==").push_front(SystemFunction{equality, (Reference (*)(FunctionContext & context)) equals});
+            context.get_function("!=").push_front(SystemFunction{equality, not_equals});
+            context.get_function("===").push_front(SystemFunction{equality, check_pointers});
+            context.get_function("!==").push_front(SystemFunction{equality, not_check_pointers});
         }
 
     }
