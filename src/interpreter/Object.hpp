@@ -19,8 +19,8 @@ namespace Interpreter {
 
         std::map<std::string, Data> properties;
         std::list<Function> functions;
-
         std::vector<Data> array;
+        void* c_pointer = nullptr;
 
         bool referenced = false;
 

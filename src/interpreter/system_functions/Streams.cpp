@@ -9,7 +9,7 @@ namespace Interpreter {
     namespace Streams {
 
         Reference print(FunctionContext & context) {
-            auto object = context.get_symbol("object").to_object(context);
+            auto object = context["object"];
 
             Interpreter::print(std::cout, object);
 
@@ -21,29 +21,32 @@ namespace Interpreter {
             getline(std::cin, str);
 
             long l = str.length();
-            Object* obj = context.new_object((size_t) l);
-            for (long i = 0; i < l; i++)
-                obj->data.a[i+1].o = context.new_object(str[i]);
+            Object* obj = context.new_object();
+            for (auto c : str)
+                obj->array.push_back(c);
             return Reference(obj);
         }
 
         Reference read(FunctionContext & context) {
-            auto stream = (std::istream*) context.get_symbol("this").to_object(context)->data.ptr;
+            if (auto object = std::get_if<Object*>(&context["this"])) {
+                auto stream = (std::istream*) (*object)->c_pointer;
 
-            std::string str;
-            getline(*stream, str);
+                std::string str;
+                getline(*stream, str);
 
-            long l = str.length();
-            Object* obj = context.new_object((size_t) l);
-            for (long i = 0; i < l; i++)
-                obj->data.a[i+1].o = context.new_object(str[i]);
-            return Reference(obj);
+                long l = str.length();
+                Object* obj = context.new_object();
+                for (auto c : str)
+                    obj->array.push_back(c);
+                return Reference(obj);
+            } else throw FunctionArgumentsError();
         }
 
         Reference has(FunctionContext & context) {
-            auto stream = (std::istream*) context.get_symbol("this").to_object(context)->data.ptr;
-
-            return Reference(context.new_object(stream->operator bool()));
+            if (auto object = std::get_if<Object*>(&context["this"])) {
+                auto stream = (std::istream*) (*object)->c_pointer;
+                return Reference(Data(stream->operator bool()));
+            } else throw FunctionArgumentsError();
         }
 
         void setInputStream(Context & context, Object & object) {
@@ -63,20 +66,24 @@ namespace Interpreter {
         }
 
         Reference write(FunctionContext & context) {
-            auto stream = (std::ostream*) context.get_symbol("this").to_object(context)->data.ptr;
-            auto message = context.get_symbol("message").to_object(context);
+            if (auto object = std::get_if<Object*>(&context["this"])) {
+                auto stream = (std::ostream*) (*object)->c_pointer;
+                auto message = context["message"];
 
-            Interpreter::print(*stream, message);
+                Interpreter::print(*stream, message);
 
-            return Reference(context.new_object());
+                return Reference(context.new_object());
+            } else throw FunctionArgumentsError();
         }
 
         Reference flush(FunctionContext & context) {
-            auto stream = (std::ostream*) context.get_symbol("this").to_object(context)->data.ptr;
+            if (auto object = std::get_if<Object*>(&context["this"])) {
+                auto stream = (std::ostream*) (*object)->c_pointer;
 
-            stream->flush();
+                stream->flush();
 
-            return Reference(context.new_object());
+                return Reference(context.new_object());
+            } else throw FunctionArgumentsError();
         }
 
         void setOutputStream(Context & context, Object & object) {
@@ -99,14 +106,16 @@ namespace Interpreter {
 
         Reference input_file(FunctionContext & context) {
             try {
-                auto path = context.get_symbol("path").to_object(context)->to_string();
+                if (auto object = std::get_if<Object*>(context["path"])) {
+                    auto path = (*object)->to_string();
 
-                auto object = context.new_object();
-                setInputStream(context, *object);
-                object->data.ptr = new std::ifstream(path);
-                context.get_global().c_pointers.push_back(object->data.ptr);
+                    auto object = context.new_object();
+                    setInputStream(context, *object);
+                    object->data.ptr = new std::ifstream(path);
+                    context.get_global().c_pointers.push_back(object->data.ptr);
 
-                return Reference(object);
+                    return Reference(object);
+                }
             } catch (std::exception & e) {
                 throw Interpreter::FunctionArgumentsError();
             }
@@ -127,7 +136,7 @@ namespace Interpreter {
         }
 
         void init(Context & context) {
-            context.get_symbol("print").to_object(context)->functions.push_front(std::make_unique<SystemFunction>(std::make_shared<Symbol>(
+            context["print"].to_object(context)->functions.push_front(std::make_unique<SystemFunction>(std::make_shared<Symbol>(
                 "object"
             ), print));
             context.get_symbol("scan").to_object(context)->functions.push_front(std::make_unique<SystemFunction>(std::make_shared<Tuple>(), scan));

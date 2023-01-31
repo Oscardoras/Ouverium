@@ -21,6 +21,10 @@ namespace Interpreter {
             return Reference(context["b"]);
         }
 
+        auto if_statement_args = std::make_shared<FunctionCall>(
+            std::make_shared<Symbol>("function"),
+            std::make_shared<Tuple>()
+        );
         Reference if_statement(FunctionContext & context) {
             auto function = std::get<CustomFunction>(*std::get<Object*>(context["function"])->functions.begin()).pointer->body;
 
@@ -55,6 +59,16 @@ namespace Interpreter {
             } else throw Interpreter::FunctionArgumentsError();
         }
 
+        auto while_statement_args = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
+            std::make_shared<FunctionCall>(
+                std::make_shared<Symbol>("condition"),
+                std::make_shared<Tuple>()
+            ),
+            std::make_shared<FunctionCall>(
+                std::make_shared<Symbol>("block"),
+                std::make_shared<Tuple>()
+            )
+        });
         Reference while_statement(FunctionContext & context) {
             auto & parent = context.get_parent();
             Reference result;
@@ -83,6 +97,17 @@ namespace Interpreter {
             else return Reference(context.new_object());
         }
 
+        auto for_statement_args = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
+            std::make_shared<Symbol>("variable"),
+            std::make_shared<Symbol>("from_s"),
+            std::make_shared<Symbol>("begin"),
+            std::make_shared<Symbol>("to_s"),
+            std::make_shared<Symbol>("end"),
+            std::make_shared<FunctionCall>(
+                std::make_shared<Symbol>("block"),
+                std::make_shared<Tuple>()
+            )
+        });
         Reference for_statement(FunctionContext & context) {
             auto & variable = context["variable"];
             auto & from_s = context["from_s"];
@@ -106,6 +131,19 @@ namespace Interpreter {
             } else throw Interpreter::FunctionArgumentsError();
         }
 
+        auto for_step_statement_args = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
+            std::make_shared<Symbol>("variable"),
+            std::make_shared<Symbol>("from_s"),
+            std::make_shared<Symbol>("begin"),
+            std::make_shared<Symbol>("to_s"),
+            std::make_shared<Symbol>("end"),
+            std::make_shared<Symbol>("step_s"),
+            std::make_shared<Symbol>("step"),
+            std::make_shared<FunctionCall>(
+                std::make_shared<Symbol>("block"),
+                std::make_shared<Tuple>()
+            )
+        });
         Reference for_step_statement(FunctionContext & context) {
             auto & parent = context.get_parent();
 
@@ -142,6 +180,14 @@ namespace Interpreter {
             } else throw Interpreter::FunctionArgumentsError();
         }
 
+        auto try_statement_args = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
+            std::make_shared<FunctionCall>(
+                std::make_shared<Symbol>("try_block"),
+                std::make_shared<Tuple>()
+            ),
+            std::make_shared<Symbol>("catch_s"),
+            std::make_shared<Symbol>("catch_function"),
+        });
         Reference try_statement(FunctionContext & context) {
             auto try_block = context["try_block"];
             auto catch_s = context["catch_s"];
@@ -341,66 +387,25 @@ namespace Interpreter {
         void init(Context & context) {
             context.get_function(";").push_front(SystemFunction{separator_args, separator});
 
-            Function if_s = SystemFunction{std::make_shared<FunctionCall>(
-                std::make_shared<Symbol>("function"),
-                std::make_shared<Tuple>()
-            ), if_statement};
+            Function if_s = SystemFunction{if_statement_args, if_statement};
             if_s.extern_symbols["if"] = context["if"];
             if_s.extern_symbols["else"] = context["else"];
             context.get_function("if").push_front(if_s);
 
-            context.get_function("while").push_front(SystemFunction{std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
-                std::make_shared<FunctionCall>(
-                    std::make_shared<Symbol>("condition"),
-                    std::make_shared<Tuple>()
-                ),
-                std::make_shared<FunctionCall>(
-                    std::make_shared<Symbol>("block"),
-                    std::make_shared<Tuple>()
-                )
-            }), while_statement});
+            context.get_function("while").push_front(SystemFunction{while_statement_args, while_statement});
 
-            Function for_s = SystemFunction{std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
-                std::make_shared<Symbol>("variable"),
-                std::make_shared<Symbol>("from_s"),
-                std::make_shared<Symbol>("begin"),
-                std::make_shared<Symbol>("to_s"),
-                std::make_shared<Symbol>("end"),
-                std::make_shared<FunctionCall>(
-                    std::make_shared<Symbol>("block"),
-                    std::make_shared<Tuple>()
-                )
-            }), for_statement};
+            Function for_s = SystemFunction{for_statement_args, for_statement};
             for_s.extern_symbols["from"] = context["from"];
             for_s.extern_symbols["to"] = context["to"];
             context.get_function("for").push_front(for_s);
 
-            Function for_step_s = SystemFunction{std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
-                std::make_shared<Symbol>("variable"),
-                std::make_shared<Symbol>("from_s"),
-                std::make_shared<Symbol>("begin"),
-                std::make_shared<Symbol>("to_s"),
-                std::make_shared<Symbol>("end"),
-                std::make_shared<Symbol>("step_s"),
-                std::make_shared<Symbol>("step"),
-                std::make_shared<FunctionCall>(
-                    std::make_shared<Symbol>("block"),
-                    std::make_shared<Tuple>()
-                )
-            }), for_step_statement};
+            Function for_step_s = SystemFunction{for_step_statement_args, for_step_statement};
             for_step_s.extern_symbols["from"] = context["from"];
             for_step_s.extern_symbols["to"] = context["to"];
             for_step_s.extern_symbols["step"] = context["step"];
             context.get_function("for").push_front(for_step_s);
 
-            Function try_s = SystemFunction{std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
-                std::make_shared<FunctionCall>(
-                    std::make_shared<Symbol>("try_block"),
-                    std::make_shared<Tuple>()
-                ),
-                std::make_shared<Symbol>("catch_s"),
-                std::make_shared<Symbol>("catch_function"),
-            }), try_statement};
+            Function try_s = SystemFunction{try_statement_args, try_statement};
             try_s.extern_symbols["catch"] = context["catch"];
             context.get_function("try").push_front(try_s);
 
