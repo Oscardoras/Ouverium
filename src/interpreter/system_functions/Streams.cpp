@@ -8,14 +8,14 @@ namespace Interpreter {
 
     namespace Streams {
 
+        auto print_args = std::make_shared<Symbol>("data");
         Reference print(FunctionContext & context) {
-            auto object = context["object"];
-
-            Interpreter::print(std::cout, object);
-
+            auto data = context["data"];
+            Interpreter::print(std::cout, data);
             return Reference(context.new_object());
         }
 
+        auto scan_args = std::make_shared<Tuple>();
         Reference scan(FunctionContext & context) {
             std::string str;
             getline(std::cin, str);
@@ -24,12 +24,13 @@ namespace Interpreter {
             Object* obj = context.new_object();
             for (auto c : str)
                 obj->array.push_back(c);
-            return Reference(obj);
+            return Reference(Data(obj));
         }
 
+        auto read_args = std::make_shared<Tuple>();
         Reference read(FunctionContext & context) {
             if (auto object = std::get_if<Object*>(&context["this"])) {
-                auto stream = (std::istream*) (*object)->c_pointer;
+                auto stream = dynamic_cast<std::ifstream*>((*object)->c_pointer.get());
 
                 std::string str;
                 getline(*stream, str);
@@ -42,20 +43,18 @@ namespace Interpreter {
             } else throw FunctionArgumentsError();
         }
 
+        auto has_args = std::make_shared<Tuple>();
         Reference has(FunctionContext & context) {
             if (auto object = std::get_if<Object*>(&context["this"])) {
-                auto stream = (std::istream*) (*object)->c_pointer;
+                auto stream = dynamic_cast<std::ifstream*>((*object)->c_pointer.get());
                 return Reference(Data(stream->operator bool()));
             } else throw FunctionArgumentsError();
         }
 
         void setInputStream(Context & context, Object & object) {
-            object.type = Object::CPointer;
-
-            auto & read = object.properties["read"];
-            if (read == nullptr) read = context.new_object();
-            auto f1 = std::make_unique<SystemFunction>(std::make_shared<Tuple>(), Streams::read);
-            f1->extern_symbols["this"] = Reference(&object);
+            auto & read = object.get_property("read", context);
+            Function f1 = SystemFunction{std::make_shared<Tuple>(), Streams::read};
+            f1.extern_symbols["this"] = &object;
             read->functions.push_front(std::move(f1));
 
             auto & has = object.properties["has"];
@@ -65,17 +64,19 @@ namespace Interpreter {
             has->functions.push_front(std::move(f2));
         }
 
+        auto print_args = std::make_shared<Symbol>("data");
         Reference write(FunctionContext & context) {
             if (auto object = std::get_if<Object*>(&context["this"])) {
                 auto stream = (std::ostream*) (*object)->c_pointer;
-                auto message = context["message"];
+                auto data = context["data"];
 
-                Interpreter::print(*stream, message);
+                Interpreter::print(*stream, data);
 
                 return Reference(context.new_object());
             } else throw FunctionArgumentsError();
         }
 
+        auto flush_args = std::make_shared<Tuple>();
         Reference flush(FunctionContext & context) {
             if (auto object = std::get_if<Object*>(&context["this"])) {
                 auto stream = (std::ostream*) (*object)->c_pointer;
@@ -104,41 +105,42 @@ namespace Interpreter {
             flush->functions.push_front(std::move(f2));
         }
 
+        auto input_file_args = std::make_shared<Symbol>("path");
         Reference input_file(FunctionContext & context) {
             try {
-                if (auto object = std::get_if<Object*>(context["path"])) {
-                    auto path = (*object)->to_string();
+                if (auto path_object = std::get_if<Object*>(&context["path"])) {
+                    auto path = (*path_object)->to_string();
 
                     auto object = context.new_object();
                     setInputStream(context, *object);
-                    object->data.ptr = new std::ifstream(path);
-                    context.get_global().c_pointers.push_back(object->data.ptr);
+                    object->c_pointer = std::make_unique<std::ifstream>(path);
 
-                    return Reference(object);
-                }
+                    return Reference(Data(object));
+                } else FunctionArgumentsError();
             } catch (std::exception & e) {
                 throw Interpreter::FunctionArgumentsError();
             }
         }
+
+        auto output_file_args = std::make_shared<Symbol>("path");
         Reference output_file(FunctionContext & context) {
             try {
-                auto path = context.get_symbol("path").to_object(context)->to_string();
+                if (auto path_object = std::get_if<Object*>(&context["path"])) {
+                    auto path = (*path_object)->to_string();
 
-                auto object = context.new_object();
-                setOutputStream(context, *object);
-                object->data.ptr = new std::ofstream(path);
-                context.get_global().c_pointers.push_back(object->data.ptr);
+                    auto object = context.new_object();
+                    setOutputStream(context, *object);
+                    object->c_pointer = std::make_unique<std::ofstream>(path);
 
-                return Reference(object);
+                    return Reference(object);
+                    } else FunctionArgumentsError();
             } catch (std::exception & e) {
                 throw Interpreter::FunctionArgumentsError();
             }
         }
 
         void init(Context & context) {
-            context["print"].to_object(context)->functions.push_front(std::make_unique<SystemFunction>(std::make_shared<Symbol>(
-                "object"
-            ), print));
+            context.get_function("print").push_front(SystemFunction{print_args, print});
             context.get_symbol("scan").to_object(context)->functions.push_front(std::make_unique<SystemFunction>(std::make_shared<Tuple>(), scan));
             context.get_symbol("InputFile").to_object(context)->functions.push_front(std::make_unique<SystemFunction>(std::make_shared<Symbol>(
                 "path"

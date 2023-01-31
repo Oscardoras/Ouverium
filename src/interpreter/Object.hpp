@@ -20,12 +20,14 @@ namespace Interpreter {
         std::map<std::string, Data> properties;
         std::list<Function> functions;
         std::vector<Data> array;
-        void* c_pointer = nullptr;
+        std::unique_ptr<std::ios> c_pointer = nullptr;
 
         bool referenced = false;
 
         Data & get_property(std::string name, Context & context);
         std::string to_string() const;
+
+        ~Object();
 
     };
 

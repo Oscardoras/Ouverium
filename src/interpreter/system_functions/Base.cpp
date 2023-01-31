@@ -206,6 +206,7 @@ namespace Interpreter {
             } else throw Interpreter::FunctionArgumentsError();
         }
 
+        auto throw_statement_args = std::make_shared<Symbol>("throw_expression");
         Reference throw_statement(FunctionContext & context) {
             Exception ex;
             ex.reference = context["throw_expression"];
@@ -214,6 +215,7 @@ namespace Interpreter {
             throw ex;
         }
 
+        auto path_args = std::make_shared<Symbol>("path");
         std::string get_canonical_path(FunctionContext & context) {
             if (auto object = std::get_if<Object*>(&context["path"])) {
                 try {
@@ -256,6 +258,7 @@ namespace Interpreter {
             }
         }
 
+        auto include_args = std::make_shared<Symbol>("path");
         Reference use(FunctionContext & context) {
             std::string path = get_canonical_path(context);
 
@@ -288,6 +291,7 @@ namespace Interpreter {
                 return Reference(context.new_object());
         }
 
+        auto copy_args = std::make_shared<Symbol>("object");
         Reference copy(FunctionContext & context) {
             auto data = context["data"];
 
@@ -316,6 +320,13 @@ namespace Interpreter {
             return var;
         }
 
+        auto assign_args = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
+            std::make_shared<FunctionCall>(
+                std::make_shared<Symbol>("var"),
+                std::make_shared<Tuple>()
+            ),
+            std::make_shared<Symbol>("data")
+        });
         Reference assign(FunctionContext & context) {
             auto var = Interpreter::call_function(context, nullptr, std::get<Object*>(context["var"])->functions, std::make_shared<Tuple>());
             auto data = context["data"];
@@ -357,6 +368,10 @@ namespace Interpreter {
             } else throw FunctionArgumentsError();
         }
 
+        auto equals_args = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
+            std::make_shared<Symbol>("a"),
+            std::make_shared<Symbol>("b")
+        });
         Reference equals(FunctionContext & context) {
             auto a = context["a"];
             auto b = context["b"];
@@ -409,31 +424,21 @@ namespace Interpreter {
             try_s.extern_symbols["catch"] = context["catch"];
             context.get_function("try").push_front(try_s);
 
-            auto equality = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
-                std::make_shared<Symbol>("a"),
-                std::make_shared<Symbol>("b")
-            });
+            context.get_function("throw").push_front(SystemFunction{throw_statement_args, throw_statement});
 
-            context.get_function("throw").push_front(SystemFunction{std::make_shared<Symbol>("throw_expression"), throw_statement});
-            context.get_function("include").push_front(SystemFunction{std::make_shared<Symbol>("path"), include});
-            context.get_function("using").push_front(SystemFunction{std::make_shared<Symbol>("path"), use});
-            context.get_function("$").push_front(SystemFunction{std::make_shared<Symbol>("object"), copy});
-            context.get_function("$==").push_front(SystemFunction{std::make_shared<Symbol>("object"), copy_pointer});
-            context.get_function(":=").push_front(SystemFunction{std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
-                std::make_shared<FunctionCall>(
-                    std::make_shared<Symbol>("var"),
-                    std::make_shared<Tuple>()
-                ),
-                std::make_shared<Symbol>("object")
-            }), assign});
-            context.get_function(":").push_front(SystemFunction{std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
-                std::make_shared<Symbol>("var"),
-                std::make_shared<Symbol>("object")
-            }), function_definition});
-            context.get_function("==").push_front(SystemFunction{equality, (Reference (*)(FunctionContext & context)) equals});
-            context.get_function("!=").push_front(SystemFunction{equality, not_equals});
-            context.get_function("===").push_front(SystemFunction{equality, check_pointers});
-            context.get_function("!==").push_front(SystemFunction{equality, not_check_pointers});
+            context.get_function("include").push_front(SystemFunction{path_args, include});
+            context.get_function("using").push_front(SystemFunction{path_args, use});
+
+            context.get_function("$").push_front(SystemFunction{copy_args, copy});
+            context.get_function("$==").push_front(SystemFunction{copy_args, copy_pointer});
+
+            context.get_function(":=").push_front(SystemFunction{assign_args, assign});
+            context.get_function(":").push_front(SystemFunction{assign_args, function_definition});
+
+            context.get_function("==").push_front(SystemFunction{equals_args, (Reference (*)(FunctionContext & context)) equals});
+            context.get_function("!=").push_front(SystemFunction{equals_args, not_equals});
+            context.get_function("===").push_front(SystemFunction{equals_args, check_pointers});
+            context.get_function("!==").push_front(SystemFunction{equals_args, not_check_pointers});
         }
 
     }

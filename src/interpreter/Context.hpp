@@ -47,7 +47,6 @@ namespace Interpreter {
         std::map<std::string, std::shared_ptr<Expression>> files;
         std::list<Object> objects;
         std::list<Data> references;
-        std::list<void*> c_pointers;
 
         GlobalContext();
 

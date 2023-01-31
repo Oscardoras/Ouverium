@@ -69,9 +69,6 @@ namespace Interpreter {
                 if (auto object = std::get_if<Object*>(&finalize->second))
                     call_function(get_global(), nullptr, (*object)->functions, std::make_shared<Tuple>());
         }
-
-        for (auto it = c_pointers.begin(); it != c_pointers.end(); it++)
-            delete (std::ios*) *it;
     }
 
 
