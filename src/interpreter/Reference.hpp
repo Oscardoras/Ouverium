@@ -16,7 +16,7 @@ namespace Interpreter {
         std::reference_wrapper<Object> parent;
         std::reference_wrapper<Data> reference;
 
-        inline Data & get() const {
+        inline operator Data &() const {
             return reference;
         }
     };
@@ -24,7 +24,7 @@ namespace Interpreter {
         std::reference_wrapper<Object> array;
         size_t i;
 
-        inline Data & get() const {
+        inline operator Data &() const {
             return array.get().array[i];
         }
     };

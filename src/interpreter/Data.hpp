@@ -12,6 +12,11 @@ namespace Interpreter {
 
         using std::variant<Object*, char, double, long, bool>::variant;
 
+        template<typename T>
+        inline T & get() {
+            return std::get<T>(*this);
+        }
+
     };
 
 }

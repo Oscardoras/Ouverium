@@ -25,15 +25,14 @@ namespace Interpreter {
 
             using std::variant<std::unique_ptr<std::ios>, std::reference_wrapper<std::ios>>::variant;
 
-            operator std::ios*() const {
+            inline operator std::ios*() const {
                 if (auto ptr = std::get_if<std::unique_ptr<std::ios>>(this))
                     return ptr->get();
                 else if (auto ref = std::get_if<std::reference_wrapper<std::ios>>(this))
                     return &ref->get();
                 else return nullptr;
             }
-        };
-        CPointer c_pointer = nullptr;
+        } c_pointer = nullptr;
 
         bool referenced = false;
 
