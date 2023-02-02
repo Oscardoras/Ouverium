@@ -10,15 +10,15 @@ namespace Interpreter {
     namespace Math {
 
         Reference logical_not(FunctionContext & context) {
-            auto a = context.get_symbol("a").to_object(context);
+            auto a = context["a"];
 
-            if (a->type == Object::Bool) return Reference(context.new_object(!a->data.b));
+            if (auto b = std::get_if<bool>(&a)) return Reference(Data(!*b));
             else throw Interpreter::FunctionArgumentsError();
         }
 
         Reference logical_and(FunctionContext & context) {
-            auto a = context.get_symbol("a").to_object(context);
-            auto b = context.get_symbol("b").to_object(context);
+            auto a = context["a"];
+            auto b = context["b"];
 
             if (a->type == Object::Bool)
                 if (a->data.b) {
@@ -31,8 +31,8 @@ namespace Interpreter {
         }
 
         Reference logical_or(FunctionContext & context) {
-            auto a = context.get_symbol("a").to_object(context);
-            auto b = context.get_symbol("b").to_object(context);
+            auto a = context["a"];
+            auto b = context["b"];
 
             if (a->type == Object::Bool)
                 if (!a->data.b) {
@@ -45,136 +45,187 @@ namespace Interpreter {
         }
 
         Reference addition(FunctionContext & context) {
-            auto a = context.get_symbol("a").to_object(context);
-            auto b = context.get_symbol("b").to_object(context);
+            auto a = context["a"];
+            auto b = context["b"];
 
-            if (a->type == Object::Int && b->type == Object::Int)
-                return Reference(context.new_object(a->data.i + b->data.i));
-            else if (a->type == Object::Float && b->type == Object::Float)
-                return Reference(context.new_object(a->data.f + b->data.f));
-            else throw Interpreter::FunctionArgumentsError();
+            if (auto a_int = std::get_if<int>(&a)) {
+                if (auto b_int = std::get_if<int>(&b))
+                    return Reference(Data(*a_int + *b_int));
+                else if (auto b_float = std::get_if<float>(&b))
+                    return Reference(Data(*a_int + *b_float));
+            } else if (auto a_float = std::get_if<float>(&a)) {
+                if (auto b_int = std::get_if<int>(&b))
+                    return Reference(Data(*a_float + *b_int));
+                else if (auto b_float = std::get_if<float>(&b))
+                    return Reference(Data(*a_float + *b_float));
+            }
+            throw FunctionArgumentsError();
         }
 
         Reference opposite(FunctionContext & context) {
-            auto a = context.get_symbol("a").to_object(context);
+            auto a = context["a"];
 
-            if (a->type == Object::Int)
-                return Reference(context.new_object(-a->data.i));
-            else if (a->type == Object::Float)
-                return Reference(context.new_object(-a->data.f));
-            else throw Interpreter::FunctionArgumentsError();
+            if (auto a_int = std::get_if<int>(&a))
+                return Reference(Data(- *a_int));
+            else if (auto a_float = std::get_if<float>(&a))
+                return Reference(Data(- *a_float));
+            throw FunctionArgumentsError();
         }
 
         Reference substraction(FunctionContext & context) {
-            auto a = context.get_symbol("a").to_object(context);
-            auto b = context.get_symbol("b").to_object(context);
+            auto a = context["a"];
+            auto b = context["b"];
 
-            if (a->type == Object::Int && b->type == Object::Int)
-                return Reference(context.new_object(a->data.i - b->data.i));
-            else if (a->type == Object::Float && b->type == Object::Float)
-                return Reference(context.new_object(a->data.f - b->data.f));
-            else throw Interpreter::FunctionArgumentsError();
+            if (auto a_int = std::get_if<int>(&a)) {
+                if (auto b_int = std::get_if<int>(&b))
+                    return Reference(Data(*a_int - *b_int));
+                else if (auto b_float = std::get_if<float>(&b))
+                    return Reference(Data(*a_int - *b_float));
+            } else if (auto a_float = std::get_if<float>(&a)) {
+                if (auto b_int = std::get_if<int>(&b))
+                    return Reference(Data(*a_float - *b_int));
+                else if (auto b_float = std::get_if<float>(&b))
+                    return Reference(Data(*a_float - *b_float));
+            }
+            throw FunctionArgumentsError();
         }
 
         Reference multiplication(FunctionContext & context) {
-            auto a = context.get_symbol("a").to_object(context);
-            auto b = context.get_symbol("b").to_object(context);
+            auto a = context["a"];
+            auto b = context["b"];
 
-            if (a->type == Object::Int && b->type == Object::Int)
-                return Reference(context.new_object(a->data.i * b->data.i));
-            else if (a->type == Object::Float && b->type == Object::Float)
-                return Reference(context.new_object(a->data.f * b->data.f));
-            else throw Interpreter::FunctionArgumentsError();
+            if (auto a_int = std::get_if<int>(&a)) {
+                if (auto b_int = std::get_if<int>(&b))
+                    return Reference(Data(*a_int * *b_int));
+                else if (auto b_float = std::get_if<float>(&b))
+                    return Reference(Data(*a_int * *b_float));
+            } else if (auto a_float = std::get_if<float>(&a)) {
+                if (auto b_int = std::get_if<int>(&b))
+                    return Reference(Data(*a_float * *b_int));
+                else if (auto b_float = std::get_if<float>(&b))
+                    return Reference(Data(*a_float * *b_float));
+            }
+            throw FunctionArgumentsError();
         }
 
         Reference division(FunctionContext & context) {
-            auto a = context.get_symbol("a").to_object(context);
-            auto b = context.get_symbol("b").to_object(context);
+            auto a = context["a"];
+            auto b = context["b"];
 
-            if (a->type == Object::Int && b->type == Object::Int && b->data.i != 0)
-                return Reference(context.new_object(a->data.i / b->data.i));
-            else if (a->type == Object::Float && b->type == Object::Float && b->data.f != 0)
-                return Reference(context.new_object(a->data.f / b->data.f));
-            else throw Interpreter::FunctionArgumentsError();
+            if (auto a_int = std::get_if<int>(&a)) {
+                if (auto b_int = std::get_if<int>(&b))
+                    return Reference(Data(*a_int / *b_int));
+                else if (auto b_float = std::get_if<float>(&b))
+                    return Reference(Data(*a_int / *b_float));
+            } else if (auto a_float = std::get_if<float>(&a)) {
+                if (auto b_int = std::get_if<int>(&b))
+                    return Reference(Data(*a_float / *b_int));
+                else if (auto b_float = std::get_if<float>(&b))
+                    return Reference(Data(*a_float / *b_float));
+            }
+            throw FunctionArgumentsError();
         }
 
         Reference modulo(FunctionContext & context) {
-            auto a = context.get_symbol("a").to_object(context);
-            auto b = context.get_symbol("b").to_object(context);
+            auto a = context["a"];
+            auto b = context["b"];
 
-            if (a->type == Object::Int && b->type == Object::Int)
-                return Reference(context.new_object(a->data.i % b->data.i));
-            else throw Interpreter::FunctionArgumentsError();
+            if (auto a_int = std::get_if<int>(&a))
+                if (auto b_int = std::get_if<int>(&b))
+                    return Reference(Data(*a_int % *b_int));
+            throw Interpreter::FunctionArgumentsError();
         }
 
         Reference strictly_inf(FunctionContext & context) {
-            auto a = context.get_symbol("a").to_object(context);
-            auto b = context.get_symbol("b").to_object(context);
+            auto a = context["a"];
+            auto b = context["b"];
 
-            if (a->type == Object::Int && b->type == Object::Int)
-                return Reference(context.new_object(a->data.i < b->data.i));
-            else if (a->type == Object::Float && b->type == Object::Float)
-                return Reference(context.new_object(a->data.f < b->data.f));
-            else if (a->type == Object::Char && b->type == Object::Char)
-                return Reference(context.new_object(a->data.c < b->data.c));
-            else throw Interpreter::FunctionArgumentsError();
+            if (auto a_int = std::get_if<int>(&a)) {
+                if (auto b_int = std::get_if<int>(&b))
+                    return Reference(Data(*a_int < *b_int));
+                else if (auto b_float = std::get_if<float>(&b))
+                    return Reference(Data(*a_int < *b_float));
+            } else if (auto a_float = std::get_if<float>(&a)) {
+                if (auto b_int = std::get_if<int>(&b))
+                    return Reference(Data(*a_float < *b_int));
+                else if (auto b_float = std::get_if<float>(&b))
+                    return Reference(Data(*a_float < *b_float));
+            }
+            throw FunctionArgumentsError();
         }
 
         Reference strictly_sup(FunctionContext & context) {
-            auto a = context.get_symbol("a").to_object(context);
-            auto b = context.get_symbol("b").to_object(context);
+            auto a = context["a"];
+            auto b = context["b"];
 
-            if (a->type == Object::Int && b->type == Object::Int)
-                return Reference(context.new_object(a->data.i > b->data.i));
-            else if (a->type == Object::Float && b->type == Object::Float)
-                return Reference(context.new_object(a->data.f > b->data.f));
-            else if (a->type == Object::Char && b->type == Object::Char)
-                return Reference(context.new_object(a->data.c > b->data.c));
-            else throw Interpreter::FunctionArgumentsError();
+            if (auto a_int = std::get_if<int>(&a)) {
+                if (auto b_int = std::get_if<int>(&b))
+                    return Reference(Data(*a_int > *b_int));
+                else if (auto b_float = std::get_if<float>(&b))
+                    return Reference(Data(*a_int > *b_float));
+            } else if (auto a_float = std::get_if<float>(&a)) {
+                if (auto b_int = std::get_if<int>(&b))
+                    return Reference(Data(*a_float > *b_int));
+                else if (auto b_float = std::get_if<float>(&b))
+                    return Reference(Data(*a_float > *b_float));
+            }
+            throw FunctionArgumentsError();
         }
 
         Reference inf_equals(FunctionContext & context) {
-            auto a = context.get_symbol("a").to_object(context);
-            auto b = context.get_symbol("b").to_object(context);
+            auto a = context["a"];
+            auto b = context["b"];
 
-            if (a->type == Object::Int && b->type == Object::Int)
-                return Reference(context.new_object(a->data.i <= b->data.i));
-            else if (a->type == Object::Float && b->type == Object::Float)
-                return Reference(context.new_object(a->data.f <= b->data.f));
-            else if (a->type == Object::Char && b->type == Object::Char)
-                return Reference(context.new_object(a->data.c <= b->data.c));
-            else throw Interpreter::FunctionArgumentsError();
+            if (auto a_int = std::get_if<int>(&a)) {
+                if (auto b_int = std::get_if<int>(&b))
+                    return Reference(Data(*a_int <= *b_int));
+                else if (auto b_float = std::get_if<float>(&b))
+                    return Reference(Data(*a_int <= *b_float));
+            } else if (auto a_float = std::get_if<float>(&a)) {
+                if (auto b_int = std::get_if<int>(&b))
+                    return Reference(Data(*a_float <= *b_int));
+                else if (auto b_float = std::get_if<float>(&b))
+                    return Reference(Data(*a_float <= *b_float));
+            }
+            throw FunctionArgumentsError();
         }
 
         Reference sup_equals(FunctionContext & context) {
-            auto a = context.get_symbol("a").to_object(context);
-            auto b = context.get_symbol("b").to_object(context);
+            auto a = context["a"];
+            auto b = context["b"];
 
-            if (a->type == Object::Int && b->type == Object::Int)
-                return Reference(context.new_object(a->data.i >= b->data.i));
-            else if (a->type == Object::Float && b->type == Object::Float)
-                return Reference(context.new_object(a->data.f >= b->data.f));
-            else if (a->type == Object::Char && b->type == Object::Char)
-                return Reference(context.new_object(a->data.c >= b->data.c));
-            else throw Interpreter::FunctionArgumentsError();
+            if (auto a_int = std::get_if<int>(&a)) {
+                if (auto b_int = std::get_if<int>(&b))
+                    return Reference(Data(*a_int >= *b_int));
+                else if (auto b_float = std::get_if<float>(&b))
+                    return Reference(Data(*a_int >= *b_float));
+            } else if (auto a_float = std::get_if<float>(&a)) {
+                if (auto b_int = std::get_if<int>(&b))
+                    return Reference(Data(*a_float >= *b_int));
+                else if (auto b_float = std::get_if<float>(&b))
+                    return Reference(Data(*a_float >= *b_float));
+            }
+            throw FunctionArgumentsError();
         }
 
         Reference increment(FunctionContext & context) {
-            auto a = context.get_symbol("a");
+            auto & a = context["a"];
 
-            if (a.get_reference()->type == Object::Int) {
-                a.get_reference() = context.new_object(a.get_reference()->data.i+1);
-                return a;
-            } else throw Interpreter::FunctionArgumentsError();
+            if (auto a_int = std::get_if<int>(&a)) {
+                a = *a_int+1;
+                return SymbolReference(a);
+            }
+            throw Interpreter::FunctionArgumentsError();
         }
 
         Reference decrement(FunctionContext & context) {
-            auto a = context.get_symbol("a");
+            auto & a = context["a"];
 
-            if (a.get_reference()->type == Object::Int) {
-                a.get_reference() = context.new_object(a.get_reference()->data.i-1);
-                return a;
-            } else throw Interpreter::FunctionArgumentsError();
+            if (auto a_int = std::get_if<int>(&a)) {
+                a = *a_int-1;
+                return SymbolReference(a);
+            }
+            throw Interpreter::FunctionArgumentsError();
         }
 
         Reference add(FunctionContext & context) {

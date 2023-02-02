@@ -30,7 +30,7 @@ namespace Interpreter {
         auto read_args = std::make_shared<Tuple>();
         Reference read(FunctionContext & context) {
             if (auto object = std::get_if<Object*>(&context["this"])) {
-                auto stream = dynamic_cast<std::ifstream*>((*object)->c_pointer.get());
+                auto stream = dynamic_cast<std::istream*>(static_cast<std::ios*>((*object)->c_pointer));
 
                 std::string str;
                 getline(*stream, str);
@@ -46,7 +46,7 @@ namespace Interpreter {
         auto has_args = std::make_shared<Tuple>();
         Reference has(FunctionContext & context) {
             if (auto object = std::get_if<Object*>(&context["this"])) {
-                auto stream = dynamic_cast<std::ifstream*>((*object)->c_pointer.get());
+                auto stream = dynamic_cast<std::istream*>(static_cast<std::ios*>((*object)->c_pointer));
                 return Reference(Data(stream->operator bool()));
             } else throw FunctionArgumentsError();
         }
@@ -64,7 +64,7 @@ namespace Interpreter {
         auto write_args = std::make_shared<Symbol>("data");
         Reference write(FunctionContext & context) {
             if (auto object = std::get_if<Object*>(&context["this"])) {
-                auto stream = dynamic_cast<std::ostream*>((*object)->c_pointer.get());
+                auto stream = dynamic_cast<std::ostream*>(static_cast<std::ios*>((*object)->c_pointer));
                 auto data = context["data"];
 
                 Interpreter::print(*stream, data);
@@ -76,7 +76,7 @@ namespace Interpreter {
         auto flush_args = std::make_shared<Tuple>();
         Reference flush(FunctionContext & context) {
             if (auto object = std::get_if<Object*>(&context["this"])) {
-                auto stream = dynamic_cast<std::ostream*>((*object)->c_pointer.get());
+                auto stream = dynamic_cast<std::ostream*>(static_cast<std::ios*>((*object)->c_pointer));
 
                 stream->flush();
 
@@ -139,17 +139,17 @@ namespace Interpreter {
 
             auto in = context.new_object();
             setInputStream(context, *in);
-            in->c_pointer = &std::cin;
+            in->c_pointer = std::cin;
             console->properties["in"] = in;
 
             auto out = context.new_object();
             setOutputStream(context, *out);
-            out->c_pointer = &std::cout;
+            out->c_pointer = std::cout;
             console->properties["out"] = out;
 
             auto err = context.new_object();
             setOutputStream(context, *err);
-            err->c_pointer = &std::cerr;
+            err->c_pointer = std::cerr;
             console->properties["err"] = err;
         }
 
