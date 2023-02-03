@@ -21,12 +21,12 @@ namespace Interpreter {
 
     GlobalContext::GlobalContext() {
         Array::init(*this);
-        ArrayList::init(*this);
+        //ArrayList::init(*this);
         Base::init(*this);
         Math::init(*this);
         Streams::init(*this);
-        String::init(*this);
-        Types::init(*this);
+        //String::init(*this);
+        //Types::init(*this);
     }
 
 
@@ -81,7 +81,7 @@ namespace Interpreter {
                 object->functions.push_front(CustomFunction{function_definition});
                 auto & f = object->functions.back();
                 for (auto symbol : function_definition->body->symbols)
-                    f.extern_symbols[symbol] = context[symbol];
+                    f.extern_symbols.emplace(symbol, context[symbol]);
 
                 function_context.add_symbol(symbol->name, Reference(object));
             } else throw Interpreter::FunctionArgumentsError();
@@ -105,11 +105,13 @@ namespace Interpreter {
                         filter = Interpreter::execute(function_context, custom_function->pointer->filter).to_data(context);
                     else filter = nullptr;
 
-                    if (auto b = std::get_if<bool>(&filter)) {
-                        if (*b)
+                    try {
+                        if (filter.get<bool>())
                             return Interpreter::execute(function_context, custom_function->pointer->body);
                         else continue;
-                    } else FunctionArgumentsError();
+                    } catch (Data::BadAccess & e) {
+                        throw FunctionArgumentsError();
+                    }
                 } else if (auto system_function = std::get_if<SystemFunction>(&function)) {
                     set_references(function_context, system_function->parameters, data);
 
@@ -142,11 +144,13 @@ namespace Interpreter {
                         filter = execute(function_context, custom_function->pointer->filter).to_data(context);
                     else filter = nullptr;
 
-                    if (auto b = std::get_if<bool>(&filter)) {
-                        if (*b)
+                    try {
+                        if (filter.get<bool>())
                             return Interpreter::execute(function_context, custom_function->pointer->body);
                         else continue;
-                    } else FunctionArgumentsError();
+                    } catch (Data::BadAccess & e) {
+                        throw FunctionArgumentsError();
+                    }
                 } else if (auto system_function = std::get_if<SystemFunction>(&function)) {
                     set_references(context, function_context, computed, system_function->parameters, arguments);
 
@@ -178,11 +182,11 @@ namespace Interpreter {
 
             for (auto symbol : function_definition->body->symbols)
                 if (context.has_symbol(symbol))
-                    f.extern_symbols[symbol] = context[symbol];
+                    f.extern_symbols.emplace(symbol, context[symbol]);
             if (function_definition->filter != nullptr)
                 for (auto symbol : function_definition->filter->symbols)
                     if (context.has_symbol(symbol))
-                        f.extern_symbols[symbol] = context[symbol];
+                        f.extern_symbols.emplace(symbol, context[symbol]);
 
             return Reference(object);
         } else if (auto property = std::dynamic_pointer_cast<Property>(expression)) {

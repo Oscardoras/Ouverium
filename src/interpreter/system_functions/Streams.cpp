@@ -29,8 +29,9 @@ namespace Interpreter {
 
         auto read_args = std::make_shared<Tuple>();
         Reference read(FunctionContext & context) {
-            if (auto object = std::get_if<Object*>(&context["this"])) {
-                auto stream = dynamic_cast<std::istream*>(static_cast<std::ios*>((*object)->c_pointer));
+            try {
+                auto object = context["this"].get<Object*>();
+                auto stream = dynamic_cast<std::istream*>(static_cast<std::ios*>(object->c_pointer));
 
                 std::string str;
                 getline(*stream, str);
@@ -40,72 +41,83 @@ namespace Interpreter {
                 for (auto c : str)
                     obj->array.push_back(c);
                 return Reference(obj);
-            } else throw FunctionArgumentsError();
+            } catch (Data::BadAccess & e) {
+                throw FunctionArgumentsError();
+            }
         }
 
         auto has_args = std::make_shared<Tuple>();
         Reference has(FunctionContext & context) {
-            if (auto object = std::get_if<Object*>(&context["this"])) {
-                auto stream = dynamic_cast<std::istream*>(static_cast<std::ios*>((*object)->c_pointer));
+            try {
+                auto object = context["this"].get<Object*>();
+                auto stream = dynamic_cast<std::istream*>(static_cast<std::ios*>(object->c_pointer));
                 return Reference(Data(stream->operator bool()));
-            } else throw FunctionArgumentsError();
+            } catch (Data::BadAccess & e) {
+                throw FunctionArgumentsError();
+            }
         }
 
         void setInputStream(Context & context, Object & object) {
             Function f1 = SystemFunction{read_args, Streams::read};
-            f1.extern_symbols["this"] = context.new_reference(&object);
+            f1.extern_symbols.emplace("this", context.new_reference(&object));
             std::get<Object*>(object.get_property("read", context))->functions.push_front(f1);
 
             Function f2 = SystemFunction{has_args, Streams::has};
-            f2.extern_symbols["this"] = context.new_reference(&object);
+            f2.extern_symbols.emplace("this", context.new_reference(&object));
             std::get<Object*>(object.get_property("has", context))->functions.push_front(f2);
         }
 
         auto write_args = std::make_shared<Symbol>("data");
         Reference write(FunctionContext & context) {
-            if (auto object = std::get_if<Object*>(&context["this"])) {
-                auto stream = dynamic_cast<std::ostream*>(static_cast<std::ios*>((*object)->c_pointer));
+            try {
+                auto object = context["this"].get<Object*>();
+                auto stream = dynamic_cast<std::ostream*>(static_cast<std::ios*>(object->c_pointer));
                 auto data = context["data"];
 
                 Interpreter::print(*stream, data);
 
-                return Reference(context.new_object());
-            } else throw FunctionArgumentsError();
+                return Reference(Data(context.new_object()));
+            } catch (Data::BadAccess & e) {
+                throw FunctionArgumentsError();
+            }
         }
 
         auto flush_args = std::make_shared<Tuple>();
         Reference flush(FunctionContext & context) {
-            if (auto object = std::get_if<Object*>(&context["this"])) {
-                auto stream = dynamic_cast<std::ostream*>(static_cast<std::ios*>((*object)->c_pointer));
+            try {
+                auto object = context["this"].get<Object*>();
+                auto stream = dynamic_cast<std::ostream*>(static_cast<std::ios*>(object->c_pointer));
 
                 stream->flush();
 
-                return Reference(context.new_object());
-            } else throw FunctionArgumentsError();
+                return Reference(Data(context.new_object()));
+            } catch (Data::BadAccess & e) {
+                throw FunctionArgumentsError();
+            }
         }
 
         void setOutputStream(Context & context, Object & object) {
             Function f1 = SystemFunction{write_args, Streams::write};
-            f1.extern_symbols["this"] = context.new_reference(&object);
+            f1.extern_symbols.emplace("this", context.new_reference(&object));
             std::get<Object*>(object.get_property("write", context))->functions.push_front(f1);
 
             Function f2 = SystemFunction{flush_args, Streams::flush};
-            f2.extern_symbols["this"] = context.new_reference(&object);
+            f2.extern_symbols.emplace("this", context.new_reference(&object));
             std::get<Object*>(object.get_property("flush", context))->functions.push_front(f2);
         }
 
         auto input_file_args = std::make_shared<Symbol>("path");
         Reference input_file(FunctionContext & context) {
             try {
-                if (auto path_object = std::get_if<Object*>(&context["path"])) {
-                    auto path = (*path_object)->to_string();
+                auto path = context["path"].get<Object*>()->to_string();
 
-                    auto object = context.new_object();
-                    setInputStream(context, *object);
-                    object->c_pointer = std::make_unique<std::ifstream>(path);
+                auto object = context.new_object();
+                setInputStream(context, *object);
+                object->c_pointer = std::make_unique<std::ifstream>(path);
 
-                    return Reference(Data(object));
-                } else FunctionArgumentsError();
+                return Reference(Data(object));
+            } catch (Data::BadAccess & e) {
+                throw Interpreter::FunctionArgumentsError();
             } catch (std::exception & e) {
                 throw Interpreter::FunctionArgumentsError();
             }
@@ -114,15 +126,15 @@ namespace Interpreter {
         auto output_file_args = std::make_shared<Symbol>("path");
         Reference output_file(FunctionContext & context) {
             try {
-                if (auto path_object = std::get_if<Object*>(&context["path"])) {
-                    auto path = (*path_object)->to_string();
+                auto path = context["path"].get<Object*>()->to_string();
 
-                    auto object = context.new_object();
-                    setOutputStream(context, *object);
-                    object->c_pointer = std::make_unique<std::ofstream>(path);
+                auto object = context.new_object();
+                setOutputStream(context, *object);
+                object->c_pointer = std::make_unique<std::ofstream>(path);
 
-                    return Reference(object);
-                    } else FunctionArgumentsError();
+                return Reference(object);
+            } catch (Data::BadAccess & e) {
+                throw Interpreter::FunctionArgumentsError();
             } catch (std::exception & e) {
                 throw Interpreter::FunctionArgumentsError();
             }

@@ -1,6 +1,7 @@
 #ifndef __INTERPRETER_OBJECT_HPP__
 #define __INTERPRETER_OBJECT_HPP__
 
+#include <functional>
 #include <list>
 #include <map>
 #include <memory>
@@ -20,13 +21,11 @@ namespace Interpreter {
         std::map<std::string, Data> properties;
         std::list<Function> functions;
         std::vector<Data> array;
-        class CPointer: public std::variant<std::unique_ptr<std::ios>, std::reference_wrapper<std::ios>> {
-            public:
-
-            using std::variant<std::unique_ptr<std::ios>, std::reference_wrapper<std::ios>>::variant;
+        struct CPointer: public std::variant<std::shared_ptr<std::ios>, std::reference_wrapper<std::ios>> {
+            using std::variant<std::shared_ptr<std::ios>, std::reference_wrapper<std::ios>>::variant;
 
             inline operator std::ios*() const {
-                if (auto ptr = std::get_if<std::unique_ptr<std::ios>>(this))
+                if (auto ptr = std::get_if<std::shared_ptr<std::ios>>(this))
                     return ptr->get();
                 else if (auto ref = std::get_if<std::reference_wrapper<std::ios>>(this))
                     return &ref->get();
@@ -38,8 +37,6 @@ namespace Interpreter {
 
         Data & get_property(std::string name, Context & context);
         std::string to_string() const;
-
-        ~Object();
 
     };
 

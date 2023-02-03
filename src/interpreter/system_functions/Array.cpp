@@ -9,102 +9,99 @@ namespace Interpreter {
 
     namespace Array {
 
-        Reference get_array_size(FunctionContext & context) {
-            auto array = context.get_symbol("array").to_object(context);
+        auto lenght_args = std::make_shared<Symbol>("array");
+        Reference lenght(FunctionContext & context) {
+            try {
+                auto array = context["array"].get<Object*>();
 
-            if (array->type >= 0)
-                return Reference(context.new_object((long) array->type));
-            else throw Interpreter::FunctionArgumentsError();
-        }
-
-        Reference get_array_capacity(FunctionContext & context) {
-            auto array = context.get_symbol("array").to_object(context);
-
-            if (array->type == 0) return context.new_object((long) 0);
-            else if (array->type > 0) return context.new_object((long) array->data.a[0].c);
-            else throw Interpreter::FunctionArgumentsError();
-        }
-
-        Reference set_array_capacity(FunctionContext & context) {
-            auto array = context.get_symbol("array").to_object(context);
-            auto capacity = context.get_symbol("capacity").to_object(context);
-
-            if (capacity->type == Object::Int && capacity->data.i >= 0) {
-                if (array->type <= 0) {
-                    if (capacity->data.i > 0) {
-                        array->data.a = (Object::Data::ArrayElement *) malloc(sizeof(Object::Data::ArrayElement) * (capacity->data.i+1));
-                        array->data.a[0].c = capacity->data.i;
-                    }
-                    array->type = 0;
-                } else if (capacity->data.i != (long) array->data.a[0].c) {
-                    array->data.a[0].c = capacity->data.i;
-                    array->data.a = (Object::Data::ArrayElement *) realloc(array->data.a, sizeof(Object::Data::ArrayElement) * (1 + array->data.a[0].c));
-                }
-
-                return context.new_object();
-            } else throw Interpreter::FunctionArgumentsError();
-        }
-
-        Reference get_array_element(FunctionContext & context) {
-            auto array = context.get_symbol("array").to_object(context);
-            auto i = context.get_symbol("i").to_object(context);
-
-            if (i->type == Object::Int && i->data.i >= 0 && i->data.i < array->type)
-                return Reference(array, i->data.i);
-            else throw Interpreter::FunctionArgumentsError();
-        }
-
-        Reference add_array_element(FunctionContext & context) {
-            auto array = context.get_symbol("array").to_object(context);
-            auto element = context.get_symbol("element").to_object(context);
-
-            if (array->type <= 0) {
-                array->type = 0;
-                array->data.a = (Object::Data::ArrayElement *) malloc(sizeof(Object::Data::ArrayElement) * 2);
-                array->data.a[0].c = 1;
-            } else if ((long) array->data.a[0].c <= array->type) {
-                array->data.a[0].c *= 2;
-                array->data.a = (Object::Data::ArrayElement *) realloc(array->data.a, sizeof(Object::Data::ArrayElement) * (1 + array->data.a[0].c));
+                return Reference(Data((long) array->array.size()));
+            } catch (Data::BadAccess & e) {
+                throw FunctionArgumentsError();
             }
-
-            array->type++;
-            array->data.a[array->type].o = element;
-
-            return Reference(array, array->type-1);
         }
 
-        Reference remove_array_element(FunctionContext & context) {
-            auto array = context.get_symbol("array").to_object(context);
+        auto get_capacity_args = std::make_shared<Symbol>("array");
+        Reference get_capacity(FunctionContext & context) {
+            auto array = context["array"].get<Object*>();
 
-            if (array->type > 0) {
-                array->type--;
-                return Reference(array, array->type);
-            } else throw Interpreter::FunctionArgumentsError();
+            try {
+                return Data((long) array->array.capacity());
+            } catch (Data::BadAccess & e) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        auto set_capacity_args = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
+            std::make_shared<Symbol>("array"),
+            std::make_shared<Symbol>("capacity")
+        });
+        Reference set_capacity(FunctionContext & context) {
+            try {
+                auto array = context["array"].get<Object*>();
+                auto capacity = context["capacity"].get<long>();
+
+                array->array.reserve(capacity);
+                return Data();
+            } catch (Data::BadAccess & e) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        auto get_args = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
+            std::make_shared<Symbol>("array"),
+            std::make_shared<Symbol>("i")
+        });
+        Reference get(FunctionContext & context) {
+            try {
+                auto array = context["array"].get<Object*>();
+                auto i = context["i"].get<long>();
+
+                if (i >= 0 && i < array->array.size())
+                    return ArrayReference{*array, (size_t) i};
+                else throw FunctionArgumentsError();
+            } catch (Data::BadAccess & e) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        auto add_args = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
+            std::make_shared<Symbol>("array"),
+            std::make_shared<Symbol>("element")
+        });
+        Reference add(FunctionContext & context) {
+            try {
+                auto array = context["array"].get<Object*>();
+                auto element = context["element"];
+
+                array->array.push_back(element);
+                return ArrayReference{*array, (size_t) array->array.size()-1};
+            } catch (Data::BadAccess & e) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        auto remove_args = std::make_shared<Symbol>("array");
+        Reference remove(FunctionContext & context) {
+            try {
+                auto array = context["array"].get<Object*>();
+                auto element = context["element"];
+
+                Data d = array->array.back();
+                array->array.pop_back();
+                return Data(d);
+            } catch (Data::BadAccess & e) {
+                throw FunctionArgumentsError();
+            }
         }
 
         void init(Context & context) {
-            auto array = context.get_symbol("Array").to_object(context);
-            array->get_property("lenght", context)->functions.push_front(std::make_unique<SystemFunction>(std::make_shared<Symbol>(
-                "array"
-            ), get_array_size));
-            array->get_property("get_capacity", context)->functions.push_front(std::make_unique<SystemFunction>(std::make_shared<Symbol>(
-                "array"
-            ), get_array_capacity));
-            array->get_property("set_capacity", context)->functions.push_front(std::make_unique<SystemFunction>(std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
-                std::make_shared<Symbol>("array"),
-                std::make_shared<Symbol>("capacity")
-            }), set_array_capacity));
-            array->get_property("get", context)->functions.push_front(std::make_unique<SystemFunction>(std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
-                std::make_shared<Symbol>("array"),
-                std::make_shared<Symbol>("i")
-            }), get_array_element));
-            array->get_property("add", context)->functions.push_front(std::make_unique<SystemFunction>(std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
-                std::make_shared<Symbol>("array"),
-                std::make_shared<Symbol>("element")
-            }), get_array_element));
-            array->get_property("remove", context)->functions.push_front(std::make_unique<SystemFunction>(std::make_shared<Symbol>(
-                "array"
-            ), remove_array_element));
+            auto array = context["Array"].get<Object*>();
+            array->get_property("lenght", context).get<Object*>()->functions.push_front(SystemFunction{lenght_args, lenght});
+            array->get_property("get_capacity", context).get<Object*>()->functions.push_front(SystemFunction{get_capacity_args, get_capacity});
+            array->get_property("set_capacity", context).get<Object*>()->functions.push_front(SystemFunction{set_capacity_args, set_capacity});
+            array->get_property("get", context).get<Object*>()->functions.push_front(SystemFunction{get_args, get});
+            array->get_property("add", context).get<Object*>()->functions.push_front(SystemFunction{add_args, add});
+            array->get_property("remove", context).get<Object*>()->functions.push_front(SystemFunction{remove_args, remove});
         }
 
     }

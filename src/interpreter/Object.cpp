@@ -15,10 +15,9 @@ namespace Interpreter {
     std::string Object::to_string() const {
         std::string str;
 
-        for (auto d : array) {
-            if (auto c = std::get_if<char>(&d)) str.push_back(*c);
-            else throw std::exception();
-        }
+        for (auto d : array)
+            str.push_back(d.get<char>());
+        ~Object();
 
         return str;
     }

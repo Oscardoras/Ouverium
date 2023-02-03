@@ -1,3 +1,5 @@
+/*
+
 #include "Array.hpp"
 #include "Types.hpp"
 
@@ -78,3 +80,4 @@ namespace Interpreter {
     }
 
 }
+*/
