@@ -361,7 +361,7 @@ namespace Parser {
                 }
                 if (words.at(i).word == "|->") {
                     if (priority) {
-                        {if (++i >= words.size()) throw IncompleteCode();}
+                        ++i;
                         auto function_definition = std::make_shared<FunctionDefinition>();
                         function_definition->position = std::make_shared<TextPosition>(words[i-1].position);
                         function_definition->parameters = expression;
@@ -397,7 +397,7 @@ namespace Parser {
                             symbol->position = std::make_shared<TextPosition>(words.at(i).position);
                             symbol->name = words.at(i).word;
                             expressions.push_back(symbol);
-                            {if (++i >= words.size()) throw IncompleteCode();}
+                            ++i;
                             if (i >= words.size() || words.at(i).word == ")" || words.at(i).word == "]" || words.at(i).word == "}")
                                 expression = std::make_shared<Tuple>();
                             else

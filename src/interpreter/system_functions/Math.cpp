@@ -165,6 +165,9 @@ namespace Interpreter {
                 else if (auto b_float = std::get_if<double>(&b))
                     return Reference(Data(*a_float < *b_float));
             }
+            if (auto a_char = std::get_if<char>(&a))
+                if (auto b_char = std::get_if<char>(&b))
+                    return Reference(Data(*a_char < *b_char));
             throw FunctionArgumentsError();
         }
 
@@ -183,6 +186,9 @@ namespace Interpreter {
                 else if (auto b_float = std::get_if<double>(&b))
                     return Reference(Data(*a_float > *b_float));
             }
+            if (auto a_char = std::get_if<char>(&a))
+                if (auto b_char = std::get_if<char>(&b))
+                    return Reference(Data(*a_char > *b_char));
             throw FunctionArgumentsError();
         }
 
@@ -201,6 +207,9 @@ namespace Interpreter {
                 else if (auto b_float = std::get_if<double>(&b))
                     return Reference(Data(*a_float <= *b_float));
             }
+            if (auto a_char = std::get_if<char>(&a))
+                if (auto b_char = std::get_if<char>(&b))
+                    return Reference(Data(*a_char <= *b_char));
             throw FunctionArgumentsError();
         }
 
@@ -219,6 +228,9 @@ namespace Interpreter {
                 else if (auto b_float = std::get_if<double>(&b))
                     return Reference(Data(*a_float >= *b_float));
             }
+            if (auto a_char = std::get_if<char>(&a))
+                if (auto b_char = std::get_if<char>(&b))
+                    return Reference(Data(*a_char >= *b_char));
             throw FunctionArgumentsError();
         }
 

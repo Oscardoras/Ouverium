@@ -26,7 +26,7 @@ namespace Interpreter {
         Math::init(*this);
         Streams::init(*this);
         //String::init(*this);
-        //Types::init(*this);
+        Types::init(*this);
     }
 
 
@@ -139,10 +139,9 @@ namespace Interpreter {
                 if (auto custom_function = std::get_if<CustomFunction>(&function)) {
                     set_references(context, function_context, computed, custom_function->pointer->parameters, arguments);
 
-                    Data filter;
+                    Data filter = true;
                     if (custom_function->pointer->filter != nullptr)
                         filter = execute(function_context, custom_function->pointer->filter).to_data(context);
-                    else filter = nullptr;
 
                     try {
                         if (filter.get<bool>())
@@ -177,7 +176,7 @@ namespace Interpreter {
                 return call_function(context, function_call->position, std::list<Function>{}, function_call->arguments);
         } else if (auto function_definition = std::dynamic_pointer_cast<FunctionDefinition>(expression)) {
             auto object = context.new_object();
-            object->functions.push_front(CustomFunction{});
+            object->functions.push_front(CustomFunction{function_definition});
             auto & f = object->functions.back();
 
             for (auto symbol : function_definition->body->symbols)
@@ -188,25 +187,25 @@ namespace Interpreter {
                     if (context.has_symbol(symbol))
                         f.extern_symbols.emplace(symbol, context[symbol]);
 
-            return Reference(object);
+            return Data(object);
         } else if (auto property = std::dynamic_pointer_cast<Property>(expression)) {
             auto data = execute(context, property->object).to_data(context);
             if (auto object = std::get_if<Object*>(&data))
                 return PropertyReference{**object, (*object)->get_property(property->name, context)};
             else
-                return Reference(context.new_object());
+                return Data(context.new_object());
         } else if (auto symbol = std::dynamic_pointer_cast<Symbol>(expression)) {
             auto data = get_symbol(symbol->name);
             if (auto b = std::get_if<bool>(&data)) {
-                return Reference(Data(*b));
+                return Data(*b);
             } else if (auto l = std::get_if<long>(&data)) {
-                return Reference(Data(*l));
+                return Data(*l);
             } else if (auto d = std::get_if<double>(&data)) {
-                return Reference(Data(*d));
+                return Data(*d);
             } else if (auto str = std::get_if<std::string>(&data)) {
-                return Reference(context.new_object(*str));
+                return context.new_object(*str);
             } else {
-                return context[symbol->name];
+                return SymbolReference(context[symbol->name]);
             }
         } else if (auto tuple = std::dynamic_pointer_cast<Tuple>(expression)) {
             if (!tuple->objects.empty()) {

@@ -107,9 +107,9 @@ namespace Interpreter {
             try {
                 auto & variable = context["variable"];
                 auto & from_s = context["from_s"];
-                auto & begin = context["begin"].get<bool>();
+                auto & begin = context["begin"].get<long>();
                 auto & to_s = context["to_s"];
-                auto & end = context["end"].get<bool>();
+                auto & end = context["end"].get<long>();
                 auto & block = context["block"];
 
                 if (from_s == context["from"] && to_s == context["to"]) {
@@ -143,11 +143,11 @@ namespace Interpreter {
 
                 auto variable = context["variable"];
                 auto from_s = context["from_s"];
-                auto begin = context["begin"].get<bool>();;
+                auto begin = context["begin"].get<long>();
                 auto to_s = context["to_s"];
-                auto end = context["end"].get<bool>();;
+                auto end = context["end"].get<long>();
                 auto step_s = context["step_s"];
-                auto step = context["step"].get<bool>();;
+                auto step = context["step"].get<long>();
                 auto block = context["block"];
 
                 if (from_s == context["from"] && to_s == context["to"] && step_s == context["step"]) {
@@ -245,7 +245,6 @@ namespace Interpreter {
             }
         }
 
-        auto include_args = std::make_shared<Symbol>("path");
         Reference use(FunctionContext & context) {
             std::string path = get_canonical_path(context);
 
@@ -278,11 +277,11 @@ namespace Interpreter {
                 return Reference(context.new_object());
         }
 
-        auto copy_args = std::make_shared<Symbol>("object");
+        auto copy_args = std::make_shared<Symbol>("data");
         Reference copy(FunctionContext & context) {
             auto data = context["data"];
 
-            if (auto object = std::get_if<Object*>(&data))
+            if (std::get_if<Object*>(&data))
                 throw Interpreter::FunctionArgumentsError();
             else
                 return Reference(Data(data));
@@ -293,7 +292,7 @@ namespace Interpreter {
         }
 
         Reference assignation(Reference var, Data d) {
-            if (auto data = std::get_if<Data>(&var)) return *data;
+            if (std::get_if<Data>(&var)) return d;
             else if (auto symbol_reference = std::get_if<SymbolReference>(&var)) symbol_reference->get() = d;
             else if (auto property_reference = std::get_if<PropertyReference>(&var)) static_cast<Data &>(*property_reference) = d;
             else if (auto array_reference = std::get_if<ArrayReference>(&var)) static_cast<Data &>(*array_reference) = d;
@@ -304,7 +303,7 @@ namespace Interpreter {
                             assignation((*tuple_reference)[i], (*object)->array[i]);
                     } else throw Interpreter::FunctionArgumentsError();
                 } else throw Interpreter::FunctionArgumentsError();
-            } else throw Interpreter::FunctionArgumentsError();
+            }
             return var;
         }
 
@@ -316,7 +315,7 @@ namespace Interpreter {
             std::make_shared<Symbol>("data")
         });
         Reference assign(FunctionContext & context) {
-            auto var = Interpreter::call_function(context, nullptr, context["var"].get<Object*>()->functions, std::make_shared<Tuple>());
+            auto var = Interpreter::call_function(context.get_parent(), nullptr, context["var"].get<Object*>()->functions, std::make_shared<Tuple>());
             auto data = context["data"];
 
             return assignation(var, data);
@@ -388,6 +387,7 @@ namespace Interpreter {
         Reference not_check_pointers(FunctionContext & context) {
             auto a = context["a"];
             auto b = context["b"];
+            
             return Reference(Data(a != b));
         }
 
@@ -425,9 +425,9 @@ namespace Interpreter {
             context.get_function("$==").push_front(SystemFunction{copy_args, copy_pointer});
 
             context.get_function(":=").push_front(SystemFunction{assign_args, assign});
-            context.get_function(":").push_front(SystemFunction{assign_args, function_definition});
+            context.get_function(":").push_front(SystemFunction{function_definition_args, function_definition});
 
-            context.get_function("==").push_front(SystemFunction{equals_args, (Reference (*)(FunctionContext & context)) equals});
+            context.get_function("==").push_front(SystemFunction{equals_args, equals});
             context.get_function("!=").push_front(SystemFunction{equals_args, not_equals});
             context.get_function("===").push_front(SystemFunction{equals_args, check_pointers});
             context.get_function("!==").push_front(SystemFunction{equals_args, not_check_pointers});

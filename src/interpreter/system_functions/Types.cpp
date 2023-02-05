@@ -1,5 +1,3 @@
-/*
-
 #include "Array.hpp"
 #include "Types.hpp"
 
@@ -8,43 +6,27 @@ namespace Interpreter {
 
     namespace Types {
 
-        bool check_type(Context & context, Object* object, Object* type) {
-            if (type == context.get_symbol("Char").to_object(context)) return object->type == Object::Char;
-            else if (type == context.get_symbol("Int").to_object(context)) return object->type == Object::Int;
-            else if (type == context.get_symbol("Float").to_object(context)) return object->type == Object::Float;
-            else if (type == context.get_symbol("Bool").to_object(context)) return object->type == Object::Bool;
-            else if (type == context.get_symbol("Array").to_object(context)) return object->type >= 0;
-            else {
-                auto array = object->get_property("_types", context);
-                for (long i = 1; i <= array->type; i++) {
-                    if (array->data.a[i].o == type)
-                        return true;
-                }
-                return false;
-            }
+        bool check_type(Context & context, Data data, Data type) {
+            if (type == context["Char"]) return std::holds_alternative<char>(data);
+            else if (type == context["Float"]) return std::holds_alternative<double>(data);
+            else if (type == context["Int"]) return std::holds_alternative<long>(data);
+            else if (type == context["Bool"]) return std::holds_alternative<bool>(data);
+            else if (type == context["Array"]) return std::holds_alternative<Object*>(data);
+            else throw FunctionArgumentsError();
         }
 
-        std::shared_ptr<Expression> getset_type() {
-            auto tuple = std::make_shared<Tuple>();
-
-            auto object = std::make_shared<Symbol>();
-            object->name = "object";
-            tuple->objects.push_back(object);
-
-            auto type = std::make_shared<Symbol>();
-            type->name = "type";
-            tuple->objects.push_back(type);
-
-            return tuple;
-        }
-
+        auto is_type_args = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
+            std::make_shared<Symbol>("data"),
+            std::make_shared<Symbol>("type")
+        });
         Reference is_type(FunctionContext & context) {
-            auto object = context.get_symbol("object").to_object(context);
-            auto type = context.get_symbol("type").to_object(context);
+            auto data = context["data"];
+            auto type = context["type"];
 
-            return Reference(context.new_object(check_type(context, object, type)));
+            return Data(check_type(context, data, type));
         }
 
+/*
         Reference set_type(FunctionContext & context) {
             auto object = context.get_symbol("object");
             auto type = context.get_symbol("type").to_object(context);
@@ -59,25 +41,21 @@ namespace Interpreter {
 
             return object;
         }
+*/
 
         void init(Context & context) {
-            auto parameters = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
-                std::make_shared<Symbol>("object"),
-                std::make_shared<Symbol>("type")
-            });
-            auto f = std::make_unique<SystemFunction>(parameters, is_type);
-            f->extern_symbols["Char"] = context.get_symbol("Char");
-            f->extern_symbols["Int"] = context.get_symbol("Int");
-            f->extern_symbols["Float"] = context.get_symbol("Float");
-            f->extern_symbols["Bool"] = context.get_symbol("Bool");
-            f->extern_symbols["Array"] = context.get_symbol("Array");
-            context.get_symbol("~").to_object(context)->functions.push_front(std::make_unique<SystemFunction>(*f));
-            context.get_symbol("is").to_object(context)->functions.push_front(std::move(f));
+            Function f = SystemFunction{is_type_args, is_type};
+            f.extern_symbols.emplace("Char", context["Char"]);
+            f.extern_symbols.emplace("Float", context["Float"]);
+            f.extern_symbols.emplace("Int", context["Int"]);
+            f.extern_symbols.emplace("Bool", context["Bool"]);
+            f.extern_symbols.emplace("Array", context["Array"]);
+            context.get_function("is").push_front(f);
+            context.get_function("~").push_front(f);
 
-            context.get_symbol(":~").to_object(context)->functions.push_front(std::make_unique<SystemFunction>(parameters, set_type));
+            //context.get_symbol(":~").to_object(context)->functions.push_front(std::make_unique<SystemFunction>(parameters, set_type));
         }
 
     }
 
 }
-*/

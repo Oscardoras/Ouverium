@@ -1,3 +1,6 @@
+using "data_structure/ArrayList.fl";
+
+
 Char : this \ (this ~ Char) |-> {
     this
 };
@@ -17,29 +20,19 @@ Char->is_alphanum : c \ (c ~ Char) |-> {
     Char->is_alpha(c) | Char->is_digit(c)
 };
 
-String : this \ {
-    found := false;
-    i := 0;
-    while (!found & i < Array->lenght(this)) {
-        if (!is (Array->get(this, i)) Char) {
-            found := true
-        };
-        ++i
-    };
-    !found
-} |-> {
+String : this |-> {
     ArrayList(this);
     this :~ String;
 
     this->lower : () |-> {
         this->foreach(c |-> {
-            
+
         })
     };
 
     this->upper : () |-> {
         this->foreach(c |-> {
-            
+
         })
     };
 
@@ -99,7 +92,7 @@ String : c \ (is c Char) |-> {
     for i from 0 to l2 {
         str->add_last(Array->get(str2, i))
     };
-    
+
     str
 };
 (+) : (str1, str2) \ (str1 ~ String & str2 ~ String) |-> {
@@ -116,7 +109,7 @@ String : c \ (is c Char) |-> {
     for i from 0 to l2 {
         str->add_last(str2[i])
     };
-    
+
     str
 };
 (+) : (str1, c2) \ (str1 ~ String & c2 ~ Char) |-> {
@@ -148,7 +141,7 @@ String : c \ (is c Char) |-> {
     for i from 0 to l2 {
         str1->add_last(str2[i])
     };
-    
+
     str1
 };
 (:+) : (str1, c2) \ (str1 ~ String & c2 ~ Char) |-> {

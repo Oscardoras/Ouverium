@@ -6,7 +6,6 @@ Iterable : this |-> {
 
     this->foreach : function |-> {};
     this->filter : function |-> {};
-        list := ArrayList();
 
     this->iterator : () |-> {};
 

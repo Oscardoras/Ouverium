@@ -14,7 +14,7 @@ ArrayList : this |-> {
         list := ArrayList();
         list->set_capacity(l);
         for i from 0 to l {
-            list.add_last(function(Array->get(this, i)))
+            list->add_last(function(Array->get(this, i)))
         };
         list
     };

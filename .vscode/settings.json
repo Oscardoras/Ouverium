@@ -1,5 +1,7 @@
 {
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "files.associations": {
+        "variant": "cpp",
         "array": "cpp",
         "atomic": "cpp",
         "bit": "cpp",
@@ -53,9 +55,6 @@
         "sstream": "cpp",
         "stdexcept": "cpp",
         "streambuf": "cpp",
-        "typeinfo": "cpp",
-        "variant": "cpp",
-        "optional": "cpp",
-        "ranges": "cpp"
+        "typeinfo": "cpp"
     }
 }

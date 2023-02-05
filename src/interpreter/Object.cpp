@@ -17,7 +17,6 @@ namespace Interpreter {
 
         for (auto d : array)
             str.push_back(d.get<char>());
-        ~Object();
 
         return str;
     }

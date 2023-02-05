@@ -56,7 +56,7 @@ namespace Interpreter {
                 auto array = context["array"].get<Object*>();
                 auto i = context["i"].get<long>();
 
-                if (i >= 0 && i < array->array.size())
+                if (i >= 0 && i < (long) array->array.size())
                     return ArrayReference{*array, (size_t) i};
                 else throw FunctionArgumentsError();
             } catch (Data::BadAccess & e) {
@@ -84,7 +84,6 @@ namespace Interpreter {
         Reference remove(FunctionContext & context) {
             try {
                 auto array = context["array"].get<Object*>();
-                auto element = context["element"];
 
                 Data d = array->array.back();
                 array->array.pop_back();

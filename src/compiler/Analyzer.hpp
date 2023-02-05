@@ -32,8 +32,19 @@ namespace Analyzer {
     };
 
     struct Data: public std::variant<Object*, bool, char, long, double> {
+        class BadAccess {};
+
         using std::variant<Object*, bool, char, long, double>::variant;
         bool defined = true;
+
+        template<typename T>
+        inline T & get() {
+            try {
+                return std::get<T>(*this);
+            } catch (std::bad_variant_access & e) {
+                throw BadAccess();
+            }
+        }
     };
 
     using SymbolReference = std::reference_wrapper<M<Data>>;
@@ -41,14 +52,14 @@ namespace Analyzer {
     class M<Reference> : public M<Reference, true> {
         public:
         using M<Reference, true>::M;
+
         M<Data> to_data(Context & context) const;
         M<SymbolReference> to_symbol_reference(Context & context) const;
     };
+    using TupleReference = std::vector<M<Reference>>;
     class Reference: public std::variant<M<Data>, SymbolReference, std::vector<M<Reference>>> {
         public:
-        inline Reference(M<Data> data): std::variant<M<Data>, SymbolReference, std::vector<M<Reference>>>(data) {}
-        inline Reference(SymbolReference reference) : std::variant<M<Data>, SymbolReference, std::vector<M<Reference>>>(reference) {}
-        inline Reference(std::vector<M<Reference>> const& tuple) : std::variant<M<Data>, SymbolReference, std::vector<M<Reference>>>(tuple) {}
+        using std::variant<M<Data>, SymbolReference, TupleReference>::variant;
 
         M<Data> to_data(Context & context) const;
         SymbolReference to_symbol_reference(Context & context) const;
@@ -80,7 +91,7 @@ namespace Analyzer {
         Object* new_object(std::string const& data);
         SymbolReference new_reference(M<Data> data);
 
-        M<SymbolReference>& operator[](std::string const& symbol);
+        M<SymbolReference> & operator[](std::string const& symbol);
         bool has_symbol(std::string const& symbol);
         inline auto begin() {
             return symbols.begin();
@@ -116,9 +127,11 @@ namespace Analyzer {
     M<Reference> execute(Context & context, bool potential, std::shared_ptr<Expression> expression);
 
 
+/*
     struct Symbol {
         std::string name;
     };
+*/
 
     struct FunctionEnvironment {
         std::shared_ptr<FunctionDefinition> expression;

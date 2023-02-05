@@ -1,13 +1,14 @@
-using "engine/parser/Standard.fl";
+using "../engine/parser/Standard.fl";
 print("BEGIN\n");
 
 
-file := InputFile("test.fl");
+file := InputFile("examples/test2.fl");
 print("FILE LOADED\n");
 
-str := String "";
+str := (String "");
 while (file->has()) {
     s := file->read();
+    print(s, "\n");
     str :+ (s + "\n");
 };
 print(str);

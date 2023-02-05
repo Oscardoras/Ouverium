@@ -20,11 +20,7 @@ namespace Interpreter {
             std::string str;
             getline(std::cin, str);
 
-            long l = str.length();
-            Object* obj = context.new_object();
-            for (auto c : str)
-                obj->array.push_back(c);
-            return Reference(Data(obj));
+            return Data(context.new_object(str));
         }
 
         auto read_args = std::make_shared<Tuple>();
@@ -36,11 +32,7 @@ namespace Interpreter {
                 std::string str;
                 getline(*stream, str);
 
-                long l = str.length();
-                Object* obj = context.new_object();
-                for (auto c : str)
-                    obj->array.push_back(c);
-                return Reference(obj);
+                return Data(context.new_object(str));
             } catch (Data::BadAccess & e) {
                 throw FunctionArgumentsError();
             }
