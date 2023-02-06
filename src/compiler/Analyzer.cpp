@@ -9,6 +9,14 @@
 
 namespace Analyzer {
 
+    M<Data> M<SymbolReference>::to_data() const {
+        M<Data> m;
+        for (auto & reference : *this)
+            for (auto & data : reference.get())
+                m.push_back(data);
+        return m;
+    }
+
     M<Data> M<Reference>::to_data(Context & context) const {
         M<Data> m;
         for (auto const& e : *this) {

@@ -3,6 +3,7 @@
 
 #include <list>
 #include <map>
+#include <set>
 #include <variant>
 
 #include "../Expressions.hpp"
@@ -18,7 +19,7 @@ namespace Analyzer {
     class GlobalContext;
 
     template<typename T, bool Specialized = false>
-    class M: public std::list<T> {
+    class M: public std::set<T> {
     public:
         inline M() = default;
         inline M(T const& t) {
@@ -48,6 +49,14 @@ namespace Analyzer {
     };
 
     using SymbolReference = std::reference_wrapper<M<Data>>;
+    template<>
+    class M<SymbolReference> : public M<SymbolReference, true> {
+        public:
+        using M<SymbolReference, true>::M;
+
+        M<Data> to_data() const;
+    };
+
     template<>
     class M<Reference> : public M<Reference, true> {
         public:

@@ -117,12 +117,24 @@ namespace Analyzer {
             try {
                 auto & variable = context["variable"];
                 auto & from_s = context["from_s"];
-                auto & begin = context["begin"].get<long>();
+                auto & begin = context["begin"];
                 auto & to_s = context["to_s"];
-                auto & end = context["end"].get<long>();
+                auto & end = context["end"];
                 auto & block = context["block"];
 
+                bool defined = begin.to_data().size() * begin.to_data().size() == 1 &&;
+
                 if (from_s == context["from"] && to_s == context["to"]) {
+                    for (auto begin_data : begin.to_data()) {
+                        for (auto end_data : end.to_data()) {
+                            for (long i = begin_data.get<long>(); i < end_data.get<long>(); i++) {
+                                for ()
+                                variable = i;
+                                Interpreter::call_function(context.get_parent(), nullptr, std::get<Object*>(block)->functions, std::make_shared<Tuple>());
+                            }
+                        }
+                    }
+
                     for (long i = begin; i < end; i++) {
                         variable = i;
                         Interpreter::call_function(context.get_parent(), nullptr, std::get<Object*>(block)->functions, std::make_shared<Tuple>());
