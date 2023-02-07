@@ -40,6 +40,23 @@ namespace Interpreter {
 
     };
 
+    class ObjectPtr {
+
+        Object* ptr;
+
+    public:
+
+        explicit inline ObjectPtr(Object & ptr): ptr(&ptr) {}
+        inline ObjectPtr(ObjectPtr const&) = default;
+
+        inline ObjectPtr & operator=(ObjectPtr const&) = default;
+
+        inline Object* operator->() {
+            return ptr;
+        }
+
+    };
+
 }
 
 
