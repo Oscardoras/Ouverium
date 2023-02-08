@@ -6,13 +6,13 @@
 
 namespace Interpreter {
 
-    class ObjectPtr;
+    class Object;
 
-    struct Data : public std::variant<ObjectPtr, char, double, long, bool> {
+    struct Data : public std::variant<Object*, char, double, long, bool> {
 
         class BadAccess: public std::exception {};
 
-        using std::variant<ObjectPtr, char, double, long, bool>::variant;
+        using std::variant<Object*, char, double, long, bool>::variant;
 
         template<typename T>
         inline T & get() {

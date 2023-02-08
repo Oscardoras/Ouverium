@@ -48,7 +48,7 @@ namespace Analyzer {
 
             if (c != Condition::FALSE) {
                 auto r = execute(context.get_parent(), potential || c == Condition::UNDEFINED, tuple->objects[i+1]);
-                m.insert(m.end(), r.begin(), r.end());
+                m.insert(r.begin(), r.end());
             }
             if (c != Condition::TRUE) {
                 if (i+3 < tuple->objects.size()) {
@@ -56,18 +56,18 @@ namespace Analyzer {
                     if (else_s == M<Reference>(context["else"]).to_data(context)) {
                         auto s = execute(context.get_parent(), potential || c == Condition::UNDEFINED, tuple->objects[i+3]).to_data(context);
                         if (i+4 == tuple->objects.size())
-                            m.insert(m.end(), s.begin(), s.end());
+                            m.insert(s.begin(), s.end());
                         else if (i+6 < tuple->objects.size() && s == M<Reference>(context["if"]).to_data(context))
                             if_function(m, context, potential || c == Condition::UNDEFINED, tuple, i+4);
                         else throw FunctionArgumentsError();
                     } else throw FunctionArgumentsError();
-                } else m.push_back(M<Data>(context.new_object()));
+                } else m.insert(M<Data>(context.new_object()));
             }
         }
 
         auto if_statement_args = std::make_shared<Symbol>("b");
         M<Reference> if_statement(Context & context, bool potential) {
-            auto function = std::get<std::shared_ptr<FunctionDefinition>>((*get_function(context["function"]).begin())->ptr)->body;
+            auto function = std::get<std::shared_ptr<FunctionDefinition>>(get_function(context["function"]).begin()->ptr)->body;
             if (auto tuple = std::dynamic_pointer_cast<Tuple>(function)) {
                 if (tuple->objects.size() >= 3) {
                     M<Reference> m;
@@ -98,7 +98,7 @@ namespace Analyzer {
             }
 
             if (m.empty())
-                m.push_back(M<Data>(context.new_object()));
+                m.insert(M<Data>(context.new_object()));
             return m;
         }
 
@@ -117,12 +117,13 @@ namespace Analyzer {
             try {
                 auto & variable = context["variable"];
                 auto & from_s = context["from_s"];
-                auto & begin = context["begin"];
+                auto begin = context["begin"].to_data();
                 auto & to_s = context["to_s"];
-                auto & end = context["end"];
+                auto end = context["end"].to_data();
                 auto & block = context["block"];
 
-                bool defined = begin.to_data().size() * begin.to_data().size() == 1 &&;
+                bool defined = begin.size() * end.size() == 1;
+                for (auto )
 
                 if (from_s == context["from"] && to_s == context["to"]) {
                     for (auto begin_data : begin.to_data()) {

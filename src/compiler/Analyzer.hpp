@@ -33,7 +33,7 @@ namespace Analyzer {
     };
 
     struct Data: public std::variant<Object*, bool, char, long, double> {
-        class BadAccess {};
+        class BadAccess: public std::exception {};
 
         using std::variant<Object*, bool, char, long, double>::variant;
         bool defined = true;
@@ -65,7 +65,9 @@ namespace Analyzer {
         M<Data> to_data(Context & context) const;
         M<SymbolReference> to_symbol_reference(Context & context) const;
     };
+
     using TupleReference = std::vector<M<Reference>>;
+
     class Reference: public std::variant<M<Data>, SymbolReference, std::vector<M<Reference>>> {
         public:
         using std::variant<M<Data>, SymbolReference, TupleReference>::variant;
@@ -78,7 +80,7 @@ namespace Analyzer {
         std::shared_ptr<Expression> creation;
 
         std::map<std::string, M<Data>> properties;
-        std::list<std::shared_ptr<Function>> functions;
+        std::list<Function> functions;
         std::vector<M<Data>> array;
 
         SymbolReference get_property(Context & context, std::string name);
@@ -132,7 +134,7 @@ namespace Analyzer {
 
     struct FunctionArgumentsError {};
 
-    M<Reference> call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, std::list<std::shared_ptr<Function>> const& functions, std::shared_ptr<Expression> arguments);
+    M<Reference> call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, std::shared_ptr<Expression> arguments);
     M<Reference> execute(Context & context, bool potential, std::shared_ptr<Expression> expression);
 
 
