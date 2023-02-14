@@ -123,25 +123,33 @@ namespace Analyzer {
                 auto & block = context["block"];
 
                 bool defined = begin.size() * end.size() == 1;
-                for (auto )
-
-                if (from_s == context["from"] && to_s == context["to"]) {
-                    for (auto begin_data : begin.to_data()) {
-                        for (auto end_data : end.to_data()) {
-                            for (long i = begin_data.get<long>(); i < end_data.get<long>(); i++) {
-                                for ()
-                                variable = i;
-                                Interpreter::call_function(context.get_parent(), nullptr, std::get<Object*>(block)->functions, std::make_shared<Tuple>());
+                if (defined) {
+                    for (auto b : begin) {
+                        if (!b.defined) {
+                            defined = false;
+                            break;
+                        }
+                        for (auto e : end) {
+                            if (!e.defined) {
+                                defined = false;
+                                break;
                             }
                         }
                     }
+                }
 
-                    for (long i = begin; i < end; i++) {
-                        variable = i;
-                        Interpreter::call_function(context.get_parent(), nullptr, std::get<Object*>(block)->functions, std::make_shared<Tuple>());
+                if (from_s == context["from"] && to_s == context["to"]) {
+                    if (defined) {
+                        for (long i = begin.begin()->get<long>(); i < end.begin()->get<long>(); i++) {
+                            assignation(variable, Data(i), potential);
+                            call_function(context.get_parent(), potential, nullptr, get_function(block), std::make_shared<Tuple>());
+                        }
+                    } else {
+                        assignation(variable, Data(0), potential);
+                        call_function(context.get_parent(), true, nullptr, get_function(block), std::make_shared<Tuple>());
                     }
-                    return Reference(context.new_object());
-                } else throw Interpreter::FunctionArgumentsError();
+                    return Reference(M<Data>(context.new_object()));
+                } else throw FunctionArgumentsError();
             } catch (Data::BadAccess & e) {
                 throw FunctionArgumentsError();
             }
@@ -228,7 +236,7 @@ namespace Analyzer {
         }
 
         auto path_args = std::make_shared<Symbol>("path");
-        std::string get_canonical_path(FunctionContext & context) {
+        std::string get_canonical_path(Context & context) {
             try {
                 auto path = context["path"].get<Object*>()->to_string();
                 auto system_position = context.position->path;

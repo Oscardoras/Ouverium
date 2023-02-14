@@ -10,6 +10,8 @@ namespace Analyzer {
 
         M<Reference> separator(Context & context);
 
+        void assignation(M<Reference> const& var, M<Data> const& data, bool potential);
+
     }
 
 }

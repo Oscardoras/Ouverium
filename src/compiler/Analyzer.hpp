@@ -46,6 +46,15 @@ namespace Analyzer {
                 throw BadAccess();
             }
         }
+
+        template<typename T>
+        inline T const & get() const {
+            try {
+                return std::get<T>(*this);
+            } catch (std::bad_variant_access & e) {
+                throw BadAccess();
+            }
+        }
     };
 
     using SymbolReference = std::reference_wrapper<M<Data>>;

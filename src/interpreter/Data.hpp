@@ -23,6 +23,14 @@ namespace Interpreter {
             }
         }
 
+        template<typename T>
+        inline T const & get() const {
+            try {
+                return std::get<T>(*this);
+            } catch (std::bad_variant_access & e) {
+                throw BadAccess();
+            }
+        }
     };
 
 }
