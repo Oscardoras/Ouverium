@@ -12,9 +12,9 @@ namespace Interpreter {
         return &objects.back();
     }
 
-    Object* Context::new_object(Object const& object) {
+    Object* Context::new_object(Object && object) {
         auto & objects = get_global().objects;
-        objects.push_back(object);
+        objects.push_back(std::move(object));
         return &objects.back();
     }
 
@@ -27,7 +27,7 @@ namespace Interpreter {
         return object;
     }
 
-    Data & Context::new_reference(Data data) {
+    Data & Context::new_reference(Data const& data) {
         auto & references = get_global().references;
         references.push_back(data);
         return references.back();

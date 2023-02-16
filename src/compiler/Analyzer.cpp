@@ -64,8 +64,6 @@ namespace Analyzer {
         } else return *((M<Data>*) nullptr);
     }
 
-    Context::Context(Context& parent): parent(parent) {}
-
     Context& Context::get_parent() {
         return this->parent.get();
     }
@@ -230,6 +228,29 @@ namespace Analyzer {
 
             result.insert(r.begin(), r.end());
         }
+    }
+
+    M<Reference> call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, std::list<std::shared_ptr<Function>> const& functions, M<Reference> const& arguments) {
+        for (auto const& function : functions) {
+            try {
+                Context function_context(context);
+                for (auto & symbol : function->extern_symbols)
+                    function_context[symbol.first] = symbol.second;
+
+                if (auto custom = std::get_if<std::shared_ptr<FunctionDefinition>>(&function->ptr))
+                    set_references(context, (*custom)->parameters, arguments);
+                else if (auto system = std::get_if<SystemFunction>(&function->ptr))
+                    set_references(context, (*system).parameters, arguments);
+
+                M<Reference> result;
+                call_reference(result, potential, function, function_context, function_context.begin(), function_context.end());
+                return result;
+            } catch (FunctionArgumentsError & e) {}
+        }
+
+        if (position != nullptr)
+            position->notify_error("The arguments given to the function don't match");
+        return Reference(Data(context.new_object()));
     }
 
     M<Reference> call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, std::list<std::shared_ptr<Function>> const& functions, std::shared_ptr<Expression> arguments) {

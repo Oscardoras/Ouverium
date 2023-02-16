@@ -18,7 +18,7 @@ namespace Parser {
             TextPosition(TextPosition const&) = default;
             TextPosition(std::string const& path, unsigned int line, unsigned int column);
 
-            virtual void store_stack_trace(Interpreter::Context & context) override;
+            virtual void store_stack_trace(Context & context) override;
             virtual void notify_error(std::string const& message, bool print_stack_trace) override;
         };
 
@@ -38,7 +38,7 @@ namespace Parser {
             ParserError(std::string const& message, TextPosition const& position);
         };
 
-        struct IncompleteCode {};
+        class IncompleteCode: public std::exception {};
 
         std::shared_ptr<Expression> get_tree(std::string const& code, std::string const& path, std::vector<std::string> symbols);
 

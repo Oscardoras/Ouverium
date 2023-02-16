@@ -175,7 +175,7 @@ namespace Interpreter {
                 std::make_shared<Tuple>()
             ),
             std::make_shared<Symbol>("catch_s"),
-            std::make_shared<Symbol>("catch_function"),
+            std::make_shared<Symbol>("catch_function")
         });
         Reference try_statement(FunctionContext & context) {
             auto try_block = context["try_block"];
@@ -199,7 +199,7 @@ namespace Interpreter {
         Reference throw_statement(FunctionContext & context) {
             Exception ex;
             ex.reference = context["throw_expression"];
-            ex.position = context.position;
+            ex.position = context.get_position();
             ex.position->store_stack_trace(context.get_parent());
             throw ex;
         }
@@ -208,7 +208,7 @@ namespace Interpreter {
         std::string get_canonical_path(FunctionContext & context) {
             try {
                 auto path = context["path"].get<Object*>()->to_string();
-                auto system_position = context.position->path;
+                auto system_position = context.get_position()->path;
 
                 if (path[0] != '/')
                     path = system_position.substr(0, system_position.find_last_of("/")+1) + path;
@@ -226,8 +226,8 @@ namespace Interpreter {
 
             auto & global = context.get_global();
             std::vector<std::string> symbols;
-            for (auto it = global.symbols.begin(); it != global.symbols.end(); it++)
-                symbols.push_back(it->first);
+            for (auto it : context)
+                symbols.push_back(it.first);
 
             std::ifstream file(path);
             std::string code;
@@ -239,8 +239,8 @@ namespace Interpreter {
                 auto expression = Parser::Standard::get_tree(code, path, symbols);
                 return Interpreter::execute(global, expression);
             } catch (Parser::Standard::IncompleteCode & e) {
-                context.position->store_stack_trace(context.get_parent());
-                context.position->notify_error("incomplete code, you must finish the last expression in file \"" + path + "\"");
+                context.get_position()->store_stack_trace(context.get_parent());
+                context.get_position()->notify_error("incomplete code, you must finish the last expression in file \"" + path + "\"");
                 throw Error();
             }
         }
@@ -251,8 +251,8 @@ namespace Interpreter {
             auto & global = context.get_global();
             if (global.files.find(path) == global.files.end()) {
                 std::vector<std::string> symbols;
-                for (auto it = global.symbols.begin(); it != global.symbols.end(); it++)
-                    symbols.push_back(it->first);
+                for (auto it : global)
+                    symbols.push_back(it.first);
 
                 std::ifstream file(path);
                 std::string code;
@@ -269,8 +269,8 @@ namespace Interpreter {
 
                     return Interpreter::execute(global, expression);
                 } catch (Parser::Standard::IncompleteCode & e) {
-                    context.position->store_stack_trace(context.get_parent());
-                    context.position->notify_error("incomplete code, you must finish the last expression in file \"" + path + "\"");
+                    context.get_position()->store_stack_trace(context.get_parent());
+                    context.get_position()->notify_error("incomplete code, you must finish the last expression in file \"" + path + "\"");
                     throw Error();
                 }
             } else
@@ -387,7 +387,7 @@ namespace Interpreter {
         Reference not_check_pointers(FunctionContext & context) {
             auto a = context["a"];
             auto b = context["b"];
-            
+
             return Reference(Data(a != b));
         }
 

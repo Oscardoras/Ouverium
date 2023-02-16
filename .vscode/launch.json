@@ -27,7 +27,7 @@
             "name": "gcc - Générer et déboguer l'interpretteur",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/interpreter",
+            "program": "${command:cmake.launchTargetPath}",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -40,9 +40,7 @@
                     "text": "-enable-pretty-printing",
                     "ignoreFailures": true
                 }
-            ],
-            "preLaunchTask": "C/C++: gcc générer le fichier actif",
-            "miDebuggerPath": "/usr/bin/gdb"
+            ]
         }
     ]
 }

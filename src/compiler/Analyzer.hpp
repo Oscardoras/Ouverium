@@ -21,12 +21,12 @@ namespace Analyzer {
     template<typename T, bool Specialized = false>
     class M: public std::set<T> {
     public:
-        inline M() = default;
-        inline M(T const& t) {
+        M() = default;
+        M(T const& t) {
             this->push_back(t);
         }
         template<typename U>
-        inline M(M<U> const& m) {
+        M(M<U> const& m) {
             for (U const& e : m)
                 this->push_back(T(e));
         }
@@ -35,11 +35,12 @@ namespace Analyzer {
     struct Data: public std::variant<Object*, bool, char, long, double> {
         class BadAccess: public std::exception {};
 
-        using std::variant<Object*, bool, char, long, double>::variant;
         bool defined = true;
 
+        using std::variant<Object*, bool, char, long, double>::variant;
+
         template<typename T>
-        inline T & get() {
+        T & const get() const {
             try {
                 return std::get<T>(*this);
             } catch (std::bad_variant_access & e) {
@@ -48,12 +49,8 @@ namespace Analyzer {
         }
 
         template<typename T>
-        inline T const & get() const {
-            try {
-                return std::get<T>(*this);
-            } catch (std::bad_variant_access & e) {
-                throw BadAccess();
-            }
+        T & get() {
+            return const_cast<T &>(const_cast<Data const&>(*this).get<T>());
         }
     };
 
@@ -66,15 +63,6 @@ namespace Analyzer {
         M<Data> to_data() const;
     };
 
-    template<>
-    class M<Reference> : public M<Reference, true> {
-        public:
-        using M<Reference, true>::M;
-
-        M<Data> to_data(Context & context) const;
-        M<SymbolReference> to_symbol_reference(Context & context) const;
-    };
-
     using TupleReference = std::vector<M<Reference>>;
 
     class Reference: public std::variant<M<Data>, SymbolReference, std::vector<M<Reference>>> {
@@ -83,6 +71,14 @@ namespace Analyzer {
 
         M<Data> to_data(Context & context) const;
         SymbolReference to_symbol_reference(Context & context) const;
+    };
+    template<>
+    class M<Reference> : public M<Reference, true> {
+        public:
+        using M<Reference, true>::M;
+
+        M<Data> to_data(Context & context) const;
+        M<SymbolReference> to_symbol_reference(Context & context) const;
     };
 
     struct Object {
@@ -95,15 +91,19 @@ namespace Analyzer {
         SymbolReference get_property(Context & context, std::string name);
     };
 
-    class Context {
-        protected:
+    class Context: public Parser::Context {
+
+    protected:
+
         std::reference_wrapper<Context> parent;
         std::map<std::string, M<SymbolReference>> symbols;
 
-        public:
-        Context(Context & parent);
+    public:
 
-        Context& get_parent();
+        Context(Context & parent, std::shared_ptr<Parser::Position> position):
+            Parser::Context(position), parent(parent) {}
+
+        virtual Context& get_parent() override;
         virtual GlobalContext& get_global();
 
         Object* new_object();
@@ -111,22 +111,35 @@ namespace Analyzer {
         Object* new_object(std::string const& data);
         SymbolReference new_reference(M<Data> data);
 
-        M<SymbolReference> & operator[](std::string const& symbol);
         bool has_symbol(std::string const& symbol);
-        inline auto begin() {
+        M<SymbolReference> & operator[](std::string const& symbol);
+        auto begin() {
             return symbols.begin();
         }
-        inline auto end() {
+        auto end() {
             return symbols.end();
         }
     };
     class GlobalContext: public Context {
-        public:
+
+    protected:
+
         std::list<Object> objects;
         std::list<M<Data>> references;
 
+    public:
+
+        std::map<std::string, std::shared_ptr<Expression>> files;
+
         GlobalContext();
-        virtual GlobalContext& get_global();
+
+        virtual GlobalContext& get_global() override;
+
+        friend Object* Context::new_object();
+        friend Object* Context::new_object(std::vector<M<Data>> const& array);
+        friend Object* Context::new_object(std::string const& str);
+        friend SymbolReference Context::new_reference(M<Data> data);
+
     };
 
     struct SystemFunction {
@@ -137,12 +150,14 @@ namespace Analyzer {
     struct Function {
         std::map<std::string, M<SymbolReference>> extern_symbols;
         FunctionPointer ptr;
-        inline Function(FunctionPointer const& ptr): ptr(ptr) {}
+        Function(FunctionPointer const& ptr): ptr(ptr) {}
     };
 
 
-    struct FunctionArgumentsError {};
+    class Error: public std::exception {};
+    class FunctionArgumentsError: public Error {};
 
+    M<Reference> call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, M<Reference> const& arguments);
     M<Reference> call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, std::shared_ptr<Expression> arguments);
     M<Reference> execute(Context & context, bool potential, std::shared_ptr<Expression> expression);
 

@@ -8,17 +8,17 @@ namespace Interpreter {
 
     namespace Array {
 
-        Reference get_array_size(FunctionContext & context);
+        Reference lenght(FunctionContext & context);
 
-        Reference get_array_element(FunctionContext & context);
+        Reference get_capacity(FunctionContext & context);
 
-        Reference get_array_capacity(FunctionContext & context);
+        Reference set_capacity(FunctionContext & context);
 
-        Reference set_array_capacity(FunctionContext & context);
+        Reference get(FunctionContext & context);
 
-        Reference add_array_element(FunctionContext & context);
+        Reference add(FunctionContext & context);
 
-        Reference remove_array_element(FunctionContext & context);
+        Reference remove(FunctionContext & context);
 
         void init(Context & context);
 

@@ -12,6 +12,15 @@ namespace Analyzer {
 
         void assignation(M<Reference> const& var, M<Data> const& data, bool potential);
 
+        class Exception {
+
+        public:
+
+            M<Reference> reference;
+            std::shared_ptr<Parser::Position> position;
+
+        };
+
     }
 
 }

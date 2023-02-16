@@ -15,16 +15,12 @@ namespace Interpreter {
         using std::variant<Object*, char, double, long, bool>::variant;
 
         template<typename T>
-        inline T & get() {
-            try {
-                return std::get<T>(*this);
-            } catch (std::bad_variant_access & e) {
-                throw BadAccess();
-            }
+        T & get() {
+            return const_cast<T &>(const_cast<Data const&>(*this).get<T>());
         }
 
         template<typename T>
-        inline T const & get() const {
+        T const & get() const {
             try {
                 return std::get<T>(*this);
             } catch (std::bad_variant_access & e) {

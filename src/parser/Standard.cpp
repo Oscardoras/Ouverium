@@ -2,8 +2,6 @@
 #include <fstream>
 #include <iostream>
 
-#include "../interpreter/Interpreter.hpp"
-
 #include "Standard.hpp"
 
 
@@ -15,14 +13,14 @@ namespace Parser {
             this->path = path;
         }
 
-        void TextPosition::store_stack_trace(Interpreter::Context & context) {
+        void TextPosition::store_stack_trace(Context & context) {
             stack_trace = "\tin file \"" + path + "\" at line " + std::to_string(line) + ", column " + std::to_string(column) + "\n";
 
-            auto old_c = (Interpreter::Context*) nullptr;
-            auto c = &context;
+            Context* old_c = nullptr;
+            Context* c = &context;
             while (c != old_c) {
-                if (c->position != nullptr) {
-                    auto text_position = std::static_pointer_cast<TextPosition>(c->position);
+                if (c->get_position() != nullptr) {
+                    auto text_position = std::static_pointer_cast<TextPosition>(c->get_position());
                     stack_trace += "\tin file \"" + text_position->path + "\" at line " + std::to_string(text_position->line) + ", column " + std::to_string(text_position->column) + "\n";
                 }
                 old_c = c;

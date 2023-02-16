@@ -14,58 +14,77 @@
 
 namespace Interpreter {
 
-    struct GlobalContext;
+    class GlobalContext;
 
-    struct Context {
+    class Context: public Parser::Context {
 
-        std::shared_ptr<Parser::Position> position;
+    protected:
+
         std::map<std::string, SymbolReference> symbols;
 
-        inline Context(std::shared_ptr<Parser::Position> position = nullptr):
-        position(position) {}
+    public:
+
+        Context(std::shared_ptr<Parser::Position> position = nullptr):
+            Parser::Context(position) {}
 
         virtual GlobalContext & get_global() = 0;
-        virtual Context & get_parent() = 0;
 
         Object* new_object();
-        Object* new_object(Object const& object);
+        Object* new_object(Object && object);
         Object* new_object(std::string const& str);
 
-        Data & new_reference(Data data = Data{});
+        Data & new_reference(Data const& data = Data{});
 
         bool has_symbol(std::string const& symbol) const;
         Data & add_symbol(std::string const& symbol, Reference const& reference);
         Data & operator[](std::string const& symbol);
-        inline auto & get_function(std::string const& symbol) {
-            return std::get<Object*>(operator[](symbol))->functions;
+        auto begin() {return symbols.begin();}
+        auto end() {return symbols.end();}
+
+        auto & get_function(std::string const& symbol) {
+            return std::get<Object*>((*this)[symbol])->functions;
         }
 
     };
 
-    struct GlobalContext: public Context {
+    class GlobalContext: public Context {
 
-        std::map<std::string, std::shared_ptr<Expression>> files;
+    protected:
+
         std::list<Object> objects;
         std::list<Data> references;
 
+    public:
+
+        std::map<std::string, std::shared_ptr<Expression>> files;
+
         GlobalContext();
 
-        virtual GlobalContext & get_global();
-        virtual Context & get_parent();
+        virtual GlobalContext & get_global() override;
+        virtual Context & get_parent() override;
 
         ~GlobalContext();
 
+        friend Object* Context::new_object();
+        friend Object* Context::new_object(Object && object);
+        friend Object* Context::new_object(std::string const& str);
+        friend Data & Context::new_reference(Data const& data);
+
     };
 
-    struct FunctionContext: public Context {
+    class FunctionContext: public Context {
+
+    protected:
 
         std::reference_wrapper<Context> parent;
 
-        inline FunctionContext(Context & parent, std::shared_ptr<Parser::Position> position = nullptr):
-        Context(position), parent(parent) {}
+    public:
 
-        virtual GlobalContext & get_global();
-        virtual Context & get_parent();
+        FunctionContext(Context & parent, std::shared_ptr<Parser::Position> position = nullptr):
+            Context(position), parent(parent) {}
+
+        virtual GlobalContext & get_global() override;
+        virtual Context & get_parent() override;
 
     };
 

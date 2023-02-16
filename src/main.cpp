@@ -17,7 +17,7 @@ int main(int argc, char ** argv) {
                 code += line + '\n';
                 try {
                     std::vector<std::string> symbols;
-                    for (auto const& symbol : context.symbols)
+                    for (auto const& symbol : context)
                         symbols.push_back(symbol.first);
 
                     auto expression = Parser::Standard::get_tree(code, ".", symbols);
@@ -38,7 +38,7 @@ int main(int argc, char ** argv) {
             Interpreter::GlobalContext context;
             try {
                 std::vector<std::string> symbols;
-                for (auto const& symbol : context.symbols)
+                for (auto const& symbol : context)
                     symbols.push_back(symbol.first);
 
                 auto expression = Parser::Standard::get_tree(code, argv[1], symbols);

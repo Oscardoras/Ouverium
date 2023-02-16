@@ -6,10 +6,10 @@
 
 namespace Interpreter {
 
-    struct Error {};
-    struct FunctionArgumentsError: public Error {};
+    class Error: public std::exception {};
+    class FunctionArgumentsError: public Error {};
 
-    Reference call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, Reference const& reference);
+    Reference call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, Reference const& arguments);
 
     Reference call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, std::shared_ptr<Expression> arguments);
 

@@ -88,8 +88,8 @@ namespace Interpreter {
         } else throw Interpreter::FunctionArgumentsError();
     }
 
-    Reference call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, Reference const& reference) {
-        Data data = reference.to_data(context);
+    Reference call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, Reference const& arguments) {
+        Data data = arguments.to_data(context);
 
         for (auto const& function : functions) {
             try {
