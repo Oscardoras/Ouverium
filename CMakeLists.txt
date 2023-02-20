@@ -12,8 +12,8 @@ FILE(GLOB_RECURSE app_sources
     src/Expressions.cpp src/Expressions.hpp
     src/parser/*
     src/interpreter/*
-    #src/compiler/Analyzer.cpp src/compiler/Analyzer.hpp
-    #src/compiler/Functions.cpp src/compiler/Functions.hpp
+    src/compiler/Analyzer.cpp src/compiler/Analyzer.hpp
+    src/compiler/Functions.cpp src/compiler/Functions.hpp
 )
 add_executable(interpreter ${app_sources})
 

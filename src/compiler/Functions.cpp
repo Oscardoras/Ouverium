@@ -14,10 +14,10 @@ namespace Analyzer {
             return std::get<Object*>(*(*reference.begin()).get().begin())->functions;
         }
 
-        auto separator_args = std::make_shared<Tuple>(
+        auto separator_args = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
             std::make_shared<Symbol>("a"),
             std::make_shared<Symbol>("b")
-        );
+        });
         M<Reference> separator(Context & context, bool potential) {
             return context["b"];
         }
@@ -46,6 +46,7 @@ namespace Analyzer {
                     }
                 } else throw FunctionArgumentsError();
             }
+            return r;
         }
 
         void if_function(M<Reference> & m, Context & context, bool potential, std::shared_ptr<Tuple> const& tuple, size_t i) {
@@ -53,24 +54,27 @@ namespace Analyzer {
 
             if (c != Condition::FALSE) {
                 auto r = execute(context.get_parent(), potential || c == Condition::UNDEFINED, tuple->objects[i+1]);
-                m.insert(r.begin(), r.end());
+                m.add(r);
             }
             if (c != Condition::TRUE) {
                 if (i+3 < tuple->objects.size()) {
                     auto else_s = execute(context.get_parent(), potential || c == Condition::UNDEFINED, tuple->objects[i+2]).to_data(context);
-                    if (else_s == M<Reference>(context["else"]).to_data(context)) {
-                        auto s = execute(context.get_parent(), potential || c == Condition::UNDEFINED, tuple->objects[i+3]).to_data(context);
+                    if (else_s == context["else"].to_data()) {
+                        auto s = execute(context.get_parent(), potential || c == Condition::UNDEFINED, tuple->objects[i+3]);
                         if (i+4 == tuple->objects.size())
-                            m.insert(s.begin(), s.end());
+                            m.add(s);
                         else if (i+6 < tuple->objects.size() && s == M<Reference>(context["if"]).to_data(context))
                             if_function(m, context, potential || c == Condition::UNDEFINED, tuple, i+4);
                         else throw FunctionArgumentsError();
                     } else throw FunctionArgumentsError();
-                } else m.insert(M<Data>(context.new_object()));
+                } else m.add(Reference(Data(context.new_object())));
             }
         }
 
-        auto if_statement_args = std::make_shared<Symbol>("b");
+        auto if_statement_args = std::make_shared<FunctionCall>(
+            std::make_shared<Symbol>("function"),
+            std::make_shared<Tuple>()
+        );
         M<Reference> if_statement(Context & context, bool potential) {
             auto function = std::get<std::shared_ptr<FunctionDefinition>>(get_function(context["function"]).begin()->ptr)->body;
             if (auto tuple = std::dynamic_pointer_cast<Tuple>(function)) {
@@ -82,10 +86,16 @@ namespace Analyzer {
             } else throw FunctionArgumentsError();
         }
 
-        auto while_args = std::make_shared<Tuple>(
-            std::make_shared<Symbol>("condition"),
-            std::make_shared<Symbol>("block")
-        );
+        auto while_statement_args = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
+            std::make_shared<FunctionCall>(
+                std::make_shared<Symbol>("condition"),
+                std::make_shared<Tuple>()
+            ),
+            std::make_shared<FunctionCall>(
+                std::make_shared<Symbol>("block"),
+                std::make_shared<Tuple>()
+            )
+        });
         M<Reference> while_statement(Context & context, bool potential) {
             M<Reference> m;
 
@@ -103,7 +113,7 @@ namespace Analyzer {
             }
 
             if (m.empty())
-                m.insert(M<Data>(context.new_object()));
+                m.add(Reference(Data(context.new_object())));
             return m;
         }
 
@@ -347,7 +357,7 @@ namespace Analyzer {
                     }
                 } else
                     return Reference(Data(context.new_object()));
-            }
+            } else throw FunctionArgumentsError();
         }
 
         auto copy_args = std::make_shared<Symbol>("data");
@@ -359,7 +369,7 @@ namespace Analyzer {
                 if (std::get_if<Object*>(&d))
                     throw FunctionArgumentsError();
                 else
-                    m.insert(d);
+                    m.add(d);
             }
             return m;
         }
@@ -372,7 +382,7 @@ namespace Analyzer {
             for (auto reference : var) {
                 if (auto ref = std::get_if<SymbolReference>(&reference)) {
                     if (potential)
-                        ref->get().insert(data.begin(), data.end());
+                        ref->get().add(data);
                     else
                         ref->get() = data;
                 } else if (auto tuple = std::get_if<TupleReference>(&reference)) {
@@ -388,13 +398,13 @@ namespace Analyzer {
             }
         }
 
-        auto assign_args = std::make_shared<Tuple>(
+        auto assign_args = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
             std::make_shared<FunctionCall>(
                 std::make_shared<Symbol>("var"),
                 std::make_shared<Tuple>()
             ),
             std::make_shared<Symbol>("data")
-        );
+        });
         M<Reference> assign(Context & context, bool potential) {
             auto var = call_function(context, potential, nullptr, get_function(context["var"]), std::make_shared<Tuple>());
             auto data = M<Reference>(context["data"]).to_data(context);
@@ -403,10 +413,10 @@ namespace Analyzer {
             return var;
         }
 
-        auto function_definition_args = std::make_shared<Tuple>(
+        auto function_definition_args = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
             std::make_shared<Symbol>("var"),
             std::make_shared<Symbol>("data")
-        );
+        });
         M<Reference> function_definition(Context & context, bool potential) {
             auto var = context["var"];
             auto function = M<Reference>(context["data"]).to_data(context);
@@ -451,7 +461,7 @@ namespace Analyzer {
             M<Data> m;
             for (auto a_data : a)
                 for (auto b_data : b)
-                    m.insert(Data(equals(a_data, b_data)));
+                    m.add(Data(equals(a_data, b_data)));
             return Reference(m);
         }
 
@@ -462,7 +472,7 @@ namespace Analyzer {
             M<Data> m;
             for (auto a_data : a)
                 for (auto b_data : b)
-                    m.insert(Data(!equals(a_data, b_data)));
+                    m.add(Data(!equals(a_data, b_data)));
             return Reference(m);
         }
 
@@ -473,7 +483,7 @@ namespace Analyzer {
             M<Data> m;
             for (auto a_data : a)
                 for (auto b_data : b)
-                    m.insert(Data(a_data == b_data));
+                    m.add(Data(a_data == b_data));
             return Reference(m);
         }
 
@@ -484,7 +494,7 @@ namespace Analyzer {
             M<Data> m;
             for (auto a_data : a)
                 for (auto b_data : b)
-                    m.insert(Data(a_data != b_data));
+                    m.add(Data(a_data != b_data));
             return Reference(m);
         }
 

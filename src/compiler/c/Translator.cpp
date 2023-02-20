@@ -4,18 +4,12 @@
 
 #include "Translator.hpp"
 
-#include "../../interpreter/system_functions/Array.hpp"
-#include "../../interpreter/system_functions/ArrayList.hpp"
-#include "../../interpreter/system_functions/Base.hpp"
-#include "../../interpreter/system_functions/Math.hpp"
-#include "../../interpreter/system_functions/Streams.hpp"
-#include "../../interpreter/system_functions/String.hpp"
-#include "../../interpreter/system_functions/Types.hpp"
+#include "../Functions.hpp"
 
 
 namespace CTranslator {
 
-    std::shared_ptr<Structures::Expression> eval_system_function(Interpreter::Reference (*function)(Interpreter::FunctionContext&), std::shared_ptr<Expression> arguments, Analyzer::MetaData & meta, Instructions & instructions) {
+    std::shared_ptr<Structures::Expression> eval_system_function(Analyzer::M<Analyzer::Reference> (*function)(Analyzer::Context &, bool), std::shared_ptr<Expression> arguments, Analyzer::MetaData & meta, Instructions & instructions) {
         switch ((unsigned long) function) {
         case (unsigned long) Interpreter::Base::separator:
             if (auto tuple = std::dynamic_pointer_cast<Tuple>(arguments)) {
@@ -149,7 +143,7 @@ namespace CTranslator {
             } else {
                 auto r = std::make_shared<Structures::FunctionCall>(Structures::FunctionCall {
                     .function = std::make_shared<Structures::VariableCall>(Structures::VariableCall {
-                        .name = "GC_eval_function"
+                        .name = "__Function_eval"
                     })
                 });
 

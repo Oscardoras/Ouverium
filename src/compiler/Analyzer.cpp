@@ -13,7 +13,7 @@ namespace Analyzer {
         M<Data> m;
         for (auto & reference : *this)
             for (auto & data : reference.get())
-                m.insert(data);
+                m.add(data);
         return m;
     }
 
@@ -21,7 +21,7 @@ namespace Analyzer {
         M<Data> m;
         for (auto const& e : *this) {
             auto data = e.to_data(context);
-            m.insert(data.begin(), data.end());
+            m.add(data);
         }
         return m;
     }
@@ -29,14 +29,15 @@ namespace Analyzer {
     M<SymbolReference> M<Reference>::to_symbol_reference(Context & context) const {
         M<SymbolReference> m;
         for (auto const& e : *this)
-            m.insert(e.to_symbol_reference(context));
+            m.add(e.to_symbol_reference(context));
         return m;
     }
 
     std::reference_wrapper<M<Data>> Object::get_property(Context & context, std::string name) {
         auto & field = properties[name];
+
         if (field.empty())
-            field.insert(context.new_object());
+            field.add(context.new_object());
 
         return field;
     }
@@ -62,14 +63,6 @@ namespace Analyzer {
         else if (auto tuple = std::get_if<std::vector<M<Reference>>>(this)) {
             return context.new_reference(to_data(context));
         } else return *((M<Data>*) nullptr);
-    }
-
-    Context& Context::get_parent() {
-        return this->parent.get();
-    }
-
-    GlobalContext& Context::get_global() {
-        return this->parent.get().get_global();
     }
 
     Object* Context::new_object() {
@@ -112,19 +105,12 @@ namespace Analyzer {
         return symbols.find(symbol) != symbols.end();
     }
 
-    GlobalContext::GlobalContext():
-    Context(*this) {}
-
-    GlobalContext& GlobalContext::get_global() {
-        return *this;
-    }
-
 
     void set_references(Context & function_context, std::shared_ptr<Expression> parameters, M<Reference> const& reference) {
         if (auto symbol = std::dynamic_pointer_cast<Symbol>(parameters)) {
             auto & lvalue = function_context[symbol->name];
             auto rvalue = reference.to_symbol_reference(function_context);
-            lvalue.insert(rvalue.begin(), rvalue.end());
+            lvalue.add(rvalue);
         } else if (auto tuple = std::dynamic_pointer_cast<Tuple>(parameters)) {
             bool success = false;
             for (auto ref : reference) {
@@ -158,7 +144,7 @@ namespace Analyzer {
             auto reference = it != computed.end() ? it->second : (computed[arguments] = execute(context, potential, arguments));
             auto & lvalue = function_context[symbol->name];
             auto rvalue = reference.to_symbol_reference(context);
-            lvalue.insert(rvalue.begin(), rvalue.end());
+            lvalue.add(rvalue);
         } else if (auto p_tuple = std::dynamic_pointer_cast<Tuple>(parameters)) {
             if (auto a_tuple = std::dynamic_pointer_cast<Tuple>(arguments)) {
                 if (p_tuple->objects.size() == a_tuple->objects.size()) {
@@ -189,7 +175,7 @@ namespace Analyzer {
 
     using It = std::map<std::string, M<SymbolReference>>::iterator;
 
-    void call_reference(M<Reference> & result, bool potential, std::shared_ptr<Analyzer::Function> function, Context function_context, It const it, It const end) {
+    void call_reference(M<Reference> & result, bool potential, Function const& function, Context function_context, It const it, It const end) {
         if (it != end) {
             bool success = false;
             for (auto const& m1 : it->second) {
@@ -205,7 +191,7 @@ namespace Analyzer {
         } else {
             M<Reference> r;
 
-            if (auto custom = std::get_if<std::shared_ptr<FunctionDefinition>>(&function->ptr)) {
+            if (auto custom = std::get_if<std::shared_ptr<FunctionDefinition>>(&function.ptr)) {
                 bool filter = false;
                 if ((*custom)->filter != nullptr) {
                     auto f = execute(function_context, potential, (*custom)->filter);
@@ -223,23 +209,23 @@ namespace Analyzer {
                 if (filter)
                     r = execute(function_context, potential, (*custom)->body);
                 else throw FunctionArgumentsError();
-            } else if (auto system = std::get_if<SystemFunction>(&function->ptr))
+            } else if (auto system = std::get_if<SystemFunction>(&function.ptr))
                 r = (*system).pointer(function_context, potential);
 
-            result.insert(r.begin(), r.end());
+            result.add(r);
         }
     }
 
-    M<Reference> call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, std::list<std::shared_ptr<Function>> const& functions, M<Reference> const& arguments) {
+    M<Reference> call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, M<Reference> const& arguments) {
         for (auto const& function : functions) {
             try {
                 Context function_context(context);
-                for (auto & symbol : function->extern_symbols)
+                for (auto & symbol : function.extern_symbols)
                     function_context[symbol.first] = symbol.second;
 
-                if (auto custom = std::get_if<std::shared_ptr<FunctionDefinition>>(&function->ptr))
+                if (auto custom = std::get_if<std::shared_ptr<FunctionDefinition>>(&function.ptr))
                     set_references(context, (*custom)->parameters, arguments);
-                else if (auto system = std::get_if<SystemFunction>(&function->ptr))
+                else if (auto system = std::get_if<SystemFunction>(&function.ptr))
                     set_references(context, (*system).parameters, arguments);
 
                 M<Reference> result;
@@ -253,22 +239,23 @@ namespace Analyzer {
         return Reference(Data(context.new_object()));
     }
 
-    M<Reference> call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, std::list<std::shared_ptr<Function>> const& functions, std::shared_ptr<Expression> arguments) {
+    M<Reference> call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, std::shared_ptr<Expression> arguments) {
         std::map<std::shared_ptr<Expression>, M<Reference>> computed;
 
         for (auto const& function : functions) {
             try {
                 Context function_context(context);
-                for (auto & symbol : function->extern_symbols)
+                for (auto & symbol : function.extern_symbols)
                     function_context[symbol.first] = symbol.second;
 
-                if (auto custom = std::get_if<std::shared_ptr<FunctionDefinition>>(&function->ptr))
+                if (auto custom = std::get_if<std::shared_ptr<FunctionDefinition>>(&function.ptr))
                     set_references(context, potential, function_context, computed, (*custom)->parameters, arguments);
-                else if (auto system = std::get_if<SystemFunction>(&function->ptr))
+                else if (auto system = std::get_if<SystemFunction>(&function.ptr))
                     set_references(context, potential, function_context, computed, (*system).parameters, arguments);
 
                 M<Reference> result;
                 call_reference(result, potential, function, function_context, function_context.begin(), function_context.end());
+                context.get_global().meta_data.get().links[].insert(function.ptr);
                 return result;
             } catch (FunctionArgumentsError & e) {}
         }
@@ -291,7 +278,7 @@ namespace Analyzer {
                     if (auto object = std::get_if<Object*>(&d))
                         functions = (*object)->functions;
                     auto result = call_function(context, potential, function_call->position, functions, function_call->arguments);
-                    m.insert(result.begin(), result.end());
+                    m.add(result);
                 }
             }
 
@@ -318,9 +305,9 @@ namespace Analyzer {
                 for (auto d : data) {
                     if (auto object = std::get_if<Object*>(&d)) {
                         auto field = (*object)->get_property(context, property->name);
-                        m.insert(field.get().begin(), field.get().end());
+                        m.add(Reference(field));
                     } else
-                        m.insert(M<Data>(context.new_object()));
+                        m.add(Reference(Data(context.new_object())));
                 }
             }
 
