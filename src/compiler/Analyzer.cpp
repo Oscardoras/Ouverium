@@ -239,7 +239,7 @@ namespace Analyzer {
         return Reference(Data(context.new_object()));
     }
 
-    M<Reference> call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, std::shared_ptr<Expression> arguments) {
+    M<Reference> call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, std::shared_ptr<Expression> arguments, std::shared_ptr<FunctionCall> function_call) {
         std::map<std::shared_ptr<Expression>, M<Reference>> computed;
 
         for (auto const& function : functions) {
@@ -255,7 +255,7 @@ namespace Analyzer {
 
                 M<Reference> result;
                 call_reference(result, potential, function, function_context, function_context.begin(), function_context.end());
-                context.get_global().meta_data.get().links[].insert(function.ptr);
+                context.get_global().meta_data.get().links[function_call].insert(function.ptr);
                 return result;
             } catch (FunctionArgumentsError & e) {}
         }
@@ -396,5 +396,18 @@ namespace Analyzer {
         return env;
     }
     */
+
+    MetaData analyze(std::shared_ptr<Expression> expression) {
+        MetaData meta_data;
+        GlobalContext context(meta_data);
+
+        execute(context, false, expression);
+
+        for (auto const& object : context.objects) {
+            
+        }
+
+        return meta_data;
+    }
 
 }

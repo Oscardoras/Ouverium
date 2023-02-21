@@ -9,7 +9,7 @@
 
 namespace CTranslator {
 
-    std::shared_ptr<Structures::Expression> eval_system_function(Analyzer::M<Analyzer::Reference> (*function)(Analyzer::Context &, bool), std::shared_ptr<Expression> arguments, Analyzer::MetaData & meta, Instructions & instructions) {
+    std::shared_ptr<Structures::Expression> eval_system_function(Analyzer::SystemFunction function, std::shared_ptr<Expression> arguments, Analyzer::MetaData & meta, Instructions & instructions) {
         switch ((unsigned long) function) {
         case (unsigned long) Interpreter::Base::separator:
             if (auto tuple = std::dynamic_pointer_cast<Tuple>(arguments)) {
@@ -121,7 +121,7 @@ namespace CTranslator {
             auto & link = meta.links[function_call];
             if (link.size() == 1) {
                 try {
-                    auto f = std::get<std::shared_ptr<FunctionDefinition>>(link[0]);
+                    auto f = std::get<std::shared_ptr<FunctionDefinition>>(*link.begin());
 
                     auto r = std::make_shared<Structures::FunctionCall>(Structures::FunctionCall {
                         .function = get_expression(function_call->function, meta, instructions)
@@ -138,7 +138,7 @@ namespace CTranslator {
 
                     return r;
                 } catch (std::bad_variant_access const& e) {
-                    return eval_system_function(std::get<Interpreter::Reference (*)(Interpreter::FunctionContext&)>(link[0]), function_call->arguments, meta, instructions);
+                    return eval_system_function(std::get<Analyzer::SystemFunction>(*link.begin()), function_call->arguments, meta, instructions);
                 }
             } else {
                 auto r = std::make_shared<Structures::FunctionCall>(Structures::FunctionCall {
@@ -147,6 +147,7 @@ namespace CTranslator {
                     })
                 });
 
+                // TODO: context
                 r->parameters.push_back(get_expression(function_call->function, meta, instructions));
                 r->parameters.push_back(get_expression(function_call->arguments, meta, instructions));
 

@@ -212,6 +212,7 @@ namespace Analyzer {
         friend Object* Context::new_object(std::vector<M<Data>> const& array);
         friend Object* Context::new_object(std::string const& str);
         friend SymbolReference Context::new_reference(M<Data> data);
+        friend MetaData analyze(std::shared_ptr<Expression> expression);
 
     };
 
@@ -238,14 +239,15 @@ namespace Analyzer {
     };
 
     struct Type {
-        bool reference;
         bool pointer;
-        std::map<std::string, std::shared_ptr<Type>> properties;
+        std::variant<std::map<std::string, std::shared_ptr<Type>>, bool, char, long, double> value_type;
     };
     struct MetaData {
         std::map<std::shared_ptr<Expression>, std::shared_ptr<Type>> types;
         std::map<std::shared_ptr<FunctionCall>, std::set<FunctionPointer>> links;
     };
+
+    MetaData analyze(std::shared_ptr<Expression> expression);
 
 }
 
