@@ -404,7 +404,10 @@ namespace Analyzer {
         execute(context, false, expression);
 
         for (auto const& object : context.objects) {
-            
+            auto & structure = meta_data.types[object.creation].Struct;
+
+            for (auto const& pair : object.properties)
+                structure[pair.first]..value_type
         }
 
         return meta_data;

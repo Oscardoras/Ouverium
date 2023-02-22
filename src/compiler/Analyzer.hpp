@@ -238,12 +238,21 @@ namespace Analyzer {
         std::vector<FunctionEnvironment> functions;
     };
 
+    struct Type;
     struct Type {
+        using Structure = std::map<std::string, Type>;
+
+        Structure Struct;
+        bool Bool = false;
+        bool Char = false;
+        bool Int = false;
+        bool Float = false;
+
         bool pointer;
-        std::variant<std::map<std::string, std::shared_ptr<Type>>, bool, char, long, double> value_type;
     };
+
     struct MetaData {
-        std::map<std::shared_ptr<Expression>, std::shared_ptr<Type>> types;
+        std::map<std::shared_ptr<Expression>, Type> types;
         std::map<std::shared_ptr<FunctionCall>, std::set<FunctionPointer>> links;
     };
 

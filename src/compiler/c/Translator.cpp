@@ -10,18 +10,17 @@
 namespace CTranslator {
 
     std::shared_ptr<Structures::Expression> eval_system_function(Analyzer::SystemFunction function, std::shared_ptr<Expression> arguments, Analyzer::MetaData & meta, Instructions & instructions) {
-        switch ((unsigned long) function) {
-        case (unsigned long) Interpreter::Base::separator:
+        switch ((unsigned long) function.pointer) {
+        case (unsigned long) Analyzer::Functions::separator:
             if (auto tuple = std::dynamic_pointer_cast<Tuple>(arguments)) {
-                for (auto const& o : tuple->objects) {
+                for (auto const& o : tuple->objects)
                     get_instructions(o, meta, instructions);
-                }
             } else {
                 get_instructions(arguments, meta, instructions);
             }
             break;
 
-        case (unsigned long) Interpreter::Base::if_statement:
+        case (unsigned long) Analyzer::Functions::if_statement:
             if (auto tuple = std::dynamic_pointer_cast<Tuple>(arguments)) {
                 if (tuple->objects.size() >= 2) {
                     int i = 0;
