@@ -255,7 +255,7 @@ namespace Analyzer {
 
                 M<Reference> result;
                 call_reference(result, potential, function, function_context, function_context.begin(), function_context.end());
-                context.get_global().meta_data.get().links[function_call].insert(function.ptr);
+                if (function_call != nullptr) context.get_global().meta_data.get().links[function_call].insert(function.ptr);
                 return result;
             } catch (FunctionArgumentsError & e) {}
         }
@@ -277,7 +277,7 @@ namespace Analyzer {
                     std::list<Function> functions;
                     if (auto object = std::get_if<Object*>(&d))
                         functions = (*object)->functions;
-                    auto result = call_function(context, potential, function_call->position, functions, function_call->arguments);
+                    auto result = call_function(context, potential, function_call->position, functions, function_call->arguments, function_call);
                     m.add(result);
                 }
             }
@@ -397,18 +397,28 @@ namespace Analyzer {
     }
     */
 
+    void get_type(Type & type, Data const& data) {
+        if (auto object = std::get_if<Object*>(&data)) {
+            for (auto const& pair : (*object)->properties) {
+                auto & t = type.Struct[pair.first];
+                for (auto const& d : pair.second)
+                    get_type(t, d);
+            }
+        }
+        else if (std::get_if<bool>(&data)) type.Bool = true;
+        else if (std::get_if<char>(&data)) type.Char = true;
+        else if (std::get_if<long>(&data)) type.Int = true;
+        else if (std::get_if<double>(&data)) type.Float = true;
+    }
+
     MetaData analyze(std::shared_ptr<Expression> expression) {
         MetaData meta_data;
         GlobalContext context(meta_data);
 
         execute(context, false, expression);
 
-        for (auto const& object : context.objects) {
-            auto & structure = meta_data.types[object.creation].Struct;
-
-            for (auto const& pair : object.properties)
-                structure[pair.first]..value_type
-        }
+        for (auto & object : context.objects)
+            get_type(meta_data.types[object.creation], Data(&object));
 
         return meta_data;
     }

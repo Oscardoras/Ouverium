@@ -40,6 +40,8 @@ namespace Analyzer {
 
         using std::list<T>::size;
         using std::list<T>::empty;
+        using std::list<T>::front;
+        using std::list<T>::back;
         using std::list<T>::begin;
         using std::list<T>::end;
 
@@ -138,7 +140,7 @@ namespace Analyzer {
         M<Reference> (*pointer)(Context&, bool);
     };
     using FunctionPointer = std::variant<std::shared_ptr<FunctionDefinition>, SystemFunction>;
-    bool operator<(FunctionPointer const& a, FunctionPointer const& b) {
+    inline bool operator<(FunctionPointer const& a, FunctionPointer const& b) {
         if (a.index() == b.index()) {
             if (auto p = std::get_if<std::shared_ptr<FunctionDefinition>>(&a))
                 return p->get() < std::get_if<std::shared_ptr<FunctionDefinition>>(&b)->get();
@@ -222,7 +224,7 @@ namespace Analyzer {
     class FunctionArgumentsError: public Error {};
 
     M<Reference> call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, M<Reference> const& arguments);
-    M<Reference> call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, std::shared_ptr<Expression> arguments);
+    M<Reference> call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, std::shared_ptr<Expression> arguments, std::shared_ptr<FunctionCall> function_call);
     M<Reference> execute(Context & context, bool potential, std::shared_ptr<Expression> expression);
 
     // Analyzis data

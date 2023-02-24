@@ -27,7 +27,7 @@ namespace Interpreter {
         );
         Reference if_statement(FunctionContext & context) {
             try {
-                auto function = std::get<CustomFunction>(*context["function"].get<Object*>()->functions.begin()).pointer->body;
+                auto function = std::get<CustomFunction>(context["function"].get<Object*>()->functions.front()).pointer->body;
 
                 if (auto tuple = std::dynamic_pointer_cast<Tuple>(function)) {
                     if (tuple->objects.size() >= 2) {
