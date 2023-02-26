@@ -37,7 +37,7 @@ namespace Analyzer {
         auto & field = properties[name];
 
         if (field.empty())
-            field.add(context.new_object());
+            field.add(context.new_object(creation));
 
         return field;
     }
@@ -65,23 +65,23 @@ namespace Analyzer {
         } else return *((M<Data>*) nullptr);
     }
 
-    Object* Context::new_object() {
+    Object* Context::new_object(std::shared_ptr<Expression> creation) {
         auto & objects = get_global().objects;
-        objects.push_back(Object());
+        objects.push_back(Object(creation));
         return &objects.back();
     }
 
-    Object* Context::new_object(std::vector<M<Data>> const& array) {
+    Object* Context::new_object(std::shared_ptr<Expression> creation, std::vector<M<Data>> const& array) {
         auto & objects = get_global().objects;
-        objects.push_back(Object());
+        objects.push_back(Object(creation));
         objects.back().array = array;
         return &objects.back();
     }
 
-    Object* Context::new_object(std::string const& str) {
+    Object* Context::new_object(std::shared_ptr<Expression> creation, std::string const& str) {
         long l = str.length();
         auto & objects = get_global().objects;
-        objects.push_back(Object());
+        objects.push_back(Object(creation));
         auto object = &objects.back();
         for (auto c : str)
             object->array.push_back(Data(c));
@@ -284,7 +284,7 @@ namespace Analyzer {
 
             return m;
         } else if (auto function_definition = std::dynamic_pointer_cast<FunctionDefinition>(expression)) {
-            auto object = context.new_object();
+            auto object = context.new_object(expression);
             Function f = {function_definition};
             for (auto symbol : function_definition->body->symbols)
                 if (context.has_symbol(symbol))
@@ -307,7 +307,7 @@ namespace Analyzer {
                         auto field = (*object)->get_property(context, property->name);
                         m.add(Reference(field));
                     } else
-                        m.add(Reference(Data(context.new_object())));
+                        m.add(Reference(Data(context.new_object(expression))));
                 }
             }
 
@@ -321,7 +321,7 @@ namespace Analyzer {
             } else if (auto d = std::get_if<double>(&data)) {
                 return M<Data>(*d);
             } else if (auto str = std::get_if<std::string>(&data)) {
-                return M<Data>(context.new_object(*str));
+                return M<Data>(context.new_object(expression, *str));
             } else {
                 return context[symbol->name];
             }
@@ -330,7 +330,7 @@ namespace Analyzer {
             for (auto e : tuple->objects)
                 v.push_back(execute(context, potential, e));
             return Reference(v);
-        } else return M<Data>(context.new_object());
+        } else return M<Data>(context.new_object(expression));
     }
 
     /*
@@ -417,8 +417,17 @@ namespace Analyzer {
 
         execute(context, false, expression);
 
-        for (auto & object : context.objects)
-            get_type(meta_data.types[object.creation], Data(&object));
+        std::map<Type, std::vector<std::shared_ptr<Expression>>> types;
+        for (auto & object : context.objects) {
+            Type type;
+            get_type(type, Data(&object));
+            types[type].push_back(object.creation);
+        }
+        for (auto const& type : types) {
+            auto ptr = std::make_shared<Type>(type.first);
+            for (auto const& expression : type.second)
+                meta_data.types[expression] = ptr;
+        }
 
         return meta_data;
     }
