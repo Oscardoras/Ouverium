@@ -157,7 +157,7 @@ namespace CTranslator {
             return std::make_shared<Structures::Property>(Structures::Property {
                 .object = o,
                 .name = property->name,
-                .pointer = meta.types[property]->pointer
+                .pointer = true
             });
         } else if (auto symbol = std::dynamic_pointer_cast<Symbol>(expression)) {
             return std::make_shared<Structures::VariableCall>(Structures::VariableCall {

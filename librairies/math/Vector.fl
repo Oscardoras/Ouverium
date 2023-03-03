@@ -1,0 +1,38 @@
+
+Vector : this \ (this ~ Array) |-> {
+    this :~ Vector;
+
+    this : index \ (index ~ Int & 0 <= index & index < this->lenght()) |-> {
+        Array->get(this, index)
+    };
+
+    this->length : () |-> {
+        Array->length(this)
+    };
+
+    this->shape : () |-> {
+        shape := ();
+
+        level := this;
+        while (is level Array && Array->length(level) > 0) {
+            Array->add(shape, Array->length(level));
+            level := Array->get(level, 0);
+        };
+
+        shape
+    };
+
+    this
+};
+
+Vector->vectorize : function |-> {
+    vector \ (vector ~ Vector) |-> {
+        Array->set_capacity(array, vector->length());
+
+        for i from 0 to (vector->length()) {
+            Array->add(function(Array->get(vector, i)));
+        }
+
+        array
+    }
+};

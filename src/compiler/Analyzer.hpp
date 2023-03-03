@@ -132,8 +132,6 @@ namespace Analyzer {
         std::list<Function> functions;
         std::vector<M<Data>> array;
 
-        Object(std::shared_ptr<Expression> creation): creation(creation) {}
-
         SymbolReference get_property(Context & context, std::string name);
     };
 
@@ -179,9 +177,9 @@ namespace Analyzer {
             return this->parent.get().get_global();
         }
 
-        Object* new_object(std::shared_ptr<Expression> creation);
-        Object* new_object(std::shared_ptr<Expression> creation, std::vector<M<Data>> const& array);
-        Object* new_object(std::shared_ptr<Expression> creation, std::string const& data);
+        Object* new_object();
+        Object* new_object(std::vector<M<Data>> const& array);
+        Object* new_object(std::string const& data);
         SymbolReference new_reference(M<Data> data);
 
         bool has_symbol(std::string const& symbol);
@@ -212,9 +210,9 @@ namespace Analyzer {
             return *this;
         }
 
-        friend Object* Context::new_object(std::shared_ptr<Expression> creation);
-        friend Object* Context::new_object(std::shared_ptr<Expression> creation, std::vector<M<Data>> const& array);
-        friend Object* Context::new_object(std::shared_ptr<Expression> creation, std::string const& str);
+        friend Object* Context::new_object();
+        friend Object* Context::new_object(std::vector<M<Data>> const& array);
+        friend Object* Context::new_object(std::string const& str);
         friend SymbolReference Context::new_reference(M<Data> data);
         friend MetaData analyze(std::shared_ptr<Expression> expression);
 
@@ -242,7 +240,6 @@ namespace Analyzer {
         std::vector<FunctionEnvironment> functions;
     };
 
-    struct Type;
     struct Type {
         using Structure = std::map<std::string, Type>;
 
@@ -251,12 +248,13 @@ namespace Analyzer {
         bool Char = false;
         bool Int = false;
         bool Float = false;
-
-        bool pointer;
     };
+    inline bool operator==(Type const& a, Type const& b) {
+        return a.Struct == b.Struct && a.Bool == b.Bool && a.Char == b.Char && a.Int == b.Int && a.Float == b.Float;
+    }
 
     struct MetaData {
-        std::map<std::shared_ptr<Expression>, std::shared_ptr<Type>> types;
+        std::map<Type::Structure, std::vector<std::shared_ptr<Expression>>> types;
         std::map<std::shared_ptr<FunctionCall>, std::set<FunctionPointer>> links;
     };
 
