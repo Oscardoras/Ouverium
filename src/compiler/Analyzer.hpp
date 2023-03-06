@@ -245,12 +245,12 @@ namespace Analyzer {
             virtual ~Type() {}
         };
         struct Structure: public Type, public std::map<std::string, Type> {};
-        struct: public Type {} Bool;
-        struct: public Type {} Char;
-        struct: public Type {} Int;
-        struct: public Type {} Float;
-
+        const struct: public Type {} Bool;
+        const struct: public Type {} Char;
+        const struct: public Type {} Int;
+        const struct: public Type {} Float;
         std::set<Structure> structures;
+
         std::map<std::shared_ptr<Expression>, std::set<std::reference_wrapper<Type>>> types;
         std::map<std::shared_ptr<FunctionCall>, std::set<FunctionPointer>> links;
     };

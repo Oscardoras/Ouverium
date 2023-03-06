@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "../Analyzer.hpp"
+
 
 namespace CTranslator {
 
@@ -13,6 +15,11 @@ namespace CTranslator {
         struct Expression {};
         struct LValue: public Expression {};
         struct Instruction {};
+
+        struct Type {
+            std::string name;
+            // TODO: Data
+        };
 
 
         struct If: public Instruction {
@@ -27,7 +34,7 @@ namespace CTranslator {
         };
 
         struct Declaration: public Instruction {
-            std::string type;
+            std::reference_wrapper<Analyzer::Type> type;
             std::string name;
         };
 
@@ -60,9 +67,17 @@ namespace CTranslator {
         };
 
         struct Array: public Instruction {
-            std::string type;
+            std::reference_wrapper<Analyzer::Type> type;
             std::string name;
             std::shared_ptr<List> list;
+        };
+
+
+        struct FunctionDefinition {
+            std::reference_wrapper<Analyzer::Type> type;
+            std::string name;
+            std::vector<Declaration> parameters;
+            std::shared_ptr<Expression> body;
         };
 
     }

@@ -110,34 +110,33 @@ namespace CTranslator {
         }
     }
 
-    void get_instructions(std::shared_ptr<Expression> expression, Analyzer::MetaData & meta, Instructions & instructions) {
-        if (auto exp = std::dynamic_pointer_cast<Structures::Instruction>(get_expression(expression, meta, instructions)))
+    void get_instructions(std::shared_ptr<Expression> expression, Analyzer::MetaData & meta, Instructions & instructions, std::vector<Functions> & functions) {
+        if (auto exp = std::dynamic_pointer_cast<Structures::Instruction>(get_expression(expression, meta, instructions, functions)))
             instructions.push_back(exp);
     }
 
-    std::shared_ptr<Structures::Expression> get_expression(std::shared_ptr<Expression> expression, Analyzer::MetaData & meta, Instructions & instructions) {
+    std::shared_ptr<Structures::Expression> get_expression(std::shared_ptr<Expression> expression, Analyzer::MetaData & meta, Instructions & instructions, std::vector<Functions> & functions) {
         if (auto function_call = std::dynamic_pointer_cast<FunctionCall>(expression)) {
             auto & link = meta.links[function_call];
             if (link.size() == 1) {
-                try {
-                    auto f = std::get<std::shared_ptr<FunctionDefinition>>(*link.begin());
+                if (auto f = std::get_if<std::shared_ptr<FunctionDefinition>>(&*link.begin())) {
 
                     auto r = std::make_shared<Structures::FunctionCall>(Structures::FunctionCall {
-                        .function = get_expression(function_call->function, meta, instructions)
+                        .function = get_expression(function_call->function, meta, instructions, functions)
                     });
 
-                    if (std::dynamic_pointer_cast<Tuple>(f->parameters)) {
+                    if (std::dynamic_pointer_cast<Tuple>((*f)->parameters)) {
                         if (auto args = std::dynamic_pointer_cast<Tuple>(function_call->arguments)) {
                             for (auto const& o : args->objects)
-                                r->parameters.push_back(get_expression(o, meta, instructions));
+                                r->parameters.push_back(get_expression(o, meta, instructions, functions));
                         }
                     } else {
-                        r->parameters.push_back(get_expression(function_call->arguments, meta, instructions));
+                        r->parameters.push_back(get_expression(function_call->arguments, meta, instructions, functions));
                     }
 
                     return r;
-                } catch (std::bad_variant_access const& e) {
-                    return eval_system_function(std::get<Analyzer::SystemFunction>(*link.begin()), function_call->arguments, meta, instructions);
+                } else if (auto f = std::get_if<Analyzer::SystemFunction>(&*link.begin())) {
+                    return eval_system_function(*f, function_call->arguments, meta, instructions);
                 }
             } else {
                 auto r = std::make_shared<Structures::FunctionCall>(Structures::FunctionCall {
@@ -147,13 +146,21 @@ namespace CTranslator {
                 });
 
                 // TODO: context
-                r->parameters.push_back(get_expression(function_call->function, meta, instructions));
-                r->parameters.push_back(get_expression(function_call->arguments, meta, instructions));
+                r->parameters.push_back(get_expression(function_call->function, meta, instructions, functions));
+                r->parameters.push_back(get_expression(function_call->arguments, meta, instructions, functions));
 
                 return r;
             }
+        } else if (auto function_definition = std::dynamic_pointer_cast<FunctionDefinition>(expression)) {
+            auto function = std::make_shared<Structures::FunctionDefinition>(Structures::FunctionDefinition {
+                .type = meta.types[function_definition],
+                .name = "" /* TODO */,
+                .body = get_expression(function_definition->body, meta, , functions)
+            });
+
+            return function;
         } else if (auto property = std::dynamic_pointer_cast<Property>(expression)) {
-            auto o = get_expression(property->object, meta, instructions);
+            auto o = get_expression(property->object, meta, instructions, functions);
             return std::make_shared<Structures::Property>(Structures::Property {
                 .object = o,
                 .name = property->name,
@@ -166,7 +173,7 @@ namespace CTranslator {
         } else if (auto tuple = std::dynamic_pointer_cast<Tuple>(expression)) {
             auto list = std::make_shared<Structures::List>(Structures::List {});
             for (auto const& o : tuple->objects)
-                list->objects.push_back(get_expression(o, meta, instructions));
+                list->objects.push_back(get_expression(o, meta, instructions, functions));
         }
     }
 
