@@ -241,7 +241,9 @@ namespace Analyzer {
     };
 
     struct MetaData {
-        struct Type {};
+        struct Type {
+            virtual ~Type() {}
+        };
         struct Structure: public Type, public std::map<std::string, Type> {};
         struct: public Type {} Bool;
         struct: public Type {} Char;
