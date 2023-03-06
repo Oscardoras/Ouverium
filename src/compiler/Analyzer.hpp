@@ -240,21 +240,16 @@ namespace Analyzer {
         std::vector<FunctionEnvironment> functions;
     };
 
-    struct Type {
-        using Structure = std::map<std::string, Type>;
-
-        Structure Struct;
-        bool Bool = false;
-        bool Char = false;
-        bool Int = false;
-        bool Float = false;
-    };
-    inline bool operator==(Type const& a, Type const& b) {
-        return a.Struct == b.Struct && a.Bool == b.Bool && a.Char == b.Char && a.Int == b.Int && a.Float == b.Float;
-    }
-
     struct MetaData {
-        std::map<Type::Structure, std::vector<std::shared_ptr<Expression>>> types;
+        struct Type {};
+        struct Structure: public Type, public std::map<std::string, Type> {};
+        struct: public Type {} Bool;
+        struct: public Type {} Char;
+        struct: public Type {} Int;
+        struct: public Type {} Float;
+
+        std::set<Structure> structures;
+        std::map<std::shared_ptr<Expression>, std::set<std::reference_wrapper<Type>>> types;
         std::map<std::shared_ptr<FunctionCall>, std::set<FunctionPointer>> links;
     };
 
