@@ -153,10 +153,14 @@ namespace CTranslator {
             }
         } else if (auto function_definition = std::dynamic_pointer_cast<FunctionDefinition>(expression)) {
             auto function = std::make_shared<Structures::FunctionDefinition>(Structures::FunctionDefinition {
-                .type = meta.types[function_definition],
                 .name = "" /* TODO */,
                 .body = get_expression(function_definition->body, meta, , functions)
             });
+            auto & types = meta.types[function_definition];
+            if (types.size() == 1)
+                function->type = *types.begin();
+            else
+                function->type = "Unknown";
 
             return function;
         } else if (auto property = std::dynamic_pointer_cast<Property>(expression)) {

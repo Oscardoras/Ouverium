@@ -34,7 +34,7 @@ namespace CTranslator {
         };
 
         struct Declaration: public Instruction {
-            std::reference_wrapper<Analyzer::Type> type;
+            std::reference_wrapper<Type> type;
             std::string name;
         };
 
@@ -52,10 +52,6 @@ namespace CTranslator {
             std::vector<std::shared_ptr<Expression>> parameters;
         };
 
-        struct FunctionDefinition: public Expression {
-            std::string name;
-        };
-
         struct Property: public LValue {
             std::shared_ptr<Expression> object;
             std::string name;
@@ -67,14 +63,14 @@ namespace CTranslator {
         };
 
         struct Array: public Instruction {
-            std::reference_wrapper<Analyzer::Type> type;
+            std::reference_wrapper<Type> type;
             std::string name;
             std::shared_ptr<List> list;
         };
 
 
         struct FunctionDefinition {
-            std::reference_wrapper<Analyzer::Type> type;
+            std::reference_wrapper<Type> type;
             std::string name;
             std::vector<Declaration> parameters;
             std::shared_ptr<Expression> body;
