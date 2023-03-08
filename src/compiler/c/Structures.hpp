@@ -17,9 +17,16 @@ namespace CTranslator {
         struct Instruction {};
 
         struct Type {
-            std::string name;
-            // TODO: Data
+            virtual ~Type() {}
         };
+        struct Structure: public Type {
+            std::string name;
+            std::map<std::string, Type> properties;
+        };
+        const struct: public Type {} Bool;
+        const struct: public Type {} Char;
+        const struct: public Type {} Int;
+        const struct: public Type {} Float;
 
 
         struct If: public Instruction {

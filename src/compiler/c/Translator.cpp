@@ -9,6 +9,16 @@
 
 namespace CTranslator {
 
+    Structures::Structure create_struct(Analyzer::MetaData::Structure const& structure) {
+        Structures::Structure s;
+
+        for (auto const& pair : structure) {
+            s.properties[pair.first] = pair
+        }
+
+        return s;
+    }
+
     std::shared_ptr<Structures::Expression> eval_system_function(Analyzer::SystemFunction function, std::shared_ptr<Expression> arguments, Analyzer::MetaData & meta, Instructions & instructions) {
         switch ((unsigned long) function.pointer) {
         case (unsigned long) Analyzer::Functions::separator:
