@@ -243,13 +243,23 @@ namespace Analyzer {
     struct MetaData {
         struct Type {
             virtual ~Type() {}
+            virtual bool operator==(Type const& t) {
+                return this == &t;
+            }
         };
-        struct Structure: public Type, public std::map<std::string, std::set<std::reference_wrapper<Type>>> {};
-        struct: public Type {} Pointer;
-        struct: public Type {} Bool;
-        struct: public Type {} Char;
-        struct: public Type {} Int;
-        struct: public Type {} Float;
+        struct Structure: public Type, public std::map<std::string, std::set<std::reference_wrapper<Type>>> {
+            virtual bool operator==(Type const& t) override {
+                if (auto ptr = dynamic_cast<Structure const *>(&t))
+                    return (std::map<std::string, std::set<std::reference_wrapper<Type>>>) *this == (std::map<std::string, std::set<std::reference_wrapper<Type>>>) *ptr;
+                else
+                    return false;
+            }
+        };
+        static struct: public Type {} Pointer;
+        static struct: public Type {} Bool;
+        static struct: public Type {} Char;
+        static struct: public Type {} Int;
+        static struct: public Type {} Float;
 
         std::set<Structure> structures;
         std::map<std::shared_ptr<Expression>, std::set<std::reference_wrapper<Type>>> types;

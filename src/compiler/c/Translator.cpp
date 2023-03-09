@@ -15,8 +15,16 @@ namespace CTranslator {
         for (auto const& pair : structure) {
             if (pair.second.size() == 1) {
                 auto ref = *pair.second.begin();
-                if (ref == meta_data.)
-                s.properties[pair.first] = *pair.second.begin();
+                if (ref.get() == Analyzer::MetaData::Pointer)
+                    s.properties[pair.first] = Structures::Pointer;
+                else if (ref.get() == Analyzer::MetaData::Bool)
+                    s.properties[pair.first] = Structures::Bool;
+                else if (ref.get() == Analyzer::MetaData::Char)
+                    s.properties[pair.first] = Structures::Char;
+                else if (ref.get() == Analyzer::MetaData::Int)
+                    s.properties[pair.first] = Structures::Int;
+                else if (ref.get() == Analyzer::MetaData::Float)
+                    s.properties[pair.first] = Structures::Float;
             } else {
                 s.properties[pair.first] = Structures::Unknown;
             }

@@ -410,11 +410,11 @@ namespace Analyzer {
                 auto & types = structure[pair.first];
 
                 for (auto const& data : pair.second) {
-                    if (std::get_if<Object*>(&data)) types.insert(meta_data.Pointer);
-                    else if (std::get_if<bool>(&data)) types.insert(meta_data.Bool);
-                    else if (std::get_if<char>(&data)) types.insert(meta_data.Char);
-                    else if (std::get_if<long>(&data)) types.insert(meta_data.Int);
-                    else if (std::get_if<double>(&data)) types.insert(meta_data.Float);
+                    if (std::get_if<Object*>(&data)) types.insert(MetaData::Pointer);
+                    else if (std::get_if<bool>(&data)) types.insert(MetaData::Bool);
+                    else if (std::get_if<char>(&data)) types.insert(MetaData::Char);
+                    else if (std::get_if<long>(&data)) types.insert(MetaData::Int);
+                    else if (std::get_if<double>(&data)) types.insert(MetaData::Float);
                 }
             }
 
