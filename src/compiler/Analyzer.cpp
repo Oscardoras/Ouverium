@@ -397,35 +397,28 @@ namespace Analyzer {
     }
     */
 
-    void get_type(Type & type, Data const& data) {
-        if (auto object = std::get_if<Object*>(&data)) {
-            for (auto const& pair : (*object)->properties) {
-                auto & t = type.Struct[pair.first];
-                for (auto const& d : pair.second)
-                    get_type(t, d);
-            }
-        }
-        else if (std::get_if<bool>(&data)) type.Bool = true;
-        else if (std::get_if<char>(&data)) type.Char = true;
-        else if (std::get_if<long>(&data)) type.Int = true;
-        else if (std::get_if<double>(&data)) type.Float = true;
-    }
-
     MetaData analyze(std::shared_ptr<Expression> expression) {
         MetaData meta_data;
         GlobalContext context(meta_data);
 
         execute(context, false, expression);
 
-        std::vector<Type> types;
         for (auto & object : context.objects) {
-            Type type;
-            get_type(type, Data(&object));
+            MetaData::Structure structure;
 
-            if (std::find(types.begin(), types.end(), type) == types.end())
-                types.push_back(type);
+            for (auto const& pair : object.properties) {
+                auto & types = structure[pair.first];
 
-            bool test = (type == type);
+                for (auto const& data : pair.second) {
+                    if (std::get_if<Object*>(&data)) types.insert(meta_data.Pointer);
+                    else if (std::get_if<bool>(&data)) types.insert(meta_data.Bool);
+                    else if (std::get_if<char>(&data)) types.insert(meta_data.Char);
+                    else if (std::get_if<long>(&data)) types.insert(meta_data.Int);
+                    else if (std::get_if<double>(&data)) types.insert(meta_data.Float);
+                }
+            }
+
+            meta_data.structures.insert(structure);
         }
 
         return meta_data;

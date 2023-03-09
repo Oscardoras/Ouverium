@@ -13,7 +13,13 @@ namespace CTranslator {
         Structures::Structure s;
 
         for (auto const& pair : structure) {
-            s.properties[pair.first] = pair
+            if (pair.second.size() == 1) {
+                auto ref = *pair.second.begin();
+                if (ref == meta_data.)
+                s.properties[pair.first] = *pair.second.begin();
+            } else {
+                s.properties[pair.first] = Structures::Unknown;
+            }
         }
 
         return s;

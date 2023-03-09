@@ -19,14 +19,16 @@ namespace CTranslator {
         struct Type {
             virtual ~Type() {}
         };
+        struct: public Type {} Unknown;
         struct Structure: public Type {
             std::string name;
-            std::map<std::string, Type> properties;
+            std::map<std::string, std::reference_wrapper<Type>> properties;
         };
-        const struct: public Type {} Bool;
-        const struct: public Type {} Char;
-        const struct: public Type {} Int;
-        const struct: public Type {} Float;
+        struct: public Type {} Pointer;
+        struct: public Type {} Bool;
+        struct: public Type {} Char;
+        struct: public Type {} Int;
+        struct: public Type {} Float;
 
 
         struct If: public Instruction {
