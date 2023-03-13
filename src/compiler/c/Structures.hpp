@@ -82,7 +82,7 @@ namespace CTranslator {
             std::reference_wrapper<Type> type;
             std::string name;
             std::vector<Declaration> parameters;
-            std::shared_ptr<Expression> body;
+            Instructions body;
         };
 
     }
