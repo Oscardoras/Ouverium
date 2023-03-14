@@ -19,7 +19,7 @@ namespace CTranslator {
 
     Structures::Structure create_struct(Analyzer::MetaData::Structure const& structure);
 
-    std::shared_ptr<Structures::Expression> eval_system_function(Analyzer::M<Analyzer::Reference> (*function)(Analyzer::Context &, bool), std::shared_ptr<Expression> arguments, Analyzer::MetaData & meta, Instructions & instructions);
+    std::shared_ptr<Structures::Expression> eval_system_function(Analyzer::M<Analyzer::Reference> (*function)(Analyzer::Context &, bool), std::shared_ptr<Expression> arguments, Analyzer::MetaData & meta, Instructions & instructions, References & references);
 
     void get_instructions(std::shared_ptr<Expression> expression, Analyzer::MetaData & meta, Instructions & instructions, References & references);
     std::shared_ptr<Structures::Expression> get_expression(std::shared_ptr<Expression> expression, Analyzer::MetaData & meta, Instructions & instructions, References & references);

@@ -38,9 +38,9 @@ namespace CTranslator {
         case (unsigned long) Analyzer::Functions::separator:
             if (auto tuple = std::dynamic_pointer_cast<Tuple>(arguments)) {
                 for (auto const& o : tuple->objects)
-                    get_instructions(o, meta, instructions);
+                    get_instructions(o, meta, instructions, references);
             } else {
-                get_instructions(arguments, meta, instructions);
+                get_instructions(arguments, meta, instructions, references);
             }
             break;
 
@@ -179,9 +179,24 @@ namespace CTranslator {
             auto & types = meta.types[function_definition];
 
             std::vector<Structures::Declaration> parameters;
-            if () {
-                for (auto p : function_definition->parameters) {
-                    
+            if (auto tuple = std::dynamic_pointer_cast<Tuple>(function_definition->parameters)) {
+                int i = 0;
+                for (auto p : tuple->objects) {
+                    auto types = meta.types[p];
+                    auto type = (types.size() == 1) ? references.types[*types.begin()] : Structures::Unknown;
+
+                    std::string name;
+                    if (auto s = std::dynamic_pointer_cast<Symbol>(p))
+                        name = s->name;
+                    else
+                        name = "arg" + std::to_string(i);
+
+                    parameters.push_back(Structures::Declaration {
+                        .type = type,
+                        .name = name
+                    });
+
+                    i++;
                 }
             }
 
@@ -191,7 +206,7 @@ namespace CTranslator {
             Structures::FunctionDefinition function {
                 .type = types.size() == 1 ? references.types[*types.begin()] : Structures::Unknown,
                 .name = "" /* TODO */,
-                .parameters = ,
+                .parameters = parameters,
                 .body = function_instructions
             };
 
