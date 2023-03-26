@@ -71,7 +71,7 @@ namespace Interpreter {
             if (auto symbol = std::dynamic_pointer_cast<Symbol>(p_function->function)) {
                 auto it = computed.find(arguments);
                 if (it != computed.end())
-                    throw Interpreter::FunctionArgumentsError();
+                    throw Interpreter::FunctionArgumentsComputedError();
 
                 auto function_definition = std::make_shared<FunctionDefinition>();
                 function_definition->parameters = p_function->arguments;
@@ -156,6 +156,12 @@ namespace Interpreter {
                     return system_function->pointer(function_context);
                 } else return Reference();
 
+            } catch (FunctionArgumentsComputedError & e) {
+                if (position != nullptr) {
+                    position->store_stack_trace(context);
+                    position->notify_error("Error: function arguments have been miscomputed");
+                }
+                throw Error();
             } catch (FunctionArgumentsError & e) {}
         }
 

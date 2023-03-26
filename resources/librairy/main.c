@@ -1,8 +1,10 @@
+#include <stdlib.h>
+
 #include "gc.h"
 
 
 int main(int argc, char* *argv) {
-    GC_init();
+    __GC_init(NULL);
 
-    
+
 }
