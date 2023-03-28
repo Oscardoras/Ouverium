@@ -62,6 +62,9 @@
         "stdlib.h": "c",
         "virtual_tables.h": "c",
         "data.h": "c",
-        "gc.h": "c"
+        "gc.h": "c",
+        "system_functions.h": "c",
+        "function.h": "c",
+        "reference.h": "c"
     }
 }

@@ -13,14 +13,12 @@ struct __Array;
 /**
  * Type of a function to get an array from a data.
 */
-typedef struct __Array (*__UnknownData_GetArray)(__UnknownData data);
-
-struct __Array __UnknownData__get_NULL_array(__UnknownData data);
+typedef struct __Array (*__UnknownData_GetArray)(struct __UnknownData data);
 
 /**
  * Type of a function to get an UnknowData from a pointer.
 */
-typedef struct __UnkownData (*__UnknownData_From)(void* ptr);
+typedef struct __UnknownData (*__UnknownData_From)(void* ptr);
 
 /**
  * Contains information to manage a data type.
