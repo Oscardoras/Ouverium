@@ -3,9 +3,6 @@ project(Ouver)
 
 set(CMAKE_CXX_STANDARD 17)
 
-include(CTest)
-enable_testing()
-
 FILE(GLOB_RECURSE app_sources
     src/main.cpp
     src/Utils.cpp src/Utils.hpp
@@ -16,7 +13,3 @@ FILE(GLOB_RECURSE app_sources
     src/compiler/Functions.cpp src/compiler/Functions.hpp
 )
 add_executable(interpreter ${app_sources})
-
-set(CPACK_PROJECT_NAME ${PROJECT_NAME})
-set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
-include(CPack)
