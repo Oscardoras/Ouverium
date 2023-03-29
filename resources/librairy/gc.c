@@ -30,7 +30,7 @@ __GC_Element* __GC_alloc_object(unsigned long size) {
 }
 
 void __GC_collect(void) {
-    for (__GC_Context* context = __GC_contexts; context != NULL; context = context->next)
+    for (__GC_Context* context = &__GC_contexts; context != NULL; context = context->next)
         context->iterator(context);
 
     for (__GC_Element** ptr = &__GC_list; *ptr != NULL;) {

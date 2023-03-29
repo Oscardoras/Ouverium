@@ -13,6 +13,7 @@ typedef struct __Reference {
         SYMBOL,
         PROPERTY,
         ARRAY,
+        TUPLE
     } type;
     union {
         __UnknownData data;
@@ -25,12 +26,14 @@ typedef struct __Reference {
             __UnknownData array;
             unsigned long i;
         } array;
+        struct {
+            struct __Reference *references;
+            size_t size;
+        };
     };
 } __Reference;
 
 __UnknownData __Reference_get(__Reference reference);
-
-__Reference __Reference_break(__Reference reference);
 
 
 #endif

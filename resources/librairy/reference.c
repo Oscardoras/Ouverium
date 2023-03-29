@@ -8,33 +8,14 @@ __UnknownData __Reference_get(__Reference reference) {
         case SYMBOL:
             return *reference.symbol;
         case PROPERTY:
-            return reference.property.property;
+            return *reference.property.property;
         case ARRAY:
+            __Array array = __UnknownData_get_array(reference.array.array);
+            return reference.data.virtual_table->unknown_data_from(array.tab + reference.data.virtual_table->size * (array.size-1));
+        case TUPLE:
+
             return reference.array.array.virtual_table->array_iterator(reference.array.array.data.ptr, reference.array.i);
         default:
             break;
     }
-}
-
-__Reference __Reference_break(__Reference reference) {
-    __Reference new_reference;
-
-    new_reference.type = DATA;
-
-    switch (reference.type) {
-        case DATA:
-            new_reference.data = reference.data;
-        case SYMBOL:
-            new_reference.data = *reference.symbol;
-        case PROPERTY:
-            new_reference.data = reference.property.object;
-            new_reference.property.property = reference.property.property;
-        case ARRAY:
-            new_reference.array.array = reference.array.array;
-            new_reference.array.i = reference.array.i;
-        default:
-            break;
-    }
-
-    return new_reference;
 }
