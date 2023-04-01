@@ -26,6 +26,7 @@ typedef struct __UnknownData (*__UnknownData_From)(void* ptr);
 typedef struct __VirtualTable {
     __GC_Iterator gc_iterator;
     __UnknownData_GetArray get_array;
+    struct __VirtualTable* array_element_virtual_table;
     __UnknownData_From unknown_data_from;
     size_t size;
 } __VirtualTable;
@@ -43,14 +44,6 @@ typedef struct __UnknownData {
         bool b;
     } data;
 } __UnknownData;
-
-typedef struct __Array {
-    void *tab;
-    size_t size;
-    size_t capacity;
-} __Array;
-
-__Array __UnknownData_get_array(__UnknownData data);
 
 
 #endif

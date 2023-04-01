@@ -9,9 +9,10 @@ __UnknownData __Reference_get(__Reference reference) {
             return *reference.symbol;
         case PROPERTY:
             return *reference.property.property;
-        case ARRAY:
+        case ARRAY: {
             __Array array = __UnknownData_get_array(reference.array.array);
-            return reference.data.virtual_table->unknown_data_from(array.tab + reference.data.virtual_table->size * (array.size-1));
+            return reference.data.virtual_table->unknown_data_from(array.tab + reference.data.virtual_table->array_element_virtual_table->size * (array.size-1));
+        }
         case TUPLE:
 
             return reference.array.array.virtual_table->array_iterator(reference.array.array.data.ptr, reference.array.i);

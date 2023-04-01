@@ -17,36 +17,16 @@ __VirtualTable __VirtualTable_Array = {
 };
 
 __UnknownData __VirtualTable_Int_unknown_data_from(void* ptr);
-__VirtualTable __VirtualTable_Int = {
-    .gc_iterator = __GC_NULL_iterator,
-    .get_array = __VirtualTable_NULL_get_array,
-    .unknown_data_from = __VirtualTable_Int_unknown_data_from,
-    .size = sizeof(long)
-};
+extern __VirtualTable __VirtualTable_Int;
 
 __UnknownData __VirtualTable_Float_unknown_data_from(void* ptr);
-__VirtualTable __VirtualTable_Float = {
-    .gc_iterator = __GC_NULL_iterator,
-    .get_array = __VirtualTable_NULL_get_array,
-    .unknown_data_from = __VirtualTable_Float_unknown_data_from,
-    .size = sizeof(double)
-};
+extern __VirtualTable __VirtualTable_Float;
 
 __UnknownData __VirtualTable_Char_unknown_data_from(void* ptr);
-__VirtualTable __VirtualTable_Char = {
-    .gc_iterator = __GC_NULL_iterator,
-    .get_array = __VirtualTable_NULL_get_array,
-    .unknown_data_from = __VirtualTable_Char_unknown_data_from,
-    .size = sizeof(char)
-};
+extern __VirtualTable __VirtualTable_Char;
 
 __UnknownData __VirtualTable_Bool_unknown_data_from(void* ptr);
-__VirtualTable __VirtualTable_Bool = {
-    .gc_iterator = __GC_NULL_iterator,
-    .get_array = __VirtualTable_NULL_get_array,
-    .unknown_data_from = __VirtualTable_Bool_unknown_data_from,
-    .size = sizeof(bool)
-};
+extern __VirtualTable __VirtualTable_Bool;
 
 
 #endif

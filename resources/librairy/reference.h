@@ -1,7 +1,7 @@
 #ifndef __REFERENCE_H__
 #define __REFERENCE_H__
 
-#include "data.h"
+#include "array.h"
 
 
 /**
@@ -19,7 +19,7 @@ typedef struct __Reference {
         __UnknownData data;
         __UnknownData* symbol;
         struct {
-            void* object;
+            void* ptr_parent;
             __UnknownData* property;
         } property;
         struct {
