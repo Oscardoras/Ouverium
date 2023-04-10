@@ -12,10 +12,6 @@ namespace CTranslator {
 
     namespace Structures {
 
-        struct Expression {};
-        struct LValue: public Expression {};
-        struct Instruction {};
-
         struct Type {
             virtual ~Type() {}
         };
@@ -30,6 +26,10 @@ namespace CTranslator {
         struct: public Type {} Int;
         struct: public Type {} Float;
 
+
+        struct Expression {};
+        struct LValue: public Expression {};
+        struct Instruction {};
 
         struct If: public Instruction {
             std::shared_ptr<Expression> condition;
@@ -77,12 +77,11 @@ namespace CTranslator {
             std::shared_ptr<List> list;
         };
 
-
         struct FunctionDefinition {
             std::reference_wrapper<Type> type;
             std::string name;
             std::vector<Declaration> parameters;
-            Instructions body;
+            std::vector<std::shared_ptr<Instruction>> body;
         };
 
     }

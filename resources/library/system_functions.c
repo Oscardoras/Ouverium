@@ -3,16 +3,9 @@
 
 
 __Reference __system_function_separator_body(__GC_Context* parent_context, __Reference args) {
-    __UnknownData data = __Reference_get(args);
-    __Array array = __UnknownData_get_array(data);
+    __Reference tuple = __Reference_get_tuple(args);
 
-    if (array.size > 0) {
-        __Reference reference = {
-            .type = DATA,
-            .data = data.virtual_table->unknown_data_from(array.tab + data.virtual_table->size * (array.size-1))
-        };
-        return reference;
-    }
+    return tuple.tuple.references[tuple.tuple.size-1];
 }
 
 bool __system_function_copy_filter(__GC_Context* parent_context, __Reference args) {
@@ -42,4 +35,11 @@ __Reference __system_function_copy_pointer_body(__GC_Context* parent_context, __
         .data = data
     };
     return reference;
+}
+
+__Reference __system_function_assign_body(__GC_Context* parent_context, __Reference args) {
+    __Reference tuple = __Reference_get_tuple(args);
+    __Reference var = tuple.tuple.references[0];
+    __UnknownData data = __Reference_get(tuple.tuple.references[1]);
+    
 }

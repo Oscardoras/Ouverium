@@ -27,7 +27,7 @@ typedef struct __GC_Element {
 } __GC_Element;
 
 void __GC_init(__GC_Iterator gc_global_context_iterator);
-__GC_Element* __GC_alloc_object(unsigned long size);
+void* __GC_alloc_object(unsigned long size);
 void __GC_collect(void);
 void __GC_end(void);
 

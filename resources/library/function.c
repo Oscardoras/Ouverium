@@ -1,4 +1,3 @@
-#include <stdarg.h>
 #include <stdlib.h>
 
 #include "function.h"

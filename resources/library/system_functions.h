@@ -40,5 +40,38 @@ __Function __system_function_copy_pointer = {
     }
 };
 
+__Reference __system_function_assign_body(__GC_Context* parent_context, __Reference args);
+__Function __system_function_assign = {
+    .next = NULL,
+    .filter = NULL,
+    .body = __system_function_assign_body,
+    .references = {
+        .size = 0,
+        .tab = NULL
+    }
+};
+
+__Reference __system_function_function_definition_body(__GC_Context* parent_context, __Reference args);
+__Function __system_function_function_definition = {
+    .next = NULL,
+    .filter = NULL,
+    .body = __system_function_function_definition_body,
+    .references = {
+        .size = 0,
+        .tab = NULL
+    }
+};
+
+__Reference __system_function_equals_body(__GC_Context* parent_context, __Reference args);
+__Function __system_function_equals = {
+    .next = NULL,
+    .filter = NULL,
+    .body = __system_function_equals_body,
+    .references = {
+        .size = 0,
+        .tab = NULL
+    }
+};
+
 
 #endif

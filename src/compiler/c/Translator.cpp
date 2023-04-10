@@ -70,6 +70,8 @@ namespace CTranslator {
 
                 r->parameters.push_back(get_expression(function_call->function, meta, instructions, references));
                 // TODO: context
+
+                = meta.types[function_call->arguments];
                 r->parameters.push_back(get_expression(function_call->arguments, meta, instructions, references));
 
                 return r;

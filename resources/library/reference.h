@@ -29,11 +29,24 @@ typedef struct __Reference {
         struct {
             struct __Reference *references;
             size_t size;
-        };
+        } tuple;
     };
 } __Reference;
 
+/**
+ * Gets the UnknownData referenced by a Reference.
+ * @param reference the Reference.
+ * @return the UnknownData stored in reference.
+*/
 __UnknownData __Reference_get(__Reference reference);
+
+
+/**
+ * Gets a tuple reference from a Reference.
+ * @param reference the Reference.
+ * @return a tuple reference.
+*/
+__Reference __Reference_get_tuple(__Reference reference);
 
 
 #endif

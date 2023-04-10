@@ -14,6 +14,26 @@ namespace Analyzer {
             return std::get<Object*>(reference.front().get().front())->functions;
         }
 
+        void assignation(M<Reference> const& var, M<Data> const& data, bool potential) {
+            for (auto reference : var) {
+                if (auto ref = std::get_if<SymbolReference>(&reference)) {
+                    if (potential)
+                        ref->get().add(data);
+                    else
+                        ref->get() = data;
+                } else if (auto tuple = std::get_if<TupleReference>(&reference)) {
+                    for (auto d : data) {
+                        if (auto object = std::get_if<Object*>(&d)) {
+                            if (tuple->size() == (*object)->array.size()) {
+                                for (long i = 0; i < tuple->size(); i++)
+                                    assignation((*tuple)[i], (*object)->array[i+1], potential);
+                            } else throw FunctionArgumentsError();
+                        } else throw FunctionArgumentsError();
+                    }
+                }
+            }
+        }
+
         auto separator_args = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
             std::make_shared<Symbol>("a"),
             std::make_shared<Symbol>("b")
@@ -376,26 +396,6 @@ namespace Analyzer {
 
         M<Reference> copy_pointer(Context & context, bool potential) {
             return M<Reference>(context["data"].to_data());
-        }
-
-        void assignation(M<Reference> const& var, M<Data> const& data, bool potential) {
-            for (auto reference : var) {
-                if (auto ref = std::get_if<SymbolReference>(&reference)) {
-                    if (potential)
-                        ref->get().add(data);
-                    else
-                        ref->get() = data;
-                } else if (auto tuple = std::get_if<TupleReference>(&reference)) {
-                    for (auto d : data) {
-                        if (auto object = std::get_if<Object*>(&d)) {
-                            if (tuple->size() == (*object)->array.size()) {
-                                for (long i = 0; i < tuple->size(); i++)
-                                    assignation((*tuple)[i], (*object)->array[i+1], potential);
-                            } else throw FunctionArgumentsError();
-                        } else throw FunctionArgumentsError();
-                    }
-                }
-            }
         }
 
         auto assign_args = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {

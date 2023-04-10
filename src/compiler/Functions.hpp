@@ -8,7 +8,7 @@ namespace Analyzer {
 
     namespace Functions {
 
-        M<Reference> separator(Context & context);
+        M<Reference> separator(Context & context, bool potential);
 
         M<Reference> if_statement(Context & context, bool potential);
 
