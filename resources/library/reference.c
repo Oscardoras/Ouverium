@@ -14,7 +14,7 @@ __UnknownData __Reference_get(__Reference reference) {
         case ARRAY: {
             __ArrayInfo array = __UnknownData_get_array(reference.array.array);
             void* ptr = __Array_get(array, reference.array.i);
-            return  __UnknownData_get(array.vtable, ptr);
+            return  __UnknownData_from_ptr(array.vtable, __Array_get(array, reference.array.i));
         }
         case TUPLE:
             __ArrayInfo array = {
@@ -55,5 +55,13 @@ __Reference __Reference_get_tuple(__Reference reference) {
         }
 
         return tuple;
+    }
+}
+
+void __Reference_free(__Reference reference) {
+    if (reference.type == TUPLE) {
+        for (unsigned long i = 0; i < reference.tuple.size; i++)
+            __Reference_free(reference.tuple.references[i]);
+        free(reference.tuple.references);
     }
 }

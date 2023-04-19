@@ -15,10 +15,11 @@ namespace CTranslator {
         struct Type {
             virtual ~Type() {}
         };
+        using Declarations = std::map<std::string, std::reference_wrapper<Type>>;
         struct: public Type {} Unknown;
         struct Structure: public Type {
             std::string name;
-            std::map<std::string, std::reference_wrapper<Type>> properties;
+            Declarations properties;
         };
         struct: public Type {} Pointer;
         struct: public Type {} Bool;
@@ -30,21 +31,19 @@ namespace CTranslator {
         struct Expression {};
         struct LValue: public Expression {};
         struct Instruction {};
+        struct Block: public Instruction, public std::vector<std::shared_ptr<Instruction>> {
+            using std::vector<std::shared_ptr<Instruction>>::vector;
+        };
 
         struct If: public Instruction {
             std::shared_ptr<Expression> condition;
-            std::vector<std::shared_ptr<Instruction>> body;
-            std::vector<std::shared_ptr<Instruction>> alternative;
+            Block body;
+            Block alternative;
         };
 
         struct While: public Instruction {
             std::shared_ptr<Expression> condition;
-            std::vector<std::shared_ptr<Instruction>> body;
-        };
-
-        struct Declaration: public Instruction {
-            std::reference_wrapper<Type> type;
-            std::string name;
+            Block body;
         };
 
         struct Affectation: public Expression, public Instruction {
@@ -77,11 +76,15 @@ namespace CTranslator {
             std::shared_ptr<List> list;
         };
 
+
         struct FunctionDefinition {
+            using Parameter = std::pair<std::string, std::reference_wrapper<Type>>;
+            using Parameters = std::vector<Parameter>;
             std::reference_wrapper<Type> type;
             std::string name;
-            std::vector<Declaration> parameters;
-            std::vector<std::shared_ptr<Instruction>> body;
+            Parameters parameters;
+            Declarations local_variables;
+            Block body;
         };
 
     }

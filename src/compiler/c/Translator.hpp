@@ -12,7 +12,7 @@
 namespace CTranslator {
 
     struct References {
-        std::map<std::reference_wrapper<Analyzer::MetaData::Type>, Structures::Type> types;
+        std::map<std::reference_wrapper<Analyzer::MetaData::Type>, std::shared_ptr<Structures::Type>> types;
         std::map<std::shared_ptr<FunctionDefinition>, Structures::FunctionDefinition> functions;
     };
     using Instructions = std::vector<std::shared_ptr<Structures::Instruction>>;

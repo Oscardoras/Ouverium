@@ -1,3 +1,10 @@
 {
-    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "files.associations": {
+        "data.h": "c",
+        "virtual_tables.h": "c",
+        "stdarg.h": "c",
+        "stddef.h": "c",
+        "gc.h": "c"
+    }
 }

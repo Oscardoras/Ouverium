@@ -71,20 +71,34 @@ namespace CTranslator {
                 r->parameters.push_back(get_expression(function_call->function, meta, instructions, references));
                 // TODO: context
 
-                = meta.types[function_call->arguments];
-                r->parameters.push_back(get_expression(function_call->arguments, meta, instructions, references));
+                auto & type = meta.types[function_call->arguments];
+                if (type.size() == 1) {
+                    r->parameters.push_back(
+                        std::make_shared<Structures::FunctionCall>(Structures::FunctionCall {
+                            .function = std::make_shared<Structures::VariableCall>(Structures::VariableCall {
+                                .name = "__UnknownData_from_data"
+                            }),
+                            .parameters = {
+                                std::make_shared<Structures::VariableCall>(Structures::VariableCall {
+                                    .name = "&__VirtualTable_" + (*type.begin()).get().name
+                                }),
+                                get_expression(function_call->arguments, meta, instructions, references)
+                            }
+                        })
+                    );
+                } else {
+                    r->parameters.push_back(get_expression(function_call->arguments, meta, instructions, references));
+                }
 
                 return r;
             }
         } else if (auto function_definition = std::dynamic_pointer_cast<FunctionDefinition>(expression)) {
-            auto & types = meta.types[function_definition];
-
-            std::vector<Structures::Declaration> parameters;
+            Structures::FunctionDefinition::Parameters parameters;
             if (auto tuple = std::dynamic_pointer_cast<Tuple>(function_definition->parameters)) {
-                int i = 0;
+                unsigned int i = 0;
                 for (auto p : tuple->objects) {
-                    auto types = meta.types[p];
-                    auto type = (types.size() == 1) ? references.types[*types.begin()] : Structures::Unknown;
+                    auto & types = meta.types[p];
+                    auto & type = (types.size() == 1) ? *references.types[*types.begin()] : Structures::Unknown;
 
                     std::string name;
                     if (auto s = std::dynamic_pointer_cast<Symbol>(p))
@@ -92,23 +106,37 @@ namespace CTranslator {
                     else
                         name = "arg" + std::to_string(i);
 
-                    parameters.push_back(Structures::Declaration {
-                        .type = type,
-                        .name = name
-                    });
+                    parameters.push_back({name, type});
 
                     i++;
                 }
+            } else {
+                auto types = meta.types[function_definition->parameters];
+                auto & type = (types.size() == 1) ? *references.types[*types.begin()] : Structures::Unknown;
+
+                std::string name;
+                if (auto s = std::dynamic_pointer_cast<Symbol>(function_definition->parameters))
+                    name = s->name;
+                else
+                    name = "arg0";
+
+                parameters.push_back({name, type});
             }
 
-            Instructions function_instructions;
-            get_instructions(function_definition->body, meta, function_instructions, references);
+            Structures::Block body;
+            get_instructions(function_definition->body, meta, body, references);
 
+            Structures::Declarations local_variables;
+            for (auto & var : meta.variables[function_definition])
+                local_variables[var.first] = (var.second.size() == 1) ? *references.types[*var.second.begin()] : Structures::Unknown;
+
+            auto & types = meta.types[function_definition];
             Structures::FunctionDefinition function {
-                .type = types.size() == 1 ? references.types[*types.begin()] : Structures::Unknown,
-                .name = "" /* TODO */,
+                .type = types.size() == 1 ? *references.types[*types.begin()] : Structures::Unknown,
+                .name = meta.names[function_definition],
                 .parameters = parameters,
-                .body = function_instructions
+                .local_variables = local_variables,
+                .body = body
             };
 
             references.functions[function_definition] = function;

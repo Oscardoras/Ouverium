@@ -40,7 +40,7 @@ namespace Parser {
 
         class IncompleteCode: public std::exception {};
 
-        std::shared_ptr<Expression> get_tree(std::string const& code, std::string const& path, std::vector<std::string> symbols);
+        std::shared_ptr<Expression> get_tree(std::string const& code, std::string const& path, std::set<std::string> symbols);
 
     }
 

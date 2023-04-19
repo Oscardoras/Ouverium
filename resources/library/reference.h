@@ -48,5 +48,12 @@ __UnknownData __Reference_get(__Reference reference);
 */
 __Reference __Reference_get_tuple(__Reference reference);
 
+/**
+ * Frees a reference when it has been used.
+ * All references must be freed.
+ * @param reference a reference.
+*/
+void __Reference_free(__Reference reference);
+
 
 #endif

@@ -10,6 +10,9 @@ struct __VirtualTable;
 struct __UnknownData;
 struct __Array;
 
+/**
+ * Represents an array and the virtual table of its data.
+*/
 typedef struct __ArrayInfo {
     struct __VirtualTable* vtable;
     struct __Array* array;
@@ -44,13 +47,26 @@ typedef struct __UnknownData {
 } __UnknownData;
 
 /**
- * Creates an UnknownData from a virtual table and a pointer to the data.
+ * Creates an UnknownData from a virtual table and a data.
+ * @param vtable the virtual table of the data.
+ * @param d a data.
+ * @return an UnknownData.
+*/
+__UnknownData __UnknownData_from_data(__VirtualTable* vtable, void* d, ...);
+
+/**
+ * Creates an UnknownData from a virtual table and a pointer.
  * @param vtable the virtual table of the data.
  * @param ptr a pointer to the data.
  * @return an UnknownData.
 */
-__UnknownData __UnknownData_get(__VirtualTable* vtable, void* ptr);
+__UnknownData __UnknownData_from_ptr(__VirtualTable* vtable, void* ptr);
 
+/**
+ * Gets the array of an UnknownData.
+ * @param data an UnknownData.
+ * @return an ArrayInfo representing the array of the data.
+*/
 __ArrayInfo __UnknownData_get_array(__UnknownData data);
 
 

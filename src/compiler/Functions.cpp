@@ -325,9 +325,9 @@ namespace Analyzer {
                 std::string path = get_canonical_path(context);
 
                 auto & global = context.get_global();
-                std::vector<std::string> symbols;
+                std::set<std::string> symbols;
                 for (auto it : global)
-                    symbols.push_back(it.first);
+                    symbols.insert(it.first);
 
                 std::ifstream file(path);
                 std::string code;
@@ -352,9 +352,9 @@ namespace Analyzer {
 
                 auto & global = context.get_global();
                 if (global.files.find(path) == global.files.end()) {
-                    std::vector<std::string> symbols;
+                    std::set<std::string> symbols;
                     for (auto it : global)
-                        symbols.push_back(it.first);
+                        symbols.insert(it.first);
 
                     std::ifstream file(path);
                     std::string code;

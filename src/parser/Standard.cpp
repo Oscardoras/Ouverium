@@ -70,9 +70,9 @@ namespace Parser {
             return true;
         }
 
-        std::vector<std::string> system_chars = {"->", ",", "\\", "|->"};
+        std::set<std::string> system_chars = {"->", ",", "\\", "|->"};
         bool is_system(std::string const& str) {
-            return std::find(system_chars.begin(), system_chars.end(), str) != system_chars.end();
+            return system_chars.find(str) != system_chars.end();
         }
 
 
@@ -419,8 +419,10 @@ namespace Parser {
         void find_symbols(std::shared_ptr<Expression> expression, std::shared_ptr<Expression> parent) {
             if (expression == nullptr) return;
 
-            if (parent != nullptr)
+            if (parent != nullptr) {
+                expression->parent = parent;
                 expression->symbols = parent->symbols;
+            }
 
             if (auto function_call = std::dynamic_pointer_cast<FunctionCall>(expression)) {
                 find_symbols(function_call->function, expression);
@@ -432,7 +434,7 @@ namespace Parser {
             } else if (auto property = std::dynamic_pointer_cast<Property>(expression)) {
                 find_symbols(property->object, expression);
             } else if (auto symbol = std::dynamic_pointer_cast<Symbol>(expression)) {
-                expression->symbols.push_back(symbol->name);
+                expression->symbols.insert(symbol->name);
             } else if (auto tuple = std::dynamic_pointer_cast<Tuple>(expression)) {
                 for (auto & ex : tuple->objects)
                     find_symbols(ex, expression);
@@ -440,11 +442,11 @@ namespace Parser {
 
             if (parent != nullptr && !std::dynamic_pointer_cast<FunctionDefinition>(expression))
                 for (auto const& name : expression->symbols)
-                    if (std::find(parent->symbols.begin(), parent->symbols.end(), name) == parent->symbols.end())
-                        parent->symbols.push_back(name);
+                    if (parent->symbols.find(name) == parent->symbols.end())
+                        parent->symbols.insert(name);
         }
 
-        std::shared_ptr<Expression> get_tree(std::vector<ParserError> & errors, std::string const& path, std::string const& code, std::vector<std::string> symbols) {
+        std::shared_ptr<Expression> get_tree(std::vector<ParserError> & errors, std::string const& path, std::string const& code, std::set<std::string> symbols) {
             try {
                 auto words = get_words(path, code);
                 unsigned long i = 0;
@@ -460,7 +462,7 @@ namespace Parser {
             }
         }
 
-        std::shared_ptr<Expression> get_tree(std::string const& code, std::string const& path, std::vector<std::string> symbols) {
+        std::shared_ptr<Expression> get_tree(std::string const& code, std::string const& path, std::set<std::string> symbols) {
             std::vector<ParserError> errors;
             auto tree = get_tree(errors, path, code, symbols);
             //std::cout << tree->to_string() << std::endl;

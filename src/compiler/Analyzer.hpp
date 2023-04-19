@@ -162,6 +162,7 @@ namespace Analyzer {
 
     protected:
 
+        std::string name_space;
         std::reference_wrapper<Context> parent;
         std::map<std::string, M<SymbolReference>> symbols;
 
@@ -242,6 +243,8 @@ namespace Analyzer {
 
     struct MetaData {
         struct Type {
+            std::string name;
+            Type(std::string const& name = ""): name{name} {}
             virtual ~Type() {}
             virtual bool operator==(Type const& t) {
                 return this == &t;
@@ -255,15 +258,17 @@ namespace Analyzer {
                     return false;
             }
         };
-        static struct: public Type {} Pointer;
-        static struct: public Type {} Bool;
-        static struct: public Type {} Char;
-        static struct: public Type {} Int;
-        static struct: public Type {} Float;
+        inline static Type Pointer{"void*"};
+        inline static Type Bool{"bool"};
+        inline static Type Char{"char"};
+        inline static Type Int{"long"};
+        inline static Type Float{"double"};
 
         std::set<Structure> structures;
         std::map<std::shared_ptr<Expression>, std::set<std::reference_wrapper<Type>>> types;
+        std::map<std::shared_ptr<Expression>, std::map<std::string, std::set<std::reference_wrapper<Type>>>> variables;
         std::map<std::shared_ptr<FunctionCall>, std::set<FunctionPointer>> links;
+        std::map<std::shared_ptr<FunctionDefinition>, std::string> names;
     };
 
     MetaData analyze(std::shared_ptr<Expression> expression);

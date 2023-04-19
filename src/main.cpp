@@ -16,9 +16,9 @@ int main(int argc, char ** argv) {
             if (line.length() > 0) {
                 code += line + '\n';
                 try {
-                    std::vector<std::string> symbols;
+                    std::set<std::string> symbols;
                     for (auto const& symbol : context)
-                        symbols.push_back(symbol.first);
+                        symbols.insert(symbol.first);
 
                     auto expression = Parser::Standard::get_tree(code, ".", symbols);
                     auto r = Interpreter::run(context, expression);
@@ -37,9 +37,9 @@ int main(int argc, char ** argv) {
 
             Interpreter::GlobalContext context;
             try {
-                std::vector<std::string> symbols;
+                std::set<std::string> symbols;
                 for (auto const& symbol : context)
-                    symbols.push_back(symbol.first);
+                    symbols.insert(symbol.first);
 
                 auto expression = Parser::Standard::get_tree(code, argv[1], symbols);
                 auto r = Interpreter::run(context, expression);

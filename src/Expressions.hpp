@@ -3,6 +3,7 @@
 
 #include <string>
 #include <memory>
+#include <set>
 #include <vector>
 
 #include "parser/Position.hpp"
@@ -16,6 +17,11 @@ struct Expression {
     virtual ~Expression() = default;
 
     /**
+     * The parent of this expression.
+    */
+    std::weak_ptr<Expression> parent;
+
+    /**
      * The position of the expression in the source.
     */
     std::shared_ptr<Parser::Position> position;
@@ -23,7 +29,7 @@ struct Expression {
     /**
      * The list of the symbols available in the expression.
     */
-    std::vector<std::string> symbols;
+    std::set<std::string> symbols;
 
     /**
      * Gets a string of the expression to print it as a tree.
