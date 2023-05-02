@@ -34,9 +34,9 @@ namespace Analyzer {
             }
         }
 
-        auto separator_args = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
-            std::make_shared<Symbol>("a"),
-            std::make_shared<Symbol>("b")
+        auto separator_args = std::make_shared<Parser::Tuple>(Parser::Tuple {
+            std::make_shared<Parser::Symbol>("a"),
+            std::make_shared<Parser::Symbol>("b")
         });
         M<Reference> separator(Context & context, bool potential) {
             return context["b"];
@@ -69,7 +69,7 @@ namespace Analyzer {
             return r;
         }
 
-        void if_function(M<Reference> & m, Context & context, bool potential, std::shared_ptr<Tuple> const& tuple, size_t i) {
+        void if_function(M<Reference> & m, Context & context, bool potential, std::shared_ptr<Parser::Tuple> const& tuple, size_t i) {
             auto c = eval_condition(execute(context.get_parent(), potential, tuple->objects[i]).to_data(context));
 
             if (c != Condition::FALSE) {
@@ -92,12 +92,12 @@ namespace Analyzer {
         }
 
         auto if_statement_args = std::make_shared<FunctionCall>(
-            std::make_shared<Symbol>("function"),
-            std::make_shared<Tuple>()
+            std::make_shared<Parser::Symbol>("function"),
+            std::make_shared<Parser::Tuple>()
         );
         M<Reference> if_statement(Context & context, bool potential) {
             auto function = std::get<std::shared_ptr<FunctionDefinition>>(get_function(context["function"]).front().ptr)->body;
-            if (auto tuple = std::dynamic_pointer_cast<Tuple>(function)) {
+            if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(function)) {
                 if (tuple->objects.size() >= 3) {
                     M<Reference> m;
                     if_function(m, context, potential, tuple, 0);
@@ -106,14 +106,14 @@ namespace Analyzer {
             } else throw FunctionArgumentsError();
         }
 
-        auto while_statement_args = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
+        auto while_statement_args = std::make_shared<Parser::Tuple>(Parser::Tuple {
             std::make_shared<FunctionCall>(
-                std::make_shared<Symbol>("condition"),
-                std::make_shared<Tuple>()
+                std::make_shared<Parser::Symbol>("condition"),
+                std::make_shared<Parser::Tuple>()
             ),
             std::make_shared<FunctionCall>(
-                std::make_shared<Symbol>("block"),
-                std::make_shared<Tuple>()
+                std::make_shared<Parser::Symbol>("block"),
+                std::make_shared<Parser::Tuple>()
             )
         });
         M<Reference> while_statement(Context & context, bool potential) {
@@ -122,12 +122,12 @@ namespace Analyzer {
             auto condition = get_function(context["condition"]);
             auto block = get_function(context["block"]);
             while (true) {
-                auto c = eval_condition(call_function(context.get_parent(), potential, nullptr, condition, std::make_shared<Tuple>(), nullptr).to_data(context));
+                auto c = eval_condition(call_function(context.get_parent(), potential, nullptr, condition, std::make_shared<Parser::Tuple>(), nullptr).to_data(context));
                 if (c == Condition::UNDEFINED)
                     potential = true;
 
                 if (c != Condition::FALSE)
-                    m = call_function(context.get_parent(), potential, nullptr, block, std::make_shared<Tuple>(), nullptr);
+                    m = call_function(context.get_parent(), potential, nullptr, block, std::make_shared<Parser::Tuple>(), nullptr);
                 else
                     break;
             }
@@ -137,15 +137,15 @@ namespace Analyzer {
             return m;
         }
 
-        auto for_statement_args = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
-            std::make_shared<Symbol>("variable"),
-            std::make_shared<Symbol>("from_s"),
-            std::make_shared<Symbol>("begin"),
-            std::make_shared<Symbol>("to_s"),
-            std::make_shared<Symbol>("end"),
+        auto for_statement_args = std::make_shared<Parser::Tuple>(Parser::Tuple {
+            std::make_shared<Parser::Symbol>("variable"),
+            std::make_shared<Parser::Symbol>("from_s"),
+            std::make_shared<Parser::Symbol>("begin"),
+            std::make_shared<Parser::Symbol>("to_s"),
+            std::make_shared<Parser::Symbol>("end"),
             std::make_shared<FunctionCall>(
-                std::make_shared<Symbol>("block"),
-                std::make_shared<Tuple>()
+                std::make_shared<Parser::Symbol>("block"),
+                std::make_shared<Parser::Tuple>()
             )
         });
         M<Reference> for_statement(Context & context, bool potential) {
@@ -177,11 +177,11 @@ namespace Analyzer {
                     if (defined) {
                         for (long i = begin.front().get<long>(); i < end.front().get<long>(); i++) {
                             assignation(variable, Data(i), potential);
-                            call_function(context.get_parent(), potential, nullptr, get_function(block), std::make_shared<Tuple>(), nullptr);
+                            call_function(context.get_parent(), potential, nullptr, get_function(block), std::make_shared<Parser::Tuple>(), nullptr);
                         }
                     } else {
                         assignation(variable, Data(0), potential);
-                        call_function(context.get_parent(), true, nullptr, get_function(block), std::make_shared<Tuple>(), nullptr);
+                        call_function(context.get_parent(), true, nullptr, get_function(block), std::make_shared<Parser::Tuple>(), nullptr);
                     }
                     return Reference(M<Data>(context.new_object()));
                 } else throw FunctionArgumentsError();
@@ -190,17 +190,17 @@ namespace Analyzer {
             }
         }
 
-        auto for_step_statement_args = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
-            std::make_shared<Symbol>("variable"),
-            std::make_shared<Symbol>("from_s"),
-            std::make_shared<Symbol>("begin"),
-            std::make_shared<Symbol>("to_s"),
-            std::make_shared<Symbol>("end"),
-            std::make_shared<Symbol>("step_s"),
-            std::make_shared<Symbol>("step"),
+        auto for_step_statement_args = std::make_shared<Parser::Tuple>(Parser::Tuple {
+            std::make_shared<Parser::Symbol>("variable"),
+            std::make_shared<Parser::Symbol>("from_s"),
+            std::make_shared<Parser::Symbol>("begin"),
+            std::make_shared<Parser::Symbol>("to_s"),
+            std::make_shared<Parser::Symbol>("end"),
+            std::make_shared<Parser::Symbol>("step_s"),
+            std::make_shared<Parser::Symbol>("step"),
             std::make_shared<FunctionCall>(
-                std::make_shared<Symbol>("block"),
-                std::make_shared<Tuple>()
+                std::make_shared<Parser::Symbol>("block"),
+                std::make_shared<Parser::Tuple>()
             )
         });
         M<Reference> for_step_statement(Context & context, bool potential) {
@@ -241,17 +241,17 @@ namespace Analyzer {
                         if (step.front().get<long>() > 0) {
                             for (long i = begin.front().get<long>(); i < end.front().get<long>(); i += step.front().get<long>()) {
                                 assignation(variable, Data(i), potential);
-                                call_function(context.get_parent(), potential, nullptr, get_function(block), std::make_shared<Tuple>(), nullptr);
+                                call_function(context.get_parent(), potential, nullptr, get_function(block), std::make_shared<Parser::Tuple>(), nullptr);
                             }
                         } else if (step.front().get<long>() < 0) {
                             for (long i = begin.front().get<long>(); i > end.front().get<long>(); i += step.front().get<long>()) {
                                 assignation(variable, Data(i), potential);
-                                call_function(context.get_parent(), potential, nullptr, get_function(block), std::make_shared<Tuple>(), nullptr);
+                                call_function(context.get_parent(), potential, nullptr, get_function(block), std::make_shared<Parser::Tuple>(), nullptr);
                             }
                         } else throw FunctionArgumentsError();
                     } else {
                         assignation(variable, Data(0), potential);
-                        call_function(context.get_parent(), true, nullptr, get_function(block), std::make_shared<Tuple>(), nullptr);
+                        call_function(context.get_parent(), true, nullptr, get_function(block), std::make_shared<Parser::Tuple>(), nullptr);
                     }
                     return Reference(M<Data>(context.new_object()));
                 } else throw FunctionArgumentsError();
@@ -260,13 +260,13 @@ namespace Analyzer {
             }
         }
 
-        auto try_statement_args = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
+        auto try_statement_args = std::make_shared<Parser::Tuple>(Parser::Tuple {
             std::make_shared<FunctionCall>(
-                std::make_shared<Symbol>("try_block"),
-                std::make_shared<Tuple>()
+                std::make_shared<Parser::Symbol>("try_block"),
+                std::make_shared<Parser::Tuple>()
             ),
-            std::make_shared<Symbol>("catch_s"),
-            std::make_shared<Symbol>("catch_function")
+            std::make_shared<Parser::Symbol>("catch_s"),
+            std::make_shared<Parser::Symbol>("catch_function")
         });
         M<Reference> try_statement(Context & context, bool potential) {
             auto try_block = context["try_block"];
@@ -275,7 +275,7 @@ namespace Analyzer {
 
             if (catch_s == context["catch"]) {
                 try {
-                    return call_function(context.get_parent(), potential, nullptr, get_function(try_block), std::make_shared<Tuple>(), nullptr);
+                    return call_function(context.get_parent(), potential, nullptr, get_function(try_block), std::make_shared<Parser::Tuple>(), nullptr);
                 } catch (Exception & ex) {
                     try {
                         return call_function(context.get_parent(), potential, nullptr, get_function(catch_function), ex.reference);
@@ -286,7 +286,7 @@ namespace Analyzer {
             } else throw FunctionArgumentsError();
         }
 
-        auto throw_statement_args = std::make_shared<Symbol>("throw_expression");
+        auto throw_statement_args = std::make_shared<Parser::Symbol>("throw_expression");
         M<Reference> throw_statement(Context & context) {
             Exception ex;
             ex.reference = context["throw_expression"];
@@ -295,7 +295,7 @@ namespace Analyzer {
             throw ex;
         }
 
-        auto path_args = std::make_shared<Symbol>("path");
+        auto path_args = std::make_shared<Parser::Symbol>("path");
         std::string get_canonical_path(Context & context) {
             try {
                 auto paths = context["path"].to_data();
@@ -380,7 +380,7 @@ namespace Analyzer {
             } else throw FunctionArgumentsError();
         }
 
-        auto copy_args = std::make_shared<Symbol>("data");
+        auto copy_args = std::make_shared<Parser::Symbol>("data");
         M<Reference> copy(Context & context, bool potential) {
             auto data = context["data"].to_data();
 
@@ -398,24 +398,24 @@ namespace Analyzer {
             return M<Reference>(context["data"].to_data());
         }
 
-        auto assign_args = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
+        auto assign_args = std::make_shared<Parser::Tuple>(Parser::Tuple {
             std::make_shared<FunctionCall>(
-                std::make_shared<Symbol>("var"),
-                std::make_shared<Tuple>()
+                std::make_shared<Parser::Symbol>("var"),
+                std::make_shared<Parser::Tuple>()
             ),
-            std::make_shared<Symbol>("data")
+            std::make_shared<Parser::Symbol>("data")
         });
         M<Reference> assign(Context & context, bool potential) {
-            auto var = call_function(context, potential, nullptr, get_function(context["var"]), std::make_shared<Tuple>(), nullptr);
+            auto var = call_function(context, potential, nullptr, get_function(context["var"]), std::make_shared<Parser::Tuple>(), nullptr);
             auto data = M<Reference>(context["data"]).to_data(context);
 
             assignation(var, data, potential);
             return var;
         }
 
-        auto function_definition_args = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
-            std::make_shared<Symbol>("var"),
-            std::make_shared<Symbol>("data")
+        auto function_definition_args = std::make_shared<Parser::Tuple>(Parser::Tuple {
+            std::make_shared<Parser::Symbol>("var"),
+            std::make_shared<Parser::Symbol>("data")
         });
         M<Reference> function_definition(Context & context, bool potential) {
             auto var = context["var"];
@@ -450,9 +450,9 @@ namespace Analyzer {
             } else throw FunctionArgumentsError();
         }
 
-        auto equals_args = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
-            std::make_shared<Symbol>("a"),
-            std::make_shared<Symbol>("b")
+        auto equals_args = std::make_shared<Parser::Tuple>(Parser::Tuple {
+            std::make_shared<Parser::Symbol>("a"),
+            std::make_shared<Parser::Symbol>("b")
         });
         M<Reference> equals(Context & context, bool potential) {
             auto a = context["a"].to_data();

@@ -66,7 +66,7 @@ namespace Interpreter {
         for (auto it = objects.begin(); it != objects.end(); it++) {
             auto finalize = it->properties.find("finalize");
             if (finalize != it->properties.end())
-                call_function(get_global(), nullptr, finalize->second.get<Object*>()->functions, std::make_shared<Tuple>());
+                call_function(get_global(), nullptr, finalize->second.get<Object*>()->functions, std::make_shared<Parser::Tuple>());
         }
     }
 

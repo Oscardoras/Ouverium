@@ -33,12 +33,12 @@ namespace CTranslator {
         return s;
     }
 
-    void get_instructions(std::shared_ptr<Expression> expression, Analyzer::MetaData & meta, Instructions & instructions, References & references) {
+    void get_instructions(std::shared_ptr<Parser::Expression> expression, Analyzer::MetaData & meta, Instructions & instructions, References & references) {
         if (auto exp = std::dynamic_pointer_cast<Structures::Instruction>(get_expression(expression, meta, instructions, references)))
             instructions.push_back(exp);
     }
 
-    std::shared_ptr<Structures::Expression> get_expression(std::shared_ptr<Expression> expression, Analyzer::MetaData & meta, Instructions & instructions, References & references) {
+    std::shared_ptr<Structures::Expression> get_expression(std::shared_ptr<Parser::Expression> expression, Analyzer::MetaData & meta, Instructions & instructions, References & references) {
         if (auto function_call = std::dynamic_pointer_cast<FunctionCall>(expression)) {
             auto & link = meta.links[function_call];
             if (link.size() == 1) {
@@ -48,8 +48,8 @@ namespace CTranslator {
                         .function = get_expression(function_call->function, meta, instructions, references)
                     });
 
-                    if (std::dynamic_pointer_cast<Tuple>((*f)->parameters)) {
-                        if (auto args = std::dynamic_pointer_cast<Tuple>(function_call->arguments)) {
+                    if (std::dynamic_pointer_cast<Parser::Tuple>((*f)->parameters)) {
+                        if (auto args = std::dynamic_pointer_cast<Parser::Tuple>(function_call->arguments)) {
                             for (auto const& o : args->objects)
                                 r->parameters.push_back(get_expression(o, meta, instructions, references));
                         }
@@ -94,14 +94,14 @@ namespace CTranslator {
             }
         } else if (auto function_definition = std::dynamic_pointer_cast<FunctionDefinition>(expression)) {
             Structures::FunctionDefinition::Parameters parameters;
-            if (auto tuple = std::dynamic_pointer_cast<Tuple>(function_definition->parameters)) {
+            if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(function_definition->parameters)) {
                 unsigned int i = 0;
                 for (auto p : tuple->objects) {
                     auto & types = meta.types[p];
                     auto & type = (types.size() == 1) ? *references.types[*types.begin()] : Structures::Unknown;
 
                     std::string name;
-                    if (auto s = std::dynamic_pointer_cast<Symbol>(p))
+                    if (auto s = std::dynamic_pointer_cast<Parser::Symbol>(p))
                         name = s->name;
                     else
                         name = "arg" + std::to_string(i);
@@ -115,7 +115,7 @@ namespace CTranslator {
                 auto & type = (types.size() == 1) ? *references.types[*types.begin()] : Structures::Unknown;
 
                 std::string name;
-                if (auto s = std::dynamic_pointer_cast<Symbol>(function_definition->parameters))
+                if (auto s = std::dynamic_pointer_cast<Parser::Symbol>(function_definition->parameters))
                     name = s->name;
                 else
                     name = "arg0";
@@ -147,11 +147,11 @@ namespace CTranslator {
                 .name = property->name,
                 .pointer = true
             });
-        } else if (auto symbol = std::dynamic_pointer_cast<Symbol>(expression)) {
+        } else if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(expression)) {
             return std::make_shared<Structures::VariableCall>(Structures::VariableCall {
                 .name = symbol->name
             });
-        } else if (auto tuple = std::dynamic_pointer_cast<Tuple>(expression)) {
+        } else if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(expression)) {
             auto list = std::make_shared<Structures::List>(Structures::List {});
             for (auto const& o : tuple->objects)
                 list->objects.push_back(get_expression(o, meta, instructions, references));

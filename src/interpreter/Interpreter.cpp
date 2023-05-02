@@ -30,10 +30,10 @@ namespace Interpreter {
     }
 
 
-    void set_references(FunctionContext & function_context, std::shared_ptr<Expression> parameters, Reference const& reference) {
-        if (auto symbol = std::dynamic_pointer_cast<Symbol>(parameters)) {
+    void set_references(FunctionContext & function_context, std::shared_ptr<Parser::Expression> parameters, Reference const& reference) {
+        if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(parameters)) {
             function_context.add_symbol(symbol->name, reference);
-        } else if (auto tuple = std::dynamic_pointer_cast<Tuple>(parameters)) {
+        } else if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(parameters)) {
             if (auto tuple_reference = std::get_if<TupleReference>(&reference)) {
                 if (tuple_reference->size() == tuple->objects.size()) {
                     for (size_t i = 0; i < tuple->objects.size(); i++)
@@ -51,13 +51,13 @@ namespace Interpreter {
         } else throw Interpreter::FunctionArgumentsError();
     }
 
-    void set_references(Context & context, FunctionContext & function_context, std::map<std::shared_ptr<Expression>, Reference> & computed, std::shared_ptr<Expression> parameters, std::shared_ptr<Expression> arguments) {
-        if (auto symbol = std::dynamic_pointer_cast<Symbol>(parameters)) {
+    void set_references(Context & context, FunctionContext & function_context, std::map<std::shared_ptr<Parser::Expression>, Reference> & computed, std::shared_ptr<Parser::Expression> parameters, std::shared_ptr<Parser::Expression> arguments) {
+        if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(parameters)) {
             auto it = computed.find(arguments);
             auto reference = it != computed.end() ? it->second : (computed[arguments] = Interpreter::execute(context, arguments));
             function_context.add_symbol(symbol->name, reference);
-        } else if (auto p_tuple = std::dynamic_pointer_cast<Tuple>(parameters)) {
-            if (auto a_tuple = std::dynamic_pointer_cast<Tuple>(arguments)) {
+        } else if (auto p_tuple = std::dynamic_pointer_cast<Parser::Tuple>(parameters)) {
+            if (auto a_tuple = std::dynamic_pointer_cast<Parser::Tuple>(arguments)) {
                 if (p_tuple->objects.size() == a_tuple->objects.size()) {
                     for (size_t i = 0; i < p_tuple->objects.size(); i++)
                         set_references(context, function_context, computed, p_tuple->objects[i], a_tuple->objects[i]);
@@ -67,13 +67,13 @@ namespace Interpreter {
                 auto reference = it != computed.end() ? it->second : (computed[arguments] = Interpreter::execute(context, arguments));
                 set_references(function_context, parameters, reference);
             }
-        } else if (auto p_function = std::dynamic_pointer_cast<FunctionCall>(parameters)) {
-            if (auto symbol = std::dynamic_pointer_cast<Symbol>(p_function->function)) {
+        } else if (auto p_function = std::dynamic_pointer_cast<Parser::FunctionCall>(parameters)) {
+            if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(p_function->function)) {
                 auto it = computed.find(arguments);
                 if (it != computed.end())
                     throw Interpreter::FunctionArgumentsComputedError();
 
-                auto function_definition = std::make_shared<FunctionDefinition>();
+                auto function_definition = std::make_shared<Parser::FunctionDefinition>();
                 function_definition->parameters = p_function->arguments;
                 function_definition->body = arguments;
 
@@ -127,8 +127,8 @@ namespace Interpreter {
         throw Error();
     }
 
-    Reference call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, std::shared_ptr<Expression> arguments) {
-        std::map<std::shared_ptr<Expression>, Reference> computed;
+    Reference call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, std::shared_ptr<Parser::Expression> arguments) {
+        std::map<std::shared_ptr<Parser::Expression>, Reference> computed;
 
         for (auto const& function : functions) {
             try {
@@ -173,14 +173,14 @@ namespace Interpreter {
     }
 
 
-    Reference execute(Context & context, std::shared_ptr<Expression> expression) {
-        if (auto function_call = std::dynamic_pointer_cast<FunctionCall>(expression)) {
+    Reference execute(Context & context, std::shared_ptr<Parser::Expression> expression) {
+        if (auto function_call = std::dynamic_pointer_cast<Parser::FunctionCall>(expression)) {
             auto data = execute(context, function_call->function).to_data(context);
             if (auto object = std::get_if<Object*>(&data))
                 return call_function(context, function_call->position, (*object)->functions, function_call->arguments);
             else
                 return call_function(context, function_call->position, std::list<Function>{}, function_call->arguments);
-        } else if (auto function_definition = std::dynamic_pointer_cast<FunctionDefinition>(expression)) {
+        } else if (auto function_definition = std::dynamic_pointer_cast<Parser::FunctionDefinition>(expression)) {
             auto object = context.new_object();
             object->functions.push_front(CustomFunction{function_definition});
             auto & f = object->functions.back();
@@ -194,13 +194,13 @@ namespace Interpreter {
                         f.extern_symbols.emplace(symbol, context[symbol]);
 
             return Data(object);
-        } else if (auto property = std::dynamic_pointer_cast<Property>(expression)) {
+        } else if (auto property = std::dynamic_pointer_cast<Parser::Property>(expression)) {
             auto data = execute(context, property->object).to_data(context);
             if (auto object = std::get_if<Object*>(&data))
                 return PropertyReference{**object, (*object)->get_property(property->name, context)};
             else
                 return Data(context.new_object());
-        } else if (auto symbol = std::dynamic_pointer_cast<Symbol>(expression)) {
+        } else if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(expression)) {
             auto data = get_symbol(symbol->name);
             if (auto b = std::get_if<bool>(&data)) {
                 return Data(*b);
@@ -213,18 +213,16 @@ namespace Interpreter {
             } else {
                 return SymbolReference(context[symbol->name]);
             }
-        } else if (auto tuple = std::dynamic_pointer_cast<Tuple>(expression)) {
-            if (!tuple->objects.empty()) {
-                TupleReference tuple_reference;
-                for (auto e : tuple->objects)
-                    tuple_reference.push_back(execute(context, e));
-                return tuple_reference;
-            } else return Reference(context.new_object());
+        } else if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(expression)) {
+            TupleReference tuple_reference;
+            for (auto e : tuple->objects)
+                tuple_reference.push_back(execute(context, e));
+            return tuple_reference;
         } else return Reference();
     }
 
 
-    Reference run(Context & context, std::shared_ptr<Expression> expression) {
+    Reference run(Context & context, std::shared_ptr<Parser::Expression> expression) {
         try {
             return Interpreter::execute(context, expression);
         } catch (Base::Exception & ex) {

@@ -9,7 +9,7 @@
 
 #include "../parser/Position.hpp"
 
-#include "../Expressions.hpp"
+#include "../parser/Expressions.hpp"
 
 
 namespace Interpreter {
@@ -56,7 +56,7 @@ namespace Interpreter {
 
     public:
 
-        std::map<std::string, std::shared_ptr<Expression>> files;
+        std::map<std::string, std::shared_ptr<Parser::Expression>> files;
 
         GlobalContext();
 

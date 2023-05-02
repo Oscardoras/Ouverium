@@ -7,8 +7,8 @@ namespace Interpreter {
 
     namespace String {
 
-        std::shared_ptr<Expression> string_p() {
-            auto array = std::make_shared<Symbol>();
+        std::shared_ptr<Parser::Expression> string_p() {
+            auto array = std::make_shared<Parser::Symbol>();
             array->name = "this";
             return array;
         }
@@ -23,8 +23,8 @@ namespace Interpreter {
             } else throw Interpreter::FunctionArgumentsError();
         }
 
-        std::shared_ptr<Expression> char_is_p() {
-            auto c = std::make_shared<Symbol>();
+        std::shared_ptr<Parser::Expression> char_is_p() {
+            auto c = std::make_shared<Parser::Symbol>();
             c->name = "c";
             return c;
         }
@@ -68,8 +68,8 @@ namespace Interpreter {
             return array;
         }
 
-        std::shared_ptr<Expression> index_of_p() {
-            auto substring = std::make_shared<Symbol>();
+        std::shared_ptr<Parser::Expression> index_of_p() {
+            auto substring = std::make_shared<Parser::Symbol>();
             substring->name = "substring";
             return substring;
         }
@@ -84,14 +84,14 @@ namespace Interpreter {
             }
         }
 
-        std::shared_ptr<Expression> substring_p() {
-            auto tuple = std::make_shared<Tuple>();
+        std::shared_ptr<Parser::Expression> substring_p() {
+            auto tuple = std::make_shared<Parser::Tuple>();
 
-            auto begin = std::make_shared<Symbol>();
+            auto begin = std::make_shared<Parser::Symbol>();
             begin->name = "begin";
             tuple->objects.push_back(begin);
 
-            auto len = std::make_shared<Symbol>();
+            auto len = std::make_shared<Parser::Symbol>();
             len->name = "len";
             tuple->objects.push_back(len);
 
@@ -111,14 +111,14 @@ namespace Interpreter {
             }
         }
 
-        std::shared_ptr<Expression> includes_p() {
-            auto tuple = std::make_shared<Tuple>();
+        std::shared_ptr<Parser::Expression> includes_p() {
+            auto tuple = std::make_shared<Parser::Tuple>();
 
-            auto substring = std::make_shared<Symbol>();
+            auto substring = std::make_shared<Parser::Symbol>();
             substring->name = "substring";
             tuple->objects.push_back(substring);
 
-            auto string = std::make_shared<Symbol>();
+            auto string = std::make_shared<Parser::Symbol>();
             string->name = "string";
             tuple->objects.push_back(string);
 
@@ -137,14 +137,14 @@ namespace Interpreter {
             } else throw Interpreter::FunctionArgumentsError();
         }
 
-        std::shared_ptr<Expression> concat_p() {
-            auto tuple = std::make_shared<Tuple>();
+        std::shared_ptr<Parser::Expression> concat_p() {
+            auto tuple = std::make_shared<Parser::Tuple>();
 
-            auto str1 = std::make_shared<Symbol>();
+            auto str1 = std::make_shared<Parser::Symbol>();
             str1->name = "str1";
             tuple->objects.push_back(str1);
 
-            auto str2 = std::make_shared<Symbol>();
+            auto str2 = std::make_shared<Parser::Symbol>();
             str2->name = "str2";
             tuple->objects.push_back(str2);
 

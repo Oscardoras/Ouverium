@@ -3,7 +3,7 @@
 
 #include <list>
 
-#include "../Expressions.hpp"
+#include "Expressions.hpp"
 
 
 namespace Parser {
@@ -22,8 +22,7 @@ namespace Parser {
             virtual void notify_error(std::string const& message, bool print_stack_trace) override;
         };
 
-        struct Word {
-            std::string word;
+        struct Word: public std::string {
             TextPosition position;
 
             Word(std::string const& word, TextPosition const& position);
@@ -40,7 +39,7 @@ namespace Parser {
 
         class IncompleteCode: public std::exception {};
 
-        std::shared_ptr<Expression> get_tree(std::string const& code, std::string const& path, std::set<std::string> symbols);
+        std::shared_ptr<Parser::Expression> get_tree(std::string const& code, std::string const& path, std::set<std::string> symbols);
 
     }
 

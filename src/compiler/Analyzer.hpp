@@ -7,7 +7,9 @@
 #include <set>
 #include <variant>
 
-#include "../Expressions.hpp"
+#include "AnalyzedExpressions.hpp"
+
+#include "../parser/Expressions.hpp"
 
 
 namespace Analyzer {
@@ -18,8 +20,6 @@ namespace Analyzer {
     class Reference;
     class Context;
     class GlobalContext;
-    struct Type;
-    struct MetaData;
 
     // Definition of a Multiple (M)
 
@@ -126,7 +126,7 @@ namespace Analyzer {
     // Definition of Object
 
     struct Object {
-        std::shared_ptr<Expression> creation;
+        std::shared_ptr<Parser::Expression> creation;
 
         std::map<std::string, M<Data>> properties;
         std::list<Function> functions;
@@ -136,14 +136,14 @@ namespace Analyzer {
     };
 
     struct SystemFunction {
-        std::shared_ptr<Expression> parameters;
+        std::shared_ptr<Parser::Expression> parameters;
         M<Reference> (*pointer)(Context&, bool);
     };
-    using FunctionPointer = std::variant<std::shared_ptr<FunctionDefinition>, SystemFunction>;
+    using FunctionPointer = std::variant<std::shared_ptr<Parser::FunctionDefinition>, SystemFunction>;
     inline bool operator<(FunctionPointer const& a, FunctionPointer const& b) {
         if (a.index() == b.index()) {
-            if (auto p = std::get_if<std::shared_ptr<FunctionDefinition>>(&a))
-                return p->get() < std::get_if<std::shared_ptr<FunctionDefinition>>(&b)->get();
+            if (auto p = std::get_if<std::shared_ptr<Parser::FunctionDefinition>>(&a))
+                return p->get() < std::get_if<std::shared_ptr<Parser::FunctionDefinition>>(&b)->get();
             if (auto p = std::get_if<SystemFunction>(&a))
                 return p->pointer < std::get_if<SystemFunction>(&b)->pointer;
             return false;
@@ -162,8 +162,7 @@ namespace Analyzer {
 
     protected:
 
-        std::string name_space;
-        std::reference_wrapper<Context> parent;
+        Context& parent;
         std::map<std::string, M<SymbolReference>> symbols;
 
     public:
@@ -172,10 +171,10 @@ namespace Analyzer {
             Parser::Context(position), parent(parent) {}
 
         virtual Context& get_parent() override {
-            return this->parent.get();
+            return this->parent;
         }
         virtual GlobalContext& get_global() {
-            return this->parent.get().get_global();
+            return this->parent.get_global();
         }
 
         Object* new_object();
@@ -201,11 +200,10 @@ namespace Analyzer {
 
     public:
 
-        std::reference_wrapper<MetaData> meta_data;
-        std::map<std::string, std::shared_ptr<Expression>> files;
+        std::map<std::string, std::shared_ptr<Parser::Expression>> files;
 
-        GlobalContext(MetaData & meta_data):
-            Context(*this), meta_data(meta_data) {}
+        GlobalContext():
+            Context(*this) {}
 
         virtual GlobalContext& get_global() override {
             return *this;
@@ -215,7 +213,7 @@ namespace Analyzer {
         friend Object* Context::new_object(std::vector<M<Data>> const& array);
         friend Object* Context::new_object(std::string const& str);
         friend SymbolReference Context::new_reference(M<Data> data);
-        friend MetaData analyze(std::shared_ptr<Expression> expression);
+        friend std::shared_ptr<AnalyzedExpression> analyze(std::shared_ptr<Parser::Expression> expression);
 
     };
 
@@ -224,54 +222,16 @@ namespace Analyzer {
     class Error: public std::exception {};
     class FunctionArgumentsError: public Error {};
 
-    M<Reference> call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, M<Reference> const& arguments);
-    M<Reference> call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, std::shared_ptr<Expression> arguments, std::shared_ptr<FunctionCall> function_call);
-    M<Reference> execute(Context & context, bool potential, std::shared_ptr<Expression> expression);
-
-    // Analyzis data
-
-    struct FunctionEnvironment {
-        std::shared_ptr<FunctionDefinition> expression;
-        std::vector<Symbol> parameters;
-        std::vector<Symbol> local_variables;
+    struct Analyse {
+        M<Reference> references;
+        std::shared_ptr<AnalyzedExpression> expression;
     };
 
-    struct GlobalEnvironment {
-        std::vector<Symbol> global_variables;
-        std::vector<FunctionEnvironment> functions;
-    };
+    Analyse call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, M<Reference> const& arguments);
+    Analyse call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, std::shared_ptr<Parser::Expression> arguments, std::shared_ptr<FunctionCall> function_call);
+    Analyse execute(Context & context, bool potential, std::shared_ptr<Parser::Expression> expression);
 
-    struct MetaData {
-        struct Type {
-            std::string name;
-            Type(std::string const& name = ""): name{name} {}
-            virtual ~Type() {}
-            virtual bool operator==(Type const& t) {
-                return this == &t;
-            }
-        };
-        struct Structure: public Type, public std::map<std::string, std::set<std::reference_wrapper<Type>>> {
-            virtual bool operator==(Type const& t) override {
-                if (auto ptr = dynamic_cast<Structure const *>(&t))
-                    return (std::map<std::string, std::set<std::reference_wrapper<Type>>>) *this == (std::map<std::string, std::set<std::reference_wrapper<Type>>>) *ptr;
-                else
-                    return false;
-            }
-        };
-        inline static Type Pointer{"void*"};
-        inline static Type Bool{"bool"};
-        inline static Type Char{"char"};
-        inline static Type Int{"long"};
-        inline static Type Float{"double"};
-
-        std::set<Structure> structures;
-        std::map<std::shared_ptr<Expression>, std::set<std::reference_wrapper<Type>>> types;
-        std::map<std::shared_ptr<Expression>, std::map<std::string, std::set<std::reference_wrapper<Type>>>> variables;
-        std::map<std::shared_ptr<FunctionCall>, std::set<FunctionPointer>> links;
-        std::map<std::shared_ptr<FunctionDefinition>, std::string> names;
-    };
-
-    MetaData analyze(std::shared_ptr<Expression> expression);
+    std::shared_ptr<AnalyzedExpression> analyze(std::shared_ptr<Parser::Expression> expression);
 
 }
 

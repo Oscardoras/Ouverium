@@ -7,4 +7,5 @@ int main(int argc, char* *argv) {
     __GC_init(NULL);
 
 
+    __GC_end();
 }

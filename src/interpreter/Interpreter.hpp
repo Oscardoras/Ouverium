@@ -12,11 +12,11 @@ namespace Interpreter {
 
     Reference call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, Reference const& arguments);
 
-    Reference call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, std::shared_ptr<Expression> arguments);
+    Reference call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, std::shared_ptr<Parser::Expression> arguments);
 
-    Reference execute(Context & context, std::shared_ptr<Expression> expression);
+    Reference execute(Context & context, std::shared_ptr<Parser::Expression> expression);
 
-    Reference run(Context & context, std::shared_ptr<Expression> expression);
+    Reference run(Context & context, std::shared_ptr<Parser::Expression> expression);
 
     bool print(std::ostream & stream, Data data);
 

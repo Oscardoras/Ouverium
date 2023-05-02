@@ -8,14 +8,14 @@ namespace Interpreter {
 
     namespace Streams {
 
-        auto print_args = std::make_shared<Symbol>("data");
+        auto print_args = std::make_shared<Parser::Symbol>("data");
         Reference print(FunctionContext & context) {
             auto data = context["data"];
             Interpreter::print(std::cout, data);
             return Reference(context.new_object());
         }
 
-        auto scan_args = std::make_shared<Tuple>();
+        auto scan_args = std::make_shared<Parser::Tuple>();
         Reference scan(FunctionContext & context) {
             std::string str;
             getline(std::cin, str);
@@ -23,7 +23,7 @@ namespace Interpreter {
             return Data(context.new_object(str));
         }
 
-        auto read_args = std::make_shared<Tuple>();
+        auto read_args = std::make_shared<Parser::Tuple>();
         Reference read(FunctionContext & context) {
             try {
                 auto object = context["this"].get<Object*>();
@@ -38,7 +38,7 @@ namespace Interpreter {
             }
         }
 
-        auto has_args = std::make_shared<Tuple>();
+        auto has_args = std::make_shared<Parser::Tuple>();
         Reference has(FunctionContext & context) {
             try {
                 auto object = context["this"].get<Object*>();
@@ -59,7 +59,7 @@ namespace Interpreter {
             std::get<Object*>(object.get_property("has", context))->functions.push_front(f2);
         }
 
-        auto write_args = std::make_shared<Symbol>("data");
+        auto write_args = std::make_shared<Parser::Symbol>("data");
         Reference write(FunctionContext & context) {
             try {
                 auto object = context["this"].get<Object*>();
@@ -74,7 +74,7 @@ namespace Interpreter {
             }
         }
 
-        auto flush_args = std::make_shared<Tuple>();
+        auto flush_args = std::make_shared<Parser::Tuple>();
         Reference flush(FunctionContext & context) {
             try {
                 auto object = context["this"].get<Object*>();
@@ -98,7 +98,7 @@ namespace Interpreter {
             std::get<Object*>(object.get_property("flush", context))->functions.push_front(f2);
         }
 
-        auto input_file_args = std::make_shared<Symbol>("path");
+        auto input_file_args = std::make_shared<Parser::Symbol>("path");
         Reference input_file(FunctionContext & context) {
             try {
                 auto path = context["path"].get<Object*>()->to_string();
@@ -115,7 +115,7 @@ namespace Interpreter {
             }
         }
 
-        auto output_file_args = std::make_shared<Symbol>("path");
+        auto output_file_args = std::make_shared<Parser::Symbol>("path");
         Reference output_file(FunctionContext & context) {
             try {
                 auto path = context["path"].get<Object*>()->to_string();

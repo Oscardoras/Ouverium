@@ -4,17 +4,15 @@
 
 
 __GC_Element* __GC_list;
-__GC_Context __GC_contexts;
+_Thread_local __GC_Context* __GC_contexts = NULL;
 
 void __GC_NULL_iterator(void*) {}
 
-void __GC_init(__GC_Iterator gc_global_context_iterator) {
+void __GC_init() {
     __GC_list = NULL;
-    __GC_contexts.next = NULL;
-    __GC_contexts.iterator = gc_global_context_iterator;
 }
 
-void* __GC_alloc_object(unsigned long size) {
+void* __GC_alloc_object(size_t size) {
     __GC_Element* ptr = malloc(sizeof(__GC_Element) + size);
 
     if (ptr == NULL) {
@@ -32,7 +30,7 @@ void* __GC_alloc_object(unsigned long size) {
 }
 
 void __GC_collect(void) {
-    for (__GC_Context* context = &__GC_contexts; context != NULL; context = context->next)
+    for (__GC_Context* context = __GC_contexts; context != NULL; context = context->parent)
         context->iterator(context);
 
     for (__GC_Element** ptr = &__GC_list; *ptr != NULL;) {

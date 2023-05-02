@@ -9,7 +9,7 @@ namespace Interpreter {
 
     namespace Array {
 
-        auto lenght_args = std::make_shared<Symbol>("array");
+        auto lenght_args = std::make_shared<Parser::Symbol>("array");
         Reference lenght(FunctionContext & context) {
             try {
                 auto array = context["array"].get<Object*>();
@@ -20,7 +20,7 @@ namespace Interpreter {
             }
         }
 
-        auto get_capacity_args = std::make_shared<Symbol>("array");
+        auto get_capacity_args = std::make_shared<Parser::Symbol>("array");
         Reference get_capacity(FunctionContext & context) {
             auto array = context["array"].get<Object*>();
 
@@ -31,10 +31,10 @@ namespace Interpreter {
             }
         }
 
-        auto set_capacity_args = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
-            std::make_shared<Symbol>("array"),
-            std::make_shared<Symbol>("capacity")
-        });
+        auto set_capacity_args = std::make_shared<Parser::Tuple>(Parser::Tuple({
+            std::make_shared<Parser::Symbol>("array"),
+            std::make_shared<Parser::Symbol>("capacity")
+        }));
         Reference set_capacity(FunctionContext & context) {
             try {
                 auto array = context["array"].get<Object*>();
@@ -47,10 +47,10 @@ namespace Interpreter {
             }
         }
 
-        auto get_args = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
-            std::make_shared<Symbol>("array"),
-            std::make_shared<Symbol>("i")
-        });
+        auto get_args = std::make_shared<Parser::Tuple>(Parser::Tuple({
+            std::make_shared<Parser::Symbol>("array"),
+            std::make_shared<Parser::Symbol>("i")
+        }));
         Reference get(FunctionContext & context) {
             try {
                 auto array = context["array"].get<Object*>();
@@ -64,10 +64,10 @@ namespace Interpreter {
             }
         }
 
-        auto add_args = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
-            std::make_shared<Symbol>("array"),
-            std::make_shared<Symbol>("element")
-        });
+        auto add_args = std::make_shared<Parser::Tuple>(Parser::Tuple({
+            std::make_shared<Parser::Symbol>("array"),
+            std::make_shared<Parser::Symbol>("element")
+        }));
         Reference add(FunctionContext & context) {
             try {
                 auto array = context["array"].get<Object*>();
@@ -80,7 +80,7 @@ namespace Interpreter {
             }
         }
 
-        auto remove_args = std::make_shared<Symbol>("array");
+        auto remove_args = std::make_shared<Parser::Symbol>("array");
         Reference remove(FunctionContext & context) {
             try {
                 auto array = context["array"].get<Object*>();

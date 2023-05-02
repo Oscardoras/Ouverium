@@ -36,19 +36,19 @@ namespace CTranslator {
         };
 
         struct If: public Instruction {
-            std::shared_ptr<Expression> condition;
+            std::shared_ptr<Parser::Expression> condition;
             Block body;
             Block alternative;
         };
 
         struct While: public Instruction {
-            std::shared_ptr<Expression> condition;
+            std::shared_ptr<Parser::Expression> condition;
             Block body;
         };
 
         struct Affectation: public Expression, public Instruction {
             std::shared_ptr<LValue> lvalue;
-            std::shared_ptr<Expression> value;
+            std::shared_ptr<Parser::Expression> value;
         };
 
         struct VariableCall: public LValue {
@@ -56,18 +56,18 @@ namespace CTranslator {
         };
 
         struct FunctionCall: public Expression, public Instruction {
-            std::shared_ptr<Expression> function;
-            std::vector<std::shared_ptr<Expression>> parameters;
+            std::shared_ptr<Parser::Expression> function;
+            std::vector<std::shared_ptr<Parser::Expression>> parameters;
         };
 
         struct Property: public LValue {
-            std::shared_ptr<Expression> object;
+            std::shared_ptr<Parser::Expression> object;
             std::string name;
             bool pointer;
         };
 
         struct List: public Expression {
-            std::vector<std::shared_ptr<Expression>> objects;
+            std::vector<std::shared_ptr<Parser::Expression>> objects;
         };
 
         struct Array: public Instruction {

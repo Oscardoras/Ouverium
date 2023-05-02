@@ -92,9 +92,9 @@ bool isConstant(std::string name) {
     return false;
 }
 
-Instr getInstructions(std::shared_ptr<Expression>);
+Instr getInstructions(std::shared_ptr<Parser::Expression>);
 
-Expr getExpression(std::shared_ptr<Expression> expression) {
+Expr getExpression(std::shared_ptr<Parser::Expression> expression) {
     Expr expr;
 
     std::string type = expression->getType();
@@ -140,8 +140,8 @@ Expr getExpression(std::shared_ptr<Expression> expression) {
     } else if (type == "FunctionCall") {
         std::shared_ptr<FunctionCall> functionCall = std::static_pointer_cast<FunctionCall>(expression);
 
-        if (functionCall->function->getType() == "Symbol" && std::static_pointer_cast<Symbol>(functionCall->function)->name == ";" && functionCall->object->getType() == "Tuple") {
-            std::shared_ptr<Tuple> tuple = std::static_pointer_cast<Tuple>(functionCall->object);
+        if (functionCall->function->getType() == "Symbol" && std::static_pointer_cast<Parser::Symbol>(functionCall->function)->name == ";" && functionCall->object->getType() == "Tuple") {
+            std::shared_ptr<Parser::Tuple> tuple = std::static_pointer_cast<Parser::Tuple>(functionCall->object);
             for (int i = 0; i < (int) tuple->objects.size()-1; i++)
                 expr.append(getInstructions(tuple->objects[i]));
 
@@ -157,7 +157,7 @@ Expr getExpression(std::shared_ptr<Expression> expression) {
             Expr param = getExpression(functionCall->object);
             expr.append(param);
             jFuncEval->parameters.push_back(param.expression);
-            
+
             expr.expression = jFuncEval;
         }
     } else if (type == "FunctionDefinition") {
@@ -179,12 +179,12 @@ Expr getExpression(std::shared_ptr<Expression> expression) {
         parameter->name = "__parameters";
         jFunction->parameters.push_back(parameter);
         std::shared_ptr<FunctionCall> assignation = std::make_shared<FunctionCall>();
-        std::shared_ptr<Symbol> function = std::make_shared<Symbol>();
+        std::shared_ptr<Parser::Symbol> function = std::make_shared<Parser::Symbol>();
         function->name = ":=";
         assignation->function = function;
-        std::shared_ptr<Tuple> tuple = std::make_shared<Tuple>();
+        std::shared_ptr<Parser::Tuple> tuple = std::make_shared<Parser::Tuple>();
         tuple->objects.push_back(functionDefinition->parameters);
-        std::shared_ptr<Symbol> symbol = std::make_shared<Symbol>();
+        std::shared_ptr<Parser::Symbol> symbol = std::make_shared<Parser::Symbol>();
         symbol->name = "__parameters";
         tuple->objects.push_back(symbol);
         assignation->object = tuple;
@@ -198,11 +198,11 @@ Expr getExpression(std::shared_ptr<Expression> expression) {
             jReturn->value = body.expression;
             jFunction->instructions.push_back(jReturn);
         }
-        
+
         expr.expression = jFunction;
     } else if (type == "Property") {
         std::shared_ptr<Property> property = std::static_pointer_cast<Property>(expression);
-        
+
         std::shared_ptr<JProperty> jProperty = std::make_shared<JProperty>();
         Expr exp = getExpression(property->object);
         expr.append(exp);
@@ -211,29 +211,29 @@ Expr getExpression(std::shared_ptr<Expression> expression) {
 
         expr.expression = jProperty;
     } else if (type == "Symbol") {
-        std::shared_ptr<Symbol> symbol = std::static_pointer_cast<Symbol>(expression);
-        
+        std::shared_ptr<Parser::Symbol> symbol = std::static_pointer_cast<Parser::Symbol>(expression);
+
         std::shared_ptr<JVariable> jVariable = std::make_shared<JVariable>();
         jVariable->name = stringConvertor(symbol->name);
 
         expr.expression = jVariable;
     } else if (type == "Tuple") {
-        std::shared_ptr<Tuple> tuple = std::static_pointer_cast<Tuple>(expression);
+        std::shared_ptr<Parser::Tuple> tuple = std::static_pointer_cast<Parser::Tuple>(expression);
 
         std::shared_ptr<JArray> array = std::make_shared<JArray>();
-        for (std::shared_ptr<Expression> ex : tuple->objects) {
+        for (std::shared_ptr<Parser::Expression> ex : tuple->objects) {
             Expr exp = getExpression(ex);
             expr.append(exp);
             array->objects.push_back(exp.expression);
         }
-        
+
         expr.expression = array;
     }
 
     return expr;
 }
 
-Instr getInstructions(std::shared_ptr<Expression> expression) {
+Instr getInstructions(std::shared_ptr<Parser::Expression> expression) {
     Instr instr;
 
     std::string type = expression->getType();
@@ -375,7 +375,7 @@ std::string toJavaScript(std::shared_ptr<JInstruction> tree) {
     return code;
 }
 
-std::string JavascriptTranslator::getJavaScript(std::shared_ptr<Expression> expression) {
+std::string JavascriptTranslator::getJavaScript(std::shared_ptr<Parser::Expression> expression) {
     std::string code = "";
 
     std::ifstream framework("compiler/javascript/functions.js");
@@ -393,7 +393,7 @@ std::string JavascriptTranslator::getJavaScript(std::shared_ptr<Expression> expr
         jAssignment->value = nullptr;
         instructions.push_back(jAssignment);
     }
-    
+
     Instr instr = getInstructions(expression);
     instructions.insert(instructions.end(), instr.instructions.begin(), instr.instructions.end());
     for (std::shared_ptr<JInstruction> instruction : instructions)

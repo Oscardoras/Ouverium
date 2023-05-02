@@ -5,6 +5,10 @@
         "virtual_tables.h": "c",
         "stdarg.h": "c",
         "stddef.h": "c",
-        "gc.h": "c"
+        "gc.h": "c",
+        "reference.h": "c",
+        "array.h": "c",
+        "stdlib.h": "c",
+        "type_traits": "c"
     }
 }

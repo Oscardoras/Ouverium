@@ -6,7 +6,7 @@
 #include "function.h"
 
 
-__Reference __system_function_separator_body(__GC_Context* parent_context, __Reference args);
+__Reference __system_function_separator_body(__Reference args);
 __Function __system_function_separator = {
     .next = NULL,
     .filter = NULL,
@@ -17,8 +17,8 @@ __Function __system_function_separator = {
     }
 };
 
-bool __system_function_copy_filter(__GC_Context* parent_context, __Reference args);
-__Reference __system_function_copy_body(__GC_Context* parent_context, __Reference args);
+bool __system_function_copy_filter(__Reference args);
+__Reference __system_function_copy_body(__Reference args);
 __Function __system_function_copy = {
     .next = NULL,
     .filter = __system_function_copy_filter,
@@ -29,7 +29,7 @@ __Function __system_function_copy = {
     }
 };
 
-__Reference __system_function_copy_pointer_body(__GC_Context* parent_context, __Reference args);
+__Reference __system_function_copy_pointer_body(__Reference args);
 __Function __system_function_copy_pointer = {
     .next = NULL,
     .filter = NULL,
@@ -40,7 +40,7 @@ __Function __system_function_copy_pointer = {
     }
 };
 
-__Reference __system_function_assign_body(__GC_Context* parent_context, __Reference args);
+__Reference __system_function_assign_body(__Reference args);
 __Function __system_function_assign = {
     .next = NULL,
     .filter = NULL,
@@ -51,7 +51,8 @@ __Function __system_function_assign = {
     }
 };
 
-__Reference __system_function_function_definition_body(__GC_Context* parent_context, __Reference args);
+/*
+__Reference __system_function_function_definition_body(__Reference args);
 __Function __system_function_function_definition = {
     .next = NULL,
     .filter = NULL,
@@ -62,7 +63,7 @@ __Function __system_function_function_definition = {
     }
 };
 
-__Reference __system_function_equals_body(__GC_Context* parent_context, __Reference args);
+__Reference __system_function_equals_body(__Reference args);
 __Function __system_function_equals = {
     .next = NULL,
     .filter = NULL,
@@ -72,6 +73,7 @@ __Function __system_function_equals = {
         .tab = NULL
     }
 };
+*/
 
 
 #endif

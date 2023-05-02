@@ -20,72 +20,72 @@ namespace Interpreter {
             function_context.add_symbol("type", context.get_global().get_symbol("ArrayList"));
             Types::set_type(function_context);
 
-            auto f = std::make_unique<SystemFunction>(std::make_shared<Symbol>(
+            auto f = std::make_unique<SystemFunction>(std::make_shared<Parser::Symbol>(
                 "index"
             ), get_array_element);
             f->extern_symbols["this"] = array;
             array_object->functions.push_front(std::move(f));
 
-            f = std::make_unique<SystemFunction>(std::make_shared<Symbol>(
+            f = std::make_unique<SystemFunction>(std::make_shared<Parser::Symbol>(
                 "function"
             ), foreach);
             f->extern_symbols["this"] = array;
             array_object->get_property("foreach", context)->functions.push_front(std::move(f));
 
-            f = std::make_unique<SystemFunction>(std::make_shared<Tuple>(), lenght);
+            f = std::make_unique<SystemFunction>(std::make_shared<Parser::Tuple>(), lenght);
             f->extern_symbols["this"] = array;
             array_object->get_property("lenght", context)->functions.push_front(std::move(f));
 
-            f = std::make_unique<SystemFunction>(std::make_shared<Tuple>(), is_empty);
+            f = std::make_unique<SystemFunction>(std::make_shared<Parser::Tuple>(), is_empty);
             f->extern_symbols["this"] = array;
             array_object->get_property("is_empty", context)->functions.push_front(std::move(f));
 
-            f = std::make_unique<SystemFunction>(std::make_shared<Tuple>(), get_capacity);
+            f = std::make_unique<SystemFunction>(std::make_shared<Parser::Tuple>(), get_capacity);
             f->extern_symbols["this"] = array;
             array_object->get_property("get_capacity", context)->functions.push_front(std::move(f));
 
-            f = std::make_unique<SystemFunction>(std::make_shared<Symbol>(
+            f = std::make_unique<SystemFunction>(std::make_shared<Parser::Symbol>(
                 "capacity"
             ), set_capacity);
             f->extern_symbols["this"] = array;
             array_object->get_property("set_capacity", context)->functions.push_front(std::move(f));
 
-            f = std::make_unique<SystemFunction>(std::make_shared<Tuple>(), get_first);
+            f = std::make_unique<SystemFunction>(std::make_shared<Parser::Tuple>(), get_first);
             f->extern_symbols["this"] = array;
             array_object->get_property("get_first", context)->functions.push_front(std::move(f));
 
-            f = std::make_unique<SystemFunction>(std::make_shared<Tuple>(), get_last);
+            f = std::make_unique<SystemFunction>(std::make_shared<Parser::Tuple>(), get_last);
             f->extern_symbols["this"] = array;
             array_object->get_property("get_last", context)->functions.push_front(std::move(f));
 
-            f = std::make_unique<SystemFunction>(std::make_shared<Symbol>(
+            f = std::make_unique<SystemFunction>(std::make_shared<Parser::Symbol>(
                 "element"
             ), add_first);
             f->extern_symbols["this"] = array;
             array_object->get_property("add_first", context)->functions.push_front(std::move(f));
 
-            f = std::make_unique<SystemFunction>(std::make_shared<Symbol>(
+            f = std::make_unique<SystemFunction>(std::make_shared<Parser::Symbol>(
                 "element"
             ), add_last);
             f->extern_symbols["this"] = array;
             array_object->get_property("add_last", context)->functions.push_front(std::move(f));
 
-            f = std::make_unique<SystemFunction>(std::make_shared<Tuple>(), remove_first);
+            f = std::make_unique<SystemFunction>(std::make_shared<Parser::Tuple>(), remove_first);
             f->extern_symbols["this"] = array;
             array_object->get_property("remove_first", context)->functions.push_front(std::move(f));
 
-            f = std::make_unique<SystemFunction>(std::make_shared<Tuple>(), remove_last);
+            f = std::make_unique<SystemFunction>(std::make_shared<Parser::Tuple>(), remove_last);
             f->extern_symbols["this"] = array;
             array_object->get_property("remove_last", context)->functions.push_front(std::move(f));
 
-            f = std::make_unique<SystemFunction>(std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
-                std::make_shared<Symbol>("index"),
-                std::make_shared<Symbol>("element")
+            f = std::make_unique<SystemFunction>(std::make_shared<Parser::Tuple>(Parser::Tuple {
+                std::make_shared<Parser::Symbol>("index"),
+                std::make_shared<Parser::Symbol>("element")
             }), insert);
             f->extern_symbols["this"] = array;
             array_object->get_property("insert", context)->functions.push_front(std::move(f));
 
-            f = std::make_unique<SystemFunction>(std::make_shared<Symbol>(
+            f = std::make_unique<SystemFunction>(std::make_shared<Parser::Symbol>(
                 "index"
             ), remove);
             f->extern_symbols["this"] = array;
@@ -249,7 +249,7 @@ namespace Interpreter {
         }
 
         void init(Context & context) {
-            context.get_symbol("ArrayList").to_object(context)->functions.push_front(std::make_unique<SystemFunction>(std::make_shared<Symbol>(
+            context.get_symbol("ArrayList").to_object(context)->functions.push_front(std::make_unique<SystemFunction>(std::make_shared<Parser::Symbol>(
                 "this"
             ), array_list));
         }

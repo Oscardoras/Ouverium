@@ -10,6 +10,7 @@ namespace Parser {
     class Context;
 
     struct Position {
+
         /**
          * The file path.
         */
@@ -24,14 +25,19 @@ namespace Parser {
         /**
          * Prints an error.
          * @param message a message to notify.
+         * @param print_stack_trace if the stack trace musts be printed.
         */
         virtual void notify_error(std::string const& message = "An error occured", bool print_stack_trace = true) = 0;
+
     };
 
     class Context {
 
     protected:
 
+        /**
+         * The position where the context was walled.
+        */
         std::shared_ptr<Parser::Position> position;
 
     public:
@@ -39,10 +45,18 @@ namespace Parser {
         Context(std::shared_ptr<Parser::Position> position):
             position(position) {}
 
+        /**
+         * Gets the position where the context was called.
+         * @return the position.
+        */
         auto get_position() const {
             return position;
         }
 
+        /**
+         * Gets the parent context.
+         * @return the parent context.
+        */
         virtual Context & get_parent() = 0;
 
     };

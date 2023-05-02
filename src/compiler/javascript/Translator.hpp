@@ -6,7 +6,7 @@
 
 namespace JavascriptTranslator {
 
-    std::string getJavaScript(std::shared_ptr<Expression> expression);
+    std::string getJavaScript(std::shared_ptr<Parser::Expression> expression);
 
 }
 

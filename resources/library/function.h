@@ -6,8 +6,8 @@
 #include "reference.h"
 
 
-typedef bool (*__FunctionFilter)(__GC_Context* parent_context, __Reference args);
-typedef __Reference (*__FunctionBody)(__GC_Context* parent_context, __Reference args);
+typedef bool (*__FunctionFilter)(__Reference args);
+typedef __Reference (*__FunctionBody)(__Reference args);
 
 /**
  * Represents a function in a function linked list.
@@ -23,7 +23,7 @@ typedef struct __Function {
 } __Function;
 
 
-__Reference __Function_eval(__Function* function, __GC_Context* parent_context, __Reference args);
+__Reference __Function_eval(__Function* function, __Reference args);
 
 
 #endif

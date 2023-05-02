@@ -9,18 +9,18 @@ namespace Interpreter {
 
     namespace Math {
 
-        auto a = std::make_shared<Symbol>("a");
-        auto ab = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
-            std::make_shared<Symbol>("a"),
-            std::make_shared<Symbol>("b")
-        });
-        auto a_b = std::make_shared<Tuple>(std::vector<std::shared_ptr<Expression>> {
-            std::make_shared<Symbol>("a"),
-            std::make_shared<FunctionCall>(
-                std::make_shared<Symbol>("b"),
-                std::make_shared<Tuple>()
+        auto a = std::make_shared<Parser::Symbol>("a");
+        auto ab = std::make_shared<Parser::Tuple>(Parser::Tuple({
+            std::make_shared<Parser::Symbol>("a"),
+            std::make_shared<Parser::Symbol>("b")
+        }));
+        auto a_b = std::make_shared<Parser::Tuple>(Parser::Tuple({
+            std::make_shared<Parser::Symbol>("a"),
+            std::make_shared<Parser::FunctionCall>(
+                std::make_shared<Parser::Symbol>("b"),
+                std::make_shared<Parser::Tuple>()
             )
-        });
+        }));
 
         Reference logical_not(FunctionContext & context) {
             try {
@@ -36,7 +36,7 @@ namespace Interpreter {
                 auto b = context["b"].get<Object*>();
 
                 if (a)
-                    return Reference(Data(Interpreter::call_function(context.get_parent(), nullptr, b->functions, std::make_shared<Tuple>()).to_data(context).get<bool>()));
+                    return Reference(Data(Interpreter::call_function(context.get_parent(), nullptr, b->functions, std::make_shared<Parser::Tuple>()).to_data(context).get<bool>()));
                 else
                     return Reference(Data(false));
             } catch (Data::BadAccess & e) {
@@ -50,7 +50,7 @@ namespace Interpreter {
                 auto b = context["b"].get<Object*>();
 
                 if (!a)
-                    return Interpreter::call_function(context.get_parent(), nullptr, b->functions, std::make_shared<Tuple>()).to_data(context).get<bool>();
+                    return Interpreter::call_function(context.get_parent(), nullptr, b->functions, std::make_shared<Parser::Tuple>()).to_data(context).get<bool>();
                 else
                     return Reference(Data(true));
             } catch (Data::BadAccess & e) {
