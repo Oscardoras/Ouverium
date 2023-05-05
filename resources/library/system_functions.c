@@ -1,85 +1,88 @@
 #include <string.h>
 
+#include "gc.h"
 #include "system_functions.h"
 #include "virtual_tables.h"
 
 
-__Reference __system_function_separator_body(__Reference args) {
-    __Reference tuple = __Reference_get_tuple(args);
-
-    __Reference reference = tuple.tuple.references[tuple.tuple.size-1];
-
-    __Reference_free(tuple);
-    return reference;
+__Reference_Owned __system_function_separator_body(__Reference_Shared args) {
+    return __Reference_get_element(args, __Reference_get_size(args));
 }
 
-bool __system_function_copy_filter(__Reference args) {
+bool __system_function_copy_filter(__Reference_Shared args) {
     __VirtualTable* vtable = __Reference_get(args).virtual_table;
 
-    __Reference_free(args);
     return
         vtable == &__VirtualTable_Int ||
         vtable == &__VirtualTable_Float ||
         vtable == &__VirtualTable_Char ||
         vtable == &__VirtualTable_Bool;
 }
-__Reference __system_function_copy_body(__Reference args) {
+__Reference_Owned __system_function_copy_body(__Reference_Shared args) {
     __UnknownData data = __Reference_get(args);
 
-    __Reference_free(args);
-    __Reference reference = {
-        .type = DATA,
-        .data = data
-    };
-    return reference;
+    return __Reference_new_data(data);
 }
 
-__Reference __system_function_copy_pointer_body(__Reference args) {
+__Reference_Owned __system_function_copy_pointer_body(__Reference_Shared args) {
     __UnknownData data = __Reference_get(args);
 
-    __Reference_free(args);
-    __Reference reference = {
-        .type = DATA,
-        .data = data
-    };
-    return reference;
+    return __Reference_new_data(data);
 }
 
-static void assign(__Reference variable, __UnknownData value) {
-    switch (variable.type) {
+static void assign(__GC_Reference* variable, __UnknownData value) {
+    switch (variable->type) {
         case SYMBOL:
-            variable.symbol->data = value;
-        case PROPERTY:
-            *variable.property.property = value;
-        case ARRAY:
-            __ArrayInfo array = __UnknownData_get_array(variable.array.array);
-            void* ptr = __Array_get(array, variable.array.i);
+            *variable->symbol = value;
+            break;
+        case PROPERTY: {
+            if (variable->property.virtual_table == &__VirtualTable_UnknownData)
+                *((__UnknownData*) variable->property.property) = value;
+            else if (variable->property.virtual_table == &__VirtualTable_Int)
+                *((long*) variable->property.property) = value.data.i;
+            else if (variable->property.virtual_table == &__VirtualTable_Float)
+                *((double*) variable->property.property) = value.data.f;
+            else if (variable->property.virtual_table == &__VirtualTable_Char)
+                *((char*) variable->property.property) = value.data.c;
+            else if (variable->property.virtual_table == &__VirtualTable_Bool)
+                *((bool*) variable->property.property) = value.data.b;
+            else
+                *((void**) variable->property.property) = value.data.ptr;
+            break;
+        }
+        case ARRAY: {
+            __ArrayInfo array = __UnknownData_get_array(variable->array.array);
+            void* ptr = __Array_get(array, variable->array.i);
             if (array.vtable == &__VirtualTable_UnknownData)
                 *((__UnknownData*) ptr) = value;
-            if (array.vtable == &__VirtualTable_Int)
+            else if (array.vtable == &__VirtualTable_Int)
                 *((long*) ptr) = value.data.i;
-            if (array.vtable == &__VirtualTable_Float)
+            else if (array.vtable == &__VirtualTable_Float)
                 *((double*) ptr) = value.data.f;
-            if (array.vtable == &__VirtualTable_Char)
+            else if (array.vtable == &__VirtualTable_Char)
                 *((char*) ptr) = value.data.c;
-            if (array.vtable == &__VirtualTable_Bool)
+            else if (array.vtable == &__VirtualTable_Bool)
                 *((bool*) ptr) = value.data.b;
-        case TUPLE_DYNAMIC:
-        case TUPLE_STATIC: {
+            else
+                *((void**) ptr) = value.data.ptr;
+            break;
+        }
+        case TUPLE: {
             __ArrayInfo array = __UnknownData_get_array(value);
 
-            for (unsigned long i = 0; i < variable.tuple.size; i++)
-                assign(variable.tuple.references[i], __UnknownData_from_ptr(array.vtable, __Array_get(array, i)));
+            for (size_t i = 0; i < variable->tuple.size; i++)
+                assign(&variable->tuple.references[i], __UnknownData_from_ptr(array.vtable, __Array_get(array, i)));
+            break;
         }
     }
 }
-__Reference __system_function_assign_body(__Reference args) {
-    __Reference tuple = __Reference_get_tuple(args);
-    __Reference var = tuple.tuple.references[0];
-    __UnknownData data = __Reference_get(tuple.tuple.references[1]);
+__Reference_Owned __system_function_assign_body(__Reference_Shared args) {
+    __Reference_Owned var = __Reference_get_element(args, 0);
+    __Reference_Owned data = __Reference_get_element(args, 1);
 
-    assign(var, data);
+    assign((__GC_Reference*) var, __Reference_get(__Reference_share(data)));
 
-    __Reference_free(tuple);
+    __Reference_free(var);
+    __Reference_free(data);
     return var;
 }

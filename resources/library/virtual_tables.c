@@ -1,3 +1,4 @@
+#include "gc.h"
 #include "virtual_tables.h"
 
 
@@ -33,7 +34,7 @@ void __VirtualTable_Array_gc_iterator(void* ptr) {
         .vtable = &__VirtualTable_UnknownData,
         .array = (__Array*) ptr
     };
-    for (unsigned long i = 0; i < array.array->size; i++)
+    for (size_t i = 0; i < array.array->size; i++)
         __VirtualTable_UnknownData_gc_iterator(__Array_get(array, i));
 }
 __ArrayInfo __VirtualTable_Array_get_array(__UnknownData data) {

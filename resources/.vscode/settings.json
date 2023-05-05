@@ -9,6 +9,7 @@
         "reference.h": "c",
         "array.h": "c",
         "stdlib.h": "c",
-        "type_traits": "c"
+        "type_traits": "c",
+        "system_functions.h": "c"
     }
 }

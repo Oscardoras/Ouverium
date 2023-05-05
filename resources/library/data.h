@@ -1,14 +1,18 @@
 #ifndef __DATA_H__
 #define __DATA_H__
 
+#include <stdbool.h>
 #include <stddef.h>
-
-#include "gc.h"
 
 
 struct __VirtualTable;
 struct __UnknownData;
 struct __Array;
+
+/**
+ * Type of a function iterator called by the garbage collector.
+*/
+typedef void (*__GC_Iterator)(void*);
 
 /**
  * Represents an array and the virtual table of its data.

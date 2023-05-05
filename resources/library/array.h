@@ -17,7 +17,7 @@ typedef struct __Array {
  * @param i the index of the element to get.
  * @return a pointer to the element.
 */
-void* __Array_get(__ArrayInfo array, unsigned long i);
+void* __Array_get(__ArrayInfo array, size_t i);
 
 /**
  * Sets the size of the array, changes the capacity if necessary.

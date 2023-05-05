@@ -6,8 +6,8 @@
 #include "reference.h"
 
 
-typedef bool (*__FunctionFilter)(__Reference args);
-typedef __Reference (*__FunctionBody)(__Reference args);
+typedef bool (*__FunctionFilter)(__Reference_Shared args);
+typedef __Reference_Owned (*__FunctionBody)(__Reference_Shared args);
 
 /**
  * Represents a function in a function linked list.
@@ -18,12 +18,12 @@ typedef struct __Function {
     __FunctionBody body;
     struct {
         unsigned short size;
-        __Reference* tab;
+        __Reference_Owned* tab;
     } references;
 } __Function;
 
 
-__Reference __Function_eval(__Function* function, __Reference args);
+__Reference_Owned __Function_eval(__Function* function, __Reference_Shared args);
 
 
 #endif

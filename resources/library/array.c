@@ -8,7 +8,7 @@ inline size_t max(size_t a, size_t b) {
     return a > b ? a : b;
 }
 
-void* __Array_get(__ArrayInfo array, unsigned long i) {
+void* __Array_get(__ArrayInfo array, size_t i) {
     return array.array->tab + (array.vtable->size) * i;
 }
 
