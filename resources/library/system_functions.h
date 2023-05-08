@@ -1,10 +1,12 @@
 #ifndef __SYSTEM_FUNCTIONS_H__
 #define __SYSTEM_FUNCTIONS_H__
 
-#include <stdlib.h>
-
 #include "function.h"
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 __Reference_Owned __system_function_separator_body(__Reference_Shared args);
 __Function __system_function_separator = {
@@ -74,6 +76,10 @@ __Function __system_function_equals = {
     }
 };
 */
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif

@@ -8,7 +8,7 @@ __GC_Roots* __GC_roots;
 
 void __GC_NULL_iterator(void*) {}
 
-void __GC_init() {
+void __GC_init(void) {
     __GC_list = NULL;
     __GC_roots = __GC_init_roots(ROOTS_CAPACITY);
 }

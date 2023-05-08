@@ -4,6 +4,10 @@
 #include "reference.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 __ArrayInfo __VirtualTable_NULL_get_array(__UnknownData data);
 
 
@@ -22,6 +26,10 @@ extern __VirtualTable __VirtualTable_Float;
 extern __VirtualTable __VirtualTable_Char;
 
 extern __VirtualTable __VirtualTable_Bool;
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif

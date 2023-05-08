@@ -38,22 +38,22 @@ namespace Analyzer {
     inline static Type Float = Type("Float");
     struct Structure: public Type {
 
-        std::map<std::string, Type&> properties;
+        std::map<std::string, std::set<Type&>> properties;
 
-        Structure(std::map<std::string, Type&> properties = {}):
+        Structure(std::map<std::string, std::set<Type&>> properties = {}):
             properties(properties) {}
 
     };
 
     struct Function: public AnalyzedExpression {
 
-        Type& return_type;
+        std::set<Type&> return_type;
         std::string name;
         std::shared_ptr<AnalyzedExpression> parameters;
         std::shared_ptr<AnalyzedExpression> filter;
         std::shared_ptr<AnalyzedExpression> body;
 
-        Function(Type& return_type, std::string name = "", std::shared_ptr<AnalyzedExpression> parameters = nullptr, std::shared_ptr<AnalyzedExpression> filter = nullptr, std::shared_ptr<AnalyzedExpression> body = nullptr):
+        Function(std::set<Type&> return_type, std::string name = "", std::shared_ptr<AnalyzedExpression> parameters = nullptr, std::shared_ptr<AnalyzedExpression> filter = nullptr, std::shared_ptr<AnalyzedExpression> body = nullptr):
             return_type(return_type), name(name), parameters(parameters), filter(filter), body(body) {}
 
     };

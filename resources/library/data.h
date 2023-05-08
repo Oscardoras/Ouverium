@@ -5,6 +5,10 @@
 #include <stddef.h>
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct __VirtualTable;
 struct __UnknownData;
 struct __Array;
@@ -72,6 +76,10 @@ __UnknownData __UnknownData_from_ptr(__VirtualTable* vtable, void* ptr);
  * @return an ArrayInfo representing the array of the data.
 */
 __ArrayInfo __UnknownData_get_array(__UnknownData data);
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif

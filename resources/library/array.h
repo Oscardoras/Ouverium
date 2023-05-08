@@ -4,6 +4,10 @@
 #include "data.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct __Array {
     void *tab;
     size_t size;
@@ -32,6 +36,10 @@ void __Array_set_size(__ArrayInfo array, size_t size);
  * @param capacity the new capacity.
 */
 void __Array_set_capacity(__ArrayInfo array, size_t capacity);
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif

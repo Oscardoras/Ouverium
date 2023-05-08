@@ -4,17 +4,21 @@
 #include "array.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * References an UnknownData.
  * It belongs to the owner of this object to free the reference with __Reference_free when it is no longer used or to give it to another owner.
 */
-typedef struct {}* __Reference_Owned;
+typedef struct __Reference_Owned_t {}* __Reference_Owned;
 
 /**
  * References an UnknownData.
  * It does NOT belong to the owner of this object to free the reference.
 */
-typedef struct {}* __Reference_Shared;
+typedef struct __Reference_Shared_t {}* __Reference_Shared;
 
 /**
  * Creates a new data reference.
@@ -98,6 +102,131 @@ __Reference_Owned __Reference_copy(__Reference_Shared reference);
  * @param reference an owned reference.
 */
 void __Reference_free(__Reference_Owned reference);
+
+#ifdef __cplusplus
+}
+#endif
+
+
+#ifdef __cplusplus
+
+class __Reference {
+
+protected:
+
+    void* reference;
+
+public:
+
+    __Reference(__Reference_Owned const reference):
+        reference{reference} {}
+
+    __Reference(__Reference const& reference):
+        reference{__Reference_copy(reference)} {}
+
+    __Reference(__Reference && reference):
+        reference{reference.reference} {
+        reference.reference = nullptr;
+    }
+
+    ~__Reference() {
+        if (reference != nullptr)
+            __Reference_free((__Reference_Owned) reference);
+    }
+
+    __Reference & operator=(__Reference const& reference) {
+        if (__Reference::reference != reference.reference) {
+            __Reference_free((__Reference_Owned) __Reference::reference);
+            __Reference::reference = __Reference_copy((__Reference_Shared) reference.reference);
+        }
+
+        return *this;
+    }
+
+    __Reference & operator=(__Reference && reference) {
+        if (__Reference::reference != reference.reference) {
+            __Reference::reference = reference.reference;
+            reference.reference = nullptr;
+        }
+
+        return *this;
+    }
+
+    operator __Reference_Owned() const {
+        return (__Reference_Owned) reference;
+    }
+
+    operator __Reference_Shared() const {
+        return (__Reference_Shared) reference;
+    }
+
+    __UnknownData get() const {
+        return __Reference_get((__Reference_Shared) reference);
+    }
+
+    size_t size() const {
+        return __Reference_get_size((__Reference_Shared) reference);
+    }
+
+    bool empty() const {
+        return size() == 0;
+    }
+
+    __Reference operator[](size_t i) const {
+        return __Reference_get_element((__Reference_Shared) reference, i);
+    }
+
+    class iterator {
+
+        __Reference & reference;
+        size_t i;
+
+    public:
+
+        iterator(__Reference & reference, size_t i):
+            reference{reference}, i{i} {}
+
+        size_t operator++() {
+            return i++;
+        }
+
+        size_t operator++(int) {
+            return ++i;
+        }
+
+        size_t operator--() {
+            return i--;
+        }
+
+        size_t operator--(int) {
+            return --i;
+        }
+
+        bool operator==(iterator const& it) const {
+            return it.i == i;
+        }
+
+        bool operator!=(iterator const& it) const {
+            return !(it == *this);
+        }
+
+        __Reference operator*() const {
+            return reference[i];
+        }
+
+    };
+
+    iterator begin() {
+        return iterator(*this, 0);
+    }
+
+    iterator end() {
+        return iterator(*this, size());
+    }
+
+};
+
+#endif
 
 
 #endif
