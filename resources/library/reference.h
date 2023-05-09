@@ -52,11 +52,11 @@ __Reference_Owned __Reference_new_array(__UnknownData array, size_t i);
 
 /**
  * Creates a new tuple reference ie. a list of references.
- * @param size the size of the tuple.
  * @param references shared references that will be copied in the tuple.
+ * @param size the size of the tuple.
  * @return an owned reference.
 */
-__Reference_Owned __Reference_new_tuple(size_t size, __Reference_Shared references[]);
+__Reference_Owned __Reference_new_tuple(__Reference_Shared references[], size_t size);
 
 /**
  * Gets the UnknownData referenced by a reference, no matter what type of reference.
@@ -112,8 +112,7 @@ void __Reference_free(__Reference_Owned reference);
 
 #include <array>
 
-
-class __Reference {
+class Reference {
 
 protected:
 
@@ -121,51 +120,43 @@ protected:
 
 public:
 
-    __Reference(__Reference_Owned const reference):
+    Reference(UnknownData const& data):
+        reference{__Reference_new_data(data)} {}
+    Reference():
+        reference{__Reference_new_symbol()} {}
+    Reference(UnknownData const& parent, __VirtualTable* const virtual_table, void* const property):
+        reference{__Reference_new_property(parent, virtual_table, property)} {}
+    Reference(UnknownData const& array, size_t const i):
+        reference{__Reference_new_array(array, i)} {}
+    Reference(std::initializer_list<Reference> const& list):
+        reference{__Reference_new_tuple((__Reference_Shared *) std::data(list), list.size())} {}
+
+    Reference(__Reference_Owned const reference):
         reference{reference} {}
 
-    __Reference(__Reference const& reference):
+    Reference(Reference const& reference):
         reference{__Reference_copy(reference)} {}
-
-    __Reference(__Reference && reference):
+    Reference(Reference && reference):
         reference{reference.reference} {
         reference.reference = nullptr;
     }
 
-    __Reference(UnknownData const& data):
-        reference{__Reference_new_data(data)} {}
-    __Reference(UnknownData && data):
-        reference{__Reference_new_data(data)} {}
-
-    __Reference():
-        reference{__Reference_new_symbol()} {}
-
-    __Reference(UnknownData parent, __VirtualTable* virtual_table, void* property):
-        reference{__Reference_new_property(parent, virtual_table, property)} {}
-
-    __Reference(UnknownData array, size_t i):
-        reference{__Reference_new_array(array, i)} {}
-
-    __Reference(std::initializer_list<__Reference> const& list):
-        reference{__Reference_new_tuple(list.size(), (__Reference_Shared *) std::data(list))} {}
-
-    ~__Reference() {
+    ~Reference() {
         if (reference != nullptr)
             __Reference_free((__Reference_Owned) reference);
     }
 
-    __Reference & operator=(__Reference const& reference) {
-        if (__Reference::reference != reference.reference) {
-            __Reference_free((__Reference_Owned) __Reference::reference);
-            __Reference::reference = __Reference_copy((__Reference_Shared) reference.reference);
+    Reference & operator=(Reference const& reference) {
+        if (Reference::reference != reference.reference) {
+            __Reference_free((__Reference_Owned) Reference::reference);
+            Reference::reference = __Reference_copy((__Reference_Shared) reference.reference);
         }
 
         return *this;
     }
-
-    __Reference & operator=(__Reference && reference) {
-        if (__Reference::reference != reference.reference) {
-            __Reference::reference = reference.reference;
+    Reference & operator=(Reference && reference) {
+        if (Reference::reference != reference.reference) {
+            Reference::reference = reference.reference;
             reference.reference = nullptr;
         }
 
@@ -173,13 +164,17 @@ public:
     }
 
     operator __Reference_Owned() const {
-        return (__Reference_Owned) reference;
+        auto tmp = (__Reference_Owned) reference;
+        __Reference_free((__Reference_Owned) reference);
+        return tmp;
     }
-
     operator __Reference_Shared() const {
         return (__Reference_Shared) reference;
     }
 
+    operator __UnknownData() const {
+        return get();
+    }
     __UnknownData get() const {
         return __Reference_get((__Reference_Shared) reference);
     }
@@ -192,18 +187,18 @@ public:
         return size() == 0;
     }
 
-    __Reference operator[](size_t i) const {
+    Reference operator[](size_t i) const {
         return __Reference_get_element((__Reference_Shared) reference, i);
     }
 
     class iterator {
 
-        __Reference & reference;
+        Reference & reference;
         size_t i;
 
     public:
 
-        iterator(__Reference & reference, size_t i):
+        iterator(Reference & reference, size_t i):
             reference{reference}, i{i} {}
 
         size_t operator++() {
@@ -230,7 +225,7 @@ public:
             return !(it == *this);
         }
 
-        __Reference operator*() const {
+        Reference operator*() const {
             return reference[i];
         }
 
@@ -245,7 +240,6 @@ public:
     }
 
 };
-
 
 #endif
 

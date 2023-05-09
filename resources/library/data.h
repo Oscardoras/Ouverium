@@ -84,6 +84,10 @@ __ArrayInfo __UnknownData_get_array(__UnknownData data);
 
 #ifdef __cplusplus
 
+template<class T>
+inline __VirtualTable vtable = {
+    .size = sizeof(T)
+};
 
 class UnknownData {
 
@@ -125,7 +129,6 @@ public:
     }
 
 };
-
 
 #endif
 

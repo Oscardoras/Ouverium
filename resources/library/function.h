@@ -40,44 +40,48 @@ __Reference_Owned __Function_eval(__Function* function, __Reference_Shared args)
 #include <vector>
 
 
-class __FunctionList {
+class Function {
 
 public:
 
-    using Filter = bool (*)(__Reference const& args);
-    using Body = __Reference && (*)(__Reference const& args);
+    using Filter = bool (*)(Reference const& args);
+    using Body = Reference && (*)(Reference const& args);
 
     template<Filter f>
     static bool filter(__Reference_Shared args) {
-        __Reference r{(__Reference_Owned) args};
+        Reference r{(__Reference_Owned) args};
         bool b = f(r);
-        r = (__Reference) NULL;
+        r = (Reference) NULL;
         return b;
     }
 
     template<Body f>
     static __Reference_Owned body(__Reference_Shared args) {
-        __Reference r{(__Reference_Owned) args};
+        Reference r{(__Reference_Owned) args};
         __Reference_Owned o = f(r);
-        r = (__Reference) NULL;
+        r = (Reference) NULL;
         return o;
     }
 
 protected:
 
-    __Function* begin;
+    __Function* & begin;
 
 public:
 
-    __FunctionList(__Function* const function):
+    Function(__Function* & function):
         begin{function} {}
+
+    ~Function() {
+        
+    }
 
     operator __Function*() const {
         return begin;
     }
 
-    void push(__FunctionBody body, __FunctionFilter filter = nullptr, std::vector<__Reference> const& references = {}) {
-        __Function* function = (__Function*) std::malloc(sizeof(__Function) + references.size() * sizeof(__Reference));
+    void push(__FunctionBody body, __FunctionFilter filter = nullptr, std::vector<Reference> const& references = {}) {
+        __Function* function = (__Function*) std::malloc(sizeof(__Function) + references.size() * sizeof(Reference));
 
         function->next = begin;
         function->filter = filter;
@@ -92,8 +96,8 @@ public:
     }
 
     template<Body body, Filter filter = nullptr>
-    void push(std::vector<__Reference> const& references = {}) {
-        push(__FunctionList::body<body>, __FunctionList::filter<filter>, references);
+    void push(std::vector<Reference> const& references = {}) {
+        push(Function::body<body>, Function::filter<filter>, references);
     }
 
     void pop() {

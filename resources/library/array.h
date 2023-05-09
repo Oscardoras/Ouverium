@@ -42,4 +42,95 @@ void __Array_set_capacity(__ArrayInfo array, size_t capacity);
 #endif
 
 
+#ifdef __cplusplus
+
+template<typename T>
+class Array {
+
+protected:
+
+    __ArrayInfo & array;
+
+public:
+
+    Array(__ArrayInfo & array):
+        array{array} {}
+
+    size_t size() const {
+        return array.array->size;
+    }
+
+    void set_size(size_t size) {
+        return __Array_set_size(array, size);
+    }
+
+    size_t capacity() const {
+        return array.array->capacity;
+    }
+
+    void set_capacity(size_t size) {
+        return __Array_set_capacity(array, size);
+    }
+
+    bool empty() const {
+        return size() == 0;
+    }
+
+    T & operator[](size_t i) const {
+        return *__Array_get(array, i);
+    }
+
+    class iterator {
+
+        Array & array;
+        size_t i;
+
+    public:
+
+        iterator(Array & array, size_t i):
+            array{array}, i{i} {}
+
+        size_t operator++() {
+            return i++;
+        }
+
+        size_t operator++(int) {
+            return ++i;
+        }
+
+        size_t operator--() {
+            return i--;
+        }
+
+        size_t operator--(int) {
+            return --i;
+        }
+
+        bool operator==(iterator const& it) const {
+            return it.i == i;
+        }
+
+        bool operator!=(iterator const& it) const {
+            return !(it == *this);
+        }
+
+        T & operator*() const {
+            return array[i];
+        }
+
+    };
+
+    iterator begin() {
+        return iterator(*this, 0);
+    }
+
+    iterator end() {
+        return iterator(*this, size());
+    }
+
+};
+
+#endif
+
+
 #endif
