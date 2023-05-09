@@ -42,17 +42,14 @@ __Reference_Owned __Reference_new_array(__UnknownData array, size_t i) {
     return (__Reference_Owned) reference;
 }
 
-__Reference_Owned __Reference_new_tuple(size_t size, __Reference_Shared references, ...) {
+__Reference_Owned __Reference_new_tuple(size_t size, __Reference_Shared references[]) {
     __GC_Reference* reference = __GC_alloc_references(1);
     reference->type = TUPLE;
     reference->tuple.references = __GC_alloc_references(size);
     reference->tuple.size = size;
 
-    va_list args;
-    va_start(args, references);
     for (size_t i = 0; i < size; i++)
-        reference->tuple.references[i] = *((__GC_Reference*) va_arg(args, __Reference_Shared*));
-    va_end(args);
+        reference->tuple.references[i] = *((__GC_Reference*) __Reference_copy(references[i]));
 
     return (__Reference_Owned) reference;
 }

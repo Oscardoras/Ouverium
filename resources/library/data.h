@@ -82,4 +82,52 @@ __ArrayInfo __UnknownData_get_array(__UnknownData data);
 #endif
 
 
+#ifdef __cplusplus
+
+
+class UnknownData {
+
+protected:
+
+    __UnknownData data;
+
+public:
+
+    UnknownData(__UnknownData const& data):
+        data{data} {}
+
+    operator __UnknownData() const {
+        return data;
+    }
+
+    operator void*() const {
+        return data.data.ptr;
+    }
+
+    operator long() const {
+        return data.data.i;
+    }
+
+    operator double() const {
+        return data.data.f;
+    }
+
+    operator char() const {
+        return data.data.c;
+    }
+
+    operator bool() const {
+        return data.data.b;
+    }
+
+    __VirtualTable* virtual_table() const {
+        return data.virtual_table;
+    }
+
+};
+
+
+#endif
+
+
 #endif

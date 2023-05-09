@@ -56,7 +56,7 @@ __Reference_Owned __Reference_new_array(__UnknownData array, size_t i);
  * @param references shared references that will be copied in the tuple.
  * @return an owned reference.
 */
-__Reference_Owned __Reference_new_tuple(size_t size, __Reference_Shared references, ...);
+__Reference_Owned __Reference_new_tuple(size_t size, __Reference_Shared references[]);
 
 /**
  * Gets the UnknownData referenced by a reference, no matter what type of reference.
@@ -110,6 +110,9 @@ void __Reference_free(__Reference_Owned reference);
 
 #ifdef __cplusplus
 
+#include <array>
+
+
 class __Reference {
 
 protected:
@@ -128,6 +131,23 @@ public:
         reference{reference.reference} {
         reference.reference = nullptr;
     }
+
+    __Reference(UnknownData const& data):
+        reference{__Reference_new_data(data)} {}
+    __Reference(UnknownData && data):
+        reference{__Reference_new_data(data)} {}
+
+    __Reference():
+        reference{__Reference_new_symbol()} {}
+
+    __Reference(UnknownData parent, __VirtualTable* virtual_table, void* property):
+        reference{__Reference_new_property(parent, virtual_table, property)} {}
+
+    __Reference(UnknownData array, size_t i):
+        reference{__Reference_new_array(array, i)} {}
+
+    __Reference(std::initializer_list<__Reference> const& list):
+        reference{__Reference_new_tuple(list.size(), (__Reference_Shared *) std::data(list))} {}
 
     ~__Reference() {
         if (reference != nullptr)
@@ -225,6 +245,7 @@ public:
     }
 
 };
+
 
 #endif
 
