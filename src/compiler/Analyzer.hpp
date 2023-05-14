@@ -227,9 +227,8 @@ namespace Analyzer {
         std::shared_ptr<AnalyzedExpression> expression;
     };
 
-    Analyse call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, M<Reference> const& arguments);
-    Analyse call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, std::shared_ptr<Parser::Expression> arguments, std::shared_ptr<FunctionCall> function_call);
-    Analyse execute(Context & context, bool potential, std::shared_ptr<Parser::Expression> expression);
+    std::pair<M<Reference>, FunctionPointer> call_function(MetaData & meta_data, Context & context, bool potential, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, M<Reference> const& arguments);
+    Analyse execute(MetaData & meta_data, Context & context, bool potential, std::shared_ptr<Parser::Expression> expression);
 
     std::shared_ptr<AnalyzedExpression> analyze(std::shared_ptr<Parser::Expression> expression);
 

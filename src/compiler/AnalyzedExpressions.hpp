@@ -4,6 +4,7 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -23,19 +24,12 @@ namespace Analyzer {
 
     };
 
-    struct Type: public AnalyzedExpression {
-
-        std::string name;
-
-        Type(std::string const& name = ""):
-            name(name) {}
-
-    };
-    inline static Type Pointer = Type("");
-    inline static Type Bool = Type("Bool");
-    inline static Type Char = Type("Char");
-    inline static Type Int = Type("Int");
-    inline static Type Float = Type("Float");
+    struct Type {};
+    inline struct: Type {} Pointer;
+    inline struct: Type {} Bool;
+    inline struct: Type {} Char;
+    inline struct: Type {} Int;
+    inline struct: Type {} Float;
     struct Structure: public Type {
 
         std::map<std::string, std::set<Type&>> properties;
@@ -45,18 +39,19 @@ namespace Analyzer {
 
     };
 
-    struct Function: public AnalyzedExpression {
+    struct FunctionDefinition {
 
         std::set<Type&> return_type;
-        std::string name;
         std::shared_ptr<AnalyzedExpression> parameters;
         std::shared_ptr<AnalyzedExpression> filter;
         std::shared_ptr<AnalyzedExpression> body;
 
-        Function(std::set<Type&> return_type, std::string name = "", std::shared_ptr<AnalyzedExpression> parameters = nullptr, std::shared_ptr<AnalyzedExpression> filter = nullptr, std::shared_ptr<AnalyzedExpression> body = nullptr):
-            return_type(return_type), name(name), parameters(parameters), filter(filter), body(body) {}
+        FunctionDefinition(std::set<Type&> const& return_type = {}, std::shared_ptr<AnalyzedExpression> parameters = nullptr, std::shared_ptr<AnalyzedExpression> filter = nullptr, std::shared_ptr<AnalyzedExpression> body = nullptr):
+            return_type(return_type), parameters(parameters), filter(filter), body(body) {}
 
     };
+
+
     struct FunctionCall: public AnalyzedExpression {
 
         std::shared_ptr<AnalyzedExpression> function;
@@ -67,10 +62,10 @@ namespace Analyzer {
     };
     struct FunctionRun: public AnalyzedExpression {
 
-        Function& function;
+        FunctionDefinition& function;
         std::shared_ptr<AnalyzedExpression> arguments;
 
-        FunctionRun(Function & function, std::shared_ptr<AnalyzedExpression> arguments = nullptr):
+        FunctionRun(FunctionDefinition & function, std::shared_ptr<AnalyzedExpression> arguments = nullptr):
             function(function), arguments(arguments) {}
 
     };
@@ -121,6 +116,12 @@ namespace Analyzer {
                 value = *str;
         }
 
+    };
+
+
+    struct MetaData {
+        std::map<std::string, Structure> structures;
+        std::map<std::string, FunctionDefinition> function_definitions;
     };
 
 }

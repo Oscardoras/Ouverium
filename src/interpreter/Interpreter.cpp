@@ -69,62 +69,32 @@ namespace Interpreter {
             }
         } else if (auto p_function = std::dynamic_pointer_cast<Parser::FunctionCall>(parameters)) {
             if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(p_function->function)) {
+                Object* object;
+
                 auto it = computed.find(arguments);
-                if (it != computed.end())
-                    throw Interpreter::FunctionArgumentsComputedError();
+                if (it == computed.end()) {
+                    auto function_definition = std::make_shared<Parser::FunctionDefinition>();
+                    function_definition->parameters = p_function->arguments;
+                    function_definition->body = arguments;
 
-                auto function_definition = std::make_shared<Parser::FunctionDefinition>();
-                function_definition->parameters = p_function->arguments;
-                function_definition->body = arguments;
+                    object = context.new_object();
+                    object->functions.push_front(CustomFunction{function_definition});
+                    auto & f = object->functions.back();
+                    for (auto symbol : function_definition->body->symbols)
+                        f.extern_symbols.emplace(symbol, context[symbol]);
+                } else {
+                    auto function_definition = std::make_shared<Parser::FunctionDefinition>();
+                    function_definition->parameters = p_function->arguments;
+                    function_definition->body = std::make_shared<Parser::Symbol>("#cached");
 
-                auto object = context.new_object();
-                object->functions.push_front(CustomFunction{function_definition});
-                auto & f = object->functions.back();
-                for (auto symbol : function_definition->body->symbols)
-                    f.extern_symbols.emplace(symbol, context[symbol]);
+                    object = context.new_object();
+                    object->functions.push_front(CustomFunction{function_definition});
+                    object->functions.back().extern_symbols.emplace("#cached", it->second.to_symbol_reference(context));
+                }
 
                 function_context.add_symbol(symbol->name, Reference(object));
             } else throw Interpreter::FunctionArgumentsError();
         } else throw Interpreter::FunctionArgumentsError();
-    }
-
-    Reference call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, Reference const& arguments) {
-        Data data = arguments.to_data(context);
-
-        for (auto const& function : functions) {
-            try {
-                FunctionContext function_context(context, nullptr);
-                for (auto & symbol : function.extern_symbols)
-                    function_context.add_symbol(symbol.first, symbol.second);
-
-                if (auto custom_function = std::get_if<CustomFunction>(&function)) {
-                    set_references(function_context, custom_function->pointer->parameters, data);
-
-                    Data filter;
-                    if (custom_function->pointer->filter != nullptr)
-                        filter = Interpreter::execute(function_context, custom_function->pointer->filter).to_data(context);
-                    else filter = nullptr;
-
-                    try {
-                        if (filter.get<bool>())
-                            return Interpreter::execute(function_context, custom_function->pointer->body);
-                        else continue;
-                    } catch (Data::BadAccess & e) {
-                        throw FunctionArgumentsError();
-                    }
-                } else if (auto system_function = std::get_if<SystemFunction>(&function)) {
-                    set_references(function_context, system_function->parameters, data);
-
-                    return system_function->pointer(function_context);
-                } else return Reference();
-            } catch (FunctionArgumentsError & e) {}
-        }
-
-        if (position != nullptr) {
-            position->store_stack_trace(context);
-            position->notify_error("Error: cannot find a function matching with the arguments");
-        }
-        throw Error();
     }
 
     Reference call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, std::shared_ptr<Parser::Expression> arguments) {
@@ -155,13 +125,6 @@ namespace Interpreter {
 
                     return system_function->pointer(function_context);
                 } else return Reference();
-
-            } catch (FunctionArgumentsComputedError & e) {
-                if (position != nullptr) {
-                    position->store_stack_trace(context);
-                    position->notify_error("Error: function arguments have been miscomputed");
-                }
-                throw Error();
             } catch (FunctionArgumentsError & e) {}
         }
 
@@ -172,6 +135,10 @@ namespace Interpreter {
         throw Error();
     }
 
+    Reference call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, Reference const& arguments) {
+        context.add_symbol("#cached", arguments.to_symbol_reference(context));
+        return call_function(context, position, functions, std::make_shared<Parser::Symbol>("#cached"));
+    }
 
     Reference execute(Context & context, std::shared_ptr<Parser::Expression> expression) {
         if (auto function_call = std::dynamic_pointer_cast<Parser::FunctionCall>(expression)) {

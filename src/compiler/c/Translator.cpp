@@ -9,7 +9,7 @@
 
 namespace CTranslator {
 
-    Structures::Structure create_struct(Analyzer::MetaData::Structure const& structure) {
+    Structures::Structure create_struct(Analyzer::Structure const& structure) {
         Structures::Structure s;
 
         for (auto const& pair : structure) {
@@ -38,7 +38,7 @@ namespace CTranslator {
             instructions.push_back(exp);
     }
 
-    std::shared_ptr<Structures::Expression> get_expression(std::shared_ptr<Parser::Expression> expression, Analyzer::MetaData & meta, Instructions & instructions, References & references) {
+    std::shared_ptr<Structures::Expression> get_expression(std::shared_ptr<Analyzer::AnalyzedExpression> expression, Instructions & instructions) {
         if (auto function_call = std::dynamic_pointer_cast<FunctionCall>(expression)) {
             auto & link = meta.links[function_call];
             if (link.size() == 1) {
@@ -140,21 +140,21 @@ namespace CTranslator {
             };
 
             references.functions[function_definition] = function;
-        } else if (auto property = std::dynamic_pointer_cast<Property>(expression)) {
-            auto o = get_expression(property->object, meta, instructions, references);
+        } else if (auto property = std::dynamic_pointer_cast<Analyzer::Property>(expression)) {
+            auto o = get_expression(property->object, instructions);
             return std::make_shared<Structures::Property>(Structures::Property {
                 .object = o,
                 .name = property->name,
                 .pointer = true
             });
-        } else if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(expression)) {
+        } else if (auto symbol = std::dynamic_pointer_cast<Analyzer::Symbol>(expression)) {
             return std::make_shared<Structures::VariableCall>(Structures::VariableCall {
                 .name = symbol->name
             });
-        } else if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(expression)) {
+        } else if (auto tuple = std::dynamic_pointer_cast<Analyzer::Tuple>(expression)) {
             auto list = std::make_shared<Structures::List>(Structures::List {});
             for (auto const& o : tuple->objects)
-                list->objects.push_back(get_expression(o, meta, instructions, references));
+                list->objects.push_back(get_expression(o, instructions));
         }
     }
 
