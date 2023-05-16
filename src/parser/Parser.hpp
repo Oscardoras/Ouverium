@@ -1,20 +1,17 @@
-#ifndef __PARSER_POSITION_HPP__
-#define __PARSER_POSITION_HPP__
+#ifndef __PARSER_PARSER_HPP__
+#define __PARSER_PARSER_HPP__
 
-#include <memory>
-#include <string>
+#include "Expressions.hpp"
 
 
 namespace Parser {
 
     class Context;
+    class Expression;
 
-    struct Position {
+    class Position {
 
-        /**
-         * The file path.
-        */
-        std::string path;
+    public:
 
         /**
          * Stores a stack trace from a context.
@@ -36,13 +33,13 @@ namespace Parser {
     protected:
 
         /**
-         * The position where the context was walled.
+         * The position from where the context was called.
         */
-        std::shared_ptr<Parser::Position> position;
+        std::shared_ptr<Position> position;
 
     public:
 
-        Context(std::shared_ptr<Parser::Position> position):
+        Context(std::shared_ptr<Position> position):
             position(position) {}
 
         /**
@@ -58,6 +55,14 @@ namespace Parser {
          * @return the parent context.
         */
         virtual Context & get_parent() = 0;
+
+    };
+
+    class Parser {
+
+    public:
+
+        virtual std::shared_ptr<Expression> get_tree(std::set<std::string> symbols) = 0;
 
     };
 

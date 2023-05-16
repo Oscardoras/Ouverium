@@ -84,6 +84,11 @@ __ArrayInfo __UnknownData_get_array(__UnknownData data);
 
 #ifdef __cplusplus
 
+extern __VirtualTable __VirtualTable_Int;
+extern __VirtualTable __VirtualTable_Float;
+extern __VirtualTable __VirtualTable_Char;
+extern __VirtualTable __VirtualTable_Bool;
+
 template<class T>
 inline __VirtualTable vtable = {
     .size = sizeof(T)
@@ -100,28 +105,52 @@ public:
     UnknownData(__UnknownData const& data):
         data{data} {}
 
-    operator __UnknownData() const {
-        return data;
+    UnknownData(__VirtualTable* vtable, void* d, ...):
+        data{__UnknownData_from_data(vtable, d)} {}
+
+    UnknownData(__VirtualTable* vtable, void* ptr):
+        data{__UnknownData_from_ptr(vtable, ptr)} {}
+
+    UnknownData(long i) {
+        data.virtual_table = &__VirtualTable_Int;
+        data.data.i = i;
+    }
+    UnknownData(double f) {
+        data.virtual_table = &__VirtualTable_Float;
+        data.data.f = f;
+    }
+    UnknownData(char c) {
+        data.virtual_table = &__VirtualTable_Char;
+        data.data.c = c;
+    }
+    UnknownData(bool b) {
+        data.virtual_table = &__VirtualTable_Bool;
+        data.data.b = b;
+    }
+    template<class T>
+    UnknownData(T* ptr) {
+        data.virtual_table = &T::vtable;
+        data.data.b = ptr;
     }
 
-    operator void*() const {
-        return data.data.ptr;
+    operator __UnknownData() const {
+        return data;
     }
 
     operator long() const {
         return data.data.i;
     }
-
     operator double() const {
         return data.data.f;
     }
-
     operator char() const {
         return data.data.c;
     }
-
     operator bool() const {
         return data.data.b;
+    }
+    operator void*() const {
+        return data.data.ptr;
     }
 
     __VirtualTable* virtual_table() const {

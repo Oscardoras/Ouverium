@@ -60,7 +60,7 @@ public:
         return array.array->size;
     }
 
-    void set_size(size_t size) {
+    void set_size(size_t const size) {
         return __Array_set_size(array, size);
     }
 
@@ -68,7 +68,7 @@ public:
         return array.array->capacity;
     }
 
-    void set_capacity(size_t size) {
+    void set_capacity(size_t const size) {
         return __Array_set_capacity(array, size);
     }
 
@@ -76,7 +76,7 @@ public:
         return size() == 0;
     }
 
-    T & operator[](size_t i) const {
+    T & operator[](size_t const i) const {
         return *__Array_get(array, i);
     }
 
@@ -87,7 +87,7 @@ public:
 
     public:
 
-        iterator(Array & array, size_t i):
+        iterator(Array & array, size_t const i):
             array{array}, i{i} {}
 
         size_t operator++() {
@@ -120,11 +120,11 @@ public:
 
     };
 
-    iterator begin() {
+    iterator begin() const {
         return iterator(*this, 0);
     }
 
-    iterator end() {
+    iterator end() const {
         return iterator(*this, size());
     }
 

@@ -7,10 +7,10 @@
 #include <string>
 #include <vector>
 
-#include "Position.hpp"
-
 
 namespace Parser {
+
+    class Position;
 
     /**
      * Represents an expression of the language, must be inherited.

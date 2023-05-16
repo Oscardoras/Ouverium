@@ -56,7 +56,7 @@ __Reference_Owned __Reference_new_array(__UnknownData array, size_t i);
  * @param size the size of the tuple.
  * @return an owned reference.
 */
-__Reference_Owned __Reference_new_tuple(__Reference_Shared references[], size_t size);
+__Reference_Owned __Reference_new_tuple(__Reference_Shared references[], size_t references_size);
 
 /**
  * Gets the UnknownData referenced by a reference, no matter what type of reference.
@@ -163,9 +163,9 @@ public:
         return *this;
     }
 
-    operator __Reference_Owned() const {
+    operator __Reference_Owned() {
         auto tmp = (__Reference_Owned) reference;
-        __Reference_free((__Reference_Owned) reference);
+        reference = nullptr;
         return tmp;
     }
     operator __Reference_Shared() const {
