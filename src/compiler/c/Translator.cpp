@@ -92,6 +92,27 @@ namespace CTranslator {
 
                 return r;
             }
+        } else if (auto function_run = std::dynamic_pointer_cast<Analyzer::FunctionRun>(expression)) {
+            function_run->
+            if (auto f = std::get_if<std::shared_ptr<FunctionDefinition>>(&*link.begin())) {
+
+                auto r = std::make_shared<Structures::FunctionCall>(Structures::FunctionCall {
+                    .function = get_expression(function_call->function, meta, instructions, references)
+                });
+
+                if (std::dynamic_pointer_cast<Parser::Tuple>((*f)->parameters)) {
+                    if (auto args = std::dynamic_pointer_cast<Parser::Tuple>(function_call->arguments)) {
+                        for (auto const& o : args->objects)
+                            r->parameters.push_back(get_expression(o, meta, instructions, references));
+                    }
+                } else {
+                    r->parameters.push_back(get_expression(function_call->arguments, meta, instructions, references));
+                }
+
+                return r;
+            } else if (auto f = std::get_if<Analyzer::SystemFunction>(&*link.begin())) {
+                return eval_system_function(*f, function_call->arguments, meta, instructions, references);
+            }
         } else if (auto function_definition = std::dynamic_pointer_cast<FunctionDefinition>(expression)) {
             Structures::FunctionDefinition::Parameters parameters;
             if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(function_definition->parameters)) {
