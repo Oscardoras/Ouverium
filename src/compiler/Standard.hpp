@@ -217,9 +217,16 @@ namespace Analyzer {
 
         };
 
+        class CacheContext {
+            std::map<std::string, M<Reference>> symbols;
+        };
+
         class Analyzer: public ::Analyzer::Analyzer {
 
         public:
+
+            MetaData meta_data;
+            std::map<std::shared_ptr<Parser::FunctionDefinition>, CacheContext> cache_contexts;
 
             class Error: public std::exception {};
             class FunctionArgumentsError: public Error {};
@@ -229,10 +236,10 @@ namespace Analyzer {
                 std::shared_ptr<AnalyzedExpression> expression;
             };
 
-            std::pair<M<Reference>, FunctionPointer> call_function(MetaData & meta_data, Context & context, bool potential, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, M<Reference> const& arguments);
-            Analyse execute(MetaData & meta_data, Context & context, bool potential, std::shared_ptr<Parser::Expression> expression);
+            std::pair<M<Reference>, FunctionPointer> call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, M<Reference> const& arguments);
+            Analyse execute(Context & context, bool potential, std::shared_ptr<Parser::Expression> expression);
 
-            virtual std::shared_ptr<AnalyzedExpression> analyze(std::shared_ptr<Parser::Expression> expression) override;
+            virtual std::shared_ptr<AnalyzedExpression> analyze(std::shared_ptr<Parser::Expression> expression) const override;
 
         };
 

@@ -226,7 +226,7 @@ namespace Analyzer {
             }
         }
 
-        Analyse Analyzer::call_function(MetaData & meta_data, Context & context, bool potential, std::shared_ptr<Parser::Position> position, M<std::list<Function>> const& all_functions, std::shared_ptr<Parser::Expression> arguments) {
+        Analyse Analyzer::call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, M<std::list<Function>> const& all_functions, std::shared_ptr<Parser::Expression> arguments) {
             Analyse analyse;
 
             std::map<std::shared_ptr<Parser::Expression>, Analyse> computed;
@@ -261,14 +261,14 @@ namespace Analyzer {
                 M<Reference> m;
                 std::vector<FunctionPointer> called_functions;
 
-                auto f = execute(meta_data, context, potential, function_call->function);
+                auto f = execute(context, potential, function_call->function);
 
                 for (auto reference : f.references) {
                     for (auto d : reference.to_data(context)) {
                         std::list<Function> functions;
                         if (auto object = std::get_if<Object*>(&d))
                             functions = (*object)->functions;
-                        auto result = call_function(meta_data, context, potential, function_call->position, functions, function_call->arguments);
+                        auto result = call_function(context, potential, function_call->position, functions, function_call->arguments);
                         m.add(result.first);
                         called_functions.push_back(result.second);
                     }
@@ -301,7 +301,7 @@ namespace Analyzer {
             } else if (auto property = std::dynamic_pointer_cast<Parser::Property>(expression)) {
                 M<Reference> m;
 
-                auto a = execute(meta_data, context, potential, property->object);
+                auto a = execute(context, potential, property->object);
                 for (auto reference : a.references) {
                     auto data = reference.to_data(context);
                     for (auto d : data) {
@@ -349,7 +349,7 @@ namespace Analyzer {
                 std::vector<M<Reference>> reference;
                 std::vector<std::shared_ptr<AnalyzedExpression>> analyzed_expression;
                 for (auto e : tuple->objects) {
-                    auto a = execute(meta_data, context, potential, e);
+                    auto a = execute(context, potential, e);
                     reference.push_back(a.references);
                     analyzed_expression.push_back(a.expression);
                 }
@@ -357,7 +357,7 @@ namespace Analyzer {
                     .references = Reference(reference),
                     .expression = std::make_shared<Tuple>(analyzed_expression)
                 };
-            } else return M<Data>(context.new_object());
+            } else return {};
         }
 
         std::shared_ptr<AnalyzedExpression> Analyzer::analyze(std::shared_ptr<Parser::Expression> expression) {

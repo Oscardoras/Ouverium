@@ -17,8 +17,6 @@ namespace Parser {
     */
     struct Expression {
 
-        virtual ~Expression() = default;
-
         /**
          * The position of the expression in the source.
         */
@@ -33,7 +31,7 @@ namespace Parser {
          * Gets a string of the expression to print it as a tree.
          * @return the expression as a string.
         */
-        std::string to_string() const;
+        virtual std::string to_string(unsigned int n = 0) const = 0;
 
     protected:
 
@@ -49,6 +47,8 @@ namespace Parser {
         FunctionCall(std::shared_ptr<Expression> function = nullptr, std::shared_ptr<Expression> arguments = nullptr):
             function(function), arguments(arguments) {}
 
+        virtual std::string to_string(unsigned int n = 0) const override;
+
     };
 
     struct FunctionDefinition: public Expression {
@@ -60,6 +60,8 @@ namespace Parser {
         FunctionDefinition(std::shared_ptr<Expression> parameters = nullptr, std::shared_ptr<Expression> filter = nullptr, std::shared_ptr<Expression> body = nullptr):
             parameters(parameters), filter(filter), body(body) {}
 
+        virtual std::string to_string(unsigned int n = 0) const override;
+
     };
 
     struct Property: public Expression {
@@ -70,6 +72,8 @@ namespace Parser {
         Property(std::shared_ptr<Expression> object = nullptr, std::string const& name = ""):
             object(object), name(name) {}
 
+        virtual std::string to_string(unsigned int n = 0) const override;
+
     };
 
     struct Symbol: public Expression {
@@ -79,6 +83,8 @@ namespace Parser {
         Symbol(std::string const& name = ""):
             name(name) {}
 
+        virtual std::string to_string(unsigned int n = 0) const override;
+
     };
 
     struct Tuple: public Expression {
@@ -87,6 +93,8 @@ namespace Parser {
 
         Tuple(std::initializer_list<std::shared_ptr<Expression>> const& l = {}):
             objects(l) {}
+
+        virtual std::string to_string(unsigned int n = 0) const override;
 
     };
 

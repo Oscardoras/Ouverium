@@ -33,7 +33,7 @@ namespace Parser {
             Word(std::string const& word, TextPosition const& position);
         };
 
-        std::vector<Word> get_words();
+        std::vector<Word> get_words() const;
 
         struct ParserError {
             std::string message;
@@ -44,14 +44,14 @@ namespace Parser {
 
         class IncompleteCode: public std::exception {};
 
-        virtual std::shared_ptr<Expression> get_tree(std::set<std::string> symbols) override;
+        virtual std::shared_ptr<Expression> get_tree(std::set<std::string> symbols) const override;
 
     protected:
 
         std::string code;
         std::string path;
 
-        std::shared_ptr<Expression> get_tree(std::vector<Standard::ParserError> & errors, std::set<std::string> symbols);
+        std::shared_ptr<Expression> get_tree(std::vector<Standard::ParserError> & errors, std::set<std::string> symbols) const;
 
     };
 

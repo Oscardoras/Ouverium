@@ -12,7 +12,7 @@ namespace Analyzer {
 
     public:
 
-        virtual std::shared_ptr<AnalyzedExpression> analyze(std::shared_ptr<Parser::Expression> expression) = 0;
+        virtual std::shared_ptr<AnalyzedExpression> analyze(std::shared_ptr<Parser::Expression> expression) const = 0;
 
     };
 

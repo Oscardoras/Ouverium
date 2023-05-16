@@ -62,7 +62,7 @@ namespace Parser {
 
     public:
 
-        virtual std::shared_ptr<Expression> get_tree(std::set<std::string> symbols) = 0;
+        virtual std::shared_ptr<Expression> get_tree(std::set<std::string> symbols) const = 0;
 
     };
 

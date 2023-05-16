@@ -77,7 +77,7 @@ namespace Parser {
     }
 
 
-    std::vector<Standard::Word> Standard::get_words() {
+    std::vector<Standard::Word> Standard::get_words() const {
         std::vector<Word> words;
 
         int size = code.size();
@@ -447,7 +447,7 @@ namespace Parser {
                     parent->symbols.insert(name);
     }
 
-    std::shared_ptr<Expression> Standard::get_tree(std::vector<Standard::ParserError> & errors, std::set<std::string> symbols) {
+    std::shared_ptr<Expression> Standard::get_tree(std::vector<Standard::ParserError> & errors, std::set<std::string> symbols) const {
         try {
             auto words = get_words();
             unsigned long i = 0;
@@ -463,7 +463,7 @@ namespace Parser {
         }
     }
 
-    std::shared_ptr<Expression> Standard::get_tree(std::set<std::string> symbols) {
+    std::shared_ptr<Expression> Standard::get_tree(std::set<std::string> symbols) const {
         std::vector<Standard::ParserError> errors;
         auto tree = get_tree(errors, symbols);
         if (errors.empty()) {
