@@ -25,7 +25,7 @@ typedef struct __GC_Element {
 */
 typedef struct __GC_Reference {
     enum {
-        NONE,
+        NONE = 0,
         DATA,
         SYMBOL,
         PROPERTY,

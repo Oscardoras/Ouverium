@@ -14,7 +14,7 @@ typedef bool (*__FunctionFilter)(__Reference_Shared args);
 typedef __Reference_Owned (*__FunctionBody)(__Reference_Shared args);
 
 /**
- * Represents a function in a function linked list.
+ * Represents a function in a function stack.
 */
 typedef struct __Function {
     struct __Function* next;
@@ -26,8 +26,20 @@ typedef struct __Function {
     } references;
 } __Function;
 
+/**
+ * Represents a function stack.
+*/
+typedef __Function* __Function_Stack;
 
-__Reference_Owned __Function_eval(__Function* function, __Reference_Shared args);
+
+__Function_Stack __Function_new();
+
+void __Function_push(__Function_Stack* function, __FunctionBody body, __FunctionFilter filter, __Reference_Owned references[], size_t references_size);
+void __Function_pop(__Function_Stack* function);
+
+__Reference_Owned __Function_eval(__Function_Stack function, __Reference_Shared args);
+
+void __Function_free(__Function_Stack* function);
 
 #ifdef __cplusplus
 }
@@ -45,7 +57,7 @@ class Function {
 public:
 
     using Filter = bool (*)(Reference const& args);
-    using Body = Reference && (*)(Reference const& args);
+    using Body = Reference (*)(Reference const& args);
 
     template<Filter f>
     static bool filter(__Reference_Shared args) {
@@ -65,43 +77,36 @@ public:
 
 protected:
 
-    __Function* & begin;
+    __Function_Stack & stack;
 
 public:
 
-    Function(__Function* & function):
-        begin{function} {}
+    Function(__Function_Stack & function):
+        stack{function} {}
 
-    ~Function() {
-        
+    operator __Function_Stack() const {
+        return stack;
     }
 
-    operator __Function*() const {
-        return begin;
-    }
-
-    void push(__FunctionBody body, __FunctionFilter filter = nullptr, std::vector<Reference> const& references = {}) {
-        __Function* function = (__Function*) std::malloc(sizeof(__Function) + references.size() * sizeof(Reference));
-
-        function->next = begin;
-        function->filter = filter;
-        function->body = body;
-        function->references.size = references.size();
-        function->references.tab = (__Reference_Owned*) function+1;
-
-        for (size_t i = 0; i < references.size(); ++i)
-            function->references.tab[i] = std::move(references[i]);
-
-        begin = function;
+    void push(__FunctionBody body, __FunctionFilter filter = nullptr, std::vector<Reference> && references = {}) {
+        __Function_push(&stack, body, filter, (__Reference_Owned *) references.data(), references.size());
     }
 
     template<Body body, Filter filter = nullptr>
-    void push(std::vector<Reference> const& references = {}) {
+    void push(std::vector<Reference> && references = {}) {
         push(Function::body<body>, Function::filter<filter>, references);
     }
 
     void pop() {
-        begin = begin->next;
+        __Function_pop(&stack);
+    }
+
+    Reference operator()(Reference const& args) const {
+        return std::move(Reference(__Function_eval(stack, args)));
+    }
+
+    void clear() {
+        __Function_free(&stack);
     }
 
 };

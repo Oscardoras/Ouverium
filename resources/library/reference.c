@@ -42,13 +42,13 @@ __Reference_Owned __Reference_new_array(__UnknownData array, size_t i) {
     return (__Reference_Owned) reference;
 }
 
-__Reference_Owned __Reference_new_tuple(__Reference_Shared references[], size_t size) {
+__Reference_Owned __Reference_new_tuple(__Reference_Shared references[], size_t references_size) {
     __GC_Reference* reference = __GC_alloc_references(1);
     reference->type = TUPLE;
-    reference->tuple.references = __GC_alloc_references(size);
-    reference->tuple.size = size;
+    reference->tuple.references = __GC_alloc_references(references_size);
+    reference->tuple.size = references_size;
 
-    for (size_t i = 0; i < size; i++)
+    for (size_t i = 0; i < references_size; i++)
         reference->tuple.references[i] = *((__GC_Reference*) __Reference_copy(references[i]));
 
     return (__Reference_Owned) reference;

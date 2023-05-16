@@ -21,6 +21,7 @@ __GC_Roots* __GC_init_roots(size_t c) {
     roots->free_list = NULL;
 
     __GC_Reference* tab = (__GC_Reference*) roots+1;
+    tab[0].type = NONE;
     tab[0].none.size = c;
     tab[0].none.next = NULL;
 
@@ -120,19 +121,22 @@ void __GC_collect(void) {
         __GC_Reference** reference_ptr = &(*roots_ptr)->free_list;
         __GC_Reference* last_free = NULL;
 
-        for (size_t i = 0; i < (*roots_ptr)->capacity; ++i) {
+        for (size_t i = 0; i < (*roots_ptr)->capacity;) {
             __GC_Reference* reference = ((__GC_Reference*) (*roots_ptr)+1) + i;
             if (reference->type == NONE) {
                 if (last_free != NULL) {
                     last_free->none.size++;
+                    ++i;
                 } else {
                     *reference_ptr = reference;
                     reference_ptr = &(*reference_ptr)->none.next;
                     last_free = reference;
+                    i += reference->none.size;
                 }
             } else {
                 __GC_Reference_iterator(reference);
                 last_free = NULL;
+                ++i;
             }
         }
 
