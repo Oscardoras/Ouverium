@@ -3,14 +3,19 @@
 
 #include <list>
 
-#include "Expressions.hpp"
+#include "Parser.hpp"
 
 
 namespace Parser {
 
-    namespace Standard {
+    class Standard: public Parser {
+
+    public:
+
+        Standard(std::string const& code, std::string const& path);
 
         struct TextPosition: public Position {
+            std::string path;
             unsigned int line;
             unsigned int column;
             std::string stack_trace;
@@ -28,7 +33,7 @@ namespace Parser {
             Word(std::string const& word, TextPosition const& position);
         };
 
-        std::vector<Word> get_words(std::string const& path, std::string const& code);
+        std::vector<Word> get_words();
 
         struct ParserError {
             std::string message;
@@ -39,9 +44,16 @@ namespace Parser {
 
         class IncompleteCode: public std::exception {};
 
-        std::shared_ptr<Parser::Expression> get_tree(std::string const& code, std::string const& path, std::set<std::string> symbols);
+        virtual std::shared_ptr<Expression> get_tree(std::set<std::string> symbols) override;
 
-    }
+    protected:
+
+        std::string code;
+        std::string path;
+
+        std::shared_ptr<Expression> get_tree(std::vector<Standard::ParserError> & errors, std::set<std::string> symbols);
+
+    };
 
 }
 

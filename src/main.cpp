@@ -20,7 +20,7 @@ int main(int argc, char ** argv) {
                     for (auto const& symbol : context)
                         symbols.insert(symbol.first);
 
-                    auto expression = Parser::Standard::get_tree(code, ".", symbols);
+                    auto expression = Parser::Standard(code, ".").get_tree(symbols);
                     auto r = Interpreter::run(context, expression);
                     if (Interpreter::print(std::cout, r.to_data(context)))
                         std::cout << std::endl;
@@ -41,7 +41,7 @@ int main(int argc, char ** argv) {
                 for (auto const& symbol : context)
                     symbols.insert(symbol.first);
 
-                auto expression = Parser::Standard::get_tree(code, argv[1], symbols);
+                auto expression = Parser::Standard(code, argv[1]).get_tree(symbols);
                 auto r = Interpreter::run(context, expression);
             } catch (Parser::Standard::IncompleteCode & e) {
                 std::cerr << "incomplete code, you must finish the last expression in file \"" << argv[1] << "\"" << std::endl;

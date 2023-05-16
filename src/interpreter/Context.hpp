@@ -7,9 +7,7 @@
 
 #include "Reference.hpp"
 
-#include "../parser/Position.hpp"
-
-#include "../parser/Expressions.hpp"
+#include "../parser/Parser.hpp"
 
 
 namespace Interpreter {

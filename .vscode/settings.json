@@ -65,6 +65,7 @@
         "gc.h": "c",
         "system_functions.h": "c",
         "function.h": "c",
-        "reference.h": "c"
+        "reference.h": "c",
+        "filesystem": "cpp"
     }
 }

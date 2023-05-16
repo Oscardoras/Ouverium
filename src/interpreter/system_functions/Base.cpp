@@ -206,19 +206,21 @@ namespace Interpreter {
 
         auto path_args = std::make_shared<Parser::Symbol>("path");
         std::string get_canonical_path(FunctionContext & context) {
-            try {
-                auto path = context["path"].get<Object*>()->to_string();
-                auto system_position = context.get_position()->path;
+            if (auto position = std::dynamic_pointer_cast<Parser::Standard::TextPosition>(context.get_position())) {
+                try {
+                    auto path = context["path"].get<Object*>()->to_string();
+                    auto system_position = position->path;
 
-                if (path[0] != '/')
-                    path = system_position.substr(0, system_position.find_last_of("/")+1) + path;
-                std::filesystem::path p(path);
-                return std::filesystem::canonical(p).string();
-            } catch (Data::BadAccess & e) {
-                throw Interpreter::FunctionArgumentsError();
-            } catch (std::exception & e) {
-                throw Interpreter::FunctionArgumentsError();
-            }
+                    if (path[0] != '/')
+                        path = system_position.substr(0, system_position.find_last_of("/")+1) + path;
+                    std::filesystem::path p(path);
+                    return std::filesystem::canonical(p).string();
+                } catch (Data::BadAccess & e) {
+                    throw Interpreter::FunctionArgumentsError();
+                } catch (std::exception & e) {
+                    throw Interpreter::FunctionArgumentsError();
+                }
+            } else throw Interpreter::FunctionArgumentsError();
         }
 
         Reference include(FunctionContext & context) {
@@ -236,7 +238,7 @@ namespace Interpreter {
                 code += line + '\n';
 
             try {
-                auto expression = Parser::Standard::get_tree(code, path, symbols);
+                auto expression = Parser::Standard(code, path).get_tree(symbols);
                 return Interpreter::execute(global, expression);
             } catch (Parser::Standard::IncompleteCode & e) {
                 context.get_position()->store_stack_trace(context.get_parent());
@@ -261,7 +263,7 @@ namespace Interpreter {
                     code += line + '\n';
 
                 try {
-                    auto expression = Parser::Standard::get_tree(code, path, symbols);
+                    auto expression = Parser::Standard(code, path).get_tree(symbols);
                     global.files[path] = expression;
 
                     for (auto const& symbol : expression->symbols)
