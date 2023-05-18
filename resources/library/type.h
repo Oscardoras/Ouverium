@@ -17,6 +17,11 @@ extern "C" {
 
 #ifdef __cplusplus
 
+template<typename T, size_t offset = T::offset>
+class Component: public T {
+    static
+};
+
 template<typename T>
 class Type: public T {
 

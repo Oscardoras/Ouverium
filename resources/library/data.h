@@ -77,6 +77,8 @@ __UnknownData __UnknownData_from_ptr(__VirtualTable* vtable, void* ptr);
 */
 __ArrayInfo __UnknownData_get_array(__UnknownData data);
 
+#define __UnknownData_get_component(type, data) ((data).data.ptr + ((void*) data.virtual_table+1)[__VirtualTable_ ## type ## _offset])
+
 #ifdef __cplusplus
 }
 #endif
@@ -88,11 +90,6 @@ extern __VirtualTable __VirtualTable_Int;
 extern __VirtualTable __VirtualTable_Float;
 extern __VirtualTable __VirtualTable_Char;
 extern __VirtualTable __VirtualTable_Bool;
-
-template<class T>
-inline __VirtualTable vtable = {
-    .size = sizeof(T)
-};
 
 class UnknownData {
 
@@ -151,6 +148,11 @@ public:
     }
     operator void*() const {
         return data.data.ptr;
+    }
+
+    template<typename T, unsigned short offset = T::vtable_offset>
+    T & get_component() {
+        return *((T*) data.data.ptr + ((size_t *) data.virtual_table+1)[offset]);
     }
 
     __VirtualTable* virtual_table() const {
