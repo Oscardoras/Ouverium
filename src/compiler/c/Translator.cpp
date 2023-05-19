@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <functionnal>
 #include <map>
 #include <stdexcept>
 
@@ -31,6 +32,16 @@ namespace CTranslator {
         }
 
         return s;
+    }
+
+    std::vector<Structures::Structure> create_structures(std::vector<Analyzer::Structure> structures) {
+        std::map<std::string, std::set<std::reference_wrapper<Analyzer::Structure>>> properties;
+        for (auto const& s : structures)
+            for (auto const& p : s.properties) {
+                auto se = properties[p.first];
+                se.insert(s);
+            }
+
     }
 
     void get_instructions(std::shared_ptr<Parser::Expression> expression, Analyzer::MetaData & meta, Instructions & instructions, References & references) {
