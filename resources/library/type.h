@@ -5,64 +5,54 @@
 
 
 #ifdef __cplusplus
-extern "C" {
-#endif
 
+template<typename... Components>
+class Type: public Components {
 
+private:
 
-#ifdef __cplusplus
-}
-#endif
+    template<>
+    void iterate() {}
 
+    template<typename C, typename... Cs>
+    void iterate() {
+        __GC_iterate(static_cast<C*>(this));
+        iterate<Cs>();
+    }
 
-#ifdef __cplusplus
+    constexpr Type<Components> object;
 
-template<typename T, size_t offset = T::offset>
-class Component: public T {
-    static
-};
+    template<>
+    static constexpr void add_vtable(void* *vtable) {}
+    template<typename C, typename... Cs>
+    static constexpr void add_vtable(void* *vtable) {
+        ((char*) vtable)[offset<C>] = (char*) static_cast<C*>(&object) - (char*) &object;
+        create_vtable<Cs>();
+    }
 
-template<typename T>
-class Type: public T {
+    template<typename... Cs>
+    static constexpr bool create_vtable(void* *vtable) {
+        vtable[0] = sizeof(Type<Components>);
+        vtable[1] = __GC_iterator;
+        add_vtable<Cs>();
+        return true;
+    }
 
 protected:
 
-    static void __GC_iterator(Type* object) {
+    static void __GC_iterator(Type<Components>* object) {
         object.iterate();
     }
 
 public:
 
-    inline static __VirtualTable const vtable = {
-        .gc_iterator = __GC_iterator;
-        .get_array = __VirtualTable_NULL_get_array;
-        .size = sizeof(Type<ArrayType>)
-    };
+    inline static __VirtualTable const vtable;
+
+    static_assert(create_vtable(vtable));
 
 };
 
-template<typename T, typename ArrayType>
-class Type: public T {
-
-protected:
-
-    __Array array;
-
-    static void __GC_iterator(Type* object) {
-        object.iterate();
-    }
-
-public:
-
-    inline static __VirtualTable const vtable = {
-        .gc_iterator = __GC_iterator;
-        .get_array = __VirtualTable_NULL_get_array;
-        .size = sizeof(Type<ArrayType>)
-    };
-
-};
-
-typedef Type<int>;
+typedef Type<int> Integer;
 
 #endif
 
