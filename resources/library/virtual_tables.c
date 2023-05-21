@@ -2,14 +2,6 @@
 #include "virtual_tables.h"
 
 
-__ArrayInfo __VirtualTable_NULL_get_array(__UnknownData data) {
-    __ArrayInfo array = {
-        .vtable = NULL,
-        .array = NULL
-    };
-    return array;
-}
-
 void __VirtualTable_UnknownData_gc_iterator(void* ptr) {
     __UnknownData data = *((__UnknownData*) ptr);
     if (
@@ -20,56 +12,55 @@ void __VirtualTable_UnknownData_gc_iterator(void* ptr) {
     )
         data.virtual_table->gc_iterator(data.data.ptr);
 }
-__ArrayInfo __VirtualTable_UnknownData_get_array(__UnknownData data) {
-    return data.virtual_table->get_array(data);
-}
 __VirtualTable __VirtualTable_UnknownData = {
+    .size = sizeof(__UnknownData),
     .gc_iterator = __VirtualTable_UnknownData_gc_iterator,
-    .get_array = __VirtualTable_UnknownData_get_array,
-    .size = sizeof(__UnknownData)
+    .array.vtable = NULL,
+    .array.offset = 0,
+    .function_offset = 0
 };
 
 void __VirtualTable_Array_gc_iterator(void* ptr) {
-    __ArrayInfo array = {
-        .vtable = &__VirtualTable_UnknownData,
-        .array = (__Array*) ptr
-    };
+    __ArrayInfo array = __UnknownData_get_array(*((__UnknownData*) ptr));
     for (size_t i = 0; i < array.array->size; i++)
         __VirtualTable_UnknownData_gc_iterator(__Array_get(array, i));
 }
-__ArrayInfo __VirtualTable_Array_get_array(__UnknownData data) {
-    __ArrayInfo array = {
-        .vtable = &__VirtualTable_UnknownData,
-        .array = (__Array*) data.data.ptr
-    };
-    return array;
-}
 __VirtualTable __VirtualTable_Array = {
+    .size = sizeof(__Array),
     .gc_iterator = __VirtualTable_Array_gc_iterator,
-    .get_array = __VirtualTable_Array_get_array,
-    .size = sizeof(__Array)
+    .array.vtable = &__VirtualTable_UnknownData,
+    .array.offset = 0,
+    .function_offset = 0
 };
 
 __VirtualTable __VirtualTable_Int = {
+    .size = sizeof(long),
     .gc_iterator = __GC_NULL_iterator,
-    .get_array = __VirtualTable_NULL_get_array,
-    .size = sizeof(long)
+    .array.vtable = &__VirtualTable_UnknownData,
+    .array.offset = 0,
+    .function_offset = 0
 };
 
 __VirtualTable __VirtualTable_Float = {
+    .size = sizeof(double),
     .gc_iterator = __GC_NULL_iterator,
-    .get_array = __VirtualTable_NULL_get_array,
-    .size = sizeof(double)
+    .array.vtable = &__VirtualTable_UnknownData,
+    .array.offset = 0,
+    .function_offset = 0
 };
 
 __VirtualTable __VirtualTable_Char = {
+    .size = sizeof(char),
     .gc_iterator = __GC_NULL_iterator,
-    .get_array = __VirtualTable_NULL_get_array,
-    .size = sizeof(char)
+    .array.vtable = &__VirtualTable_UnknownData,
+    .array.offset = 0,
+    .function_offset = 0
 };
 
 __VirtualTable __VirtualTable_Bool = {
+    .size = sizeof(bool),
     .gc_iterator = __GC_NULL_iterator,
-    .get_array = __VirtualTable_NULL_get_array,
-    .size = sizeof(bool)
+    .array.vtable = &__VirtualTable_UnknownData,
+    .array.offset = 0,
+    .function_offset = 0
 };

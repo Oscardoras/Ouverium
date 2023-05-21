@@ -27,17 +27,20 @@ typedef struct __ArrayInfo {
 } __ArrayInfo;
 
 /**
- * Type of a function to get an array from a data.
-*/
-typedef struct __ArrayInfo (*__UnknownData_GetArray)(struct __UnknownData data);
-
-/**
  * Contains information to manage a data type.
 */
 typedef struct __VirtualTable {
-    __GC_Iterator gc_iterator;
-    __UnknownData_GetArray get_array;
     size_t size;
+    __GC_Iterator gc_iterator;
+    struct {
+        struct __VirtualTable* vtable;
+        size_t offset;
+    } array;
+    size_t function_offset;
+    union {
+        size_t offset;
+        void* ptr;
+    } tab[];
 } __VirtualTable;
 
 /**
@@ -71,13 +74,27 @@ __UnknownData __UnknownData_from_data(__VirtualTable* vtable, void* d, ...);
 __UnknownData __UnknownData_from_ptr(__VirtualTable* vtable, void* ptr);
 
 /**
+ * Gets a component from an UnknownData.
+ * @param index the index of the component in the virtual tables.
+ * @param data the UnknownData.
+ * @return a pointer to the component.
+*/
+void* __UnknownData_get_component_at(size_t index, __UnknownData data);
+
+/**
+ * Gets a component from an UnknownData.
+ * @param type the name of the component.
+ * @param data the UnknownData.
+ * @return a pointer to the component.
+*/
+#define __UnknownData_get_component(type, data) __UnknownData_get_component_at(__VirtualTable_ ## type ## _index, data)
+
+/**
  * Gets the array of an UnknownData.
  * @param data an UnknownData.
  * @return an ArrayInfo representing the array of the data.
 */
 __ArrayInfo __UnknownData_get_array(__UnknownData data);
-
-#define __UnknownData_get_component(type, data) ((data).data.ptr + ((void*) data.virtual_table+1)[__VirtualTable_ ## type ## _offset])
 
 #ifdef __cplusplus
 }

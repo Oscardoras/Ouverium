@@ -6,14 +6,13 @@
 
 #ifdef __cplusplus
 
-template<typename... Components>
-class Type: public Components {
+template<typename ArrayType, bool function, typename... Components>
+class Type: public std::conditional<std::is_same<ArrayType, void>::value, void, ArrayType::vtable>, public std::conditional<true, __Function, void>, public Components... {
 
 private:
 
     template<>
     void iterate() {}
-
     template<typename C, typename... Cs>
     void iterate() {
         __GC_iterate(static_cast<C*>(this));
@@ -23,18 +22,19 @@ private:
     constexpr Type<Components> object;
 
     template<>
-    static constexpr void add_vtable(void* *vtable) {}
+    static constexpr void add_vtable(__VirtualTable* vtable) {}
     template<typename C, typename... Cs>
-    static constexpr void add_vtable(void* *vtable) {
-        ((char*) vtable)[offset<C>] = (char*) static_cast<C*>(&object) - (char*) &object;
-        create_vtable<Cs>();
-    }
-
-    template<typename... Cs>
-    static constexpr bool create_vtable(void* *vtable) {
-        vtable[0] = sizeof(Type<Components>);
-        vtable[1] = __GC_iterator;
+    static constexpr void add_vtable(__VirtualTable* vtable) {
+        vtable->tab[index<C>].offset = (size_t) ((char*) static_cast<C*>(&object)) - ((char*) &object);
         add_vtable<Cs>();
+    }
+    static constexpr bool create_vtable(__VirtualTable* vtable) {
+        vtable->size = sizeof(Type<Components>);
+        vtable->gc_iterator = __GC_iterator;
+        vtable->array.vtable = ArrayType::vtable;
+        vtable->array.offset = 0;
+        vtable->function_offset
+        add_vtable<Components>();
         return true;
     }
 
@@ -48,11 +48,15 @@ public:
 
     inline static __VirtualTable const vtable;
 
-    static_assert(create_vtable(vtable));
+    static_assert(create_vtable<Components>(vtable));
 
 };
 
-typedef Type<int> Integer;
+typedef Type<void, false, int> Integer;
+
+void tes() {
+    Integer i;
+}
 
 #endif
 

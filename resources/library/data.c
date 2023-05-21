@@ -45,6 +45,14 @@ __UnknownData __UnknownData_from_ptr(__VirtualTable* vtable, void* ptr) {
     return data;
 }
 
+void* __UnknownData_get_component_at(size_t index, __UnknownData data) {
+    return ((char*) data.data.ptr) + data.virtual_table->tab[index].offset;
+}
+
 __ArrayInfo __UnknownData_get_array(__UnknownData data) {
-    return data.virtual_table->get_array(data);
+    __ArrayInfo array = {
+        .vtable = data.virtual_table->array.vtable,
+        .array = ((char*) data.data.ptr) + data.virtual_table->array.offset
+    };
+    return array;
 }
