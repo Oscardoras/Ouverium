@@ -1,6 +1,6 @@
 #include <algorithm>
-#include <functionnal>
 #include <map>
+#include <set>
 #include <stdexcept>
 
 #include "Translator.hpp"
@@ -13,7 +13,7 @@ namespace CTranslator {
     Structures::Structure create_struct(Analyzer::Structure const& structure) {
         Structures::Structure s;
 
-        for (auto const& pair : structure) {
+        for (auto const& pair : structure.properties) {
             if (pair.second.size() == 1) {
                 auto ref = *pair.second.begin();
                 if (ref.get() == Analyzer::MetaData::Pointer)
@@ -34,13 +34,24 @@ namespace CTranslator {
         return s;
     }
 
-    std::vector<Structures::Structure> create_structures(std::vector<Analyzer::Structure> structures) {
-        std::map<std::string, std::set<std::reference_wrapper<Analyzer::Structure>>> properties;
-        for (auto const& s : structures)
-            for (auto const& p : s.properties) {
-                auto se = properties[p.first];
-                se.insert(s);
+    std::vector<Structures::Structure> create_structures(std::vector<std::shared_ptr<Analyzer::Structure>> structures) {
+
+        std::map<std::pair<std::string, std::weak_ptr<Analyzer::Type>>, std::set<std::shared_ptr<Analyzer::Structure>>> properties;
+        for (auto const& s : structures) {
+            for (auto const& p : s->properties) {
+                for (auto const& t : p.second) {
+                    properties[{p.first, t}].insert(s);
+                }
             }
+        }
+
+        std::map<std::set<std::shared_ptr<Analyzer::Structure>>, std::map<std::string, std::weak_ptr<Analyzer::Type>>> groups;
+        for (auto const& p : properties) {
+            groups[p.second][p.first.first] = p.first.second;
+        }
+
+        std::map<std::map<std::string, std::weak_ptr<Analyzer::Type>>, std::shared_ptr<Analyzer::Structure>> components;
+        for ()
 
     }
 

@@ -12,20 +12,21 @@ namespace CTranslator {
 
     namespace Structures {
 
+        using Declarations = std::map<std::string, std::weak_ptr<Type>>;
+
+
         struct Type {
             virtual ~Type() {}
         };
-        using Declarations = std::map<std::string, std::reference_wrapper<Type>>;
-        struct: public Type {} Unknown;
+        std::shared_ptr<Type> Unknown = std::make_shared<Type>();
         struct Structure: public Type {
-            std::string name;
             Declarations properties;
         };
-        struct: public Type {} Pointer;
-        struct: public Type {} Bool;
-        struct: public Type {} Char;
-        struct: public Type {} Int;
-        struct: public Type {} Float;
+        inline std::shared_ptr<Type> Pointer = std::make_shared<Type>();
+        inline std::shared_ptr<Type> Bool = std::make_shared<Type>();
+        inline std::shared_ptr<Type> Char = std::make_shared<Type>();
+        inline std::shared_ptr<Type> Int = std::make_shared<Type>();
+        inline std::shared_ptr<Type> Float = std::make_shared<Type>();
 
 
         struct Expression {};
@@ -71,16 +72,16 @@ namespace CTranslator {
         };
 
         struct Array: public Instruction {
-            std::reference_wrapper<Type> type;
+            std::weak_ptr<Type> type;
             std::string name;
             std::shared_ptr<List> list;
         };
 
 
         struct FunctionDefinition {
-            using Parameter = std::pair<std::string, std::reference_wrapper<Type>>;
+            using Parameter = std::pair<std::string, std::weak_ptr<Type>>;
             using Parameters = std::vector<Parameter>;
-            std::reference_wrapper<Type> type;
+            std::weak_ptr<Type> type;
             std::string name;
             Parameters parameters;
             Declarations local_variables;

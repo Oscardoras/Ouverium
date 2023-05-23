@@ -26,28 +26,28 @@ namespace Analyzer {
     };
 
     struct Type {};
-    inline struct: Type {} Pointer;
-    inline struct: Type {} Bool;
-    inline struct: Type {} Char;
-    inline struct: Type {} Int;
-    inline struct: Type {} Float;
+    inline std::shared_ptr<Type> Pointer = std::make_shared<Type>();
+    inline std::shared_ptr<Type> Bool = std::make_shared<Type>();
+    inline std::shared_ptr<Type> Char = std::make_shared<Type>();
+    inline std::shared_ptr<Type> Int = std::make_shared<Type>();
+    inline std::shared_ptr<Type> Float = std::make_shared<Type>();
     struct Structure: public Type {
 
-        std::map<std::string, std::set<Type&>> properties;
+        std::map<std::string, std::set<std::weak_ptr<Type>>> properties;
 
-        Structure(std::map<std::string, std::set<Type&>> properties = {}):
+        Structure(std::map<std::string, std::set<std::weak_ptr<Type>> properties = {}):
             properties(properties) {}
 
     };
 
     struct FunctionDefinition {
 
-        std::set<Type&> return_type;
+        std::set<std::weak_ptr<Type>> return_type;
         std::shared_ptr<AnalyzedExpression> parameters;
         std::shared_ptr<AnalyzedExpression> filter;
         std::shared_ptr<AnalyzedExpression> body;
 
-        FunctionDefinition(std::set<Type&> const& return_type = {}, std::shared_ptr<AnalyzedExpression> parameters = nullptr, std::shared_ptr<AnalyzedExpression> filter = nullptr, std::shared_ptr<AnalyzedExpression> body = nullptr):
+        FunctionDefinition(std::set<std::weak_ptr<Type>> const& return_type = {}, std::shared_ptr<AnalyzedExpression> parameters = nullptr, std::shared_ptr<AnalyzedExpression> filter = nullptr, std::shared_ptr<AnalyzedExpression> body = nullptr):
             return_type(return_type), parameters(parameters), filter(filter), body(body) {}
 
     };
@@ -121,8 +121,8 @@ namespace Analyzer {
 
 
     struct MetaData {
-        std::map<std::string, Structure> structures;
-        std::map<std::string, FunctionDefinition> function_definitions;
+        std::map<std::string, std::shared_ptr<Structure>> structures;
+        std::map<std::string, std::shared_ptr<FunctionDefinition>> function_definitions;
     };
 
 }
