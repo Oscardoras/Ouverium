@@ -3,7 +3,7 @@ project(Ouver)
 
 set(CMAKE_CXX_STANDARD 17)
 
-FILE(GLOB_RECURSE app_sources
+FILE(GLOB_RECURSE interpreter_sources
     src/main.cpp
     src/Utils.cpp src/Utils.hpp
     src/parser/*
@@ -11,4 +11,9 @@ FILE(GLOB_RECURSE app_sources
     #src/compiler/Analyzer.cpp src/compiler/Analyzer.hpp
     #src/compiler/Functions.cpp src/compiler/Functions.hpp
 )
-add_executable(interpreter ${app_sources})
+add_executable(interpreter ${interpreter_sources})
+
+FILE(GLOB_RECURSE capi_sources
+    resources/library/*
+)
+add_executable(capi ${capi_sources})
