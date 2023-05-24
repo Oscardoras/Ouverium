@@ -26,22 +26,29 @@ typedef struct __ArrayInfo {
     struct __Array* array;
 } __ArrayInfo;
 
+struct __VirtualTable_Info {
+    size_t size;
+    __GC_Iterator gc_iterator;
+    struct __VirtualTable* arra_vtable;
+};
+union __VirtualTable_TabElement {
+    size_t offset;
+    void* ptr;
+};
+
 /**
  * Contains information to manage a data type.
 */
 typedef struct __VirtualTable {
-    size_t size;
-    __GC_Iterator gc_iterator;
-    struct {
-        struct __VirtualTable* vtable;
-        size_t offset;
-    } array;
-    size_t function_offset;
-    union {
-        size_t offset;
-        void* ptr;
-    } tab[];
+    struct __VirtualTable_Info info;
+    union __VirtualTable_TabElement tab[];
 } __VirtualTable;
+
+#define __VirtualTable_size(size) \
+    struct __VirtualTable ## tab_size { \
+        struct __VirtualTable_Info info; \
+        union __VirtualTable_TabElement tab[size]; \
+    }
 
 /**
  * Represents a data which the real type is unknown.
