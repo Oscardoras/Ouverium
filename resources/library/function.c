@@ -16,7 +16,8 @@ void __Function_push(__Function_Stack* function, __FunctionBody body, __Function
     f->references.size = references_size;
     f->references.tab = (__Reference_Owned *) f+1;
 
-    for (size_t i = 0; i < references_size; ++i)
+    size_t i;
+    for (i = 0; i < references_size; ++i)
         f->references.tab[i] = references[i];
 
     *function = f;
@@ -25,7 +26,8 @@ void __Function_push(__Function_Stack* function, __FunctionBody body, __Function
 void __Function_pop(__Function_Stack* function) {
     __Function* next = (*function)->next;
 
-    for (size_t i = 0; i < (*function)->references.size; ++i)
+    size_t i;
+    for (i = 0; i < (*function)->references.size; ++i)
         __Reference_free((*function)->references.tab[i]);
 
     free(*function);
@@ -34,7 +36,8 @@ void __Function_pop(__Function_Stack* function) {
 }
 
 __Reference_Owned __Function_eval(__Function_Stack function, __Reference_Shared args) {
-    for (__Function* ptr = function; ptr != NULL; ptr = ptr->next) {
+    __Function* ptr;
+    for (ptr = function; ptr != NULL; ptr = ptr->next) {
         if (function->filter == NULL || function->filter(args)) {
             function->body(args);
             break;

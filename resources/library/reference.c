@@ -48,7 +48,8 @@ __Reference_Owned __Reference_new_tuple(__Reference_Shared references[], size_t 
     reference->tuple.references = __GC_alloc_references(references_size);
     reference->tuple.size = references_size;
 
-    for (size_t i = 0; i < references_size; i++)
+    size_t i;
+    for (i = 0; i < references_size; i++)
         reference->tuple.references[i] = *((__GC_Reference*) __Reference_copy(references[i]));
 
     return (__Reference_Owned) reference;
@@ -133,7 +134,8 @@ void __Reference_free(__Reference_Owned r) {
     __GC_Reference* reference = (__GC_Reference*) r;
 
     if (reference->type == TUPLE) {
-        for (unsigned short i = 0; i < reference->tuple.size; i++)
+        size_t i;
+        for (i = 0; i < reference->tuple.size; i++)
             __Reference_free((__Reference_Owned) reference->tuple.references + i);
     }
 

@@ -17,3 +17,4 @@ FILE(GLOB_RECURSE capi_sources
     resources/library/*
 )
 add_executable(capi ${capi_sources})
+set_property(TARGET capi PROPERTY C_STANDARD 90)

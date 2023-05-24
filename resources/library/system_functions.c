@@ -70,7 +70,8 @@ static void assign(__GC_Reference* variable, __UnknownData value) {
         case TUPLE: {
             __ArrayInfo array = __UnknownData_get_array(value);
 
-            for (size_t i = 0; i < variable->tuple.size; i++)
+            size_t i;
+            for (i = 0; i < variable->tuple.size; i++)
                 assign(&variable->tuple.references[i], __UnknownData_from_ptr(array.vtable, __Array_get(array, i)));
             break;
         }

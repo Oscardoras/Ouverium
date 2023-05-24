@@ -107,7 +107,8 @@ void __GC_Reference_iterator(__GC_Reference* reference) {
             __GC_iterate(reference->array.array.virtual_table->gc_iterator, reference->array.array.data.ptr);
             break;
         case TUPLE: {
-            for (size_t i = 0; i < reference->tuple.size; ++i)
+            size_t i;
+            for (i = 0; i < reference->tuple.size; ++i)
                 __GC_Reference_iterator(&reference->tuple.references[i]);
             break;
         }
@@ -117,11 +118,13 @@ void __GC_Reference_iterator(__GC_Reference* reference) {
 }
 
 void __GC_collect(void) {
-    for (__GC_Roots** roots_ptr = &__GC_roots; *roots_ptr != NULL;) {
+    __GC_Roots** roots_ptr;
+    for (roots_ptr = &__GC_roots; *roots_ptr != NULL;) {
         __GC_Reference** reference_ptr = &(*roots_ptr)->free_list;
         __GC_Reference* last_free = NULL;
 
-        for (size_t i = 0; i < (*roots_ptr)->capacity;) {
+        size_t i;
+        for (i = 0; i < (*roots_ptr)->capacity;) {
             __GC_Reference* reference = ((__GC_Reference*) (*roots_ptr)+1) + i;
             if (reference->type == NONE) {
                 if (last_free != NULL) {
@@ -149,7 +152,8 @@ void __GC_collect(void) {
         }
     }
 
-    for (__GC_Element** ptr = &__GC_list; *ptr != NULL;) {
+    __GC_Element** ptr;
+    for (ptr = &__GC_list; *ptr != NULL;) {
         if (!(*ptr)->iterated) {
             __GC_Element* next = (*ptr)->next;
             free(*ptr);
@@ -162,13 +166,15 @@ void __GC_collect(void) {
 }
 
 void __GC_end(void) {
-    for (__GC_Roots* roots = __GC_roots; roots != NULL;) {
+    __GC_Roots* roots;
+    for (roots = __GC_roots; roots != NULL;) {
         __GC_Roots* next = roots->next;
         free(roots);
         roots = next;
     }
 
-    for (__GC_Element* ptr = __GC_list; ptr != NULL;) {
+    __GC_Element* ptr;
+    for (ptr = __GC_list; ptr != NULL;) {
         __GC_Element* next = ptr->next;
         free(ptr);
         ptr = next;

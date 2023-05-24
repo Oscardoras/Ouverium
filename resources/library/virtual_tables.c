@@ -22,7 +22,8 @@ __VirtualTable __VirtualTable_UnknownData = {
 
 void __VirtualTable_Array_gc_iterator(void* ptr) {
     __ArrayInfo array = __UnknownData_get_array(*((__UnknownData*) ptr));
-    for (size_t i = 0; i < array.array->size; i++)
+    size_t i;
+    for (i = 0; i < array.array->size; i++)
         __VirtualTable_UnknownData_gc_iterator(__Array_get(array, i));
 }
 __VirtualTable __VirtualTable_Array = {
