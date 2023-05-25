@@ -10,6 +10,23 @@
 
 namespace CTranslator {
 
+    std::weak_ptr<Structures::Type> get_type(std::set<std::weak_ptr<Analyzer::Type>> types) {
+        if (types.size() > 1)
+            return Structures::Unknown;
+
+        auto type = *types.begin();
+        if (type.lock() == Analyzer::Bool)
+            return Structures::Bool;
+        if (type.lock() == Analyzer::Char)
+            return Structures::Char;
+        if (type.lock() == Analyzer::Int)
+            return Structures::Int;
+        if (type.lock() == Analyzer::Float)
+            return Structures::Float;
+
+
+    }
+
     Structures::Structure create_struct(Analyzer::Structure const& structure) {
         Structures::Structure s;
 
@@ -34,7 +51,7 @@ namespace CTranslator {
         return s;
     }
 
-    std::vector<Structures::Structure> create_structures(std::vector<std::shared_ptr<Analyzer::Structure>> structures) {
+    std::pair<std::vector<std::shared_ptr<Structures::Component>>, std::vector<std::shared_ptr<Structures::Structure>>> create_structures(std::vector<std::shared_ptr<Analyzer::Structure>> structures) {
 
         std::map<std::pair<std::string, std::weak_ptr<Analyzer::Type>>, std::set<std::shared_ptr<Analyzer::Structure>>> properties;
         for (auto const& s : structures) {
@@ -50,9 +67,20 @@ namespace CTranslator {
             groups[p.second][p.first.first] = p.first.second;
         }
 
-        std::map<std::map<std::string, std::weak_ptr<Analyzer::Type>>, std::shared_ptr<Analyzer::Structure>> components;
-        for ()
+        std::map<std::map<std::string, std::weak_ptr<Analyzer::Type>>, std::set<std::shared_ptr<Analyzer::Structure>>> components;
+        for (auto const& g : groups) {
+            components[g.second] = g.first;
+        }
 
+        std::vector<Structures::Structure> structs;
+        for (auto const& c : components) {
+            Structures::Structure structure;
+            for (auto const& p : c.first) {
+                structure.properties[p.first];
+            }
+            structs.push_back(structure);
+        }
+        for (auto const& s : structures)
     }
 
     void get_instructions(std::shared_ptr<Parser::Expression> expression, Analyzer::MetaData & meta, Instructions & instructions, References & references) {

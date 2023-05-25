@@ -15,14 +15,16 @@ namespace CTranslator {
         using Declarations = std::map<std::string, std::weak_ptr<Type>>;
 
 
+        struct Component {
+            Declarations properties;
+        };
         struct Type {
-            virtual ~Type() {}
+            virtual ~Type() = default;
         };
         std::shared_ptr<Type> Unknown = std::make_shared<Type>();
         struct Structure: public Type {
-            Declarations properties;
+            std::set<std::weak_ptr<Component>> components;
         };
-        inline std::shared_ptr<Type> Pointer = std::make_shared<Type>();
         inline std::shared_ptr<Type> Bool = std::make_shared<Type>();
         inline std::shared_ptr<Type> Char = std::make_shared<Type>();
         inline std::shared_ptr<Type> Int = std::make_shared<Type>();

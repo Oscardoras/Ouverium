@@ -16,5 +16,6 @@ add_executable(interpreter ${interpreter_sources})
 FILE(GLOB_RECURSE capi_sources
     resources/library/*
 )
-add_executable(capi ${capi_sources})
+add_library(capi SHARED ${capi_sources})
 set_property(TARGET capi PROPERTY C_STANDARD 90)
+link_libraries(interpreter PUBLIC capi)
