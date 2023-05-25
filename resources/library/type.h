@@ -7,7 +7,7 @@
 #ifdef __cplusplus
 
 template<typename T>
-constexpr size_t index;
+constexpr size_t index = 0;
 
 template<typename ArrayType, typename... Components>
 class Type: public Components... {
@@ -35,17 +35,16 @@ private:
         vtable->tab[index<C>].offset = ptrdiff_t(static_cast<C*>(&object)) - ptrdiff_t(&object);
         add_vtable<Cs...>();
     }
-    static size_t constexpr get_size() {
+    static constexpr size_t max() {
         return 0;
     }
-    template<typename C, typename... Cs>
-    static constexpr size_t get_size() {
-        constexpr size_t a = get_size<Cs...>();
-        constexpr size_t b = index<C>;
-        if constexpr (a > b)
+    template<typename A, typename... B>
+    static constexpr size_t max(A a, B... b...) {
+        size_t c = max(b...);
+        if (a > c)
             return a;
         else
-            return b;
+            return c;
     }
     static constexpr bool create_vtable(__VirtualTable* vtable) {
         vtable->size = sizeof(Type<ArrayType, Components...>);
@@ -65,13 +64,19 @@ protected:
 
 public:
 
-    inline static VirtualTable<get_size<Components...>()> vtable;
+    inline static VirtualTable<max(index<Components>...)> vtable;
 
-    static_assert(create_vtable(&vtable));
+    static_assert(create_vtable((__VirtualTable*) (void*) &vtable));
 
 };
 
-typedef Type<void, int> Integer;
+struct Compo {
+
+};
+template<>
+constexpr size_t index<Compo> = 10;
+
+typedef Type<void, Compo> Integer;
 
 void tes() {
     Integer i;
