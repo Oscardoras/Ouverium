@@ -3,13 +3,13 @@
 
 
 void __VirtualTable_UnknownData_gc_iterator(void* ptr) {
-    __UnknownData data = *((__UnknownData*) ptr);
+    __UnknownData data = *((__UnknownData*)ptr);
     if (
         data.virtual_table != &__VirtualTable_Int &&
         data.virtual_table != &__VirtualTable_Float &&
         data.virtual_table != &__VirtualTable_Char &&
         data.virtual_table != &__VirtualTable_Bool
-    )
+        )
         data.virtual_table->info.gc_iterator(data.data.ptr);
 }
 __VirtualTable __VirtualTable_UnknownData = {
@@ -19,7 +19,7 @@ __VirtualTable __VirtualTable_UnknownData = {
 };
 
 void __VirtualTable_Array_gc_iterator(void* ptr) {
-    __ArrayInfo array = __UnknownData_get_array(*((__UnknownData*) ptr));
+    __ArrayInfo array = __UnknownData_get_array(*((__UnknownData*)ptr));
     size_t i;
     for (i = 0; i < array.array->size; i++)
         __VirtualTable_UnknownData_gc_iterator(__Array_get(array, i));

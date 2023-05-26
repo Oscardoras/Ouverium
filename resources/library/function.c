@@ -14,7 +14,7 @@ void __Function_push(__Function_Stack* function, __FunctionBody body, __Function
     f->filter = filter;
     f->body = body;
     f->references.size = references_size;
-    f->references.tab = (__Reference_Owned *) f+1;
+    f->references.tab = (__Reference_Owned*)f + 1;
 
     size_t i;
     for (i = 0; i < references_size; ++i)

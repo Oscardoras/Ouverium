@@ -6,7 +6,7 @@
 
 __VirtualTable_size(3) table;
 
-int main(int argc, char* *argv) {
+int main(int argc, char** argv) {
 
     __GC_end();
 }

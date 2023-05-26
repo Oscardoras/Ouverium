@@ -89,7 +89,7 @@ public:
             return array[i];
         }
 
-};
+    };
 
     iterator begin() {
         return iterator(*this, 0);
@@ -200,14 +200,14 @@ protected:
 
 public:
 
-    UnknownData(__UnknownData const& data):
-        data{data} {}
+    UnknownData(__UnknownData const& data) :
+        data{ data } {}
 
-    UnknownData(__VirtualTable* vtable, void* d, ...):
-        data{__UnknownData_from_data(vtable, d)} {}
+    UnknownData(__VirtualTable* vtable, void* d, ...) :
+        data{ __UnknownData_from_data(vtable, d) } {}
 
-    UnknownData(__VirtualTable* vtable, void* ptr):
-        data{__UnknownData_from_ptr(vtable, ptr)} {}
+    UnknownData(__VirtualTable* vtable, void* ptr) :
+        data{ __UnknownData_from_ptr(vtable, ptr) } {}
 
     UnknownData(long i) {
         data.virtual_table = &__VirtualTable_Int;
@@ -247,13 +247,13 @@ public:
     operator bool() const {
         return data.data.b;
     }
-    operator void*() const {
+    operator void* () const {
         return data.data.ptr;
     }
 
     template<typename T, size_t index = T::index>
-    T & get_component() {
-        return *((T*) (data.data.ptr + data.virtual_table->tab[index].offset));
+    T& get_component() {
+        return *((T*)(data.data.ptr + data.virtual_table->tab[index].offset));
     }
 
     ArrayInfo get_array() {
@@ -274,41 +274,41 @@ protected:
 
 public:
 
-    Reference(UnknownData const& data):
-        reference{__Reference_new_data(data)} {}
-    Reference():
-        reference{__Reference_new_symbol()} {}
-    Reference(UnknownData const& parent, __VirtualTable* const virtual_table, void* const property):
-        reference{__Reference_new_property(parent, virtual_table, property)} {}
-    Reference(UnknownData const& array, size_t const i):
-        reference{__Reference_new_array(array, i)} {}
-    Reference(std::initializer_list<Reference> const& list):
-        reference{__Reference_new_tuple((__Reference_Shared *) std::data(list), list.size())} {}
+    Reference(UnknownData const& data) :
+        reference{ __Reference_new_data(data) } {}
+    Reference() :
+        reference{ __Reference_new_symbol() } {}
+    Reference(UnknownData const& parent, __VirtualTable* const virtual_table, void* const property) :
+        reference{ __Reference_new_property(parent, virtual_table, property) } {}
+    Reference(UnknownData const& array, size_t const i) :
+        reference{ __Reference_new_array(array, i) } {}
+    Reference(std::initializer_list<Reference> const& list) :
+        reference{ __Reference_new_tuple((__Reference_Shared*)std::data(list), list.size()) } {}
 
-    Reference(__Reference_Owned const reference):
-        reference{reference} {}
+    Reference(__Reference_Owned const reference) :
+        reference{ reference } {}
 
-    Reference(Reference const& reference):
-        reference{__Reference_copy(reference)} {}
-    Reference(Reference && reference):
-        reference{reference.reference} {
+    Reference(Reference const& reference) :
+        reference{ __Reference_copy(reference) } {}
+    Reference(Reference&& reference) :
+        reference{ reference.reference } {
         reference.reference = nullptr;
     }
 
     ~Reference() {
         if (reference != nullptr)
-            __Reference_free((__Reference_Owned) reference);
+            __Reference_free((__Reference_Owned)reference);
     }
 
-    Reference & operator=(Reference const& reference) {
+    Reference& operator=(Reference const& reference) {
         if (Reference::reference != reference.reference) {
-            __Reference_free((__Reference_Owned) Reference::reference);
-            Reference::reference = __Reference_copy((__Reference_Shared) reference.reference);
+            __Reference_free((__Reference_Owned)Reference::reference);
+            Reference::reference = __Reference_copy((__Reference_Shared)reference.reference);
         }
 
         return *this;
     }
-    Reference & operator=(Reference && reference) {
+    Reference& operator=(Reference&& reference) {
         if (Reference::reference != reference.reference) {
             Reference::reference = reference.reference;
             reference.reference = nullptr;
@@ -318,23 +318,23 @@ public:
     }
 
     operator __Reference_Owned() {
-        auto tmp = (__Reference_Owned) reference;
+        auto tmp = (__Reference_Owned)reference;
         reference = nullptr;
         return tmp;
     }
     operator __Reference_Shared() const {
-        return (__Reference_Shared) reference;
+        return (__Reference_Shared)reference;
     }
 
     operator __UnknownData() const {
         return get();
     }
     __UnknownData get() const {
-        return __Reference_get((__Reference_Shared) reference);
+        return __Reference_get((__Reference_Shared)reference);
     }
 
     size_t size() const {
-        return __Reference_get_size((__Reference_Shared) reference);
+        return __Reference_get_size((__Reference_Shared)reference);
     }
 
     bool empty() const {
@@ -342,18 +342,18 @@ public:
     }
 
     Reference operator[](size_t i) const {
-        return __Reference_get_element((__Reference_Shared) reference, i);
+        return __Reference_get_element((__Reference_Shared)reference, i);
     }
 
     class iterator {
 
-        Reference & reference;
+        Reference& reference;
         size_t i;
 
     public:
 
-        iterator(Reference & reference, size_t i):
-            reference{reference}, i{i} {}
+        iterator(Reference& reference, size_t i) :
+            reference{ reference }, i{ i } {}
 
         size_t operator++() {
             return i++;
@@ -400,43 +400,43 @@ class Function {
 public:
 
     using Filter = bool (*)(Reference const& args);
-    using Body = Reference (*)(Reference const& args);
+    using Body = Reference(*)(Reference const& args);
 
     template<Filter f>
     static bool filter(__Reference_Shared args) {
-        Reference r{(__Reference_Owned) args};
+        Reference r{ (__Reference_Owned)args };
         bool b = f(r);
-        r = (Reference) NULL;
+        r = (Reference)NULL;
         return b;
     }
 
     template<Body f>
     static __Reference_Owned body(__Reference_Shared args) {
-        Reference r{(__Reference_Owned) args};
+        Reference r{ (__Reference_Owned)args };
         __Reference_Owned o = f(r);
-        r = (Reference) NULL;
+        r = (Reference)NULL;
         return o;
     }
 
 protected:
 
-    __Function_Stack & stack;
+    __Function_Stack& stack;
 
 public:
 
-    Function(__Function_Stack & function):
-        stack{function} {}
+    Function(__Function_Stack& function) :
+        stack{ function } {}
 
     operator __Function_Stack() const {
         return stack;
     }
 
-    void push(__FunctionBody body, __FunctionFilter filter = nullptr, std::vector<Reference> && references = {}) {
-        __Function_push(&stack, body, filter, (__Reference_Owned *) references.data(), references.size());
+    void push(__FunctionBody body, __FunctionFilter filter = nullptr, std::vector<Reference>&& references = {}) {
+        __Function_push(&stack, body, filter, (__Reference_Owned*)references.data(), references.size());
     }
 
     template<Body body, Filter filter = nullptr>
-    void push(std::vector<Reference> && references = {}) {
+    void push(std::vector<Reference>&& references = {}) {
         push(Function::body<body>, Function::filter<filter>, references);
     }
 
@@ -455,7 +455,7 @@ public:
 };
 
 template<typename ArrayType, typename... Components>
-class Type: public Components... {
+class Type : public Components... {
 
 private:
 
@@ -506,14 +506,12 @@ private:
         iterate(components...);
     }
 
-protected:
+public:
 
     static void __GC_iterator(void* object) {
         auto ptr = reinterpret_cast<Type<ArrayType, Components...>*>(object);
         iterate(static_cast<Components*>(ptr)...);
     }
-
-public:
 
     inline static VirtualTable<size> const vtable = create_vtable();
 

@@ -20,7 +20,7 @@ __GC_Roots* __GC_init_roots(size_t c) {
     roots->capacity = c;
     roots->free_list = NULL;
 
-    __GC_Reference* tab = (__GC_Reference*) roots+1;
+    __GC_Reference* tab = (__GC_Reference*)roots + 1;
     tab[0].type = NONE;
     tab[0].none.size = c;
     tab[0].none.next = NULL;
@@ -28,14 +28,15 @@ __GC_Roots* __GC_init_roots(size_t c) {
     return roots;
 }
 
-__GC_Reference *__GC_alloc_references(size_t n) {
+__GC_Reference* __GC_alloc_references(size_t n) {
     __GC_Roots* roots = __GC_roots;
     __GC_Reference** reference_ptr = &roots->free_list;
 
     while (!(*reference_ptr)->type == NONE && (*reference_ptr)->none.size >= n) {
         if ((*reference_ptr)->none.next != NULL) {
             reference_ptr = &(*reference_ptr)->none.next;
-        } else {
+        }
+        else {
             if (roots->next == NULL)
                 roots->next = __GC_init_roots(roots->capacity * 2 > n ? roots->capacity * 2 : n);
 
@@ -45,11 +46,12 @@ __GC_Reference *__GC_alloc_references(size_t n) {
     }
 
     if ((*reference_ptr)->none.size > n) {
-        (*reference_ptr+n)->none.size = (*reference_ptr)->none.size - n;
-        (*reference_ptr+n)->none.next = (*reference_ptr)->none.next;
+        (*reference_ptr + n)->none.size = (*reference_ptr)->none.size - n;
+        (*reference_ptr + n)->none.next = (*reference_ptr)->none.next;
 
-        *reference_ptr = (*reference_ptr+n)->none.next;
-    } else {
+        *reference_ptr = (*reference_ptr + n)->none.next;
+    }
+    else {
         *reference_ptr = (*reference_ptr)->none.next;
     }
     return *reference_ptr;
@@ -57,7 +59,7 @@ __GC_Reference *__GC_alloc_references(size_t n) {
 
 void __GC_free_reference(__GC_Reference* reference) {
     struct __GC_Roots* roots = __GC_roots;
-    while (!((__GC_Reference*) roots < reference && reference < ((__GC_Reference*) roots+1) + roots->capacity))
+    while (!((__GC_Reference*)roots < reference && reference < ((__GC_Reference*)roots + 1) + roots->capacity))
         roots = roots->next;
 
     reference->type = NONE;
@@ -84,7 +86,7 @@ void* __GC_alloc_object(size_t size) {
 }
 
 void __GC_iterate(__GC_Iterator iterator, void* object) {
-    __GC_Element* element = ((__GC_Element*) object) - 1;
+    __GC_Element* element = ((__GC_Element*)object) - 1;
 
     if (!element->iterated) {
         iterator(object);
@@ -94,26 +96,26 @@ void __GC_iterate(__GC_Iterator iterator, void* object) {
 
 void __GC_Reference_iterator(__GC_Reference* reference) {
     switch (reference->type) {
-        case DATA:
-            __GC_iterate(reference->data.virtual_table->info.gc_iterator, reference->data.data.ptr);
-            break;
-        case SYMBOL:
-            __GC_iterate(reference->symbol->virtual_table->info.gc_iterator, reference->symbol->data.ptr);
-            break;
-        case PROPERTY:
-            __GC_iterate(reference->property.parent.virtual_table->info.gc_iterator, reference->property.parent.data.ptr);
-            break;
-        case ARRAY:
-            __GC_iterate(reference->array.array.virtual_table->info.gc_iterator, reference->array.array.data.ptr);
-            break;
-        case TUPLE: {
-            size_t i;
-            for (i = 0; i < reference->tuple.size; ++i)
-                __GC_Reference_iterator(&reference->tuple.references[i]);
-            break;
-        }
-        default:
-            break;
+    case DATA:
+        __GC_iterate(reference->data.virtual_table->info.gc_iterator, reference->data.data.ptr);
+        break;
+    case SYMBOL:
+        __GC_iterate(reference->symbol->virtual_table->info.gc_iterator, reference->symbol->data.ptr);
+        break;
+    case PROPERTY:
+        __GC_iterate(reference->property.parent.virtual_table->info.gc_iterator, reference->property.parent.data.ptr);
+        break;
+    case ARRAY:
+        __GC_iterate(reference->array.array.virtual_table->info.gc_iterator, reference->array.array.data.ptr);
+        break;
+    case TUPLE: {
+        size_t i;
+        for (i = 0; i < reference->tuple.size; ++i)
+            __GC_Reference_iterator(&reference->tuple.references[i]);
+        break;
+    }
+    default:
+        break;
     }
 }
 
@@ -125,18 +127,20 @@ void __GC_collect(void) {
 
         size_t i;
         for (i = 0; i < (*roots_ptr)->capacity;) {
-            __GC_Reference* reference = ((__GC_Reference*) (*roots_ptr)+1) + i;
+            __GC_Reference* reference = ((__GC_Reference*)(*roots_ptr) + 1) + i;
             if (reference->type == NONE) {
                 if (last_free != NULL) {
                     last_free->none.size++;
                     ++i;
-                } else {
+                }
+                else {
                     *reference_ptr = reference;
                     reference_ptr = &(*reference_ptr)->none.next;
                     last_free = reference;
                     i += reference->none.size;
                 }
-            } else {
+            }
+            else {
                 __GC_Reference_iterator(reference);
                 last_free = NULL;
                 ++i;
@@ -147,7 +151,8 @@ void __GC_collect(void) {
             __GC_Roots* tmp = *roots_ptr;
             *roots_ptr = (*roots_ptr)->next;
             free(tmp);
-        } else {
+        }
+        else {
             roots_ptr = &(*roots_ptr)->next;
         }
     }
@@ -158,7 +163,8 @@ void __GC_collect(void) {
             __GC_Element* next = (*ptr)->next;
             free(*ptr);
             *ptr = next;
-        } else {
+        }
+        else {
             (*ptr)->iterated = false;
             ptr = &(*ptr)->next;
         }
