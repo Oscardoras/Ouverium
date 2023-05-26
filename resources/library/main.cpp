@@ -2,7 +2,7 @@
 
 #include "gc.h"
 #include "function.h"
-#include "type.h"
+#include "type.hpp"
 
 __VirtualTable_size(3) table;
 

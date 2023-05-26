@@ -30,6 +30,7 @@ typedef struct __Function {
  * Represents a function stack.
 */
 typedef __Function* __Function_Stack;
+#define __Component___Function_Stack_index 0
 
 
 __Function_Stack __Function_new();
@@ -43,74 +44,6 @@ void __Function_free(__Function_Stack* function);
 
 #ifdef __cplusplus
 }
-#endif
-
-
-#ifdef __cplusplus
-
-#include <cstdlib>
-#include <vector>
-
-
-class Function {
-
-public:
-
-    using Filter = bool (*)(Reference const& args);
-    using Body = Reference (*)(Reference const& args);
-
-    template<Filter f>
-    static bool filter(__Reference_Shared args) {
-        Reference r{(__Reference_Owned) args};
-        bool b = f(r);
-        r = (Reference) NULL;
-        return b;
-    }
-
-    template<Body f>
-    static __Reference_Owned body(__Reference_Shared args) {
-        Reference r{(__Reference_Owned) args};
-        __Reference_Owned o = f(r);
-        r = (Reference) NULL;
-        return o;
-    }
-
-protected:
-
-    __Function_Stack & stack;
-
-public:
-
-    Function(__Function_Stack & function):
-        stack{function} {}
-
-    operator __Function_Stack() const {
-        return stack;
-    }
-
-    void push(__FunctionBody body, __FunctionFilter filter = nullptr, std::vector<Reference> && references = {}) {
-        __Function_push(&stack, body, filter, (__Reference_Owned *) references.data(), references.size());
-    }
-
-    template<Body body, Filter filter = nullptr>
-    void push(std::vector<Reference> && references = {}) {
-        push(Function::body<body>, Function::filter<filter>, references);
-    }
-
-    void pop() {
-        __Function_pop(&stack);
-    }
-
-    Reference operator()(Reference const& args) const {
-        return std::move(Reference(__Function_eval(stack, args)));
-    }
-
-    void clear() {
-        __Function_free(&stack);
-    }
-
-};
-
 #endif
 
 

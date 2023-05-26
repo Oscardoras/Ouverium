@@ -95,16 +95,16 @@ void __GC_iterate(__GC_Iterator iterator, void* object) {
 void __GC_Reference_iterator(__GC_Reference* reference) {
     switch (reference->type) {
         case DATA:
-            __GC_iterate(reference->data.virtual_table->gc_iterator, reference->data.data.ptr);
+            __GC_iterate(reference->data.virtual_table->info.gc_iterator, reference->data.data.ptr);
             break;
         case SYMBOL:
-            __GC_iterate(reference->symbol->virtual_table->gc_iterator, reference->symbol->data.ptr);
+            __GC_iterate(reference->symbol->virtual_table->info.gc_iterator, reference->symbol->data.ptr);
             break;
         case PROPERTY:
-            __GC_iterate(reference->property.parent.virtual_table->gc_iterator, reference->property.parent.data.ptr);
+            __GC_iterate(reference->property.parent.virtual_table->info.gc_iterator, reference->property.parent.data.ptr);
             break;
         case ARRAY:
-            __GC_iterate(reference->array.array.virtual_table->gc_iterator, reference->array.array.data.ptr);
+            __GC_iterate(reference->array.array.virtual_table->info.gc_iterator, reference->array.array.data.ptr);
             break;
         case TUPLE: {
             size_t i;

@@ -1,7 +1,7 @@
 #ifndef __VIRTUAL_TABLES_H__
 #define __VIRTUAL_TABLES_H__
 
-#include "reference.h"
+#include "function.h"
 
 
 #ifdef __cplusplus

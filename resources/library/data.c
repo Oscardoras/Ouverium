@@ -51,8 +51,8 @@ void* __UnknownData_get_component_at(size_t index, __UnknownData data) {
 
 __ArrayInfo __UnknownData_get_array(__UnknownData data) {
     __ArrayInfo array = {
-        .vtable = data.virtual_table->array.vtable,
-        .array = (__Array*) ((char*) data.data.ptr) + data.virtual_table->array.offset
+        .vtable = data.virtual_table->info.array_vtable,
+        .array = __UnknownData_get_component(__Array, data)
     };
     return array;
 }
