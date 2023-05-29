@@ -22,7 +22,7 @@ namespace CTranslator {
             virtual ~Type() = default;
         };
         std::shared_ptr<Type> Unknown = std::make_shared<Type>();
-        struct Structure: public Type {
+        struct Class: public Type {
             std::set<std::weak_ptr<Component>> components;
         };
         inline std::shared_ptr<Type> Bool = std::make_shared<Type>();

@@ -64,10 +64,10 @@ namespace Analyzer {
     };
     struct FunctionRun: public AnalyzedExpression {
 
-        FunctionDefinition& function;
+        std::weak_ptr<FunctionDefinition> function;
         std::shared_ptr<AnalyzedExpression> arguments;
 
-        FunctionRun(FunctionDefinition & function, std::shared_ptr<AnalyzedExpression> arguments = nullptr):
+        FunctionRun(std::weak_ptr<FunctionDefinition> function, std::shared_ptr<AnalyzedExpression> arguments = nullptr):
             function(function), arguments(arguments) {}
 
     };

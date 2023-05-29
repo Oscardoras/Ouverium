@@ -223,7 +223,7 @@ namespace Analyzer {
 
         class Analyzer: public ::Analyzer::Analyzer {
 
-        public:
+        protected:
 
             MetaData meta_data;
             std::map<std::shared_ptr<Parser::FunctionDefinition>, CacheContext> cache_contexts;
@@ -231,13 +231,21 @@ namespace Analyzer {
             class Error: public std::exception {};
             class FunctionArgumentsError: public Error {};
 
-            struct Analyse {
+            struct Analysis {
                 M<Reference> references;
                 std::shared_ptr<AnalyzedExpression> expression;
             };
 
-            std::pair<M<Reference>, FunctionPointer> call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, M<Reference> const& arguments);
-            Analyse execute(Context & context, bool potential, std::shared_ptr<Parser::Expression> expression);
+            using It = std::map<std::string, M<SymbolReference>>::iterator;
+
+            void set_references(Context & function_context, std::shared_ptr<Parser::Expression> parameters, M<Reference> const& reference);
+            std::shared_ptr<AnalyzedExpression> set_references(Context & context, bool potential, Context & function_context, std::map<std::shared_ptr<Parser::Expression>, Analyzer::Analysis> & computed, std::shared_ptr<Parser::Expression> parameters, std::shared_ptr<Parser::Expression> arguments);
+            void call_reference(M<Reference> & references, bool potential, Function const& function, Context function_context, It const it, It const end);
+
+        public:
+
+            Analysis call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, M<std::list<Function>> const& all_functions, std::shared_ptr<Parser::Expression> arguments);
+            Analysis execute(Context & context, bool potential, std::shared_ptr<Parser::Expression> expression);
 
             virtual std::shared_ptr<AnalyzedExpression> analyze(std::shared_ptr<Parser::Expression> expression) const override;
 

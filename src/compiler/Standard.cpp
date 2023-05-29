@@ -109,7 +109,7 @@ namespace Analyzer {
         }
 
 
-        void set_references(Context & function_context, std::shared_ptr<Parser::Expression> parameters, M<Reference> const& reference) {
+        void Analyzer::set_references(Context & function_context, std::shared_ptr<Parser::Expression> parameters, M<Reference> const& reference) {
             if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(parameters)) {
                 auto & lvalue = function_context[symbol->name];
                 auto rvalue = reference.to_symbol_reference(function_context);
@@ -141,10 +141,10 @@ namespace Analyzer {
             } else throw FunctionArgumentsError();
         }
 
-        std::shared_ptr<AnalyzedExpression> set_references(MetaData & meta_data, Context & context, bool potential, Context & function_context, std::map<std::shared_ptr<Parser::Expression>, Analyse> & computed, std::shared_ptr<Parser::Expression> parameters, std::shared_ptr<Parser::Expression> arguments) {
+        std::shared_ptr<AnalyzedExpression> Analyzer::set_references(Context & context, bool potential, Context & function_context, std::map<std::shared_ptr<Parser::Expression>, Analyzer::Analysis> & computed, std::shared_ptr<Parser::Expression> parameters, std::shared_ptr<Parser::Expression> arguments) {
             if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(parameters)) {
                 auto it = computed.find(arguments);
-                auto analyse = it != computed.end() ? it->second : (computed[arguments] = execute(meta_data, context, potential, arguments));
+                auto analyse = it != computed.end() ? it->second : (computed[arguments] = execute(context, potential, arguments));
                 auto & lvalue = function_context[symbol->name];
                 auto rvalue = analyse.references.to_symbol_reference(context);
                 lvalue.add(rvalue);
@@ -154,12 +154,12 @@ namespace Analyzer {
                     if (p_tuple->objects.size() == a_tuple->objects.size()) {
                         std::vector<std::shared_ptr<AnalyzedExpression>> analyzed_expression;
                         for (size_t i = 0; i < p_tuple->objects.size(); i++)
-                            analyzed_expression.push_back(set_references(meta_data, context, potential, function_context, computed, p_tuple->objects[i], a_tuple->objects[i]));
+                            analyzed_expression.push_back(set_references(context, potential, function_context, computed, p_tuple->objects[i], a_tuple->objects[i]));
                         return std::make_shared<Tuple>(analyzed_expression);
                     } else throw FunctionArgumentsError();
                 } else {
                     auto it = computed.find(arguments);
-                    auto a = it != computed.end() ? it->second : (computed[arguments] = execute(meta_data, context, potential, arguments));
+                    auto a = it != computed.end() ? it->second : (computed[arguments] = execute(context, potential, arguments));
                     set_references(function_context, parameters, a.references);
                     return a.expression;
                 }
@@ -182,16 +182,14 @@ namespace Analyzer {
             } else throw FunctionArgumentsError();
         }
 
-        using It = std::map<std::string, M<SymbolReference>>::iterator;
-
-        void call_reference(MetaData & meta_data, M<Reference> & references, bool potential, Function const& function, Context function_context, It const it, It const end) {
+        void Analyzer::call_reference(M<Reference> & references, bool potential, Function const& function, Context function_context, It const it, It const end) {
             if (it != end) {
                 bool success = false;
                 for (auto const& m1 : it->second) {
                     function_context[it->first] = SymbolReference(m1.get());
                     It copy = it;
                     try {
-                        call_reference(meta_data, references, potential, function, function_context, copy++, end);
+                        call_reference(references, potential, function, function_context, copy++, end);
                         success = true;
                     } catch (FunctionArgumentsError & e) {}
                 }
@@ -203,7 +201,7 @@ namespace Analyzer {
                 if (auto custom = std::get_if<std::shared_ptr<Parser::FunctionDefinition>>(&function.ptr)) {
                     bool filter = false;
                     if ((*custom)->filter != nullptr) {
-                        auto a = execute(meta_data, function_context, potential, (*custom)->filter);
+                        auto a = execute(function_context, potential, (*custom)->filter);
                         for (auto reference : a.references)
                             for (auto data : reference.to_data(function_context)) {
                                 if (auto c = std::get_if<bool>(&data)) {
@@ -216,7 +214,7 @@ namespace Analyzer {
                     } else filter = true;
 
                     if (filter) {
-                        auto a = execute(meta_data, function_context, potential, (*custom)->body);
+                        auto a = execute(function_context, potential, (*custom)->body);
                         r.add(a.references);
                     } else throw FunctionArgumentsError();
                 } else if (auto system = std::get_if<SystemFunction>(&function.ptr))
@@ -226,10 +224,10 @@ namespace Analyzer {
             }
         }
 
-        Analyse Analyzer::call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, M<std::list<Function>> const& all_functions, std::shared_ptr<Parser::Expression> arguments) {
-            Analyse analyse;
+        Analyzer::Analysis Analyzer::call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, M<std::list<Function>> const& all_functions, std::shared_ptr<Parser::Expression> arguments) {
+            Analysis analysis;
 
-            std::map<std::shared_ptr<Parser::Expression>, Analyse> computed;
+            std::map<std::shared_ptr<Parser::Expression>, Analysis> computed;
             for (auto const& functions : all_functions) {
                 for (auto const& function : functions) {
                     try {
@@ -243,9 +241,9 @@ namespace Analyzer {
                         else if (auto system = std::get_if<SystemFunction>(&function.ptr))
                             parameters = (*system).parameters;
 
-                        set_references(meta_data, context, potential, function_context, computed, parameters, arguments);
+                        set_references(context, potential, function_context, computed, parameters, arguments);
 
-                        call_reference(meta_data, analyse, potential, function, function_context, function_context.begin(), function_context.end());
+                        call_reference(analysis, potential, function, function_context, function_context.begin(), function_context.end());
                     } catch (FunctionArgumentsError & e) {}
                 }
 
@@ -253,10 +251,10 @@ namespace Analyzer {
                     position->notify_error("The arguments given to the function don't match");
             }
 
-            return analyse;
+            return analysis;
         }
 
-        Analyzer::Analyse Analyzer::execute(MetaData & meta_data, Context & context, bool potential, std::shared_ptr<Parser::Expression> expression) {
+        Analyzer::Analysis Analyzer::execute(Context & context, bool potential, std::shared_ptr<Parser::Expression> expression) {
             if (auto function_call = std::dynamic_pointer_cast<Parser::FunctionCall>(expression)) {
                 M<Reference> m;
                 std::vector<FunctionPointer> called_functions;
@@ -275,13 +273,13 @@ namespace Analyzer {
                 }
 
                 if (called_functions.size() == 1) {
-                    return Analyse {
+                    return Analysis {
                         .references = m,
                         .expression = std::make_shared<FunctionRun>(, )
                     };
                 }
 
-                return Analyse {
+                return Analysis {
                     .references = m,
                     .expression = std::make_shared<Property>(a.expression)
                 };
@@ -313,34 +311,34 @@ namespace Analyzer {
                     }
                 }
 
-                return Analyse {
+                return Analysis {
                     .references = m,
                     .expression = std::make_shared<Property>(a.expression)
                 };
             } else if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(expression)) {
                 auto data = get_symbol(symbol->name);
                 if (auto b = std::get_if<bool>(&data)) {
-                    return Analyse {
+                    return Analysis {
                         .references = Reference(Data(*b)),
                         .expression = std::make_shared<Value>(*b)
                     };
                 } else if (auto l = std::get_if<long>(&data)) {
-                    return Analyse {
+                    return Analysis {
                         .references = Reference(Data(*l)),
                         .expression = std::make_shared<Value>(*l)
                     };
                 } else if (auto d = std::get_if<double>(&data)) {
-                    return Analyse {
+                    return Analysis {
                         .references = Reference(Data(*d)),
                         .expression = std::make_shared<Value>(*d)
                     };
                 } else if (auto str = std::get_if<std::string>(&data)) {
-                    return Analyse {
+                    return Analysis {
                         .references = Reference(Data(context.new_object(*str))),
                         .expression = std::make_shared<Value>(*str)
                     };
                 } else {
-                    return Analyse {
+                    return Analysis {
                         .references = context[symbol->name],
                         .expression = std::make_shared<Symbol>(symbol->name)
                     };
@@ -353,7 +351,7 @@ namespace Analyzer {
                     reference.push_back(a.references);
                     analyzed_expression.push_back(a.expression);
                 }
-                return Analyse {
+                return Analysis {
                     .references = Reference(reference),
                     .expression = std::make_shared<Tuple>(analyzed_expression)
                 };

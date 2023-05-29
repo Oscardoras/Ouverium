@@ -10,48 +10,18 @@
 
 namespace CTranslator {
 
-    std::weak_ptr<Structures::Type> get_type(std::set<std::weak_ptr<Analyzer::Type>> types) {
-        if (types.size() > 1)
-            return Structures::Unknown;
+    struct CorrespondanceTable: public std::map<std::shared_ptr<Analyzer::Type>, std::shared_ptr<Structures::Type>> {
 
-        auto type = *types.begin();
-        if (type.lock() == Analyzer::Bool)
-            return Structures::Bool;
-        if (type.lock() == Analyzer::Char)
-            return Structures::Char;
-        if (type.lock() == Analyzer::Int)
-            return Structures::Int;
-        if (type.lock() == Analyzer::Float)
-            return Structures::Float;
-
-
-    }
-
-    Structures::Structure create_struct(Analyzer::Structure const& structure) {
-        Structures::Structure s;
-
-        for (auto const& pair : structure.properties) {
-            if (pair.second.size() == 1) {
-                auto ref = *pair.second.begin();
-                if (ref.get() == Analyzer::MetaData::Pointer)
-                    s.properties[pair.first] = Structures::Pointer;
-                else if (ref.get() == Analyzer::MetaData::Bool)
-                    s.properties[pair.first] = Structures::Bool;
-                else if (ref.get() == Analyzer::MetaData::Char)
-                    s.properties[pair.first] = Structures::Char;
-                else if (ref.get() == Analyzer::MetaData::Int)
-                    s.properties[pair.first] = Structures::Int;
-                else if (ref.get() == Analyzer::MetaData::Float)
-                    s.properties[pair.first] = Structures::Float;
-            } else {
-                s.properties[pair.first] = Structures::Unknown;
-            }
+        CorrespondanceTable() {
+            this->operator[](Analyzer::Bool) = Structures::Bool;
+            this->operator[](Analyzer::Char) = Structures::Char;
+            this->operator[](Analyzer::Int) = Structures::Int;
+            this->operator[](Analyzer::Float) = Structures::Float;
         }
 
-        return s;
-    }
+    };
 
-    std::pair<std::vector<std::shared_ptr<Structures::Component>>, std::vector<std::shared_ptr<Structures::Structure>>> create_structures(std::vector<std::shared_ptr<Analyzer::Structure>> structures) {
+    std::pair<std::set<std::shared_ptr<Structures::Component>>, std::set<std::shared_ptr<Structures::Class>>> create_structures(std::vector<std::shared_ptr<Analyzer::Structure>> structures) {
 
         std::map<std::pair<std::string, std::weak_ptr<Analyzer::Type>>, std::set<std::shared_ptr<Analyzer::Structure>>> properties;
         for (auto const& s : structures) {
@@ -67,20 +37,32 @@ namespace CTranslator {
             groups[p.second][p.first.first] = p.first.second;
         }
 
-        std::map<std::map<std::string, std::weak_ptr<Analyzer::Type>>, std::set<std::shared_ptr<Analyzer::Structure>>> components;
+        std::map<std::map<std::string, std::weak_ptr<Analyzer::Type>>, std::set<std::shared_ptr<Analyzer::Structure>>> compos;
         for (auto const& g : groups) {
-            components[g.second] = g.first;
+            compos[g.second] = g.first;
         }
 
-        std::vector<Structures::Structure> structs;
-        for (auto const& c : components) {
-            Structures::Structure structure;
+        CorrespondanceTable map;
+        std::set<std::shared_ptr<Structures::Component>> components;
+        std::map<std::shared_ptr<Analyzer::Structure>, std::set<std::weak_ptr<Structures::Component>>> used_components;
+        for (auto const& c : compos) {
+            auto component = std::make_shared<Structures::Component>();
             for (auto const& p : c.first) {
-                structure.properties[p.first];
+                component->properties[p.first];
             }
-            structs.push_back(structure);
+            components.insert(component);
+
+            for (auto const& s : c.second) {
+                used_components[s].insert(component);
+            }
         }
-        for (auto const& s : structures)
+        std::set<std::shared_ptr<Structures::Class>> classes;
+        for (auto const& uc : used_components) {
+            auto cl = std::make_shared<Structures::Class>();
+            cl->components = uc.second;
+            classes.insert(cl);
+            map[uc.first] = cl;
+        }
     }
 
     void get_instructions(std::shared_ptr<Parser::Expression> expression, Analyzer::MetaData & meta, Instructions & instructions, References & references) {
@@ -143,26 +125,18 @@ namespace CTranslator {
                 return r;
             }
         } else if (auto function_run = std::dynamic_pointer_cast<Analyzer::FunctionRun>(expression)) {
-            function_run->
-            if (auto f = std::get_if<std::shared_ptr<FunctionDefinition>>(&*link.begin())) {
+            auto r = std::make_shared<Structures::FunctionCall>(Structures::FunctionCall {
+                .function = function_run->function
+            });
 
-                auto r = std::make_shared<Structures::FunctionCall>(Structures::FunctionCall {
-                    .function = get_expression(function_call->function, meta, instructions, references)
-                });
-
-                if (std::dynamic_pointer_cast<Parser::Tuple>((*f)->parameters)) {
-                    if (auto args = std::dynamic_pointer_cast<Parser::Tuple>(function_call->arguments)) {
-                        for (auto const& o : args->objects)
-                            r->parameters.push_back(get_expression(o, meta, instructions, references));
-                    }
-                } else {
-                    r->parameters.push_back(get_expression(function_call->arguments, meta, instructions, references));
-                }
-
-                return r;
-            } else if (auto f = std::get_if<Analyzer::SystemFunction>(&*link.begin())) {
-                return eval_system_function(*f, function_call->arguments, meta, instructions, references);
+            if (auto args = std::dynamic_pointer_cast<Analyzer::Tuple>(function_run->arguments)) {
+                for (auto const& o : args->objects)
+                    r->parameters.push_back(get_expression(o, instructions));
+            } else {
+                r->parameters.push_back(get_expression(function_run->arguments, instructions));
             }
+
+            return r;
         } else if (auto function_definition = std::dynamic_pointer_cast<FunctionDefinition>(expression)) {
             Structures::FunctionDefinition::Parameters parameters;
             if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(function_definition->parameters)) {
