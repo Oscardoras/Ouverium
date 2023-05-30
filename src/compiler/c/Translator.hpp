@@ -11,10 +11,17 @@
 
 namespace CTranslator {
 
-    struct MetaData {
-        std::vector<Structures::Structure> structures;
-        std::vector<Structures::FunctionDefinition> functions;
+    struct CorrespondanceTable: public std::map<std::shared_ptr<Analyzer::Type>, std::shared_ptr<Structures::Type>> {
+
+        CorrespondanceTable() {
+            this->operator[](Analyzer::Bool) = Structures::Bool;
+            this->operator[](Analyzer::Char) = Structures::Char;
+            this->operator[](Analyzer::Int) = Structures::Int;
+            this->operator[](Analyzer::Float) = Structures::Float;
+        }
+
     };
+
     using Instructions = std::vector<std::shared_ptr<Structures::Instruction>>;
 
     Structures::Structure create_struct(Analyzer::Structure const& structure);

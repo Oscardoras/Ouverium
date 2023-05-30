@@ -10,59 +10,53 @@
 
 namespace CTranslator {
 
-    struct CorrespondanceTable: public std::map<std::shared_ptr<Analyzer::Type>, std::shared_ptr<Structures::Type>> {
+    std::pair<std::set<std::shared_ptr<Structures::Component>>, std::set<std::shared_ptr<Structures::Class>>> create_structures(std::vector<std::shared_ptr<Analyzer::Structure>> structures, CorrespondanceTable & table) {
+        using AnalyzedProperty = std::pair<std::string, std::set<std::weak_ptr<Analyzer::Type>>>;
+        using AnalyzedProperties = std::map<std::string, std::set<std::weak_ptr<Analyzer::Type>>>;
 
-        CorrespondanceTable() {
-            this->operator[](Analyzer::Bool) = Structures::Bool;
-            this->operator[](Analyzer::Char) = Structures::Char;
-            this->operator[](Analyzer::Int) = Structures::Int;
-            this->operator[](Analyzer::Float) = Structures::Float;
-        }
-
-    };
-
-    std::pair<std::set<std::shared_ptr<Structures::Component>>, std::set<std::shared_ptr<Structures::Class>>> create_structures(std::vector<std::shared_ptr<Analyzer::Structure>> structures) {
-
-        std::map<std::pair<std::string, std::weak_ptr<Analyzer::Type>>, std::set<std::shared_ptr<Analyzer::Structure>>> properties;
+        std::map<AnalyzedProperty, std::set<std::shared_ptr<Analyzer::Structure>>> properties;
         for (auto const& s : structures) {
             for (auto const& p : s->properties) {
-                for (auto const& t : p.second) {
-                    properties[{p.first, t}].insert(s);
-                }
+                properties[p].insert(s);
             }
         }
 
-        std::map<std::set<std::shared_ptr<Analyzer::Structure>>, std::map<std::string, std::weak_ptr<Analyzer::Type>>> groups;
+        std::map<std::set<std::shared_ptr<Analyzer::Structure>>, AnalyzedProperties> groups;
         for (auto const& p : properties) {
             groups[p.second][p.first.first] = p.first.second;
         }
 
-        std::map<std::map<std::string, std::weak_ptr<Analyzer::Type>>, std::set<std::shared_ptr<Analyzer::Structure>>> compos;
+        std::map<AnalyzedProperties, std::set<std::shared_ptr<Analyzer::Structure>>> compos;
         for (auto const& g : groups) {
             compos[g.second] = g.first;
         }
 
-        CorrespondanceTable map;
+
+        std::set<std::shared_ptr<Structures::Class>> classes;
+        for (auto const& s : structures) {
+            auto cl = std::make_shared<Structures::Class>();
+            classes.insert(cl);
+            table[s] = cl;
+        }
+
         std::set<std::shared_ptr<Structures::Component>> components;
-        std::map<std::shared_ptr<Analyzer::Structure>, std::set<std::weak_ptr<Structures::Component>>> used_components;
         for (auto const& c : compos) {
             auto component = std::make_shared<Structures::Component>();
             for (auto const& p : c.first) {
-                component->properties[p.first];
+                if (p.second.size() == 1) {
+                    component->properties[p.first] = table[p.second.begin()->lock()];
+                } else {
+                    component->properties[p.first] = Structures::Unknown;
+                }
             }
             components.insert(component);
 
             for (auto const& s : c.second) {
-                used_components[s].insert(component);
+                std::static_pointer_cast<Structures::Class>(table[s])->components.insert(component);
             }
         }
-        std::set<std::shared_ptr<Structures::Class>> classes;
-        for (auto const& uc : used_components) {
-            auto cl = std::make_shared<Structures::Class>();
-            cl->components = uc.second;
-            classes.insert(cl);
-            map[uc.first] = cl;
-        }
+
+        return {components, classes};
     }
 
     void get_instructions(std::shared_ptr<Parser::Expression> expression, Analyzer::MetaData & meta, Instructions & instructions, References & references) {

@@ -12,14 +12,12 @@ namespace CTranslator {
 
     namespace Structures {
 
-        using Declarations = std::map<std::string, std::weak_ptr<Type>>;
-
-
-        struct Component {
-            Declarations properties;
-        };
         struct Type {
             virtual ~Type() = default;
+        };
+        using Declarations = std::map<std::string, std::weak_ptr<Type>>;
+        struct Component {
+            Declarations properties;
         };
         std::shared_ptr<Type> Unknown = std::make_shared<Type>();
         struct Class: public Type {
