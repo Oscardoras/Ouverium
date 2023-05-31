@@ -1,5 +1,5 @@
-#ifndef __COMPILER_C_STRUCTURES_HPP__
-#define __COMPILER_C_STRUCTURES_HPP__
+#ifndef __COMPILER_C_CODE_HPP__
+#define __COMPILER_C_CODE_HPP__
 
 #include <memory>
 #include <string>
@@ -8,9 +8,9 @@
 #include "../Analyzer.hpp"
 
 
-namespace CTranslator {
+namespace Translator {
 
-    namespace Structures {
+    namespace CStandard {
 
         struct Type {
             virtual ~Type() = default;
