@@ -1,5 +1,5 @@
-#ifndef __COMPILER_ANALYZEDEXPRESSIONS_HPP__
-#define __COMPILER_ANALYZEDEXPRESSIONS_HPP__
+#ifndef __COMPILER_EXPRESSIONS_HPP__
+#define __COMPILER_EXPRESSIONS_HPP__
 
 #include <list>
 #include <map>
@@ -15,13 +15,13 @@ namespace Analyzer {
     /**
      * Represents an analyzed expression, must be inherited.
     */
-    struct AnalyzedExpression {
+    struct Expression {
 
-        virtual ~AnalyzedExpression() = default;
+        virtual ~Expression() = default;
 
     protected:
 
-        AnalyzedExpression() = default;
+        Expression() = default;
 
     };
 
@@ -44,54 +44,56 @@ namespace Analyzer {
     struct FunctionDefinition {
 
         std::set<std::weak_ptr<Type>> return_type;
-        std::shared_ptr<AnalyzedExpression> parameters;
-        std::shared_ptr<AnalyzedExpression> filter;
-        std::shared_ptr<AnalyzedExpression> body;
+        std::shared_ptr<Expression> parameters;
+        std::shared_ptr<Expression> filter;
+        std::shared_ptr<Expression> body;
 
-        FunctionDefinition(std::set<std::weak_ptr<Type>> const& return_type = {}, std::shared_ptr<AnalyzedExpression> parameters = nullptr, std::shared_ptr<AnalyzedExpression> filter = nullptr, std::shared_ptr<AnalyzedExpression> body = nullptr):
+        FunctionDefinition(std::set<std::weak_ptr<Type>> const& return_type = {}, std::shared_ptr<Expression> parameters = nullptr, std::shared_ptr<Expression> filter = nullptr, std::shared_ptr<Expression> body = nullptr):
             return_type(return_type), parameters(parameters), filter(filter), body(body) {}
 
     };
 
+    using SystemFunction = std::string;
 
-    struct FunctionCall: public AnalyzedExpression {
 
-        std::shared_ptr<AnalyzedExpression> function;
-        std::shared_ptr<AnalyzedExpression> arguments;
+    struct FunctionCall: public Expression {
 
-        FunctionCall(std::shared_ptr<AnalyzedExpression> function = nullptr, std::shared_ptr<AnalyzedExpression> arguments = nullptr) {}
+        std::shared_ptr<Expression> function;
+        std::shared_ptr<Expression> arguments;
+
+        FunctionCall(std::shared_ptr<Expression> function = nullptr, std::shared_ptr<Expression> arguments = nullptr) {}
 
     };
-    struct FunctionRun: public AnalyzedExpression {
+    struct FunctionRun: public Expression {
 
-        std::weak_ptr<FunctionDefinition> function;
-        std::shared_ptr<AnalyzedExpression> arguments;
+        std::variant<std::weak_ptr<FunctionDefinition>, SystemFunction> function;
+        std::shared_ptr<Expression> arguments;
 
-        FunctionRun(std::weak_ptr<FunctionDefinition> function, std::shared_ptr<AnalyzedExpression> arguments = nullptr):
+        FunctionRun(std::weak_ptr<FunctionDefinition> function, std::shared_ptr<Expression> arguments = nullptr):
             function(function), arguments(arguments) {}
 
     };
 
-    struct Property: public AnalyzedExpression {
+    struct Property: public Expression {
 
-        std::shared_ptr<AnalyzedExpression> object;
+        std::shared_ptr<Expression> object;
         std::string name;
 
-        Property(std::shared_ptr<AnalyzedExpression> object = nullptr, std::string const& name = ""):
+        Property(std::shared_ptr<Expression> object = nullptr, std::string const& name = ""):
             object(object), name(name) {}
 
     };
 
-    struct Tuple: public AnalyzedExpression {
+    struct Tuple: public Expression {
 
-        std::vector<std::shared_ptr<AnalyzedExpression>> objects;
+        std::vector<std::shared_ptr<Expression>> objects;
 
-        Tuple(std::initializer_list<std::shared_ptr<AnalyzedExpression>> const& l = {}):
+        Tuple(std::initializer_list<std::shared_ptr<Expression>> const& l = {}):
             objects(l) {}
 
     };
 
-    struct Symbol: public AnalyzedExpression {
+    struct Symbol: public Expression {
 
         std::string name;
 
@@ -100,7 +102,7 @@ namespace Analyzer {
 
     };
 
-    struct Value: public AnalyzedExpression {
+    struct Value: public Expression {
 
         std::variant<char, bool, long, double, std::string> value;
 

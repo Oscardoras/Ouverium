@@ -34,10 +34,10 @@ namespace Translator {
 
             std::pair<std::set<std::shared_ptr<Component>>, std::set<std::shared_ptr<Class>>> create_structures(std::vector<std::shared_ptr<Analyzer::Structure>> structures);
 
-            std::shared_ptr<Expression> eval_system_function(Analyzer::Standard::SystemFunction function, std::shared_ptr<Parser::Expression> arguments, Instructions & instructions);
+            std::shared_ptr<Expression> eval_system_function(Analyzer::SystemFunction function, std::shared_ptr<Parser::Expression> arguments, Instructions & instructions);
 
-            void get_instructions(std::shared_ptr<Analyzer::AnalyzedExpression> expression, Instructions & instructions);
-            std::shared_ptr<Expression> get_expression(std::shared_ptr<Analyzer::AnalyzedExpression> expression, Instructions & instructions);
+            void get_instructions(std::shared_ptr<Analyzer::Expression> expression, Instructions & instructions);
+            std::shared_ptr<Expression> get_expression(std::shared_ptr<Analyzer::Expression> expression, Instructions & instructions);
 
         };
 

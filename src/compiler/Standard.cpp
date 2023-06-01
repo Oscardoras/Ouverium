@@ -141,7 +141,7 @@ namespace Analyzer {
             } else throw FunctionArgumentsError();
         }
 
-        std::shared_ptr<AnalyzedExpression> Analyzer::set_references(Context & context, bool potential, Context & function_context, std::map<std::shared_ptr<Parser::Expression>, Analyzer::Analysis> & computed, std::shared_ptr<Parser::Expression> parameters, std::shared_ptr<Parser::Expression> arguments) {
+        std::shared_ptr<Expression> Analyzer::set_references(Context & context, bool potential, Context & function_context, std::map<std::shared_ptr<Parser::Expression>, Analyzer::Analysis> & computed, std::shared_ptr<Parser::Expression> parameters, std::shared_ptr<Parser::Expression> arguments) {
             if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(parameters)) {
                 auto it = computed.find(arguments);
                 auto analyse = it != computed.end() ? it->second : (computed[arguments] = execute(context, potential, arguments));
@@ -152,7 +152,7 @@ namespace Analyzer {
             } else if (auto p_tuple = std::dynamic_pointer_cast<Parser::Tuple>(parameters)) {
                 if (auto a_tuple = std::dynamic_pointer_cast<Parser::Tuple>(arguments)) {
                     if (p_tuple->objects.size() == a_tuple->objects.size()) {
-                        std::vector<std::shared_ptr<AnalyzedExpression>> analyzed_expression;
+                        std::vector<std::shared_ptr<Expression>> analyzed_expression;
                         for (size_t i = 0; i < p_tuple->objects.size(); i++)
                             analyzed_expression.push_back(set_references(context, potential, function_context, computed, p_tuple->objects[i], a_tuple->objects[i]));
                         return std::make_shared<Tuple>(analyzed_expression);
@@ -345,7 +345,7 @@ namespace Analyzer {
                 }
             } else if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(expression)) {
                 std::vector<M<Reference>> reference;
-                std::vector<std::shared_ptr<AnalyzedExpression>> analyzed_expression;
+                std::vector<std::shared_ptr<Expression>> analyzed_expression;
                 for (auto e : tuple->objects) {
                     auto a = execute(context, potential, e);
                     reference.push_back(a.references);
@@ -358,7 +358,7 @@ namespace Analyzer {
             } else return {};
         }
 
-        std::shared_ptr<AnalyzedExpression> Analyzer::analyze(std::shared_ptr<Parser::Expression> expression) {
+        std::shared_ptr<Expression> Analyzer::analyze(std::shared_ptr<Parser::Expression> expression) {
             MetaData meta_data;
             GlobalContext context(meta_data);
 

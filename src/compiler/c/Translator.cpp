@@ -61,18 +61,18 @@ namespace Translator {
             return {components, classes};
         }
 
-        void Translator::get_instructions(std::shared_ptr<Analyzer::AnalyzedExpression> expression, Instructions & instructions) {
+        void Translator::get_instructions(std::shared_ptr<Analyzer::Expression> expression, Instructions & instructions) {
             if (auto exp = std::dynamic_pointer_cast<Instruction>(get_expression(expression, instructions)))
                 instructions.push_back(exp);
         }
 
-        std::shared_ptr<Expression> Translator::get_expression(std::shared_ptr<Analyzer::AnalyzedExpression> expression, Instructions & instructions) {
+        std::shared_ptr<Expression> Translator::get_expression(std::shared_ptr<Analyzer::Expression> expression, Instructions & instructions) {
             if (auto function_call = std::dynamic_pointer_cast<FunctionCall>(expression)) {
                 auto & link = meta.links[function_call];
                 if (link.size() == 1) {
                     if (auto f = std::get_if<std::shared_ptr<FunctionDefinition>>(&*link.begin())) {
 
-                        auto r = std::make_shared<Structures::FunctionCall>(Structures::FunctionCall {
+                        auto r = std::make_shared<FunctionCall>(FunctionCall {
                             .function = get_expression(function_call->function, meta, instructions, references)
                         });
 
@@ -90,8 +90,8 @@ namespace Translator {
                         return eval_system_function(*f, function_call->arguments, meta, instructions, references);
                     }
                 } else {
-                    auto r = std::make_shared<Structures::FunctionCall>(Structures::FunctionCall {
-                        .function = std::make_shared<Structures::VariableCall>(Structures::VariableCall {
+                    auto r = std::make_shared<FunctionCall>(FunctionCall {
+                        .function = std::make_shared<VariableCall>(VariableCall {
                             .name = "__Function_eval"
                         })
                     });
@@ -102,12 +102,12 @@ namespace Translator {
                     auto & type = meta.types[function_call->arguments];
                     if (type.size() == 1) {
                         r->parameters.push_back(
-                            std::make_shared<Structures::FunctionCall>(Structures::FunctionCall {
-                                .function = std::make_shared<Structures::VariableCall>(Structures::VariableCall {
+                            std::make_shared<FunctionCall>(FunctionCall {
+                                .function = std::make_shared<VariableCall>(VariableCall {
                                     .name = "__UnknownData_from_data"
                                 }),
                                 .parameters = {
-                                    std::make_shared<Structures::VariableCall>(Structures::VariableCall {
+                                    std::make_shared<VariableCall>(VariableCall {
                                         .name = "&__VirtualTable_" + (*type.begin()).get().name
                                     }),
                                     get_expression(function_call->arguments, meta, instructions, references)
@@ -134,12 +134,12 @@ namespace Translator {
 
                 return r;
             } else if (auto function_definition = std::dynamic_pointer_cast<FunctionDefinition>(expression)) {
-                Structures::FunctionDefinition::Parameters parameters;
+                FunctionDefinition::Parameters parameters;
                 if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(function_definition->parameters)) {
                     unsigned int i = 0;
                     for (auto p : tuple->objects) {
                         auto & types = meta.types[p];
-                        auto & type = (types.size() == 1) ? *references.types[*types.begin()] : Structures::Unknown;
+                        auto & type = (types.size() == 1) ? *references.types[*types.begin()] : Unknown;
 
                         std::string name;
                         if (auto s = std::dynamic_pointer_cast<Parser::Symbol>(p))
@@ -153,7 +153,7 @@ namespace Translator {
                     }
                 } else {
                     auto types = meta.types[function_definition->parameters];
-                    auto & type = (types.size() == 1) ? *references.types[*types.begin()] : Structures::Unknown;
+                    auto & type = (types.size() == 1) ? *references.types[*types.begin()] : Unknown;
 
                     std::string name;
                     if (auto s = std::dynamic_pointer_cast<Parser::Symbol>(function_definition->parameters))
@@ -164,16 +164,16 @@ namespace Translator {
                     parameters.push_back({name, type});
                 }
 
-                Structures::Block body;
+                Block body;
                 get_instructions(function_definition->body, meta, body, references);
 
-                Structures::Declarations local_variables;
+                Declarations local_variables;
                 for (auto & var : meta.variables[function_definition])
-                    local_variables[var.first] = (var.second.size() == 1) ? *references.types[*var.second.begin()] : Structures::Unknown;
+                    local_variables[var.first] = (var.second.size() == 1) ? *references.types[*var.second.begin()] : Unknown;
 
                 auto & types = meta.types[function_definition];
-                Structures::FunctionDefinition function {
-                    .type = types.size() == 1 ? *references.types[*types.begin()] : Structures::Unknown,
+                FunctionDefinition function {
+                    .type = types.size() == 1 ? *references.types[*types.begin()] : Unknown,
                     .name = meta.names[function_definition],
                     .parameters = parameters,
                     .local_variables = local_variables,

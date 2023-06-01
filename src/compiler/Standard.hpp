@@ -213,7 +213,7 @@ namespace Analyzer {
             friend Object* Context::new_object(std::vector<M<Data>> const& array);
             friend Object* Context::new_object(std::string const& str);
             friend SymbolReference Context::new_reference(M<Data> data);
-            friend std::shared_ptr<AnalyzedExpression> analyze(std::shared_ptr<Parser::Expression> expression);
+            friend std::shared_ptr<Expression> analyze(std::shared_ptr<Parser::Expression> expression);
 
         };
 
@@ -233,13 +233,13 @@ namespace Analyzer {
 
             struct Analysis {
                 M<Reference> references;
-                std::shared_ptr<AnalyzedExpression> expression;
+                std::shared_ptr<Expression> expression;
             };
 
             using It = std::map<std::string, M<SymbolReference>>::iterator;
 
             void set_references(Context & function_context, std::shared_ptr<Parser::Expression> parameters, M<Reference> const& reference);
-            std::shared_ptr<AnalyzedExpression> set_references(Context & context, bool potential, Context & function_context, std::map<std::shared_ptr<Parser::Expression>, Analyzer::Analysis> & computed, std::shared_ptr<Parser::Expression> parameters, std::shared_ptr<Parser::Expression> arguments);
+            std::shared_ptr<Expression> set_references(Context & context, bool potential, Context & function_context, std::map<std::shared_ptr<Parser::Expression>, Analyzer::Analysis> & computed, std::shared_ptr<Parser::Expression> parameters, std::shared_ptr<Parser::Expression> arguments);
             void call_reference(M<Reference> & references, bool potential, Function const& function, Context function_context, It const it, It const end);
 
         public:
@@ -247,7 +247,7 @@ namespace Analyzer {
             Analysis call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, M<std::list<Function>> const& all_functions, std::shared_ptr<Parser::Expression> arguments);
             Analysis execute(Context & context, bool potential, std::shared_ptr<Parser::Expression> expression);
 
-            virtual std::shared_ptr<AnalyzedExpression> analyze(std::shared_ptr<Parser::Expression> expression) const override;
+            virtual std::pair<std::shared_ptr<Expression>, MetaData> analyze(std::shared_ptr<Parser::Expression> expression) const override;
 
         };
 

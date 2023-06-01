@@ -1,7 +1,7 @@
 #ifndef __COMPILER_ANALYZER_ANALYZER_HPP__
 #define __COMPILER_ANALYZER_ANALYZER_HPP__
 
-#include "AnalyzedExpressions.hpp"
+#include "Expressions.hpp"
 
 #include "../parser/Parser.hpp"
 
@@ -12,7 +12,7 @@ namespace Analyzer {
 
     public:
 
-        virtual std::shared_ptr<AnalyzedExpression> analyze(std::shared_ptr<Parser::Expression> expression) const = 0;
+        virtual std::pair<std::shared_ptr<Expression>, MetaData> analyze(std::shared_ptr<Parser::Expression> expression) const = 0;
 
     };
 
