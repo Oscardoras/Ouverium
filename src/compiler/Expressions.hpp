@@ -12,19 +12,6 @@
 
 namespace Analyzer {
 
-    /**
-     * Represents an analyzed expression, must be inherited.
-    */
-    struct Expression {
-
-        virtual ~Expression() = default;
-
-    protected:
-
-        Expression() = default;
-
-    };
-
     struct Type {
         virtual ~Type() = default;
     };
@@ -41,10 +28,24 @@ namespace Analyzer {
 
     };
 
+    using Types = std::set<std::weak_ptr<Type>>;
+
+    /**
+     * Represents an analyzed expression, must be inherited.
+    */
+    struct Expression {
+
+        Types types;
+
+        virtual ~Expression() = default;
+
+    };
+
     struct FunctionDefinition {
 
         std::set<std::weak_ptr<Type>> return_type;
         std::shared_ptr<Expression> parameters;
+        std::map<std::string, Types> local_variables;
         std::shared_ptr<Expression> filter;
         std::shared_ptr<Expression> body;
 
@@ -54,7 +55,6 @@ namespace Analyzer {
     };
 
     using SystemFunction = std::string;
-
 
     struct FunctionCall: public Expression {
 
@@ -124,8 +124,9 @@ namespace Analyzer {
 
 
     struct MetaData {
-        std::map<std::string, std::shared_ptr<Structure>> structures;
-        std::map<std::string, std::shared_ptr<FunctionDefinition>> function_definitions;
+        std::set<std::shared_ptr<Structure>> structures;
+        std::set<std::shared_ptr<FunctionDefinition>> function_definitions;
+        std::map<std::string, Types> global_variables;
     };
 
 }

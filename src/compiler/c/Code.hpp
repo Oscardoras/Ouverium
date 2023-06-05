@@ -13,7 +13,11 @@ namespace Translator {
     namespace CStandard {
 
         struct Type {
+
+            std::string name;
+
             virtual ~Type() = default;
+
         };
         using Declarations = std::map<std::string, std::weak_ptr<Type>>;
         struct Component {
@@ -29,7 +33,9 @@ namespace Translator {
         inline std::shared_ptr<Type> Float = std::make_shared<Type>();
 
 
-        struct Expression {};
+        struct Expression {
+            std::weak_ptr<Type> type;
+        };
         struct LValue: public Expression {};
         struct Instruction {};
         struct Block: public Instruction, public std::vector<std::shared_ptr<Instruction>> {
@@ -54,6 +60,10 @@ namespace Translator {
 
         struct VariableCall: public LValue {
             std::string name;
+        };
+
+        struct Value: public Expression {
+            std::variant<char, bool, long, double, std::string> value;
         };
 
         struct FunctionCall: public Expression, public Instruction {

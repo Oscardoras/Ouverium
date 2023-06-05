@@ -33,9 +33,7 @@ namespace Parser {
         */
         virtual std::string to_string(unsigned int n = 0) const = 0;
 
-    protected:
-
-        Expression() = default;
+        virtual ~Expression() = default;
 
     };
 

@@ -84,7 +84,7 @@ extern "C" {
      * @param data the UnknownData.
      * @return a pointer to the component.
     */
-#define __UnknownData_get_component(component, data) (component*) __UnknownData_get_component_at(__Component_ ## component ## _index, data)
+    #define __UnknownData_get_component(component, data) (component*) __UnknownData_get_component_at(__Component_ ## component ## _index, data)
 
     /**
      * Gets the array of an UnknownData.
