@@ -1,14 +1,14 @@
 (:~) : (object, type) |-> {
-    Array->add(object->_types, type);
+    Array.add(object._types, type);
     object
 };
 
 is : (object, type) \ (type !== Char & type !== Int & type !== Float & type !== Bool & type !== Array) |-> {
     found := false;
-    l := Array->lenght(object->_types);
+    l := Array.lenght(object._types);
     i := 0;
     while (!found & i < l) {
-        if (Array->get(object->_types, i) === type) {
+        if (Array.get(object._types, i) === type) {
             found := true
         } else {
             ++i
