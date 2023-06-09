@@ -245,7 +245,9 @@ namespace Analyzer::Standard {
         Analysis call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, M<std::list<Function>> const& all_functions, std::shared_ptr<Parser::Expression> arguments);
         Analysis execute(Context & context, bool potential, std::shared_ptr<Parser::Expression> expression);
 
-        virtual std::pair<std::shared_ptr<Expression>, MetaData> analyze(std::shared_ptr<Parser::Expression> expression) const override;
+        void create_structures(GlobalContext const& context);
+
+        virtual std::pair<std::shared_ptr<Expression>, MetaData> analyze(std::shared_ptr<Parser::Expression> expression) override;
 
     };
 

@@ -12,7 +12,7 @@ namespace Analyzer {
 
     public:
 
-        virtual std::pair<std::shared_ptr<Expression>, MetaData> analyze(std::shared_ptr<Parser::Expression> expression) const = 0;
+        virtual std::pair<std::shared_ptr<Expression>, MetaData> analyze(std::shared_ptr<Parser::Expression> expression) = 0;
 
     };
 
