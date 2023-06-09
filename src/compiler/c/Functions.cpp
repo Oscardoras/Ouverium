@@ -7,7 +7,7 @@
 #include "../Functions.hpp"
 
 
-namespace CTranslator {
+namespace Translator::CTranslator {
 
     std::shared_ptr<Structures::Expression> eval_system_function(Analyzer::SystemFunction function, std::shared_ptr<Parser::Expression> arguments, Analyzer::MetaData & meta, Instructions & instructions, References & references) {
         if (function.pointer == Analyzer::Functions::separator) {
