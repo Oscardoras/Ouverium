@@ -210,10 +210,10 @@ namespace Analyzer {
             }
 
             friend Object* Context::new_object();
-            friend Object* Context::new_object(std::vector<M<Data>> const& array);
-            friend Object* Context::new_object(std::string const& str);
-            friend SymbolReference Context::new_reference(M<Data> data);
-            friend std::shared_ptr<Expression> analyze(std::shared_ptr<Parser::Expression> expression);
+            friend Object* Context::new_object(std::vector<M<Data>> const&);
+            friend Object* Context::new_object(std::string const&);
+            friend SymbolReference Context::new_reference(M<Data>);
+            friend void create_structures(GlobalContext const&);
 
         };
 
@@ -247,7 +247,9 @@ namespace Analyzer {
             Analysis call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, M<std::list<Function>> const& all_functions, std::shared_ptr<Parser::Expression> arguments);
             Analysis execute(Context & context, bool potential, std::shared_ptr<Parser::Expression> expression);
 
-            virtual std::pair<std::shared_ptr<Expression>, MetaData> analyze(std::shared_ptr<Parser::Expression> expression) const override;
+            void create_structures(GlobalContext const& context);
+
+            virtual std::pair<std::shared_ptr<Expression>, MetaData> analyze(std::shared_ptr<Parser::Expression> expression) override;
 
         };
 

@@ -22,9 +22,10 @@ namespace Analyzer {
     struct Structure: public Type {
 
         std::map<std::string, std::set<std::weak_ptr<Type>>> properties;
+        std::set<std::weak_ptr<Type>> array;
 
-        Structure(std::map<std::string, std::set<std::weak_ptr<Type>>> properties = {}):
-            properties(properties) {}
+        Structure(std::map<std::string, std::set<std::weak_ptr<Type>>> const& properties = {}, std::set<std::weak_ptr<Type>> const& array = {}):
+            properties(properties), array(array) {}
 
     };
 

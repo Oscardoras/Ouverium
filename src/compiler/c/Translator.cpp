@@ -176,26 +176,41 @@ namespace Translator {
                             if (it != component->properties.end())
                                 components[component].insert(type);
                         }
+                auto component = components.begin()->first;
 
                 auto o = get_expression(property->object, instructions);
+                std::shared_ptr<Expression> object;
                 if (o->type.lock() == Unknown) {
-                    std::make_shared<FunctionCall>(FunctionCall {
-                        .function = std::make_shared<VariableCall>(VariableCall {
-                            .name = "__UnknownData_get_component"
-                        }),
-                        .parameters = {
-                            std::make_shared<VariableCall>(VariableCall {
-                                .name = "" + type_table[function_call->arguments->types.begin()->lock()]->name
+                    return std::make_shared<Property>(Property {
+                        Expression {
+                            .type = type_table.get(expression->types)
+                        },
+                        .object = std::make_shared<FunctionCall>(FunctionCall {
+                            .function = std::make_shared<VariableCall>(VariableCall {
+                                .name = "__UnknownData_get_component"
                             }),
-                            get_expression(function_call->arguments, instructions)
-                        }
+                            .parameters = {
+                                std::make_shared<VariableCall>(VariableCall {
+                                    .name = type_table[function_call->arguments->types.begin()->lock()]->name
+                                }),
+                                get_expression(function_call->arguments, instructions)
+                            }
+                        }),
+                        .name = property->name,
+                        .pointer = true
                     });
                 } else {
                     return std::make_shared<Property>(Property {
-                        .type = type_table.get(expression->types),
-                        .object = o,
+                        Expression {
+                            .type = type_table.get(expression->types)
+                        },
+                        .object = std::make_shared<Property>(Property {
+                            .object = o,
+                            .name = component->name,
+                            .pointer = true
+                        }),
                         .name = property->name,
-                        .pointer = true
+                        .pointer = false
                     });
                 }
             } else if (auto symbol = std::dynamic_pointer_cast<Analyzer::Symbol>(expression)) {

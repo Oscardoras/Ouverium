@@ -21,6 +21,8 @@ namespace Translator {
         };
         using Declarations = std::map<std::string, std::weak_ptr<Type>>;
         struct Component {
+            std::string name;
+            size_t offset;
             Declarations properties;
         };
         std::shared_ptr<Type> Unknown = std::make_shared<Type>();
@@ -36,7 +38,9 @@ namespace Translator {
         struct Expression {
             std::weak_ptr<Type> type;
         };
-        struct LValue: public Expression {};
+        struct LValue: public Expression {
+            std::weak_ptr<Type> type;
+        };
         struct Instruction {};
         struct Block: public Instruction, public std::vector<std::shared_ptr<Instruction>> {
             using std::vector<std::shared_ptr<Instruction>>::vector;

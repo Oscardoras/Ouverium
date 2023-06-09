@@ -358,13 +358,22 @@ namespace Analyzer {
             } else return {};
         }
 
-        std::shared_ptr<Expression> Analyzer::analyze(std::shared_ptr<Parser::Expression> expression) {
-            MetaData meta_data;
-            GlobalContext context(meta_data);
+        void create_structures(GlobalContext const& context) {
 
-            execute(context, false, expression);
+            for (auto const& o : context.objects) {
+                o.
+            }
+        }
 
-            meta_data.global_symbols = std::move(context.symbols);
+        std::pair<std::shared_ptr<Expression>, MetaData> Analyzer::analyze(std::shared_ptr<Parser::Expression> expression) {
+            GlobalContext context;
+
+            auto analysis = execute(context, false, expression);
+
+            for (auto const& symbol : context) {
+                meta_data.global_variables[symbol.first] = symbol.second;
+            }
+            meta_data.global_variables = std::move(context.symbols);
 
             for (auto & object : context.objects) {
                 MetaData::Structure structure;
