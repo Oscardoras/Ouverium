@@ -55,6 +55,11 @@ namespace Translator::CStandard {
         Block body;
     };
 
+    struct Switch: public Instruction {
+        std::shared_ptr<Expression> value;
+        std::vector<std::pair<std::vector<std::string>, Block>> cases;
+    };
+
     struct Affectation: public Expression, public Instruction {
         std::shared_ptr<LValue> lvalue;
         std::shared_ptr<Expression> value;
