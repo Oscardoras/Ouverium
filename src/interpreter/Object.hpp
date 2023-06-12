@@ -14,9 +14,10 @@
 namespace Interpreter {
 
     struct Context;
-    struct Function;
 
     struct Object {
+
+        std::list<Object*> prototypes;
 
         std::map<std::string, Data> properties;
         std::list<Function> functions;

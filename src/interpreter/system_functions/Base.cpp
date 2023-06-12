@@ -341,6 +341,22 @@ namespace Interpreter {
             }
         }
 
+        auto getter_args = std::make_shared<Parser::Tuple>(Parser::Tuple({
+            std::make_shared<Parser::Symbol>("var"),
+            std::make_shared<Parser::FunctionCall>(
+                std::make_shared<Parser::Symbol>("getter"),
+                std::make_shared<Parser::Tuple>()
+            )
+        }));
+        Reference getter(FunctionContext & context) {
+            auto & var = context["var"];
+            auto getter = context["getter"].get<Object*>();
+
+            var = Getter(getter->functions.front());
+
+            return var;
+        }
+
         bool equals(Data a, Data b) {
             if (auto a_object = std::get_if<Object*>(&a)) {
                 if (auto b_object = std::get_if<Object*>(&b))
@@ -428,6 +444,7 @@ namespace Interpreter {
 
             context.get_function(":=").push_front(SystemFunction{assign_args, assign});
             context.get_function(":").push_front(SystemFunction{function_definition_args, function_definition});
+            context.get_function("=").push_front(SystemFunction{getter_args, getter});
 
             context.get_function("==").push_front(SystemFunction{equals_args, equals});
             context.get_function("!=").push_front(SystemFunction{equals_args, not_equals});

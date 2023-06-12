@@ -37,6 +37,10 @@ namespace Interpreter {
         Data to_data(Context & context) const;
         Data & to_symbol_reference(Context & context) const;
 
+    protected:
+
+        static Data compute_data(Context & context, Data const& data);
+
     };
 
 }

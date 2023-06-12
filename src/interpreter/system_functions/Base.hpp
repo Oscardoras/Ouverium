@@ -24,7 +24,7 @@ namespace Interpreter {
 
             Reference reference;
             std::shared_ptr<Parser::Position> position;
-        
+
         };
 
         Reference try_statement(FunctionContext & context);
@@ -41,12 +41,12 @@ namespace Interpreter {
         Reference copy_pointer(FunctionContext & context);
 
         void assign1(std::vector<Object*> & cache, Reference const& var, Object* const& object);
-
         void assign2(Context & context, std::vector<Object*>::iterator & it, Reference const& var);
-
         Reference assign(FunctionContext & context);
 
         Reference function_definition(FunctionContext & context);
+
+        Reference getter(FunctionContext & context);
 
         bool equals(Data a, Data b);
 

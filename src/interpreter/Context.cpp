@@ -40,17 +40,19 @@ namespace Interpreter {
     Data & Context::add_symbol(std::string const& symbol, Reference const& reference) {
         auto it = symbols.find(symbol);
         if (it == symbols.end())
-            symbols.emplace(symbol, reference.to_symbol_reference(*this));
-
-        return symbols.at(symbol);
+            return symbols.emplace(symbol, reference.to_symbol_reference(*this)).first->second;
+        else {
+            return it->second;
+        }
     }
 
     Data & Context::operator[](std::string const& symbol) {
         auto it = symbols.find(symbol);
         if (it == symbols.end())
-            symbols.emplace(symbol, new_reference(new_object()));
-
-        return symbols.at(symbol);
+            return symbols.emplace(symbol, new_reference(new_object())).first->second;
+        else {
+            return it->second;
+        }
     }
 
 
