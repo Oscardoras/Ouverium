@@ -7,9 +7,11 @@
 namespace Interpreter {
 
     Data & Object::get_property(std::string name, Context & context) {
-        auto & field = properties[name];
-        if (field == Data(nullptr)) field = context.new_object();
-        return field;
+        auto it = properties.find(name);
+        if (it == properties.end())
+            return properties[name] = Data(context.new_object());
+        else
+            return it->second;
     }
 
     std::string Object::to_string(Context & context) const {
