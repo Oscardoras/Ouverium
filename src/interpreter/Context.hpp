@@ -40,7 +40,7 @@ namespace Interpreter {
         auto end() {return symbols.end();}
 
         auto & get_function(std::string const& symbol) {
-            return std::get<Object*>((*this)[symbol])->functions;
+            return (*this)[symbol].get<Object*>(*this)->functions;
         }
 
     };

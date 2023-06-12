@@ -1,8 +1,21 @@
-#include "Data.hpp"
-#include "Function.hpp"
+#include "Interpreter.hpp"
 
 
 namespace Interpreter {
+
+    std::variant<Object*, char, double, long, bool, Getter> Data::compute(Context & context) const {
+        if (auto getter = std::get_if<Getter>(this))
+            return call_function(context, nullptr, {*getter}, std::make_shared<Parser::Tuple>()).to_data(context);
+        else
+            return *this;
+    }
+
+    bool operator==(Data const& a, Data const& b) {
+        return static_cast<std::variant<Object*, char, double, long, bool, Getter> const&>(a) == static_cast<std::variant<Object*, char, double, long, bool, Getter> const&>(b);
+    }
+    bool operator!=(Data const& a, Data const& b) {
+        return !(a == b);
+    }
 
     Getter::Getter(Function const& function):
         function{ new Function(function) } {}
@@ -46,7 +59,6 @@ namespace Interpreter {
     bool operator==(Getter const& a, Getter const& b) {
         return a.function == b.function;
     }
-
     bool operator!=(Getter const& a, Getter const& b) {
         return !(a == b);
     }

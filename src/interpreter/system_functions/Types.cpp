@@ -7,11 +7,13 @@ namespace Interpreter {
     namespace Types {
 
         bool check_type(Context & context, Data data, Data type) {
-            if (type == context["Char"]) return std::holds_alternative<char>(data);
-            else if (type == context["Float"]) return std::holds_alternative<double>(data);
-            else if (type == context["Int"]) return std::holds_alternative<long>(data);
-            else if (type == context["Bool"]) return std::holds_alternative<bool>(data);
-            else if (type == context["Array"]) return std::holds_alternative<Object*>(data);
+            auto const& d = data.compute(context);
+
+            if (type == context["Char"]) return std::holds_alternative<char>(d);
+            else if (type == context["Float"]) return std::holds_alternative<double>(d);
+            else if (type == context["Int"]) return std::holds_alternative<long>(d);
+            else if (type == context["Bool"]) return std::holds_alternative<bool>(d);
+            else if (type == context["Array"]) return std::holds_alternative<Object*>(d);
             else throw FunctionArgumentsError();
         }
 

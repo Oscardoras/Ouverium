@@ -12,11 +12,11 @@ namespace Interpreter {
         return field;
     }
 
-    std::string Object::to_string() const {
+    std::string Object::to_string(Context & context) const {
         std::string str;
 
         for (auto d : array)
-            str.push_back(d.get<char>());
+            str.push_back(d.get<char>(context));
 
         return str;
     }

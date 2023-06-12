@@ -7,6 +7,7 @@
 
 namespace Interpreter {
 
+    class Context;
     class Object;
     struct Function;
 
@@ -36,26 +37,35 @@ namespace Interpreter {
     bool operator==(Getter const& a, Getter const& b);
     bool operator!=(Getter const& a, Getter const& b);
 
-    struct Data : public std::variant<Object*, char, double, long, bool, Getter> {
+    struct Data : protected std::variant<Object*, char, double, long, bool, Getter> {
 
         class BadAccess: public std::exception {};
 
         using std::variant<Object*, char, double, long, bool, Getter>::variant;
 
-        template<typename T>
-        T & get() {
-            return const_cast<T &>(const_cast<Data const&>(*this).get<T>());
-        }
+        using std::variant<Object*, char, double, long, bool, Getter>::operator=;
+
+        std::variant<Object*, char, double, long, bool, Getter> compute(Context & context) const;
 
         template<typename T>
-        T const & get() const {
+        T & get(Context & context) {
+            return const_cast<T &>(const_cast<Data const&>(*this).get<T>(context));
+        }
+        template<typename T>
+        T const& get(Context & context) const {
             try {
-                return std::get<T>(*this);
+                return std::get<T>(compute(context));
             } catch (std::bad_variant_access & e) {
                 throw BadAccess();
             }
         }
+
+        friend bool operator==(Data const&, Data const&);
+
     };
+
+    bool operator==(Data const& a, Data const& b);
+    bool operator!=(Data const& a, Data const& b);
 
 }
 

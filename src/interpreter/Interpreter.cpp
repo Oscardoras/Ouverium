@@ -41,12 +41,15 @@ namespace Interpreter {
                 } else throw Interpreter::FunctionArgumentsError();
             } else {
                 auto data = reference.to_data(function_context);
-                if (auto object = std::get_if<Object*>(&data)) {
-                    if ((*object)->array.size() == tuple->objects.size()) {
+                try {
+                    auto object = data.get<Object*>(function_context);
+                    if (object->array.size() == tuple->objects.size()) {
                         for (size_t i = 0; i < tuple->objects.size(); i++)
-                            set_references(function_context, tuple->objects[i], ArrayReference{**object, i});
+                            set_references(function_context, tuple->objects[i], ArrayReference{*object, i});
                     } else throw Interpreter::FunctionArgumentsError();
-                } else throw Interpreter::FunctionArgumentsError();
+                } catch (Data::BadAccess const& e) {
+                    throw Interpreter::FunctionArgumentsError();
+                }
             }
         } else throw Interpreter::FunctionArgumentsError();
     }
@@ -114,7 +117,7 @@ namespace Interpreter {
                         filter = execute(function_context, custom_function->pointer->filter).to_data(context);
 
                     try {
-                        if (filter.get<bool>())
+                        if (filter.get<bool>(context))
                             return Interpreter::execute(function_context, custom_function->pointer->body);
                         else continue;
                     } catch (Data::BadAccess & e) {
@@ -143,10 +146,12 @@ namespace Interpreter {
     Reference execute(Context & context, std::shared_ptr<Parser::Expression> expression) {
         if (auto function_call = std::dynamic_pointer_cast<Parser::FunctionCall>(expression)) {
             auto data = execute(context, function_call->function).to_data(context);
-            if (auto object = std::get_if<Object*>(&data))
-                return call_function(context, function_call->position, (*object)->functions, function_call->arguments);
-            else
+            try {
+                auto object = data.get<Object*>(context);
+                return call_function(context, function_call->position, object->functions, function_call->arguments);
+            } catch (Data::BadAccess const& e) {
                 return call_function(context, function_call->position, std::list<Function>{}, function_call->arguments);
+            }
         } else if (auto function_definition = std::dynamic_pointer_cast<Parser::FunctionDefinition>(expression)) {
             auto object = context.new_object();
             object->functions.push_front(CustomFunction{function_definition});
@@ -163,10 +168,12 @@ namespace Interpreter {
             return Data(object);
         } else if (auto property = std::dynamic_pointer_cast<Parser::Property>(expression)) {
             auto data = execute(context, property->object).to_data(context);
-            if (auto object = std::get_if<Object*>(&data))
-                return PropertyReference{**object, (*object)->get_property(property->name, context)};
-            else
+            try {
+                auto object = data.get<Object*>(context);
+                return PropertyReference{*object, object->get_property(property->name, context)};
+            } catch (Data::BadAccess const& e) {
                 return Data(context.new_object());
+            }
         } else if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(expression)) {
             auto data = get_symbol(symbol->name);
             if (auto b = std::get_if<bool>(&data)) {
@@ -200,23 +207,25 @@ namespace Interpreter {
         }
     }
 
-    bool print(std::ostream & stream, Data data) {
-        if (auto c = std::get_if<char>(&data)) {
+    bool print(Context & context, std::ostream & stream, Data data) {
+        auto const& d = data.compute(context);
+
+        if (auto c = std::get_if<char>(&d)) {
             std::cout << *c;
             return true;
-        } else if (auto f = std::get_if<double>(&data)) {
+        } else if (auto f = std::get_if<double>(&d)) {
             std::cout << *f;
             return true;
-        } else if (auto i = std::get_if<long>(&data)) {
+        } else if (auto i = std::get_if<long>(&d)) {
             std::cout << *i;
             return true;
-        } else if (auto b = std::get_if<bool>(&data)) {
+        } else if (auto b = std::get_if<bool>(&d)) {
             std::cout << *b;
             return true;
-        } else if (auto object = std::get_if<Object*>(&data)) {
+        } else if (auto object = std::get_if<Object*>(&d)) {
             bool printed = false;
             for (auto d : (*object)->array)
-                if (print(stream, d)) printed = true;
+                if (print(context, stream, d)) printed = true;
             return printed;
         } else return false;
     }

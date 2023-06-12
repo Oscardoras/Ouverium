@@ -24,7 +24,7 @@ namespace Interpreter {
 
         Reference logical_not(FunctionContext & context) {
             try {
-                return Reference(Data(!context["a"].get<bool>()));
+                return Reference(Data(!context["a"].get<bool>(context)));
             } catch (Data::BadAccess & e) {
                 throw FunctionArgumentsError();
             }
@@ -32,11 +32,11 @@ namespace Interpreter {
 
         Reference logical_and(FunctionContext & context) {
             try {
-                auto a = context["a"].get<bool>();
-                auto b = context["b"].get<Object*>();
+                auto a = context["a"].get<bool>(context);
+                auto b = context["b"].get<Object*>(context);
 
                 if (a)
-                    return Reference(Data(Interpreter::call_function(context.get_parent(), nullptr, b->functions, std::make_shared<Parser::Tuple>()).to_data(context).get<bool>()));
+                    return Reference(Data(Interpreter::call_function(context.get_parent(), nullptr, b->functions, std::make_shared<Parser::Tuple>()).to_data(context).get<bool>(context)));
                 else
                     return Reference(Data(false));
             } catch (Data::BadAccess & e) {
@@ -46,11 +46,11 @@ namespace Interpreter {
 
         Reference logical_or(FunctionContext & context) {
             try {
-                auto a = context["a"].get<bool>();
-                auto b = context["b"].get<Object*>();
+                auto a = context["a"].get<bool>(context);
+                auto b = context["b"].get<Object*>(context);
 
                 if (!a)
-                    return Interpreter::call_function(context.get_parent(), nullptr, b->functions, std::make_shared<Parser::Tuple>()).to_data(context).get<bool>();
+                    return Interpreter::call_function(context.get_parent(), nullptr, b->functions, std::make_shared<Parser::Tuple>()).to_data(context).get<bool>(context);
                 else
                     return Reference(Data(true));
             } catch (Data::BadAccess & e) {
@@ -59,8 +59,8 @@ namespace Interpreter {
         }
 
         Reference addition(FunctionContext & context) {
-            auto a = context["a"];
-            auto b = context["b"];
+            auto a = context["a"].compute(context);
+            auto b = context["b"].compute(context);
 
             if (auto a_int = std::get_if<long>(&a)) {
                 if (auto b_int = std::get_if<long>(&b))
@@ -77,7 +77,7 @@ namespace Interpreter {
         }
 
         Reference opposite(FunctionContext & context) {
-            auto a = context["a"];
+            auto a = context["a"].compute(context);
 
             if (auto a_int = std::get_if<long>(&a))
                 return Reference(Data(- *a_int));
@@ -87,8 +87,8 @@ namespace Interpreter {
         }
 
         Reference substraction(FunctionContext & context) {
-            auto a = context["a"];
-            auto b = context["b"];
+            auto a = context["a"].compute(context);
+            auto b = context["b"].compute(context);
 
             if (auto a_int = std::get_if<long>(&a)) {
                 if (auto b_int = std::get_if<long>(&b))
@@ -105,8 +105,8 @@ namespace Interpreter {
         }
 
         Reference multiplication(FunctionContext & context) {
-            auto a = context["a"];
-            auto b = context["b"];
+            auto a = context["a"].compute(context);
+            auto b = context["b"].compute(context);
 
             if (auto a_int = std::get_if<long>(&a)) {
                 if (auto b_int = std::get_if<long>(&b))
@@ -123,8 +123,8 @@ namespace Interpreter {
         }
 
         Reference division(FunctionContext & context) {
-            auto a = context["a"];
-            auto b = context["b"];
+            auto a = context["a"].compute(context);
+            auto b = context["b"].compute(context);
 
             if (auto a_int = std::get_if<long>(&a)) {
                 if (auto b_int = std::get_if<long>(&b))
@@ -141,8 +141,8 @@ namespace Interpreter {
         }
 
         Reference modulo(FunctionContext & context) {
-            auto a = context["a"];
-            auto b = context["b"];
+            auto a = context["a"].compute(context);
+            auto b = context["b"].compute(context);
 
             if (auto a_int = std::get_if<long>(&a))
                 if (auto b_int = std::get_if<long>(&b))
@@ -151,8 +151,8 @@ namespace Interpreter {
         }
 
         Reference strictly_inf(FunctionContext & context) {
-            auto a = context["a"];
-            auto b = context["b"];
+            auto a = context["a"].compute(context);
+            auto b = context["b"].compute(context);
 
             if (auto a_int = std::get_if<long>(&a)) {
                 if (auto b_int = std::get_if<long>(&b))
@@ -172,8 +172,8 @@ namespace Interpreter {
         }
 
         Reference strictly_sup(FunctionContext & context) {
-            auto a = context["a"];
-            auto b = context["b"];
+            auto a = context["a"].compute(context);
+            auto b = context["b"].compute(context);
 
             if (auto a_int = std::get_if<long>(&a)) {
                 if (auto b_int = std::get_if<long>(&b))
@@ -193,8 +193,8 @@ namespace Interpreter {
         }
 
         Reference inf_equals(FunctionContext & context) {
-            auto a = context["a"];
-            auto b = context["b"];
+            auto a = context["a"].compute(context);
+            auto b = context["b"].compute(context);
 
             if (auto a_int = std::get_if<long>(&a)) {
                 if (auto b_int = std::get_if<long>(&b))
@@ -214,8 +214,8 @@ namespace Interpreter {
         }
 
         Reference sup_equals(FunctionContext & context) {
-            auto a = context["a"];
-            auto b = context["b"];
+            auto a = context["a"].compute(context);
+            auto b = context["b"].compute(context);
 
             if (auto a_int = std::get_if<long>(&a)) {
                 if (auto b_int = std::get_if<long>(&b))
@@ -237,91 +237,93 @@ namespace Interpreter {
         Reference increment(FunctionContext & context) {
             auto & a = context["a"];
 
-            if (auto a_int = std::get_if<long>(&a)) {
-                a = *a_int+1;
+            try {
+                a = a.get<long>(context)+1;
                 return SymbolReference(a);
+            } catch (Data::BadAccess const& e) {
+                throw FunctionArgumentsError();
             }
-            throw FunctionArgumentsError();
         }
 
         Reference decrement(FunctionContext & context) {
             auto & a = context["a"];
 
-            if (auto a_int = std::get_if<long>(&a)) {
-                a = *a_int-1;
+            try {
+                a = a.get<long>(context)-1;
                 return SymbolReference(a);
+            } catch (Data::BadAccess const& e) {
+                throw FunctionArgumentsError();
             }
-            throw FunctionArgumentsError();
         }
 
         Reference add(FunctionContext & context) {
-            auto & a = context["a"];
-            auto & b = context["b"];
+            auto a = context["a"].compute(context);
+            auto b = context["b"].compute(context);
 
             if (auto a_int = std::get_if<long>(&a)) {
                 if (auto b_int = std::get_if<long>(&b))
-                    return a = Data(*a_int + *b_int);
+                    return context["a"] = Data(*a_int + *b_int);
                 else if (auto b_float = std::get_if<double>(&b))
-                    return a = Data(*a_int + *b_float);
+                    return context["a"] = Data(*a_int + *b_float);
             } else if (auto a_float = std::get_if<double>(&a)) {
                 if (auto b_int = std::get_if<long>(&b))
-                    return a = Data(*a_float + *b_int);
+                    return context["a"] = Data(*a_float + *b_int);
                 else if (auto b_float = std::get_if<double>(&b))
-                    return a = Data(*a_float + *b_float);
+                    return context["a"] = Data(*a_float + *b_float);
             }
             throw FunctionArgumentsError();
         }
 
         Reference remove(FunctionContext & context) {
-            auto & a = context["a"];
-            auto & b = context["b"];
+            auto a = context["a"].compute(context);
+            auto b = context["b"].compute(context);
 
             if (auto a_int = std::get_if<long>(&a)) {
                 if (auto b_int = std::get_if<long>(&b))
-                    return a = Data(*a_int - *b_int);
+                    return context["a"] = Data(*a_int - *b_int);
                 else if (auto b_float = std::get_if<double>(&b))
-                    return a = Data(*a_int - *b_float);
+                    return context["a"] = Data(*a_int - *b_float);
             } else if (auto a_float = std::get_if<double>(&a)) {
                 if (auto b_int = std::get_if<long>(&b))
-                    return a = Data(*a_float - *b_int);
+                    return context["a"] = Data(*a_float - *b_int);
                 else if (auto b_float = std::get_if<double>(&b))
-                    return a = Data(*a_float - *b_float);
+                    return context["a"] = Data(*a_float - *b_float);
             }
             throw FunctionArgumentsError();
         }
 
         Reference mutiply(FunctionContext & context) {
-            auto & a = context["a"];
-            auto & b = context["b"];
+            auto a = context["a"].compute(context);
+            auto b = context["b"].compute(context);
 
             if (auto a_int = std::get_if<long>(&a)) {
                 if (auto b_int = std::get_if<long>(&b))
-                    return a = Data(*a_int * *b_int);
+                    return context["a"] = Data(*a_int * *b_int);
                 else if (auto b_float = std::get_if<double>(&b))
-                    return a = Data(*a_int * *b_float);
+                    return context["a"] = Data(*a_int * *b_float);
             } else if (auto a_float = std::get_if<double>(&a)) {
                 if (auto b_int = std::get_if<long>(&b))
-                    return a = Data(*a_float * *b_int);
+                    return context["a"] = Data(*a_float * *b_int);
                 else if (auto b_float = std::get_if<double>(&b))
-                    return a = Data(*a_float * *b_float);
+                    return context["a"] = Data(*a_float * *b_float);
             }
             throw FunctionArgumentsError();
         }
 
         Reference divide(FunctionContext & context) {
-            auto & a = context["a"];
-            auto & b = context["b"];
+            auto a = context["a"].compute(context);
+            auto b = context["b"].compute(context);
 
             if (auto a_int = std::get_if<long>(&a)) {
                 if (auto b_int = std::get_if<long>(&b))
-                    return a = Data(*a_int / *b_int);
+                    return context["a"] = Data(*a_int / *b_int);
                 else if (auto b_float = std::get_if<double>(&b))
-                    return a = Data(*a_int / *b_float);
+                    return context["a"] = Data(*a_int / *b_float);
             } else if (auto a_float = std::get_if<double>(&a)) {
                 if (auto b_int = std::get_if<long>(&b))
-                    return a = Data(*a_float / *b_int);
+                    return context["a"] = Data(*a_float / *b_int);
                 else if (auto b_float = std::get_if<double>(&b))
-                    return a = Data(*a_float / *b_float);
+                    return context["a"] = Data(*a_float / *b_float);
             }
             throw FunctionArgumentsError();
         }

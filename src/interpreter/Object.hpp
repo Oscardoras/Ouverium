@@ -17,7 +17,7 @@ namespace Interpreter {
 
     struct Object {
 
-        std::list<Object*> prototypes;
+        std::list<Data> prototypes;
 
         std::map<std::string, Data> properties;
         std::list<Function> functions;
@@ -37,7 +37,7 @@ namespace Interpreter {
         bool referenced = false;
 
         Data & get_property(std::string name, Context & context);
-        std::string to_string() const;
+        std::string to_string(Context & context) const;
 
     };
 
