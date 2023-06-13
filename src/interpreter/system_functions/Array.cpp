@@ -94,7 +94,7 @@ namespace Interpreter {
         }
 
         void init(Context & context) {
-            auto array = static_cast<Data &>(context["array"]).get<Object*>(context);
+            auto array = static_cast<Data &>(context["Array"]).get<Object*>(context);
             array->get_property("lenght", context).get<Object*>(context)->functions.push_front(SystemFunction{lenght_args, lenght});
             array->get_property("get_capacity", context).get<Object*>(context)->functions.push_front(SystemFunction{get_capacity_args, get_capacity});
             array->get_property("set_capacity", context).get<Object*>(context)->functions.push_front(SystemFunction{set_capacity_args, set_capacity});
