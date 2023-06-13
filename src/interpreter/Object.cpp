@@ -9,7 +9,7 @@ namespace Interpreter {
     Data & Object::get_property(std::string name, Context & context) {
         auto it = properties.find(name);
         if (it == properties.end())
-            return properties[name] = Data(context.new_object());
+            return properties.emplace(name, Data(context.new_object())).first->second;
         else
             return it->second;
     }

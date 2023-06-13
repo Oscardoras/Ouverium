@@ -37,16 +37,16 @@ namespace Interpreter {
         return symbols.find(symbol) != symbols.end();
     }
 
-    Data & Context::add_symbol(std::string const& symbol, Reference const& reference) {
+    IndirectReference Context::add_symbol(std::string const& symbol, Reference const& reference) {
         auto it = symbols.find(symbol);
         if (it == symbols.end())
-            return symbols.emplace(symbol, reference.to_symbol_reference(*this)).first->second;
+            return symbols.emplace(symbol, reference.to_indirect_reference(*this)).first->second;
         else {
             return it->second;
         }
     }
 
-    Data & Context::operator[](std::string const& symbol) {
+    IndirectReference Context::operator[](std::string const& symbol) {
         auto it = symbols.find(symbol);
         if (it == symbols.end())
             return symbols.emplace(symbol, new_reference(new_object())).first->second;

@@ -92,7 +92,7 @@ namespace Interpreter {
 
                     object = context.new_object();
                     object->functions.push_front(CustomFunction{function_definition});
-                    object->functions.back().extern_symbols.emplace("#cached", it->second.to_symbol_reference(context));
+                    object->functions.back().extern_symbols.emplace("#cached", it->second.to_indirect_reference(context));
                 }
 
                 function_context.add_symbol(symbol->name, Reference(object));
@@ -139,7 +139,7 @@ namespace Interpreter {
     }
 
     Reference call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, Reference const& arguments) {
-        context.add_symbol("#cached", arguments.to_symbol_reference(context));
+        context.add_symbol("#cached", arguments.to_indirect_reference(context));
         return call_function(context, position, functions, std::make_shared<Parser::Symbol>("#cached"));
     }
 

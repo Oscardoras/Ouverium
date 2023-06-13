@@ -27,7 +27,7 @@ namespace Interpreter {
         );
         Reference if_statement(FunctionContext & context) {
             try {
-                auto function = std::get<CustomFunction>(context["function"].get<Object*>(context)->functions.front()).pointer->body;
+                auto function = std::get<CustomFunction>(static_cast<Data &>(context["function"]).get<Object*>(context)->functions.front()).pointer->body;
 
                 if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(function)) {
                     if (tuple->objects.size() >= 2) {
@@ -73,8 +73,8 @@ namespace Interpreter {
                 Reference result;
                 bool resulted = false;
 
-                auto condition = context["condition"].get<Object*>(context);
-                auto block = context["block"].get<Object*>(context);
+                auto condition = static_cast<Data &>(context["condition"]).get<Object*>(context);
+                auto block = static_cast<Data &>(context["block"]).get<Object*>(context);
                 while (true) {
                     auto c = Interpreter::call_function(parent, nullptr, condition->functions, std::make_shared<Parser::Tuple>()).to_data(context).get<bool>(context);
                     if (c) {
@@ -105,12 +105,12 @@ namespace Interpreter {
         }));
         Reference for_statement(FunctionContext & context) {
             try {
-                auto & variable = context["variable"];
-                auto & from_s = context["from_s"];
-                auto & begin = context["begin"].get<long>(context);
-                auto & to_s = context["to_s"];
-                auto & end = context["end"].get<long>(context);
-                auto & block = context["block"];
+                auto & variable = static_cast<Data &>(context["variable"]);
+                auto & from_s = static_cast<Data &>(context["from_s"]);
+                auto & begin = static_cast<Data &>(context["begin"]).get<long>(context);
+                auto & to_s = static_cast<Data &>(context["to_s"]);
+                auto & end = static_cast<Data &>(context["end"]).get<long>(context);
+                auto & block = static_cast<Data &>(context["block"]);
 
                 if (from_s == context["from"] && to_s == context["to"]) {
                     for (long i = begin; i < end; i++) {
@@ -143,23 +143,23 @@ namespace Interpreter {
 
                 auto variable = context["variable"];
                 auto from_s = context["from_s"];
-                auto begin = context["begin"].get<long>(context);
+                auto begin = static_cast<Data &>(context["begin"]).get<long>(context);
                 auto to_s = context["to_s"];
-                auto end = context["end"].get<long>(context);
+                auto end = static_cast<Data &>(context["end"]).get<long>(context);
                 auto step_s = context["step_s"];
-                auto step = context["step"].get<long>(context);
+                auto step = static_cast<Data &>(context["step"]).get<long>(context);
                 auto block = context["block"];
 
                 if (from_s == context["from"] && to_s == context["to"] && step_s == context["step"]) {
                     if (step > 0) {
                         for (long i = begin; i < end; i += step) {
-                            variable = i;
-                            Interpreter::call_function(parent, nullptr, block.get<Object*>(context)->functions, std::make_shared<Parser::Tuple>());
+                            static_cast<Data &>(variable) = i;
+                            Interpreter::call_function(parent, nullptr, static_cast<Data &>(block).get<Object*>(context)->functions, std::make_shared<Parser::Tuple>());
                         }
                     } else if (step < 0) {
                         for (long i = begin; i > end; i += step) {
-                            variable = i;
-                            Interpreter::call_function(parent, nullptr, block.get<Object*>(context)->functions, std::make_shared<Parser::Tuple>());
+                            static_cast<Data &>(variable) = i;
+                            Interpreter::call_function(parent, nullptr, static_cast<Data &>(block).get<Object*>(context)->functions, std::make_shared<Parser::Tuple>());
                         }
                     } else throw Interpreter::FunctionArgumentsError();
                     return Reference(context.new_object());
@@ -184,10 +184,10 @@ namespace Interpreter {
 
             if (catch_s == context["catch"]) {
                 try {
-                    return Interpreter::call_function(context.get_parent(), nullptr, try_block.get<Object*>(context)->functions, std::make_shared<Parser::Tuple>());
+                    return Interpreter::call_function(context.get_parent(), nullptr, static_cast<Data &>(try_block).get<Object*>(context)->functions, std::make_shared<Parser::Tuple>());
                 } catch (Exception & ex) {
                     try {
-                        return Interpreter::call_function(context.get_parent(), nullptr, catch_function.get<Object*>(context)->functions, ex.reference);
+                        return Interpreter::call_function(context.get_parent(), nullptr, static_cast<Data &>(catch_function).get<Object*>(context)->functions, ex.reference);
                     } catch (Interpreter::Error & e) {
                         throw ex;
                     }
@@ -208,7 +208,7 @@ namespace Interpreter {
         std::string get_canonical_path(FunctionContext & context) {
             if (auto position = std::dynamic_pointer_cast<Parser::Standard::TextPosition>(context.get_position())) {
                 try {
-                    auto path = context["path"].get<Object*>(context)->to_string(context);
+                    auto path = static_cast<Data &>(context["path"]).get<Object*>(context)->to_string(context);
                     auto system_position = position->path;
 
                     if (path[0] != '/')
@@ -284,7 +284,7 @@ namespace Interpreter {
             auto data = context["data"];
 
             try {
-                data.get<Object*>(context);
+                static_cast<Data &>(data).get<Object*>(context);
                 throw Interpreter::FunctionArgumentsError();
             } catch (Data::BadAccess const& e) {
                 return Reference(Data(data));
@@ -322,7 +322,7 @@ namespace Interpreter {
             std::make_shared<Parser::Symbol>("data")
         }));
         Reference assign(FunctionContext & context) {
-            auto var = Interpreter::call_function(context.get_parent(), nullptr, context["var"].get<Object*>(context)->functions, std::make_shared<Parser::Tuple>());
+            auto var = Interpreter::call_function(context.get_parent(), nullptr, static_cast<Data &>(context["var"]).get<Object*>(context)->functions, std::make_shared<Parser::Tuple>());
             auto data = context["data"];
 
             return assignation(context, var, data);
@@ -334,8 +334,8 @@ namespace Interpreter {
         }));
         Reference function_definition(FunctionContext & context) {
             try {
-                auto var = context["var"].get<Object*>(context);
-                auto object = context["data"].get<Object*>(context);
+                auto var = static_cast<Data &>(context["var"]).get<Object*>(context);
+                auto object = static_cast<Data &>(context["data"]).get<Object*>(context);
 
                 for (auto it = object->functions.rbegin(); it != object->functions.rend(); it++)
                     var->functions.push_front(*it);
@@ -354,8 +354,8 @@ namespace Interpreter {
             )
         }));
         Reference getter(FunctionContext & context) {
-            auto & var = context["var"];
-            auto getter = context["getter"].get<Object*>(context);
+            auto & var = static_cast<Data &>(context["var"]);
+            auto getter = static_cast<Data &>(context["getter"]).get<Object*>(context);
 
             var = Getter(getter->functions.front());
 
@@ -390,14 +390,14 @@ namespace Interpreter {
             auto a = context["a"];
             auto b = context["b"];
 
-            return Reference(Data(equals(a.compute(context), b.compute(context))));
+            return Reference(Data(equals(static_cast<Data &>(a).compute(context), static_cast<Data &>(b).compute(context))));
         }
 
         Reference not_equals(FunctionContext & context) {
             auto a = context["a"];
             auto b = context["b"];
 
-            return Reference(Data(!equals(a.compute(context), b.compute(context))));
+            return Reference(Data(!equals(static_cast<Data &>(a).compute(context), static_cast<Data &>(b).compute(context))));
         }
 
         Reference check_pointers(FunctionContext & context) {

@@ -18,7 +18,7 @@ namespace Interpreter {
 
     protected:
 
-        std::map<std::string, SymbolReference> symbols;
+        std::map<std::string, IndirectReference> symbols;
 
     public:
 
@@ -34,13 +34,13 @@ namespace Interpreter {
         Data & new_reference(Data const& data = Data{});
 
         bool has_symbol(std::string const& symbol) const;
-        Data & add_symbol(std::string const& symbol, Reference const& reference);
-        Data & operator[](std::string const& symbol);
+        IndirectReference add_symbol(std::string const& symbol, Reference const& reference);
+        IndirectReference operator[](std::string const& symbol);
         auto begin() {return symbols.begin();}
         auto end() {return symbols.end();}
 
         auto & get_function(std::string const& symbol) {
-            return (*this)[symbol].get<Object*>(*this)->functions;
+            return static_cast<Data &>((*this)[symbol]).get<Object*>(*this)->functions;
         }
 
     };

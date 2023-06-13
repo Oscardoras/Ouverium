@@ -11,6 +11,7 @@ namespace Interpreter {
     class Context;
     class Reference;
 
+    using TupleReference = std::vector<Reference>;
     using SymbolReference = std::reference_wrapper<Data>;
     struct PropertyReference {
         std::reference_wrapper<Object> parent;
@@ -28,14 +29,22 @@ namespace Interpreter {
             return array.get().array[i];
         }
     };
-    using TupleReference = std::vector<Reference>;
 
-    struct Reference : public std::variant<Data, SymbolReference, PropertyReference, ArrayReference, TupleReference> {
+    struct IndirectReference : public std::variant<SymbolReference, PropertyReference, ArrayReference> {
 
-        using std::variant<Data, SymbolReference, PropertyReference, ArrayReference, TupleReference>::variant;
+        using std::variant<SymbolReference, PropertyReference, ArrayReference>::variant;
+
+        operator Data &() const;
+
+    };
+
+    struct Reference : public std::variant<Data, TupleReference, SymbolReference, PropertyReference, ArrayReference> {
+
+        using std::variant<Data, TupleReference, SymbolReference, PropertyReference, ArrayReference>::variant;
+        Reference(IndirectReference const& indirect_reference);
 
         Data to_data(Context & context) const;
-        Data & to_symbol_reference(Context & context) const;
+        IndirectReference to_indirect_reference(Context & context) const;
 
     };
 
