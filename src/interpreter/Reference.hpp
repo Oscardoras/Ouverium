@@ -30,7 +30,9 @@ namespace Interpreter {
         }
     };
 
-    struct IndirectReference : public std::variant<SymbolReference, PropertyReference, ArrayReference> {
+    class IndirectReference : public std::variant<SymbolReference, PropertyReference, ArrayReference> {
+
+    public:
 
         using std::variant<SymbolReference, PropertyReference, ArrayReference>::variant;
 
@@ -38,7 +40,9 @@ namespace Interpreter {
 
     };
 
-    struct Reference : public std::variant<Data, TupleReference, SymbolReference, PropertyReference, ArrayReference> {
+    class Reference : public std::variant<Data, TupleReference, SymbolReference, PropertyReference, ArrayReference> {
+
+    public:
 
         using std::variant<Data, TupleReference, SymbolReference, PropertyReference, ArrayReference>::variant;
         Reference(IndirectReference const& indirect_reference);
