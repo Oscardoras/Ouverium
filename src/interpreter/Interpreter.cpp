@@ -110,15 +110,15 @@ namespace Interpreter {
                     function_context.add_symbol(symbol.first, symbol.second);
 
                 if (auto custom_function = std::get_if<CustomFunction>(&function)) {
-                    set_references(context, function_context, computed, custom_function->pointer->parameters, arguments);
+                    set_references(context, function_context, computed, (*custom_function)->parameters, arguments);
 
                     Data filter = true;
-                    if (custom_function->pointer->filter != nullptr)
-                        filter = execute(function_context, custom_function->pointer->filter).to_data(context);
+                    if ((*custom_function)->filter != nullptr)
+                        filter = execute(function_context, (*custom_function)->filter).to_data(context);
 
                     try {
                         if (filter.get<bool>(context))
-                            return Interpreter::execute(function_context, custom_function->pointer->body);
+                            return Interpreter::execute(function_context, (*custom_function)->body);
                         else continue;
                     } catch (Data::BadAccess & e) {
                         throw FunctionArgumentsError();
@@ -170,7 +170,7 @@ namespace Interpreter {
             auto data = execute(context, property->object).to_data(context);
             try {
                 auto object = data.get<Object*>(context);
-                return PropertyReference{*object, object->get_property(property->name, context)};
+                return PropertyReference{*object, object->get_property(context, property->name)};
             } catch (Data::BadAccess const& e) {
                 return Data(context.new_object());
             }

@@ -10,9 +10,7 @@
 
 namespace Interpreter {
 
-    struct CustomFunction {
-        std::shared_ptr<Parser::FunctionDefinition> pointer;
-    };
+    using CustomFunction = std::shared_ptr<Parser::FunctionDefinition>;
 
     struct SystemFunction {
         std::shared_ptr<Parser::Expression> parameters;

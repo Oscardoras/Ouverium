@@ -27,7 +27,7 @@ namespace Interpreter {
         );
         Reference if_statement(FunctionContext & context) {
             try {
-                auto function = std::get<CustomFunction>(static_cast<Data &>(context["function"]).get<Object*>(context)->functions.front()).pointer->body;
+                auto function = std::get<CustomFunction>(static_cast<Data &>(context["function"]).get<Object*>(context)->functions.front())->body;
 
                 if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(function)) {
                     if (tuple->objects.size() >= 2) {
@@ -251,7 +251,7 @@ namespace Interpreter {
             std::string path = get_canonical_path(context);
 
             auto & global = context.get_global();
-            if (global.files.find(path) == global.files.end()) {
+            if (global.sources.find(path) == global.sources.end()) {
                 std::set<std::string> symbols;
                 for (auto it : global)
                     symbols.insert(it.first);
@@ -264,7 +264,7 @@ namespace Interpreter {
 
                 try {
                     auto expression = Parser::Standard(code, path).get_tree(symbols);
-                    global.files[path] = expression;
+                    global.sources[path] = expression;
 
                     for (auto const& symbol : expression->symbols)
                         global[symbol];
@@ -362,7 +362,7 @@ namespace Interpreter {
             return var;
         }
 
-        bool equals(std::variant<Object*, char, double, long, bool, Getter> a, std::variant<Object*, char, double, long, bool, Getter> b) {
+        bool equals(RawData a, RawData b) {
             if (auto a_object = std::get_if<Object*>(&a)) {
                 if (auto b_object = std::get_if<Object*>(&b))
                     return (*a_object)->properties == (*b_object)->properties && (*a_object)->array == (*b_object)->array;

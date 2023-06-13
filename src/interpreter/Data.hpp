@@ -8,8 +8,8 @@
 namespace Interpreter {
 
     class Context;
-    class Object;
     struct Function;
+    class Object;
 
     class Getter {
 
@@ -37,15 +37,19 @@ namespace Interpreter {
     bool operator==(Getter const& a, Getter const& b);
     bool operator!=(Getter const& a, Getter const& b);
 
-    struct Data : protected std::variant<Object*, char, double, long, bool, Getter> {
+    using RawData = std::variant<Object*, char, double, long, bool>;
 
-        class BadAccess: public std::exception {};
+    class Data : protected std::variant<Object*, char, double, long, bool, Getter> {
+
+    public:
 
         using std::variant<Object*, char, double, long, bool, Getter>::variant;
 
         using std::variant<Object*, char, double, long, bool, Getter>::operator=;
 
-        std::variant<Object*, char, double, long, bool, Getter> compute(Context & context) const;
+        RawData compute(Context & context) const;
+
+        class BadAccess: public std::exception {};
 
         template<typename T>
         T & get(Context & context) {
@@ -63,7 +67,6 @@ namespace Interpreter {
         friend bool operator==(Data const&, Data const&);
 
     };
-
     bool operator==(Data const& a, Data const& b);
     bool operator!=(Data const& a, Data const& b);
 

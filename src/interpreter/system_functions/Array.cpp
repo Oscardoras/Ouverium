@@ -95,12 +95,12 @@ namespace Interpreter {
 
         void init(Context & context) {
             auto array = static_cast<Data &>(context["Array"]).get<Object*>(context);
-            array->get_property("lenght", context).get<Object*>(context)->functions.push_front(SystemFunction{lenght_args, lenght});
-            array->get_property("get_capacity", context).get<Object*>(context)->functions.push_front(SystemFunction{get_capacity_args, get_capacity});
-            array->get_property("set_capacity", context).get<Object*>(context)->functions.push_front(SystemFunction{set_capacity_args, set_capacity});
-            array->get_property("get", context).get<Object*>(context)->functions.push_front(SystemFunction{get_args, get});
-            array->get_property("add", context).get<Object*>(context)->functions.push_front(SystemFunction{add_args, add});
-            array->get_property("remove", context).get<Object*>(context)->functions.push_front(SystemFunction{remove_args, remove});
+            array->get_property(context, "lenght").get<Object*>(context)->functions.push_front(SystemFunction{lenght_args, lenght});
+            array->get_property(context, "get_capacity").get<Object*>(context)->functions.push_front(SystemFunction{get_capacity_args, get_capacity});
+            array->get_property(context, "set_capacity").get<Object*>(context)->functions.push_front(SystemFunction{set_capacity_args, set_capacity});
+            array->get_property(context, "get").get<Object*>(context)->functions.push_front(SystemFunction{get_args, get});
+            array->get_property(context, "add").get<Object*>(context)->functions.push_front(SystemFunction{add_args, add});
+            array->get_property(context, "remove").get<Object*>(context)->functions.push_front(SystemFunction{remove_args, remove});
         }
 
     }

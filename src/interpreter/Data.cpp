@@ -3,11 +3,18 @@
 
 namespace Interpreter {
 
-    std::variant<Object*, char, double, long, bool, Getter> Data::compute(Context & context) const {
-        if (auto getter = std::get_if<Getter>(this))
-            return call_function(context, nullptr, {*getter}, std::make_shared<Parser::Tuple>()).to_data(context);
-        else
-            return *this;
+    template<class... Ts>
+    struct overloaded : Ts... { using Ts::operator()...; };
+
+    RawData Data::compute(Context & context) const {
+        return std::visit(overloaded {
+            [&context](Getter const& getter) -> RawData {
+                return call_function(context, nullptr, {getter}, std::make_shared<Parser::Tuple>()).to_data(context).compute(context);
+            },
+            [](auto const& arg) -> RawData {
+                return arg;
+            }
+        }, static_cast<std::variant<Object*, char, double, long, bool, Getter>>(*this));
     }
 
     bool operator==(Data const& a, Data const& b) {

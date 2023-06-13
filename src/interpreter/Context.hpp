@@ -54,7 +54,7 @@ namespace Interpreter {
 
     public:
 
-        std::map<std::string, std::shared_ptr<Parser::Expression>> files;
+        std::map<std::string, std::shared_ptr<Parser::Expression>> sources;
 
         GlobalContext();
 
@@ -74,7 +74,7 @@ namespace Interpreter {
 
     protected:
 
-        std::reference_wrapper<Context> parent;
+        Context & parent;
 
     public:
 

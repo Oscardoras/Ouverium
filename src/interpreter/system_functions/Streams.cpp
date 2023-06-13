@@ -52,11 +52,11 @@ namespace Interpreter {
         void setInputStream(Context & context, Object & object) {
             Function f1 = SystemFunction{read_args, Streams::read};
             f1.extern_symbols.emplace("this", context.new_reference(&object));
-            object.get_property("read", context).get<Object*>(context)->functions.push_front(f1);
+            object.get_property(context, "read").get<Object*>(context)->functions.push_front(f1);
 
             Function f2 = SystemFunction{has_args, Streams::has};
             f2.extern_symbols.emplace("this", context.new_reference(&object));
-            object.get_property("has", context).get<Object*>(context)->functions.push_front(f2);
+            object.get_property(context, "has").get<Object*>(context)->functions.push_front(f2);
         }
 
         auto write_args = std::make_shared<Parser::Symbol>("data");
@@ -91,11 +91,11 @@ namespace Interpreter {
         void setOutputStream(Context & context, Object & object) {
             Function f1 = SystemFunction{write_args, Streams::write};
             f1.extern_symbols.emplace("this", context.new_reference(&object));
-            object.get_property("write", context).get<Object*>(context)->functions.push_front(f1);
+            object.get_property(context, "write").get<Object*>(context)->functions.push_front(f1);
 
             Function f2 = SystemFunction{flush_args, Streams::flush};
             f2.extern_symbols.emplace("this", context.new_reference(&object));
-            object.get_property("flush", context).get<Object*>(context)->functions.push_front(f2);
+            object.get_property(context, "flush").get<Object*>(context)->functions.push_front(f2);
         }
 
         auto input_file_args = std::make_shared<Parser::Symbol>("path");

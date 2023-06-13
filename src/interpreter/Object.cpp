@@ -6,7 +6,7 @@
 
 namespace Interpreter {
 
-    Data & Object::get_property(std::string name, Context & context) {
+    Data & Object::get_property(Context & context, std::string name) {
         auto it = properties.find(name);
         if (it == properties.end())
             return properties.emplace(name, Data(context.new_object())).first->second;

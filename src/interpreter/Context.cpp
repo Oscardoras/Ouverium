@@ -74,7 +74,7 @@ namespace Interpreter {
 
 
     GlobalContext & FunctionContext::get_global() {
-        return parent.get().get_global();
+        return parent.get_global();
     }
 
     Context & FunctionContext::get_parent() {

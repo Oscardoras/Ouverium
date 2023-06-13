@@ -36,7 +36,7 @@ namespace Interpreter {
 
         bool referenced = false;
 
-        Data & get_property(std::string name, Context & context);
+        Data & get_property(Context & context, std::string name);
         std::string to_string(Context & context) const;
 
     };
