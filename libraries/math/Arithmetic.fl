@@ -1,6 +1,6 @@
 gcd : (a, b) |-> {
     (a', b') := (a, b);
-    while (b' != 0) repeat {
+    while (b' != 0) {
         (a', b') := (b', a' % b')
     };
     a'
