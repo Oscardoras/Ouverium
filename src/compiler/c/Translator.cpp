@@ -116,6 +116,20 @@ namespace Translator::CStandard {
             instructions.push_back(exp);
     }
 
+    auto UnknownData_from_data(std::shared_ptr<Type> type, std::shared_ptr<Expression> value) {
+        return std::make_shared<FunctionCall>(FunctionCall {
+            .function = std::make_shared<VariableCall>(VariableCall {
+                .name = "__UnknownData_from_data"
+            }),
+            .parameters = {
+                std::make_shared<VariableCall>(VariableCall {
+                    .name = "&__VirtualTable_" + type->name
+                }),
+                value
+            }
+        });
+    }
+
     std::shared_ptr<Expression> Translator::get_expression(std::shared_ptr<Analyzer::Expression> expression, Instructions & instructions) {
         if (auto function_call = std::dynamic_pointer_cast<Analyzer::FunctionCall>(expression)) {
             auto r = std::make_shared<FunctionCall>(FunctionCall {
@@ -123,23 +137,12 @@ namespace Translator::CStandard {
                     .name = "__Function_eval"
                 })
             });
+            r->type = Unknown;
 
             r->parameters.push_back(get_expression(function_call->function, instructions));
 
-            if (function_call->arguments->types.size() == 1) {
-                r->parameters.push_back(
-                    std::make_shared<FunctionCall>(FunctionCall {
-                        .function = std::make_shared<VariableCall>(VariableCall {
-                            .name = "__UnknownData_from_data"
-                        }),
-                        .parameters = {
-                            std::make_shared<VariableCall>(VariableCall {
-                                .name = "&__VirtualTable_" + type_table[function_call->arguments->types.begin()->lock()]->name
-                            }),
-                            get_expression(function_call->arguments, instructions)
-                        }
-                    })
-                );
+            if (auto type = type_table.get(function_call->arguments->types)) {
+                r->parameters.push_back(UnknownData_from_data(type, get_expression(function_call->arguments, instructions)));
             } else {
                 r->parameters.push_back(get_expression(function_call->arguments, instructions));
             }
@@ -167,7 +170,29 @@ namespace Translator::CStandard {
         } else if (auto property = std::dynamic_pointer_cast<Analyzer::Property>(expression)) {
             auto o = get_expression(property->object, instructions);
 
-            if (o->type.lock() == Unknown) {
+            if (auto type = o->type.lock()) {
+                std::shared_ptr<Component> component;
+                for (auto const& c : std::dynamic_pointer_cast<Class>(o)->components) {
+                    auto comp = c.lock();
+                    if (comp->properties.find(property->name) != comp->properties.end()) {
+                        component = comp;
+                        break;
+                    }
+                }
+
+                return std::make_shared<Property>(Property {
+                    {
+                        type_table.get(expression->types)
+                    },
+                    std::make_shared<Property>(Property {
+                        .object = o,
+                        .name = component->name,
+                        .pointer = true
+                    }),
+                    property->name,
+                    false
+                });
+            } else {
                 std::map<std::shared_ptr<Component>, std::set<std::shared_ptr<Class>>> components;
                 for (auto const& t : property->object->types)
                     if (auto type = std::dynamic_pointer_cast<Class>(type_table[t.lock()]))
@@ -181,72 +206,40 @@ namespace Translator::CStandard {
                     auto component = components.begin()->first;
 
                     return std::make_shared<Property>(Property {
-                        Expression {
-                            .type = type_table.get(expression->types)
+                        {
+                            type_table.get(expression->types)
                         },
-                        .object = std::make_shared<FunctionCall>(FunctionCall {
-                            .function = std::make_shared<VariableCall>(VariableCall {
-                                .name = "__UnknownData_get_component"
-                            }),
-                            .parameters = {
-                                std::make_shared<VariableCall>(VariableCall {
-                                    .name = type_table[function_call->arguments->types.begin()->lock()]->name
-                                }),
-                                get_expression(function_call->arguments, instructions)
-                            }
-                        }),
-                        .name = property->name,
-                        .pointer = true
+                        UnknownData_from_data(type_table[function_call->arguments->types.begin()->lock()], get_expression(function_call->arguments, instructions)),
+                        property->name,
+                        true
                     });
                 } else {
-                    
+                    // TODO
                 }
-            } else {
-                std::shared_ptr<Component> component;
-                for (auto const& c : std::dynamic_pointer_cast<Class>(o)->components) {
-                    auto comp = c.lock();
-                    if (comp->properties.find(property->name) != comp->properties.end()) {
-                        component = comp;
-                        break;
-                    }
-                }
-
-                return std::make_shared<Property>(Property {
-                    Expression {
-                        .type = type_table.get(expression->types)
-                    },
-                    .object = std::make_shared<Property>(Property {
-                        .object = o,
-                        .name = component->name,
-                        .pointer = true
-                    }),
-                    .name = property->name,
-                    .pointer = false
-                });
             }
         } else if (auto symbol = std::dynamic_pointer_cast<Analyzer::Symbol>(expression)) {
             return std::make_shared<VariableCall>(VariableCall {
-                Expression {
-                    .type = type_table.get(expression->types)
+                {
+                    type_table.get(expression->types)
                 },
-                .name = symbol->name
+                symbol->name
             });
         } else if (auto tuple = std::dynamic_pointer_cast<Analyzer::Tuple>(expression)) {
             auto list = std::make_shared<List>(List {
-                Expression {
-                    .type = type_table.get(expression->types)
+                {
+                    type_table.get(expression->types)
                 }
             });
             for (auto const& o : tuple->objects)
                 list->objects.push_back(get_expression(o, instructions));
         } else if (auto value = std::dynamic_pointer_cast<Analyzer::Value>(expression)) {
             return std::make_shared<Value>(Value {
-                Expression {
-                    .type = type_table.get(expression->types)
+                {
+                    type_table.get(expression->types)
                 },
-                .value = value->value
+                value->value
             });
-        }
+        } else return nullptr;
     }
 
 }

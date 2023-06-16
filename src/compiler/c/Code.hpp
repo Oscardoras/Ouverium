@@ -23,7 +23,7 @@ namespace Translator::CStandard {
         size_t offset;
         Declarations properties;
     };
-    std::shared_ptr<Type> Unknown = std::make_shared<Type>();
+    std::shared_ptr<Type> Unknown = nullptr;
     struct Class: public Type {
         std::set<std::weak_ptr<Component>> components;
     };
