@@ -15,7 +15,12 @@ namespace Parser {
     /**
      * Represents an expression of the language, must be inherited.
     */
-    struct Expression {
+    struct Expression: std::enable_shared_from_this<Expression> {
+
+        /**
+         * The parent expression.
+        */
+        std::weak_ptr<Expression> parent;
 
         /**
          * The position of the expression in the source.
@@ -23,9 +28,18 @@ namespace Parser {
         std::shared_ptr<Position> position;
 
         /**
-         * The list of the symbols available in the expression.
+         * The list of the symbols used in the expression.
         */
         std::set<std::string> symbols;
+
+        std::shared_ptr<Expression> get_root();
+
+        /**
+         * Determine the symbols of this expressions tree.
+         * @param available_symbols the symbols available in the parent expression.
+         * @return the symbols used by this expression.
+        */
+        virtual std::set<std::string> compute_symbols(std::set<std::string> & available_symbols) = 0;
 
         /**
          * Gets a string of the expression to print it as a tree.
@@ -45,6 +59,7 @@ namespace Parser {
         FunctionCall(std::shared_ptr<Expression> function = nullptr, std::shared_ptr<Expression> arguments = nullptr):
             function(function), arguments(arguments) {}
 
+        virtual std::set<std::string> compute_symbols(std::set<std::string> & available_symbols);
         virtual std::string to_string(unsigned int n = 0) const override;
 
     };
@@ -58,6 +73,7 @@ namespace Parser {
         FunctionDefinition(std::shared_ptr<Expression> parameters = nullptr, std::shared_ptr<Expression> filter = nullptr, std::shared_ptr<Expression> body = nullptr):
             parameters(parameters), filter(filter), body(body) {}
 
+        virtual std::set<std::string> compute_symbols(std::set<std::string> & available_symbols);
         virtual std::string to_string(unsigned int n = 0) const override;
 
     };
@@ -70,6 +86,7 @@ namespace Parser {
         Property(std::shared_ptr<Expression> object = nullptr, std::string const& name = ""):
             object(object), name(name) {}
 
+        virtual std::set<std::string> compute_symbols(std::set<std::string> & available_symbols);
         virtual std::string to_string(unsigned int n = 0) const override;
 
     };
@@ -81,6 +98,7 @@ namespace Parser {
         Symbol(std::string const& name = ""):
             name(name) {}
 
+        virtual std::set<std::string> compute_symbols(std::set<std::string> & available_symbols);
         virtual std::string to_string(unsigned int n = 0) const override;
 
     };
@@ -92,6 +110,7 @@ namespace Parser {
         Tuple(std::initializer_list<std::shared_ptr<Expression>> const& l = {}):
             objects(l) {}
 
+        virtual std::set<std::string> compute_symbols(std::set<std::string> & available_symbols);
         virtual std::string to_string(unsigned int n = 0) const override;
 
     };

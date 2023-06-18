@@ -24,4 +24,4 @@ link_libraries(interpreter PUBLIC capi)
 FILE(GLOB_RECURSE compiler_sources
     src/compiler/c/*
 )
-add_executable(compiler ${compiler_sources})
+#add_executable(compiler ${compiler_sources})

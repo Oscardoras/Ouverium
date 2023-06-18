@@ -33,9 +33,7 @@ namespace Interpreter {
 
         std::string get_canonical_path(FunctionContext & context);
 
-        Reference include(FunctionContext & context);
-
-        Reference use(FunctionContext & context);
+        Reference import(FunctionContext & context);
 
         Reference copy(FunctionContext & context);
         Reference copy_pointer(FunctionContext & context);

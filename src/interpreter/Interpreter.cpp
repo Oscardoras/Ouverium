@@ -19,7 +19,8 @@
 
 namespace Interpreter {
 
-    GlobalContext::GlobalContext() {
+    GlobalContext::GlobalContext(std::shared_ptr<Parser::Expression> expression):
+        Context(expression) {
         Array::init(*this);
         //ArrayList::init(*this);
         Base::init(*this);
@@ -100,12 +101,12 @@ namespace Interpreter {
         } else throw Interpreter::FunctionArgumentsError();
     }
 
-    Reference call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, std::shared_ptr<Parser::Expression> arguments) {
+    Reference call_function(Context & context, std::shared_ptr<Parser::Expression> expression, std::list<Function> const& functions, std::shared_ptr<Parser::Expression> arguments) {
         std::map<std::shared_ptr<Parser::Expression>, Reference> computed;
 
         for (auto const& function : functions) {
             try {
-                FunctionContext function_context(context, position);
+                FunctionContext function_context(context, expression);
                 for (auto & symbol : function.extern_symbols)
                     function_context.add_symbol(symbol.first, symbol.second);
 
@@ -131,16 +132,16 @@ namespace Interpreter {
             } catch (FunctionArgumentsError & e) {}
         }
 
-        if (position != nullptr) {
-            position->store_stack_trace(context);
-            position->notify_error("Error: cannot find a function matching with the arguments");
+        if (expression->position != nullptr) {
+            expression->position->store_stack_trace(context);
+            expression->position->notify_error("Error: cannot find a function matching with the arguments");
         }
         throw Error();
     }
 
-    Reference call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, Reference const& arguments) {
+    Reference call_function(Context & context, std::shared_ptr<Parser::Expression> expression, std::list<Function> const& functions, Reference const& arguments) {
         context.add_symbol("#cached", arguments.to_indirect_reference(context));
-        return call_function(context, position, functions, std::make_shared<Parser::Symbol>("#cached"));
+        return call_function(context, expression, functions, std::make_shared<Parser::Symbol>("#cached"));
     }
 
     Reference execute(Context & context, std::shared_ptr<Parser::Expression> expression) {
@@ -148,9 +149,9 @@ namespace Interpreter {
             auto data = execute(context, function_call->function).to_data(context);
             try {
                 auto object = data.get<Object*>(context);
-                return call_function(context, function_call->position, object->functions, function_call->arguments);
+                return call_function(context, function_call, object->functions, function_call->arguments);
             } catch (Data::BadAccess const& e) {
-                return call_function(context, function_call->position, std::list<Function>{}, function_call->arguments);
+                return call_function(context, function_call, std::list<Function>{}, function_call->arguments);
             }
         } else if (auto function_definition = std::dynamic_pointer_cast<Parser::FunctionDefinition>(expression)) {
             auto object = context.new_object();

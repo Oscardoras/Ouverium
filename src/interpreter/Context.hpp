@@ -22,8 +22,8 @@ namespace Interpreter {
 
     public:
 
-        Context(std::shared_ptr<Parser::Position> position = nullptr):
-            Parser::Context(position) {}
+        Context(std::shared_ptr<Parser::Expression> expression):
+            Parser::Context(expression) {}
 
         virtual GlobalContext & get_global() = 0;
 
@@ -33,11 +33,12 @@ namespace Interpreter {
 
         Data & new_reference(Data const& data = Data{});
 
+        std::set<std::string> get_symbols() const;
         bool has_symbol(std::string const& symbol) const;
         IndirectReference add_symbol(std::string const& symbol, Reference const& reference);
         IndirectReference operator[](std::string const& symbol);
-        auto begin() {return symbols.begin();}
-        auto end() {return symbols.end();}
+        auto begin() const {return symbols.begin();}
+        auto end() const {return symbols.end();}
 
         auto & get_function(std::string const& symbol) {
             return static_cast<Data &>((*this)[symbol]).get<Object*>(*this)->functions;
@@ -56,7 +57,7 @@ namespace Interpreter {
 
         std::map<std::string, std::shared_ptr<Parser::Expression>> sources;
 
-        GlobalContext();
+        GlobalContext(std::shared_ptr<Parser::Expression> expression);
 
         virtual GlobalContext & get_global() override;
         virtual Context & get_parent() override;
@@ -78,8 +79,8 @@ namespace Interpreter {
 
     public:
 
-        FunctionContext(Context & parent, std::shared_ptr<Parser::Position> position = nullptr):
-            Context(position), parent(parent) {}
+        FunctionContext(Context & parent, std::shared_ptr<Parser::Expression> expression):
+            Context(expression), parent(parent) {}
 
         virtual GlobalContext & get_global() override;
         virtual Context & get_parent() override;

@@ -9,8 +9,8 @@ namespace Interpreter {
     class Error: public std::exception {};
     class FunctionArgumentsError: public Error {};
 
-    Reference call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, std::shared_ptr<Parser::Expression> arguments);
-    Reference call_function(Context & context, std::shared_ptr<Parser::Position> position, std::list<Function> const& functions, Reference const& arguments);
+    Reference call_function(Context & context, std::shared_ptr<Parser::Expression> expression, std::list<Function> const& functions, std::shared_ptr<Parser::Expression> arguments);
+    Reference call_function(Context & context, std::shared_ptr<Parser::Expression> expression, std::list<Function> const& functions, Reference const& arguments);
 
     Reference execute(Context & context, std::shared_ptr<Parser::Expression> expression);
 

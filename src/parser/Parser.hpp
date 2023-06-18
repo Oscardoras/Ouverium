@@ -30,25 +30,15 @@ namespace Parser {
 
     class Context {
 
-    protected:
-
-        /**
-         * The position from where the context was called.
-        */
-        std::shared_ptr<Position> position;
-
     public:
 
-        Context(std::shared_ptr<Position> position):
-            position(position) {}
-
         /**
-         * Gets the position where the context was called.
-         * @return the position.
+         * The expression from where the context was called.
         */
-        auto get_position() const {
-            return position;
-        }
+        std::shared_ptr<Expression> expression;
+
+        Context(std::shared_ptr<Expression> expression):
+            expression(expression) {}
 
         /**
          * Gets the parent context.
@@ -62,7 +52,7 @@ namespace Parser {
 
     public:
 
-        virtual std::shared_ptr<Expression> get_tree(std::set<std::string> symbols) const = 0;
+        virtual std::shared_ptr<Expression> get_tree() const = 0;
 
     };
 

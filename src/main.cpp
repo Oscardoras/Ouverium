@@ -8,7 +8,8 @@
 
 int main(int argc, char ** argv) {
     if (argc == 1) {
-        Interpreter::GlobalContext context;
+        Interpreter::GlobalContext context(nullptr);
+        auto symbols = context.get_symbols();
 
         std::string code;
         std::string line;
@@ -16,11 +17,12 @@ int main(int argc, char ** argv) {
             if (line.length() > 0) {
                 code += line + '\n';
                 try {
-                    std::set<std::string> symbols;
-                    for (auto const& symbol : context)
-                        symbols.insert(symbol.first);
+                    auto expression = Parser::Standard(code, ".").get_tree();
+                    context.expression = expression;
 
-                    auto expression = Parser::Standard(code, ".").get_tree(symbols);
+                    auto new_symbols = expression->compute_symbols(symbols);
+                    symbols.insert(new_symbols.begin(), new_symbols.end());
+
                     auto r = Interpreter::run(context, expression);
                     if (Interpreter::print(context, std::cout, r.to_data(context)))
                         std::cout << std::endl;
@@ -30,18 +32,17 @@ int main(int argc, char ** argv) {
     } else if (argc == 2) {
         std::ifstream src(argv[1]);
         if (src) {
-            std::string code;
-            std::string line;
-            while (std::getline(src, line))
-                code += line + '\n';
+            std::string code = Parser::Standard::read_file(src);
 
-            Interpreter::GlobalContext context;
             try {
-                std::set<std::string> symbols;
-                for (auto const& symbol : context)
-                    symbols.insert(symbol.first);
 
-                auto expression = Parser::Standard(code, argv[1]).get_tree(symbols);
+                auto expression = Parser::Standard(code, argv[1]).get_tree();
+
+                Interpreter::GlobalContext context(expression);
+
+                std::set<std::string> symbols = context.get_symbols();
+                expression->compute_symbols(symbols);
+
                 auto r = Interpreter::run(context, expression);
             } catch (Parser::Standard::IncompleteCode & e) {
                 std::cerr << "incomplete code, you must finish the last expression in file \"" << argv[1] << "\"" << std::endl;

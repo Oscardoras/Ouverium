@@ -1,11 +1,18 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 
 #include "Standard.hpp"
 
 
 namespace Parser {
+
+    std::string Standard::read_file(std::ifstream const& file) {
+        std::ostringstream sstr;
+        sstr << file.rdbuf();
+        return sstr.str();
+    }
 
     Standard::Standard(std::string const& code, std::string const& path):
         code(code), path(path) {}
@@ -19,8 +26,8 @@ namespace Parser {
         Context* old_c = nullptr;
         Context* c = &context;
         while (c != old_c) {
-            if (c->get_position() != nullptr) {
-                auto text_position = std::static_pointer_cast<TextPosition>(c->get_position());
+            if (c->expression->position != nullptr) {
+                auto text_position = std::static_pointer_cast<TextPosition>(c->expression->position);
                 stack_trace += "\tin file \"" + text_position->path + "\" at line " + std::to_string(text_position->line) + ", column " + std::to_string(text_position->column) + "\n";
             }
             old_c = c;
@@ -250,7 +257,7 @@ namespace Parser {
         }
     }
 
-    std::shared_ptr<Expression> get_expression(std::vector<Standard::ParserError> & errors, std::vector<Standard::Word> const& words, unsigned long &i, std::vector<std::shared_ptr<Expression>> & escaped, bool in_tuple, bool in_function, bool in_operator, bool priority) {
+    std::shared_ptr<Expression> get_expression(std::vector<Standard::ParserError> & errors, std::vector<Standard::Word> const& words, size_t & i, std::vector<std::shared_ptr<Expression>> & escaped, bool in_tuple, bool in_function, bool in_operator, bool priority) {
         std::shared_ptr<Expression> expression = nullptr;
 
         if (words.at(i) == "(") {
@@ -419,43 +426,12 @@ namespace Parser {
         return expressions_to_expression(errors, expressions, expression, is_function, escaped);
     }
 
-    void find_symbols(std::shared_ptr<Expression> expression, std::shared_ptr<Expression> parent) {
-        if (expression == nullptr) return;
-
-        if (parent != nullptr)
-            expression->symbols = parent->symbols;
-
-        if (auto function_call = std::dynamic_pointer_cast<FunctionCall>(expression)) {
-            find_symbols(function_call->function, expression);
-            find_symbols(function_call->arguments, expression);
-        } else if (auto function_definition = std::dynamic_pointer_cast<FunctionDefinition>(expression)) {
-            find_symbols(function_definition->parameters, expression);
-            find_symbols(function_definition->filter, expression);
-            find_symbols(function_definition->body, expression);
-        } else if (auto property = std::dynamic_pointer_cast<Property>(expression)) {
-            find_symbols(property->object, expression);
-        } else if (auto symbol = std::dynamic_pointer_cast<Symbol>(expression)) {
-            expression->symbols.insert(symbol->name);
-        } else if (auto tuple = std::dynamic_pointer_cast<Tuple>(expression)) {
-            for (auto & ex : tuple->objects)
-                find_symbols(ex, expression);
-        }
-
-        if (parent != nullptr && !std::dynamic_pointer_cast<FunctionDefinition>(expression))
-            for (auto const& name : expression->symbols)
-                if (parent->symbols.find(name) == parent->symbols.end())
-                    parent->symbols.insert(name);
-    }
-
-    std::shared_ptr<Expression> Standard::get_tree(std::vector<Standard::ParserError> & errors, std::set<std::string> symbols) const {
+    std::shared_ptr<Expression> Standard::get_tree(std::vector<Standard::ParserError> & errors) const {
         try {
             auto words = get_words();
-            unsigned long i = 0;
+            size_t i = 0;
             std::vector<std::shared_ptr<Expression>> escaped;
             auto expression = get_expression(errors, words, i, escaped, false, false, false, true);
-
-            expression->symbols = symbols;
-            find_symbols(expression, nullptr);
 
             return expression;
         } catch (std::out_of_range const& e) {
@@ -463,9 +439,9 @@ namespace Parser {
         }
     }
 
-    std::shared_ptr<Expression> Standard::get_tree(std::set<std::string> symbols) const {
+    std::shared_ptr<Expression> Standard::get_tree() const {
         std::vector<Standard::ParserError> errors;
-        auto tree = get_tree(errors, symbols);
+        auto tree = get_tree(errors);
         if (errors.empty()) {
             return tree;
         } else {

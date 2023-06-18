@@ -33,6 +33,13 @@ namespace Interpreter {
         return references.back();
     }
 
+    std::set<std::string> Context::get_symbols() const {
+        std::set<std::string> symbols;
+        for (auto const& symbol : *this)
+            symbols.insert(symbol.first);
+        return symbols;
+    }
+
     bool Context::has_symbol(std::string const& symbol) const {
         return symbols.find(symbol) != symbols.end();
     }

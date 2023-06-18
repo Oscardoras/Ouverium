@@ -12,6 +12,8 @@ namespace Parser {
 
     public:
 
+        static std::string read_file(std::ifstream const& file);
+
         Standard(std::string const& code, std::string const& path);
 
         struct TextPosition: public Position {
@@ -44,14 +46,14 @@ namespace Parser {
 
         class IncompleteCode: public std::exception {};
 
-        virtual std::shared_ptr<Expression> get_tree(std::set<std::string> symbols) const override;
+        virtual std::shared_ptr<Expression> get_tree() const override;
 
     protected:
 
         std::string code;
         std::string path;
 
-        std::shared_ptr<Expression> get_tree(std::vector<Standard::ParserError> & errors, std::set<std::string> symbols) const;
+        std::shared_ptr<Expression> get_tree(std::vector<Standard::ParserError> & errors) const;
 
     };
 

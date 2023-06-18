@@ -199,14 +199,13 @@ namespace Interpreter {
         Reference throw_statement(FunctionContext & context) {
             Exception ex;
             ex.reference = context["throw_expression"];
-            ex.position = context.get_position();
+            ex.position = context.expression->position;
             ex.position->store_stack_trace(context.get_parent());
             throw ex;
         }
 
-        auto path_args = std::make_shared<Parser::Symbol>("path");
         std::string get_canonical_path(FunctionContext & context) {
-            if (auto position = std::dynamic_pointer_cast<Parser::Standard::TextPosition>(context.get_position())) {
+            if (auto position = std::dynamic_pointer_cast<Parser::Standard::TextPosition>(context.expression->position)) {
                 try {
                     auto path = static_cast<Data &>(context["path"]).get<Object*>(context)->to_string(context);
                     auto system_position = position->path;
@@ -223,60 +222,46 @@ namespace Interpreter {
             } else throw Interpreter::FunctionArgumentsError();
         }
 
-        Reference include(FunctionContext & context) {
+        auto path_args = std::make_shared<Parser::Symbol>("path");
+        Reference import(FunctionContext & context) {
+            auto & global = context.get_global();
+            auto root = context.expression->get_root();
             std::string path = get_canonical_path(context);
 
-            auto & global = context.get_global();
-            std::set<std::string> symbols;
-            for (auto it : context)
-                symbols.insert(it.first);
-
-            std::ifstream file(path);
-            std::string code;
-            std::string line;
-            while (std::getline(file, line))
-                code += line + '\n';
-
-            try {
-                auto expression = Parser::Standard(code, path).get_tree(symbols);
-                return Interpreter::execute(global, expression);
-            } catch (Parser::Standard::IncompleteCode & e) {
-                context.get_position()->store_stack_trace(context.get_parent());
-                context.get_position()->notify_error("incomplete code, you must finish the last expression in file \"" + path + "\"");
-                throw Error();
-            }
-        }
-
-        Reference use(FunctionContext & context) {
-            std::string path = get_canonical_path(context);
-
-            auto & global = context.get_global();
-            if (global.sources.find(path) == global.sources.end()) {
-                std::set<std::string> symbols;
-                for (auto it : global)
-                    symbols.insert(it.first);
-
-                std::ifstream file(path);
-                std::string code;
-                std::string line;
-                while (std::getline(file, line))
-                    code += line + '\n';
+            auto it = global.sources.find(path);
+            if (it == global.sources.end()) {
+                std::string code = Parser::Standard::read_file(std::ifstream(path));
 
                 try {
-                    auto expression = Parser::Standard(code, path).get_tree(symbols);
+                    auto expression = Parser::Standard(code, path).get_tree();
                     global.sources[path] = expression;
 
-                    for (auto const& symbol : expression->symbols)
-                        global[symbol];
+                    {
+                        auto symbols = GlobalContext(nullptr).get_symbols();
+                        expression->compute_symbols(symbols);
+                    }
+
+                    {
+                        auto symbols = root->symbols;
+                        symbols.insert(expression->symbols.begin(), expression->symbols.end());
+                        root->compute_symbols(symbols);
+                    }
 
                     return Interpreter::execute(global, expression);
                 } catch (Parser::Standard::IncompleteCode & e) {
-                    context.get_position()->store_stack_trace(context.get_parent());
-                    context.get_position()->notify_error("incomplete code, you must finish the last expression in file \"" + path + "\"");
+                    context.expression->position->store_stack_trace(context.get_parent());
+                    context.expression->position->notify_error("incomplete code, you must finish the last expression in file \"" + path + "\"");
                     throw Error();
                 }
-            } else
+            } else {
+                auto expression = it->second;
+
+                auto symbols = root->symbols;
+                symbols.insert(expression->symbols.begin(), expression->symbols.end());
+                root->compute_symbols(symbols);
+
                 return Reference(context.new_object());
+            }
         }
 
         auto copy_args = std::make_shared<Parser::Symbol>("data");
@@ -441,8 +426,7 @@ namespace Interpreter {
 
             context.get_function("throw").push_front(SystemFunction{throw_statement_args, throw_statement});
 
-            context.get_function("include").push_front(SystemFunction{path_args, include});
-            context.get_function("using").push_front(SystemFunction{path_args, use});
+            context.get_function("import").push_front(SystemFunction{path_args, import});
 
             context.get_function("$").push_front(SystemFunction{copy_args, copy});
             context.get_function("$==").push_front(SystemFunction{copy_args, copy_pointer});
