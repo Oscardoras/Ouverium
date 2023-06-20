@@ -1,51 +1,52 @@
-using "data_structure/ArrayList.fl";
+import "Type.fl";
+import "data_structure/ArrayList.fl";
 
 
 Char : this \ (this ~ Char) |-> {
     this
 };
-Char : this \ (Array->lenght(this) == 1 & is (Array->get(this, 0)) Char) |-> {
-    Array->get(this, 0)
+Char : this \ (Array.lenght(this) == 1 & is (Array.get(this, 0)) Char) |-> {
+    Array.get(this, 0)
 };
 
-Char->is_digit : c \ (c ~ Char) |-> {
+Char.is_digit : c \ (c ~ Char) |-> {
     Char "0" <= c & c <= Char "9"
 };
 
-Char->is_alpha : c \ (c ~ Char) |-> {
+Char.is_alpha : c \ (c ~ Char) |-> {
     Char "A" <= c & c <= Char "Z" | Char "a" <= c & c <= Char "z"
 };
 
-Char->is_alphanum : c \ (c ~ Char) |-> {
-    Char->is_alpha(c) | Char->is_digit(c)
+Char.is_alphanum : c \ (c ~ Char) |-> {
+    Char.is_alpha(c) | Char.is_digit(c)
 };
 
 String : this |-> {
     ArrayList(this);
     this :~ String;
 
-    this->lower : () |-> {
-        this->foreach(c |-> {
+    this.lower : () |-> {
+        this.foreach(c |-> {
 
         })
     };
 
-    this->upper : () |-> {
-        this->foreach(c |-> {
+    this.upper : () |-> {
+        this.foreach(c |-> {
 
         })
     };
 
-    this->index_of : substring \ (substring ~ String) |-> {
+    this.index_of : substring \ (substring ~ String) |-> {
         index := -1;
 
         i := 0;
-        while (index < 0 & i < this->lenght()) {
+        while (index < 0 & i < this.lenght()) {
             j := 0;
-            while (j < substring->lenght() & this[i+j] == substring[j]) {
+            while (j < substring.lenght() & this[i+j] == substring[j]) {
                 ++j
             };
-            if (j == substring->lenght()) {
+            if (j == substring.lenght()) {
                 index := i
             } else {
                 ++i
@@ -55,12 +56,12 @@ String : this |-> {
         index
     };
 
-    this->substring : (begin, len) \ (begin ~ Int & len ~ Int & len >= 0 & begin+len < this->lenght()) |-> {
+    this.substring : (begin, len) \ (begin ~ Int & len ~ Int & len >= 0 & begin+len < this.lenght()) |-> {
         str := String();
-        str->set_capacity(len);
+        str.set_capacity(len);
 
         for i from 0 to len {
-            str->add_last(this[begin+i])
+            str.add_last(this[begin+i])
         };
 
         str
@@ -69,28 +70,28 @@ String : this |-> {
     this
 };
 String : c \ (is c Char) |-> {
-    Array->add(this, c);
+    Array.add(this, c);
     String(this)
 };
 
 
 (~) : (substring, string) \ (is substring String & is string String) |-> {
-    string->index_of(substring) >= 0
+    string.index_of(substring) >= 0
 };
 
 (+) : (str1, str2) \ (is str1 Array & is str2 Array) |-> {
     str := String();
 
-    (l1,l2) := (Array->lenght(str1), Array->lenght(str2));
+    (l1,l2) := (Array.lenght(str1), Array.lenght(str2));
     l := l1+l2;
-    str->set_capacity(l);
+    str.set_capacity(l);
 
     for i from 0 to l1 {
-        str->add_last(Array->get(str1, i))
+        str.add_last(Array.get(str1, i))
     };
     i := 0;
     for i from 0 to l2 {
-        str->add_last(Array->get(str2, i))
+        str.add_last(Array.get(str2, i))
     };
 
     str
@@ -98,54 +99,54 @@ String : c \ (is c Char) |-> {
 (+) : (str1, str2) \ (str1 ~ String & str2 ~ String) |-> {
     str := String();
 
-    (l1,l2) := (str1->lenght(), str2->lenght());
+    (l1,l2) := (str1.lenght(), str2.lenght());
     l := l1+l2;
-    str->set_capacity(l);
+    str.set_capacity(l);
 
     for i from 0 to l1 {
-        str->add_last(str1[i])
+        str.add_last(str1[i])
     };
     i := 0;
     for i from 0 to l2 {
-        str->add_last(str2[i])
+        str.add_last(str2[i])
     };
 
     str
 };
 (+) : (str1, c2) \ (str1 ~ String & c2 ~ Char) |-> {
     str2 := String();
-    str2->add_last(c2);
+    str2.add_last(c2);
     str1 + str2
 };
 (+) : (c1, str2) \ (c1 ~ Char & str2 ~ String) |-> {
     str1 := String();
-    str1->add_last(c1);
+    str1.add_last(c1);
     str1 + str2
 };
 (+) : (c1, c2) \ (c1 ~ Char & c2 ~ Char) |-> {
     str1 := String();
-    str1->add_last(c1);
+    str1.add_last(c1);
     str1 + c2
 };
 
 (:+) : (str1, str2) \ (str1 ~ String & str2 ~ String) |-> {
-    (l1,l2) := (str1->lenght(), str2->lenght());
+    (l1,l2) := (str1.lenght(), str2.lenght());
     l := l1+l2;
 
-    if (str1->get_capacity() < l) {
-        str1->set_capacity(l)
+    if (str1.get_capacity() < l) {
+        str1.set_capacity(l)
     };
 
-    str1->set_capacity(l);
+    str1.set_capacity(l);
 
     for i from 0 to l2 {
-        str1->add_last(str2[i])
+        str1.add_last(str2[i])
     };
 
     str1
 };
 (:+) : (str1, c2) \ (str1 ~ String & c2 ~ Char) |-> {
     str2 := String();
-    str2->add_last(c2);
+    str2.add_last(c2);
     str1 :+ str2
 }

@@ -5,7 +5,7 @@ Tuple : this |-> {
     Expression(this);
     this :~ Tuple;
 
-    this->objects := ArrayList();
+    this.objects := ArrayList();
 
     this
 }

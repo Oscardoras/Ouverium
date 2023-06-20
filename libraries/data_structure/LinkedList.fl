@@ -1,225 +1,227 @@
-using "List.fl";
+import "../Type.fl";
+import "Iterable.fl";
+import "List.fl";
 
 
 LinkedList : this |-> {
     List(this);
     this :~ LinkedList;
 
-    this->_first := ();
-    this->_last := ();
-    this->_lenght := 0;
+    this._first := ();
+    this._last := ();
+    this._lenght := 0;
 
     this : index |-> {
         i := 0;
-        cell := this->first;
+        cell := this.first;
         while (i < index) {
-            cell := cell->next;
+            cell := cell.next;
             ++i
         };
-        cell->object
+        cell.object
     };
 
-    this->foreach : function |-> {
+    this.foreach : function |-> {
         list := LinkedList();
-        cell := this->_first;
+        cell := this._first;
         while (cell != ()) {
-            list->add_last(function(cell->object));
-            cell := cell->next
+            list.add_last(function(cell.object));
+            cell := cell.next
         };
         list
     };
 
-    this->filter : function |-> {
-        this->filter(LinkedList, function)
+    this.filter : function |-> {
+        this.filter(LinkedList, function)
     };
 
-    this->lenght : () |-> {
-        this->_lenght
+    this.lenght : () |-> {
+        this._lenght
     };
 
-    this->is_empty : () |-> {
-        this->_first == ()
+    this.is_empty : () |-> {
+        this._first == ()
     };
 
-    this->get_first : () \ (!this->is_empty()) |-> {
-        this->_first->object
+    this.get_first : () \ (!this.is_empty()) |-> {
+        this._first.object
     };
 
-    this->get_last : () \ (!this->is_empty()) |-> {
-        this->_last->object
+    this.get_last : () \ (!this.is_empty()) |-> {
+        this._last.object
     };
 
-    this->add_first : element |-> {
-        tmp->object := element;
-        tmp->previous := ();
-        tmp->next := this->_first;
-        if (this->_first != ()) {
-            this->_first->previous := tmp
+    this.add_first : element |-> {
+        tmp.object := element;
+        tmp.previous := ();
+        tmp.next := this._first;
+        if (this._first != ()) {
+            this._first.previous := tmp
         } else {
-            this->_last := tmp
+            this._last := tmp
         };
-        this->_first := tmp;
-        ++this->_lenght;
-        tmp->object
+        this._first := tmp;
+        ++this._lenght;
+        tmp.object
     };
 
-    this->add_last : element |-> {
-        tmp->object := element;
-        tmp->previous := this->_last;
-        tmp->next := ();
-        if (this->_last != ()) {
-            this->_last->next := tmp
+    this.add_last : element |-> {
+        tmp.object := element;
+        tmp.previous := this._last;
+        tmp.next := ();
+        if (this._last != ()) {
+            this._last.next := tmp
         } else {
-            this->_first := tmp
+            this._first := tmp
         };
-        this->_last := tmp;
-        ++this->_lenght;
-        tmp->object
+        this._last := tmp;
+        ++this._lenght;
+        tmp.object
     };
 
-    this->remove_first : () \ (!this->is_empty()) |-> {
-        tmp := this->_first->object;
-        this->_first := this->_first->next;
-        if (this->_first != ()) {
-            this->_first->previous := ()
+    this.remove_first : () \ (!this.is_empty()) |-> {
+        tmp := this._first.object;
+        this._first := this._first.next;
+        if (this._first != ()) {
+            this._first.previous := ()
         } else {
-            this->_last := ()
+            this._last := ()
         };
-        --this->_lenght;
+        --this._lenght;
         tmp
     };
 
-    this->remove_last : () \ (!this->is_empty()) |-> {
-        tmp := this->_last->object;
-        this->_last := this->_last->previous;
-        if (this->_last != ()) {
-            this->_last->next := ()
+    this.remove_last : () \ (!this.is_empty()) |-> {
+        tmp := this._last.object;
+        this._last := this._last.previous;
+        if (this._last != ()) {
+            this._last.next := ()
         } else {
-            this->_first := ()
+            this._first := ()
         };
-        --this->_lenght;
+        --this._lenght;
         tmp
     };
 
-    this->insert : (index, element) \ (0 <= index & index < this->_lenght) |-> {
+    this.insert : (index, element) \ (0 <= index & index < this._lenght) |-> {
         i := 0;
-        cell := this->_first;
+        cell := this._first;
         while (i < index) {
-            cell := cell->next;
+            cell := cell.next;
             ++i
         };
 
-        tmp->object := element;
-        tmp->previous := cell->previous;
-        tmp->next := cell;
+        tmp.object := element;
+        tmp.previous := cell.previous;
+        tmp.next := cell;
 
-        if (cell->previous != ()) {
-            cell->previous->next := tmp
+        if (cell.previous != ()) {
+            cell.previous.next := tmp
         } else {
-            this->iterable->_first := tmp
+            this.iterable._first := tmp
         };
-        cell->previous := tmp;
+        cell.previous := tmp;
 
-        tmp->object
+        tmp.object
     };
 
-    this->remove : index \ (0 <= index & index < this->_lenght) |-> {
+    this.remove : index \ (0 <= index & index < this._lenght) |-> {
         i := 0;
-        cell := this->_first;
+        cell := this._first;
         while (i < index) {
-            cell := cell->next;
+            cell := cell.next;
             ++i
         };
 
-        cell->previous->next := cell->next;
-        cell->next->previous := cell->previous;
-        cell->object
+        cell.previous.next := cell.next;
+        cell.next.previous := cell.previous;
+        cell.object
     };
 
-    this->iterator_first : () |-> {
-        cell->object := ();
-        cell->previous := ();
-        cell->next := this->_first;
-        LinkedList->Iterator((), this, cell)
+    this.iterator_first : () |-> {
+        cell.object := ();
+        cell.previous := ();
+        cell.next := this._first;
+        LinkedList.Iterator((), this, cell)
     };
 
-    this->iterator_last : () |-> {
-        cell->object := ();
-        cell->previous := this->_last;
-        cell->next := ();
-        LinkedList->Iterator((), this, cell)
+    this.iterator_last : () |-> {
+        cell.object := ();
+        cell.previous := this._last;
+        cell.next := ();
+        LinkedList.Iterator((), this, cell)
     };
 
-    this->iterator : this->iterator_first;
+    this.iterator : this.iterator_first;
 
-    this->iterator : index \ (index ~ Int & 0 <= index & index < this->_lenght) |-> {
-        cell := this->_first;
+    this.iterator : index \ (index ~ Int & 0 <= index & index < this._lenght) |-> {
+        cell := this._first;
         for i from 0 to index {
-            cell := cell->next
+            cell := cell.next
         };
-        LinkedList->Iterator((), this, cell)
+        LinkedList.Iterator((), this, cell)
     };
 
     this
 };
 
-LinkedList->Iterator : (this, list, cell) |-> {
-    List->Iterator(this, list);
-    this :~ LinkedList->Iterator;
+LinkedList.Iterator : (this, list, cell) |-> {
+    List.Iterator(this, list);
+    this :~ LinkedList.Iterator;
 
-    this->_cell := cell;
+    this._cell := cell;
 
-    this->has_previous : () |-> {
-        this->_cell->previous != ()
+    this.has_previous : () |-> {
+        this._cell.previous != ()
     };
 
-    this->previous : () \ (this->has_previous()) |-> {
-        this->_cell := this->_cell->previous;
-        this->_cell->object
+    this.previous : () \ (this.has_previous()) |-> {
+        this._cell := this._cell.previous;
+        this._cell.object
     };
 
-    this->has_next : () |-> {
-        this->_cell->next != ()
+    this.has_next : () |-> {
+        this._cell.next != ()
     };
 
-    this->next : () \ (this->has_next()) |-> {
-        this->_cell := this->_cell->next;
-        this->_cell->object
+    this.next : () \ (this.has_next()) |-> {
+        this._cell := this._cell.next;
+        this._cell.object
     };
 
-    this->get : () |-> {
-        this->_cell->object
+    this.get : () |-> {
+        this._cell.object
     };
 
-    this->remove : () |-> {
-        if (this->_cell->previous != ()) {
-            this->_cell->previous->next := cell->next
+    this.remove : () |-> {
+        if (this._cell.previous != ()) {
+            this._cell.previous.next := cell.next
         } else {
-            this->iterable->first := cell->next
+            this.iterable.first := cell.next
         };
 
-        if (this->_cell->next != ()) {
-            this->_cell->next->previous := cell->previous
+        if (this._cell.next != ()) {
+            this._cell.next.previous := cell.previous
         } else {
-            this->iterable->last := cell->previous
+            this.iterable.last := cell.previous
         };
 
-        this->_cell->object
+        this._cell.object
     };
 
-    this->insert : object |-> {
-        tmp->object := object;
-        tmp->previous := this->_cell->previous;
-        tmp->next := this->_cell;
+    this.insert : object |-> {
+        tmp.object := object;
+        tmp.previous := this._cell.previous;
+        tmp.next := this._cell;
 
-        if (this->_cell->previous != ()) {
-            this->_cell->previous->next := tmp
+        if (this._cell.previous != ()) {
+            this._cell.previous.next := tmp
         } else {
-            this->iterable->_first := tmp
+            this.iterable._first := tmp
         };
-        this->_cell->previous := tmp;
+        this._cell.previous := tmp;
 
-        tmp->object
+        tmp.object
     };
 
     this
@@ -227,9 +229,9 @@ LinkedList->Iterator : (this, list, cell) |-> {
 
 (~) : (element, list) \ (is list LinkedList) |-> {
     found := false;
-    it := list->iterator();
-    while (!found & it->has_next()) {
-        if (it->next() = element) {
+    it := list.iterator();
+    while (!found & it.has_next()) {
+        if (it.next() = element) {
             found := true
         }
     };
@@ -238,9 +240,9 @@ LinkedList->Iterator : (this, list, cell) |-> {
 
 (~==) : (element, list) \ (is list LinkedList) |-> {
     found := false;
-    it := list->iterator();
-    while (!found & it->has_next()) {
-        if (it->next() === element) {
+    it := list.iterator();
+    while (!found & it.has_next()) {
+        if (it.next() === element) {
             found := true
         }
     };

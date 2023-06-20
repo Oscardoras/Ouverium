@@ -1,27 +1,27 @@
-using "../Type.fl";
+import "../Type.fl";
 
 
 Iterable : this |-> {
     this :~ Iterable;
 
-    this->foreach : function |-> {};
-    this->filter : function |-> {};
+    this.foreach : function |-> {};
+    this.filter : function |-> {};
 
-    this->iterator : () |-> {};
+    this.iterator : () |-> {};
 
     this
 };
 
-Iterable->Iterator : (this, iterable) |-> {
-    this :~ Iterable->Iterator;
+Iterable.Iterator : (this, iterable) |-> {
+    this :~ Iterable.Iterator;
 
-    this->iterable := iterable;
+    this.iterable := iterable;
 
-    this->has_next : () |-> {};
-    this->next : () \ (this->has_next()) |-> {};
+    this.has_next : () |-> {};
+    this.next : () \ (this.has_next()) |-> {};
 
-    this->get : () |-> {};
-    this->remove : () |-> {};
+    this.get : () |-> {};
+    this.remove : () |-> {};
 
     this
 };
@@ -30,18 +30,18 @@ BidirectionalIterable : this |-> {
     Iterable(this);
     this :~ BidirectionalIterable;
 
-    this->iterator_first : () |-> {};
-    this->iterator_last : () |-> {};
+    this.iterator_first : () |-> {};
+    this.iterator_last : () |-> {};
 
     this
 };
 
-BidirectionalIterable->Iterator : (this, iterable) |-> {
-    Iterable->Iterator(this, iterable);
-    this :~ BidirectionalIterable->Iterator;
+BidirectionalIterable.Iterator : (this, iterable) |-> {
+    Iterable.Iterator(this, iterable);
+    this :~ BidirectionalIterable.Iterator;
 
-    this->has_previous : () |-> {};
-    this->previous : () \ (this->has_previous()) |-> {};
+    this.has_previous : () |-> {};
+    this.previous : () \ (this.has_previous()) |-> {};
 
     this
 }

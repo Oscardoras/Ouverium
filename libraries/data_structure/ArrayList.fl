@@ -1,151 +1,153 @@
-using "List.fl";
+import "../Type.fl";
+import "Iterable.fl";
+import "List.fl";
 
 
 ArrayList : this |-> {
     List(this);
     this :~ ArrayList;
 
-    this : index \ (index ~ Int & 0 <= index & index < this->lenght()) |-> {
-        Array->get(this, index)
+    this : index \ (index ~ Int & 0 <= index & index < this.lenght()) |-> {
+        Array.get(this, index)
     };
 
-    this->foreach : function |-> {
-        l := Array->lenght(this);
+    this.foreach : function |-> {
+        l := Array.lenght(this);
         list := ArrayList();
-        list->set_capacity(l);
+        list.set_capacity(l);
         for i from 0 to l {
-            list->add_last(function(Array->get(this, i)))
+            list.add_last(function(Array.get(this, i)))
         };
         list
     };
 
-    this->filter : function |-> {
-        this->filter(ArrayList, function)
+    this.filter : function |-> {
+        this.filter(ArrayList, function)
     };
 
-    this->lenght : () |-> {
-        Array->lenght(this)
+    this.lenght : () |-> {
+        Array.lenght(this)
     };
 
-    this->is_empty : () |-> {
-        Array->lenght(this) == 0
+    this.is_empty : () |-> {
+        Array.lenght(this) == 0
     };
 
-    this->get_capacity : () |-> {
-        Array->get_capacity(this)
+    this.get_capacity : () |-> {
+        Array.get_capacity(this)
     };
 
-    this->set_capacity : capacity \ (capacity ~ Int & capacity >= 0) |-> {
-        Array->set_capacity(this, capacity)
+    this.set_capacity : capacity \ (capacity ~ Int & capacity >= 0) |-> {
+        Array.set_capacity(this, capacity)
     };
 
-    this->get_first : () \ (!this->is_empty()) |-> {
-        Array->get(this, 1)
+    this.get_first : () \ (!this.is_empty()) |-> {
+        Array.get(this, 1)
     };
 
-    this->get_last : () \ (!this->is_empty()) |-> {
-        Array->get(this, Array->lenght(this))
+    this.get_last : () \ (!this.is_empty()) |-> {
+        Array.get(this, Array.lenght(this))
     };
 
-    this->add_first : element |-> {
-        l := Array->lenght(this);
+    this.add_first : element |-> {
+        l := Array.lenght(this);
         if (l > 0) {
-            Array->add(this, Array->get(this, l-1));
+            Array.add(this, Array.get(this, l-1));
             for i from (l-1) to 1 step (-1) {
-                Array->get(this, i) := Array->get(this, i-1)
+                Array.get(this, i) := Array.get(this, i-1)
             };
-            Array->get(this, 0) := element
+            Array.get(this, 0) := element
         } else {
-            Array->add(this, element)
+            Array.add(this, element)
         }
     };
 
-    this->add_last : element |-> {
-        Array->add(this, element)
+    this.add_last : element |-> {
+        Array.add(this, element)
     };
 
-    this->remove_first : () \ (!this->is_empty()) |-> {
-        l := Array->lenght(this);
+    this.remove_first : () \ (!this.is_empty()) |-> {
+        l := Array.lenght(this);
         for i from 0 to (l-1) {
-            Array->get(this, i) := Array->get(this, i+1)
+            Array.get(this, i) := Array.get(this, i+1)
         };
-        Array->remove(this)
+        Array.remove(this)
     };
 
-    this->remove_last : () \ (!this->is_empty()) |-> {
-        Array->remove(this)
+    this.remove_last : () \ (!this.is_empty()) |-> {
+        Array.remove(this)
     };
 
-    this->insert : (index, element) \ (index ~ Int & 0 <= index & index < this->lenght()) |-> {
-        l := Array->lenght(this);
-        Array->add(this, Array->get(this, l-1));
+    this.insert : (index, element) \ (index ~ Int & 0 <= index & index < this.lenght()) |-> {
+        l := Array.lenght(this);
+        Array.add(this, Array.get(this, l-1));
         for i from (l-1) to index step (-1) {
-            Array->get(this, i) := Array->get(this, i-1)
+            Array.get(this, i) := Array.get(this, i-1)
         };
-        Array->get(this, index) := element
+        Array.get(this, index) := element
     };
 
-    this->remove : index \ (index ~ Int & 0 <= index & index < this->lenght()) |-> {
-        l := Array->lenght(this);
-        tmp := Array->get(this, index);
+    this.remove : index \ (index ~ Int & 0 <= index & index < this.lenght()) |-> {
+        l := Array.lenght(this);
+        tmp := Array.get(this, index);
         for i from index to (l-1) {
-            Array->get(this, i) := Array->get(this, i+1)
+            Array.get(this, i) := Array.get(this, i+1)
         };
-        Array->remove(this);
+        Array.remove(this);
         tmp
     };
 
-    this->iterator_first : () |-> {
-        ArrayList->Iterator((), this, -1)
+    this.iterator_first : () |-> {
+        ArrayList.Iterator((), this, -1)
     };
 
-    this->iterator_last : () |-> {
-        ArrayList->Iterator((), this, Array->lenght(this))
+    this.iterator_last : () |-> {
+        ArrayList.Iterator((), this, Array.lenght(this))
     };
 
-    this->iterator : this->iterator_first;
+    this.iterator : this.iterator_first;
 
-    this->iterator : index \ (index ~ Int & 0 <= index & index < this->lenght()) |-> {
-        ArrayList->Iterator((), this, index)
+    this.iterator : index \ (index ~ Int & 0 <= index & index < this.lenght()) |-> {
+        ArrayList.Iterator((), this, index)
     };
 
     this
 };
 
-ArrayList->Iterator : (this, list, index) |-> {
-    List->Iterator(this, list);
-    this :~ ArrayList->Iterator;
+ArrayList.Iterator : (this, list, index) |-> {
+    List.Iterator(this, list);
+    this :~ ArrayList.Iterator;
 
-    this->_index := index;
+    this._index := index;
 
-    this->has_previous : () |-> {
-        this->_index > 0
+    this.has_previous : () |-> {
+        this._index > 0
     };
 
-    this->previous : () \ (this->has_previous()) |-> {
-        --this->_index;
-        this->iterable[this->_index]
+    this.previous : () \ (this.has_previous()) |-> {
+        --this._index;
+        this.iterable[this._index]
     };
 
-    this->has_next : () |-> {
-        this->_index < Array->lenght(this->iterable)-1
+    this.has_next : () |-> {
+        this._index < Array.lenght(this.iterable)-1
     };
 
-    this->next : () \ (this->has_next()) |-> {
-        ++this->_index;
-        this->iterable[this->_index]
+    this.next : () \ (this.has_next()) |-> {
+        ++this._index;
+        this.iterable[this._index]
     };
 
-    this->get : () |-> {
-        this->iterable[this->_index]
+    this.get : () |-> {
+        this.iterable[this._index]
     };
 
-    this->remove : () |-> {
-        this->iterable->remove(index)
+    this.remove : () |-> {
+        this.iterable.remove(index)
     };
 
-    this->insert : object |-> {
-        iterable->insert(object, index)
+    this.insert : object |-> {
+        iterable.insert(object, index)
     };
 
     this
@@ -154,10 +156,10 @@ ArrayList->Iterator : (this, list, index) |-> {
 
 (~) : (element, list) \ (is list ArrayList) |-> {
     found := false;
-    l := Array->lenght(list);
+    l := Array.lenght(list);
     i := 0;
     while (!found & i < l) {
-        if (Array->get(list, i) == element) {
+        if (Array.get(list, i) == element) {
             found := true
         } else {
             ++i
@@ -168,10 +170,10 @@ ArrayList->Iterator : (this, list, index) |-> {
 
 (~==) : (element, list) \ (is list ArrayList) |-> {
     found := false;
-    l := Array->lenght(list);
+    l := Array.lenght(list);
     i := 0;
     while (!found & i < l) {
-        if (Array->get(list, i) === element) {
+        if (Array.get(list, i) === element) {
             found := true
         } else {
             ++i
@@ -180,6 +182,6 @@ ArrayList->Iterator : (this, list, index) |-> {
     found
 };
 
-($) : iterator \ (iterator ~ ArrayList->Iterator) |-> {
-    ArrayList->Iterator((), iterator->iterable, $iterator->_index)
+($) : iterator \ (iterator ~ ArrayList.Iterator) |-> {
+    ArrayList.Iterator((), iterator.iterable, $iterator._index)
 }

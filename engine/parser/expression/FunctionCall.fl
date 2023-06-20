@@ -5,8 +5,8 @@ FunctionCall : (this, function, argument) \ (function ~ Expression & argument ~ 
     Expression(this);
     this :~ FunctionCall;
 
-    this->function := function;
-    this->argument := argument;
+    this.function := function;
+    this.argument := argument;
 
     this
 };

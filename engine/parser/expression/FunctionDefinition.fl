@@ -5,9 +5,9 @@ FunctionDefinition : (this, parameter, filter, object) \ (parameter ~ Expression
     Expression(this);
     this :~ FunctionDefinition;
 
-    this->parameter := parameter;
-    this->filter := filter;
-    this->object := object;
+    this.parameter := parameter;
+    this.filter := filter;
+    this.object := object;
 
     this
 };

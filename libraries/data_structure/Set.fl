@@ -1,15 +1,16 @@
-using "Iterable.fl";
+import "../Type.fl";
+import "Iterable.fl";
 
 
 Set : this |-> {
     Iterable(this);
     this :~ Set;
 
-    this->lenght : () |-> {};
-    this->is_empty : () |-> {};
+    this.lenght : () |-> {};
+    this.is_empty : () |-> {};
 
-    this->add : object |-> {};
-    this->remove : object |-> {};
+    this.add : object |-> {};
+    this.remove : object |-> {};
 
     this
 }

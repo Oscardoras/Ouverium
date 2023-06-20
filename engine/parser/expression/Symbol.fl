@@ -5,7 +5,7 @@ Symbol : (this, name) \ (name ~ String) |-> {
     Expression(this);
     this :~ Symbol;
 
-    this->name := name;
+    this.name := name;
 
     this
 };

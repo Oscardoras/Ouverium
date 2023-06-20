@@ -5,8 +5,8 @@ Property : (this, object, name) \ (object ~ Expression & name ~ String) |-> {
     Expression(this);
     this :~ Property;
 
-    this->object := object;
-    this->name := name;
+    this.object := object;
+    this.name := name;
 
     this
 };

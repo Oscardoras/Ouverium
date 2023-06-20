@@ -1,22 +1,22 @@
-Vector->constructor : (array, shape) |-> {
+Vector.constructor : (array, shape) |-> {
     this :~ Vector;
 
-    this : index \ (index ~ Int & 0 <= index & index < this->lenght()) |-> {
-        Array->get(this, index)
+    this : index \ (index ~ Int & 0 <= index & index < this.lenght()) |-> {
+        Array.get(this, index)
     };
 
-    this->length : () |-> {
-        Array->get(shape, 0)
+    this.length : () |-> {
+        Array.get(shape, 0)
     };
 
-    this->shape : () |-> {
+    this.shape : () |-> {
         shape
     };
 
-    this->transpose : () {
+    this.transpose : () {
 
     };
-    this->tr := this->transpose;
+    this.tr := this.transpose;
 
     this
 };
@@ -26,63 +26,63 @@ Vector : object \ (object ~ Array) |-> {
     shape := [];
 
     iterate : (tab, level, i) |-> {
-        size := Array->length(tab);
+        size := Array.length(tab);
 
-        if (Array->length(shape) < level) {
-            Array->add(shape, size);
+        if (Array.length(shape) < level) {
+            Array.add(shape, size);
         };
 
-        if (Array->get(shape, level) == size) {
+        if (Array.get(shape, level) == size) {
             for j from 0 to size {
-                element := Array->get(tab, j);
+                element := Array.get(tab, j);
 
                 if (element ~ Array) {
                     iterate(element, level+1, i);
                 } else {
-                    Array->add(shape, i);
+                    Array.add(shape, i);
                     ++i;
                 };
             };
         } else {
-            throw (() :~ Vector->BadFormat);
+            throw (() :~ Vector.BadFormat);
         };
     };
     array_index := 0;
     iterate(object, 1, array_index);
 
-    Vector->constructor(array, shape)
+    Vector.constructor(array, shape)
 };
 
-Vector->BadFormat;
+Vector.BadFormat;
 
-Vector->new : (shape, value) \ (shape ~ Int || shape ~ Array) |-> {
-    if (Array->length(shape) > 0) {
+Vector.new : (shape, value) \ (shape ~ Int || shape ~ Array) |-> {
+    if (Array.length(shape) > 0) {
         size := 1;
-        for i from 0 to (Array->length(shape)) {
-            size :* Array->get(shape, i);
+        for i from 0 to (Array.length(shape)) {
+            size :* Array.get(shape, i);
         };
     } else {
         size := 0;
     }
 
-    Array->set_capacity(array, size);
+    Array.set_capacity(array, size);
     for i from 0 to size {
-        Array->add(value);
+        Array.add(value);
     };
 
-    Vector->constructor(array, shape)
+    Vector.constructor(array, shape)
 };
 
-Vector->zeros : shape |-> {
-    Vector->new(shape, 0.);
+Vector.zeros : shape |-> {
+    Vector.new(shape, 0.);
 };
 
-Vector->ones : shape |-> {
-    Vector->new(shape, 1.);
+Vector.ones : shape |-> {
+    Vector.new(shape, 1.);
 };
 
-Vector->identity : n \ (n ~ Int) |-> {
-    matrix := Vector->new((n, n), 0.);
+Vector.identity : n \ (n ~ Int) |-> {
+    matrix := Vector.new((n, n), 0.);
 
     for i from 0 to n {
         matrix[i] := 1.;
@@ -91,43 +91,43 @@ Vector->identity : n \ (n ~ Int) |-> {
     matrix;
 };
 
-Vector->arange : (start, stop, step) {
+Vector.arange : (start, stop, step) {
 
 };
 
-Vector->linspace : (start, stop, num) {
+Vector.linspace : (start, stop, num) {
 
 };
 
-Vector->vectorize : function |-> {
+Vector.vectorize : function |-> {
     vector \ (vector ~ Vector) |-> {
-        Array->set_capacity(array, vector->length());
+        Array.set_capacity(array, vector.length());
 
-        for i from 0 to (vector->length()) {
-            Array->add(function(Array->get(vector, i)));
+        for i from 0 to (vector.length()) {
+            Array.add(function(Array.get(vector, i)));
         }
 
         array
     }
 };
 
-Vector->dot : (a, b) \ (a ~ Vector && b ~ Vector && a->length() == b->length()) |-> {
-    size = a->length();
+Vector.dot : (a, b) \ (a ~ Vector && b ~ Vector && a.length() == b.length()) |-> {
+    size = a.length();
     array;
-    Array->add(shape, size);
+    Array.add(shape, size);
 
 
     for i from 0 to size {
-        Array->add(array, a[i] * b[i]);
+        Array.add(array, a[i] * b[i]);
     }
 
-    Vector->constructor(array, shape)
+    Vector.constructor(array, shape)
 };
 
 ($) : vector \ (vector ~ Vector) |-> {
     new_vector = Vector[];
-    Array->set_capacity(new_vector, Array->get_capacity(vector))
-    for i from 0 to (vector->lenght) {
-        Array->add(new_vector, if (vector[i] ~ Vector) ($(vector[i])) else (vector[i]));
+    Array.set_capacity(new_vector, Array.get_capacity(vector))
+    for i from 0 to (vector.lenght) {
+        Array.add(new_vector, if (vector[i] ~ Vector) ($(vector[i])) else (vector[i]));
     }
 };
