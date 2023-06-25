@@ -25,7 +25,7 @@ namespace Interpreter {
         struct CPointer: public std::variant<std::shared_ptr<std::ios>, std::reference_wrapper<std::ios>> {
             using std::variant<std::shared_ptr<std::ios>, std::reference_wrapper<std::ios>>::variant;
 
-            inline operator std::ios*() const {
+            operator std::ios*() const {
                 if (auto ptr = std::get_if<std::shared_ptr<std::ios>>(this))
                     return ptr->get();
                 else if (auto ref = std::get_if<std::reference_wrapper<std::ios>>(this))

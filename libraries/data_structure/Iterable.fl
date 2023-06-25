@@ -4,10 +4,10 @@ import "../Type.fl";
 Iterable : this |-> {
     this :~ Iterable;
 
-    this.foreach : function |-> {};
-    this.filter : function |-> {};
+    abstract this.foreach;
+    abstract this.filter;
 
-    this.iterator : () |-> {};
+    abstract this.iterator;
 
     this
 };
@@ -17,11 +17,11 @@ Iterable.Iterator : (this, iterable) |-> {
 
     this.iterable := iterable;
 
-    this.has_next : () |-> {};
-    this.next : () \ (this.has_next()) |-> {};
+    abstract this.has_next;
+    abstract this.next;
 
-    this.get : () |-> {};
-    this.remove : () |-> {};
+    abstract this.get;
+    abstract this.remove;
 
     this
 };
@@ -30,8 +30,8 @@ BidirectionalIterable : this |-> {
     Iterable(this);
     this :~ BidirectionalIterable;
 
-    this.iterator_first : () |-> {};
-    this.iterator_last : () |-> {};
+    abstract this.iterator_first;
+    abstract this.iterator_last;
 
     this
 };
@@ -40,8 +40,8 @@ BidirectionalIterable.Iterator : (this, iterable) |-> {
     Iterable.Iterator(this, iterable);
     this :~ BidirectionalIterable.Iterator;
 
-    this.has_previous : () |-> {};
-    this.previous : () \ (this.has_previous()) |-> {};
+    abstract this.has_previous;
+    abstract this.previous;
 
     this
 }

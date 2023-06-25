@@ -17,4 +17,6 @@ is : (object, type) \ (type !== Char & type !== Int & type !== Float & type !== 
     found
 };
 
-(~) : is
+(~) : is;
+
+abstract : f |-> f;

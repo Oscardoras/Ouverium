@@ -11,9 +11,11 @@ int main(int argc, char ** argv) {
         Interpreter::GlobalContext context(nullptr);
         auto symbols = context.get_symbols();
 
+        std::cout << "> ";
+
         std::string code;
         std::string line;
-        while (std::getline(std::cin, line))
+        while (std::getline(std::cin, line)) {
             if (line.length() > 0) {
                 code += line + '\n';
                 try {
@@ -27,8 +29,12 @@ int main(int argc, char ** argv) {
                     if (Interpreter::print(context, std::cout, r.to_data(context)))
                         std::cout << std::endl;
                     code = "";
+
+                    std::cout << "> ";
                 } catch (Parser::Standard::IncompleteCode const& e) {}
             }
+        }
+        std::cout << std::endl;
     } else if (argc == 2) {
         std::ifstream src(argv[1]);
         if (src) {
