@@ -130,6 +130,14 @@ namespace Translator::CStandard {
         });
     }
 
+    std::shared_ptr<Expression> Translator::get_unknown_data(std::shared_ptr<Expression> expression) {
+        if (auto type = expression->type.lock()) {
+            return UnknownData_from_data(type, expression);
+        } else {
+            return expression;
+        }
+    }
+
     std::shared_ptr<Expression> Translator::get_expression(std::shared_ptr<Analyzer::Expression> expression, Instructions & instructions) {
         if (auto function_call = std::dynamic_pointer_cast<Analyzer::FunctionCall>(expression)) {
             auto r = std::make_shared<FunctionCall>(FunctionCall {
@@ -139,13 +147,31 @@ namespace Translator::CStandard {
             });
             r->type = Unknown;
 
-            r->parameters.push_back(get_expression(function_call->function, instructions));
-
-            if (auto type = type_table.get(function_call->arguments->types)) {
-                r->parameters.push_back(UnknownData_from_data(type, get_expression(function_call->arguments, instructions)));
+            auto function = get_expression(function_call->function, instructions);
+            if (auto type = function->type.lock()) {
+                r->parameters.push_back(std::make_shared<Property>(Property {
+                    {
+                        type_table.get(expression->types)
+                    },
+                    function,
+                    "function_stack",
+                    false
+                }));
             } else {
-                r->parameters.push_back(get_expression(function_call->arguments, instructions));
+                r->parameters.push_back(std::make_shared<FunctionCall>(FunctionCall {
+                    .function = std::make_shared<VariableCall>(VariableCall {
+                        .name = "__UnknownData_get_component"
+                    }),
+                    .parameters = {
+                        std::make_shared<VariableCall>(VariableCall {
+                            .name = "__Function_Stack"
+                        }),
+                        function
+                    }
+                }));
             }
+
+            r->parameters.push_back(get_unknown_data(get_expression(function_call->arguments, instructions)));
 
             return r;
         } else if (auto function_run = std::dynamic_pointer_cast<Analyzer::FunctionRun>(expression)) {

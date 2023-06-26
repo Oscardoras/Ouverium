@@ -37,6 +37,8 @@ namespace Translator::CStandard {
         TypeTable type_table;
         FunctionTable function_table;
 
+        std::shared_ptr<Expression> get_unknown_data(std::shared_ptr<Expression> expression);
+
     public:
 
         std::pair<std::set<std::shared_ptr<Component>>, std::set<std::shared_ptr<Class>>> create_structures(std::set<std::shared_ptr<Analyzer::Structure>> const& structures);
