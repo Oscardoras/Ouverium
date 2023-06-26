@@ -31,19 +31,37 @@ namespace Interpreter {
     }
 
 
-    using Computed = std::map<std::shared_ptr<Parser::Expression>, Reference>;
+    using Expression = std::shared_ptr<Parser::Expression>;
+    class Computed : public std::map<std::shared_ptr<Parser::Expression>, Reference> {
 
-    void set_references(Context & context, FunctionContext & function_context, Computed & computed, std::shared_ptr<Parser::Expression> parameters, Arguments const& arguments) {
-        using Expression = std::shared_ptr<Parser::Expression>;
+    public:
+
+        using std::map<std::shared_ptr<Parser::Expression>, Reference>::map;
+
+        Arguments get(Arguments const& arguments) const {
+            if (auto expression = std::get_if<Expression>(&arguments)) {
+                auto it = find(*expression);
+                if (it != end())
+                    return it->second;
+            }
+            return arguments;
+        }
+
+        Reference compute(Context & context, Arguments const& arguments) {
+            if (auto expression = std::get_if<Expression>(&arguments)) {
+                return operator[](*expression) = Interpreter::execute(context, *expression);
+            } else if (auto reference = std::get_if<Reference>(&arguments)) {
+                return *reference;
+            } else return *((Reference*) nullptr);
+        }
+
+    };
+
+    void set_references(Context & context, FunctionContext & function_context, Computed & computed, std::shared_ptr<Parser::Expression> parameters, Arguments const& argument) {
+        auto arguments = computed.get(argument);
 
         if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(parameters)) {
-            Reference reference;
-            if (auto expression = std::get_if<Expression>(&arguments)) {
-                auto it = computed.find(*expression);
-                reference = it != computed.end() ? it->second : (computed[*expression] = Interpreter::execute(context, *expression));
-            } else {
-                reference = *std::get_if<Reference>(&arguments);
-            }
+            auto reference = computed.compute(context, arguments);
 
             if (function_context.has_symbol(symbol->name)) {
                 if (reference.to_data(context) != function_context[symbol->name])
@@ -57,11 +75,18 @@ namespace Interpreter {
                     if (p_tuple->objects.size() == a_tuple->objects.size()) {
                         for (size_t i = 0; i < p_tuple->objects.size(); i++)
                             set_references(context, function_context, computed, p_tuple->objects[i], a_tuple->objects[i]);
+
+                        TupleReference cache;
+                        for (auto const& o : a_tuple->objects) {
+                            auto it = computed.find(o);
+                            if (it != computed.end()) {
+                                cache.push_back(it->second);
+                            } else return;
+                        }
+                        computed[a_tuple] = cache;
                     } else throw Interpreter::FunctionArgumentsError();
                 } else {
-                    auto it = computed.find(*expression);
-                    Reference reference = it != computed.end() ? it->second : (computed[*expression] = Interpreter::execute(context, *expression));
-                    set_references(context, function_context, computed, parameters, reference);
+                    set_references(context, function_context, computed, parameters, computed.compute(context, arguments));
                 }
             } else if (auto reference = std::get_if<Reference>(&arguments)) {
                 if (auto tuple_reference = std::get_if<TupleReference>(reference)) {
@@ -132,13 +157,7 @@ namespace Interpreter {
             auto reference = call_function(context, p_function, functions, args);
             set_references(context, function_context, computed, p_function->arguments, reference);
         } else if (auto p_property = std::dynamic_pointer_cast<Parser::Property>(parameters)) {
-            Reference reference;
-            if (auto expression = std::get_if<Expression>(&arguments)) {
-                auto it = computed.find(*expression);
-                reference = it != computed.end() ? it->second : (computed[*expression] = Interpreter::execute(context, *expression));
-            } else {
-                reference = *std::get_if<Reference>(&arguments);
-            }
+            auto reference = computed.compute(context, arguments);
 
             if (auto property_reference = std::get_if<PropertyReference>(&reference)) {
                 set_references(context, function_context, computed, p_property->object, Reference(Data(&property_reference->parent.get())));

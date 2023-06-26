@@ -72,10 +72,10 @@ namespace Interpreter {
     }
 
     GlobalContext::~GlobalContext() {
-        for (auto it = objects.begin(); it != objects.end(); it++) {
-            auto finalize = it->properties.find("finalize");
-            if (finalize != it->properties.end())
-                call_function(get_global(), nullptr, finalize->second.get<Object*>(*this)->functions, std::make_shared<Parser::Tuple>());
+        for (auto const& object : objects) {
+            auto it = object.properties.find("destructor");
+            if (it != object.properties.end())
+                call_function(get_global(), nullptr, it->second.get<Object*>(*this)->functions, std::make_shared<Parser::Tuple>());
         }
     }
 
