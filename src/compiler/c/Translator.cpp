@@ -177,13 +177,26 @@ namespace Translator::CStandard {
         } else if (auto function_run = std::dynamic_pointer_cast<Analyzer::FunctionRun>(expression)) {
             if (auto system_function = std::get_if<Analyzer::SystemFunction>(&function_run->function)) {
                 return eval_system_function(*system_function, function_run->arguments, instructions);
-            } else {
+            } else if (auto function_definition = std::get_if<std::weak_ptr<Analyzer::FunctionDefinition>>(&function_run->function)) {
+                auto function = function_table[function_definition->lock()];
+
                 auto r = std::make_shared<FunctionCall>(FunctionCall {
                     .function = std::make_shared<VariableCall>(VariableCall {
-                        .name = function_table[std::get<std::weak_ptr<Analyzer::FunctionDefinition>>(function_run->function).lock()]->name
+                        .name = function->name
                     })
                 });
 
+                if (function->parameters.size() > 1) {
+                    if (auto a_tuple = std::dynamic_pointer_cast<Analyzer::Tuple>(function_run->arguments)) {
+                        if (a_tuple->objects.size() == function->parameters.size()) {
+
+                        }
+                    } else {
+
+                    }
+                } else {
+                    
+                }
                 if (auto args = std::dynamic_pointer_cast<Analyzer::Tuple>(function_run->arguments)) {
                     for (auto const& o : args->objects)
                         r->parameters.push_back(get_expression(o, instructions));
