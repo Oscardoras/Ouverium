@@ -10,12 +10,27 @@
 
 namespace Analyzer::Standard {
 
-    M<Data> M<SymbolReference>::to_data() const {
-        M<Data> m;
-        for (auto & reference : *this)
-            for (auto & data : reference.get())
-                m.add(data);
-        return m;
+    M<Data> Reference::to_data(Context & context) const {
+        if (auto object_ptr = std::get_if<M<Data>>(this))
+            return *object_ptr;
+        else if (auto reference = std::get_if<IndirectReference>(this))
+            return reference->get();
+        else if (auto tuple = std::get_if<std::vector<M<Reference>>>(this)) {
+            std::vector<M<Data>> array;
+            for (auto o : *tuple)
+                array.push_back(o.to_data(context));
+            return Data(context.new_object(array));
+        } else return Data(nullptr);
+    }
+
+    IndirectReference Reference::to_indirect_reference(Context & context) const {
+        if (auto data = std::get_if<M<Data>>(this))
+            return context.new_reference(*data);
+        else if (auto reference = std::get_if<IndirectReference>(this))
+            return *reference;
+        else if (auto tuple = std::get_if<std::vector<M<Reference>>>(this)) {
+            return context.new_reference(to_data(context));
+        } else return *((M<Data>*) nullptr);
     }
 
     M<Data> M<Reference>::to_data(Context & context) const {
@@ -27,10 +42,10 @@ namespace Analyzer::Standard {
         return m;
     }
 
-    M<SymbolReference> M<Reference>::to_symbol_reference(Context & context) const {
-        M<SymbolReference> m;
+    M<IndirectReference> M<Reference>::to_indirect_reference(Context & context) const {
+        M<IndirectReference> m;
         for (auto const& e : *this)
-            m.add(e.to_symbol_reference(context));
+            m.add(e.to_indirect_reference(context));
         return m;
     }
 
@@ -41,29 +56,6 @@ namespace Analyzer::Standard {
             field.add(context.new_object());
 
         return field;
-    }
-
-    M<Data> Reference::to_data(Context & context) const {
-        if (auto object_ptr = std::get_if<M<Data>>(this))
-            return *object_ptr;
-        else if (auto reference = std::get_if<SymbolReference>(this))
-            return reference->get();
-        else if (auto tuple = std::get_if<std::vector<M<Reference>>>(this)) {
-            std::vector<M<Data>> array;
-            for (auto o : *tuple)
-                array.push_back(o.to_data(context));
-            return Data(context.new_object(array));
-        } else return Data(nullptr);
-    }
-
-    SymbolReference Reference::to_symbol_reference(Context & context) const {
-        if (auto data = std::get_if<M<Data>>(this))
-            return context.new_reference(*data);
-        else if (auto reference = std::get_if<SymbolReference>(this))
-            return *reference;
-        else if (auto tuple = std::get_if<std::vector<M<Reference>>>(this)) {
-            return context.new_reference(to_data(context));
-        } else return *((M<Data>*) nullptr);
     }
 
     Object* Context::new_object() {
@@ -89,12 +81,12 @@ namespace Analyzer::Standard {
         return object;
     }
 
-    SymbolReference Context::new_reference(M<Data> data) {
+    IndirectReference Context::new_reference(M<Data> data) {
         get_global().references.push_back(data);
         return get_global().references.back();
     }
 
-    M<SymbolReference>& Context::operator[](std::string const& symbol) {
+    M<IndirectReference>& Context::operator[](std::string const& symbol) {
         auto it = symbols.find(symbol);
         if (it == symbols.end())
             symbols.emplace(symbol, new_reference(Data(new_object())));
@@ -110,7 +102,7 @@ namespace Analyzer::Standard {
     void Analyzer::set_references(Context & function_context, std::shared_ptr<Parser::Expression> parameters, M<Reference> const& reference) {
         if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(parameters)) {
             auto & lvalue = function_context[symbol->name];
-            auto rvalue = reference.to_symbol_reference(function_context);
+            auto rvalue = reference.to_indirect_reference(function_context);
             lvalue.add(rvalue);
         } else if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(parameters)) {
             bool success = false;

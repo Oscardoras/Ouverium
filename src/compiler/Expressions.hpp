@@ -37,7 +37,6 @@ namespace Analyzer {
     struct Expression {
 
         Types types;
-        Types allocations;
 
         virtual ~Expression() = default;
 

@@ -25,13 +25,10 @@ namespace Interpreter {
         Context(std::shared_ptr<Parser::Expression> expression):
             Parser::Context(expression) {}
 
-        virtual GlobalContext & get_global() = 0;
-
         Object* new_object();
         Object* new_object(Object && object);
-        Object* new_object(std::string const& str);
 
-        Data & new_reference(Data const& data = Data{});
+        Data & new_reference(Data const& data = {});
 
         std::set<std::string> get_symbols() const;
         bool has_symbol(std::string const& symbol) const;
@@ -59,14 +56,18 @@ namespace Interpreter {
 
         GlobalContext(std::shared_ptr<Parser::Expression> expression);
 
-        virtual GlobalContext & get_global() override;
-        virtual Context & get_parent() override;
+        virtual GlobalContext & get_global() override {
+            return *this;
+        }
+        
+        virtual Context & get_parent() override {
+            return *this;
+        }
 
         ~GlobalContext();
 
         friend Object* Context::new_object();
         friend Object* Context::new_object(Object && object);
-        friend Object* Context::new_object(std::string const& str);
         friend Data & Context::new_reference(Data const& data);
 
     };

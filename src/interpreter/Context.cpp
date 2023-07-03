@@ -7,28 +7,19 @@
 namespace Interpreter {
 
     Object* Context::new_object() {
-        auto & objects = get_global().objects;
+        auto & objects = static_cast<GlobalContext&>(get_global()).objects;
         objects.push_back(Object());
         return &objects.back();
     }
 
     Object* Context::new_object(Object && object) {
-        auto & objects = get_global().objects;
+        auto & objects = static_cast<GlobalContext&>(get_global()).objects;
         objects.push_back(std::move(object));
         return &objects.back();
     }
 
-    Object* Context::new_object(std::string const& str) {
-        auto & objects = get_global().objects;
-        objects.push_back(Object());
-        auto object = &objects.back();
-        for (auto c : str)
-            object->array.push_back(c);
-        return object;
-    }
-
     Data & Context::new_reference(Data const& data) {
-        auto & references = get_global().references;
+        auto & references = static_cast<GlobalContext&>(get_global()).references;
         references.push_back(data);
         return references.back();
     }
@@ -63,14 +54,6 @@ namespace Interpreter {
     }
 
 
-    GlobalContext & GlobalContext::get_global() {
-        return *this;
-    }
-
-    Context & GlobalContext::get_parent() {
-        return *this;
-    }
-
     GlobalContext::~GlobalContext() {
         for (auto const& object : objects) {
             auto it = object.properties.find("destructor");
@@ -81,7 +64,7 @@ namespace Interpreter {
 
 
     GlobalContext & FunctionContext::get_global() {
-        return parent.get_global();
+        return static_cast<GlobalContext&>(parent.get_global());
     }
 
     Context & FunctionContext::get_parent() {

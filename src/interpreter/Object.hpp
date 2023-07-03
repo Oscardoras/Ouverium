@@ -36,6 +36,14 @@ namespace Interpreter {
 
         bool referenced = false;
 
+        Object() = default;
+
+        Object(std::string const& str) {
+            array.reserve(str.size());
+            for (auto c : str)
+                array.push_back(c);
+        }
+
         Data & get_property(Context & context, std::string name);
         std::string to_string(Context & context) const;
 

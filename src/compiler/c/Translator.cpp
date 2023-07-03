@@ -195,7 +195,7 @@ namespace Translator::CStandard {
 
                     }
                 } else {
-                    
+
                 }
                 if (auto args = std::dynamic_pointer_cast<Analyzer::Tuple>(function_run->arguments)) {
                     for (auto const& o : args->objects)
@@ -211,7 +211,7 @@ namespace Translator::CStandard {
 
             if (auto type = o->type.lock()) {
                 std::shared_ptr<Component> component;
-                for (auto const& c : std::dynamic_pointer_cast<Class>(o)->components) {
+                for (auto const& c : std::dynamic_pointer_cast<Class>(type)->components) {
                     auto comp = c.lock();
                     if (comp->properties.find(property->name) != comp->properties.end()) {
                         component = comp;
