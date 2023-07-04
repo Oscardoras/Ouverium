@@ -54,44 +54,35 @@ namespace Analyzer::Standard {
         return field;
     }
 
+    Object* Context::new_object() {
+        auto & objects = static_cast<GlobalContext&>(get_global()).objects;
+        objects.push_back(Object());
+        return &objects.back();
+    }
+
     Object* Context::new_object(Object && object) {
         auto & objects = static_cast<GlobalContext&>(get_global()).objects;
         objects.push_back(std::move(object));
         return &objects.back();
     }
 
-    Object* Context::new_object(std::vector<M<Data>> const& array) {
-        auto & objects = get_global().objects;
-        objects.push_back(Object());
-        objects.back().array = array;
-        return &objects.back();
+    M<Data> & Context::new_reference(M<Data> const& data) {
+        auto & references = static_cast<GlobalContext&>(get_global()).references;
+        references.push_back(data);
+        return references.back();
     }
 
-    Object* Context::new_object(std::string const& str) {
-        long l = str.length();
-        auto & objects = get_global().objects;
-        objects.push_back(Object());
-        auto object = &objects.back();
-        for (auto c : str)
-            object->array.push_back(Data(c));
-        return object;
-    }
-
-    IndirectReference Context::new_reference(M<Data> data) {
-        get_global().references.push_back(data);
-        return get_global().references.back();
+    bool Context::has_symbol(std::string const& symbol) {
+        return symbols.find(symbol) != symbols.end();
     }
 
     M<IndirectReference>& Context::operator[](std::string const& symbol) {
         auto it = symbols.find(symbol);
         if (it == symbols.end())
-            symbols.emplace(symbol, new_reference(Data(new_object())));
-
-        return symbols.at(symbol);
-    }
-
-    bool Context::has_symbol(std::string const& symbol) {
-        return symbols.find(symbol) != symbols.end();
+            return symbols.emplace(symbol, new_reference(Data(new_object()))).first->second;
+        else {
+            return it->second;
+        }
     }
 
 
@@ -127,7 +118,7 @@ namespace Analyzer::Standard {
         } else throw FunctionArgumentsError();
     }
 
-    std::shared_ptr<Expression> Analyzer::set_references(Context & context, bool potential, Context & function_context, std::map<std::shared_ptr<Parser::Expression>, Analyzer::Analysis> & computed, std::shared_ptr<Parser::Expression> parameters, std::shared_ptr<Parser::Expression> arguments) {
+    std::shared_ptr<Expression> Analyzer::set_arguments(Context & context, bool potential, Context & function_context, std::map<std::shared_ptr<Parser::Expression>, Analyzer::Analysis> & computed, std::shared_ptr<Parser::Expression> parameters, std::shared_ptr<Parser::Expression> arguments) {
         if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(parameters)) {
             auto it = computed.find(arguments);
             auto analyse = it != computed.end() ? it->second : (computed[arguments] = execute(context, potential, arguments));
