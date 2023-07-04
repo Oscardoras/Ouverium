@@ -62,13 +62,4 @@ namespace Interpreter {
         }
     }
 
-
-    GlobalContext & FunctionContext::get_global() {
-        return static_cast<GlobalContext&>(parent.get_global());
-    }
-
-    Context & FunctionContext::get_parent() {
-        return parent;
-    }
-
 }

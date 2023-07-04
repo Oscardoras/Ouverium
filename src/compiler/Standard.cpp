@@ -11,34 +11,30 @@
 namespace Analyzer::Standard {
 
     M<Data> Reference::to_data(Context & context) const {
-        if (auto object_ptr = std::get_if<M<Data>>(this))
-            return *object_ptr;
-        else if (auto reference = std::get_if<IndirectReference>(this))
-            return reference->get();
-        else if (auto tuple = std::get_if<std::vector<M<Reference>>>(this)) {
-            std::vector<M<Data>> array;
-            for (auto o : *tuple)
-                array.push_back(o.to_data(context));
-            return Data(context.new_object(array));
-        } else return Data(nullptr);
+        if (auto data = std::get_if<M<Data>>(this))
+            return *data;
+        else if (auto indirect_reference = std::get_if<IndirectReference>(this))
+            return indirect_reference->get();
+        else if (auto tuple_reference = std::get_if<std::vector<M<Reference>>>(this)) {
+            auto object = context.new_object();
+            object->array.reserve(tuple_reference->size());
+            for (auto o : *tuple_reference)
+                object->array.push_back(o.to_data(context));
+            return Data(object);
+        } else return Data{};
     }
 
     IndirectReference Reference::to_indirect_reference(Context & context) const {
-        if (auto data = std::get_if<M<Data>>(this))
-            return context.new_reference(*data);
-        else if (auto reference = std::get_if<IndirectReference>(this))
-            return *reference;
-        else if (auto tuple = std::get_if<std::vector<M<Reference>>>(this)) {
+        if (auto indirect_reference = std::get_if<IndirectReference>(this))
+            return *indirect_reference;
+        else
             return context.new_reference(to_data(context));
-        } else return *((M<Data>*) nullptr);
     }
 
     M<Data> M<Reference>::to_data(Context & context) const {
         M<Data> m;
-        for (auto const& e : *this) {
-            auto data = e.to_data(context);
-            m.add(data);
-        }
+        for (auto const& e : *this)
+            m.add(e.to_data(context));
         return m;
     }
 
@@ -49,7 +45,7 @@ namespace Analyzer::Standard {
         return m;
     }
 
-    std::reference_wrapper<M<Data>> Object::get_property(Context & context, std::string name) {
+    M<Data> & Object::get_property(Context & context, std::string name) {
         auto & field = properties[name];
 
         if (field.empty())
@@ -58,9 +54,9 @@ namespace Analyzer::Standard {
         return field;
     }
 
-    Object* Context::new_object() {
-        auto & objects = get_global().objects;
-        objects.push_back(Object());
+    Object* Context::new_object(Object && object) {
+        auto & objects = static_cast<GlobalContext&>(get_global()).objects;
+        objects.push_back(std::move(object));
         return &objects.back();
     }
 
@@ -171,6 +167,8 @@ namespace Analyzer::Standard {
             } else throw FunctionArgumentsError();
         } else throw FunctionArgumentsError();
     }
+
+    using It = std::map<std::string, M<IndirectReference>>::iterator;
 
     void Analyzer::call_reference(M<Reference> & references, bool potential, Function const& function, Context function_context, It const it, It const end) {
         if (it != end) {

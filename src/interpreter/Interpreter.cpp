@@ -57,7 +57,7 @@ namespace Interpreter {
 
     };
 
-    void set_references(Context & context, FunctionContext & function_context, Computed & computed, std::shared_ptr<Parser::Expression> parameters, Arguments const& argument) {
+    void set_arguments(Context & context, FunctionContext & function_context, Computed & computed, std::shared_ptr<Parser::Expression> parameters, Arguments const& argument) {
         auto arguments = computed.get(argument);
 
         if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(parameters)) {
@@ -74,7 +74,7 @@ namespace Interpreter {
                 if (auto a_tuple = std::dynamic_pointer_cast<Parser::Tuple>(*expression)) {
                     if (p_tuple->objects.size() == a_tuple->objects.size()) {
                         for (size_t i = 0; i < p_tuple->objects.size(); i++)
-                            set_references(context, function_context, computed, p_tuple->objects[i], a_tuple->objects[i]);
+                            set_arguments(context, function_context, computed, p_tuple->objects[i], a_tuple->objects[i]);
 
                         TupleReference cache;
                         for (auto const& o : a_tuple->objects) {
@@ -86,13 +86,13 @@ namespace Interpreter {
                         computed[a_tuple] = cache;
                     } else throw Interpreter::FunctionArgumentsError();
                 } else {
-                    set_references(context, function_context, computed, parameters, computed.compute(context, arguments));
+                    set_arguments(context, function_context, computed, parameters, computed.compute(context, arguments));
                 }
             } else if (auto reference = std::get_if<Reference>(&arguments)) {
                 if (auto tuple_reference = std::get_if<TupleReference>(reference)) {
                     if (tuple_reference->size() == p_tuple->objects.size()) {
                         for (size_t i = 0; i < p_tuple->objects.size(); i++)
-                            set_references(context, function_context, computed, p_tuple->objects[i], tuple_reference[i]);
+                            set_arguments(context, function_context, computed, p_tuple->objects[i], tuple_reference[i]);
                     } else throw Interpreter::FunctionArgumentsError();
                 } else {
                     auto data = reference->to_data(function_context);
@@ -100,7 +100,7 @@ namespace Interpreter {
                         auto object = data.get<Object*>(function_context);
                         if (object->array.size() == p_tuple->objects.size()) {
                             for (size_t i = 0; i < p_tuple->objects.size(); i++)
-                                set_references(context, function_context, computed, p_tuple->objects[i], ArrayReference{*object, i});
+                                set_arguments(context, function_context, computed, p_tuple->objects[i], ArrayReference{*object, i});
                         } else throw Interpreter::FunctionArgumentsError();
                     } catch (Data::BadAccess const& e) {
                         throw Interpreter::FunctionArgumentsError();
@@ -155,12 +155,12 @@ namespace Interpreter {
             }
 
             auto reference = call_function(context, p_function, functions, args);
-            set_references(context, function_context, computed, p_function->arguments, reference);
+            set_arguments(context, function_context, computed, p_function->arguments, reference);
         } else if (auto p_property = std::dynamic_pointer_cast<Parser::Property>(parameters)) {
             auto reference = computed.compute(context, arguments);
 
             if (auto property_reference = std::get_if<PropertyReference>(&reference)) {
-                set_references(context, function_context, computed, p_property->object, Reference(Data(&property_reference->parent.get())));
+                set_arguments(context, function_context, computed, p_property->object, Reference(Data(&property_reference->parent.get())));
             } else throw Interpreter::FunctionArgumentsError();
         } else throw Interpreter::FunctionArgumentsError();
     }
@@ -175,7 +175,7 @@ namespace Interpreter {
                     function_context.add_symbol(symbol.first, symbol.second);
 
                 if (auto custom_function = std::get_if<CustomFunction>(&function)) {
-                    set_references(context, function_context, computed, (*custom_function)->parameters, arguments);
+                    set_arguments(context, function_context, computed, (*custom_function)->parameters, arguments);
 
                     Data filter = true;
                     if ((*custom_function)->filter != nullptr)
@@ -189,7 +189,7 @@ namespace Interpreter {
                         throw FunctionArgumentsError();
                     }
                 } else if (auto system_function = std::get_if<SystemFunction>(&function)) {
-                    set_references(context, function_context, computed, system_function->parameters, arguments);
+                    set_arguments(context, function_context, computed, system_function->parameters, arguments);
 
                     return system_function->pointer(function_context);
                 } else return Reference();

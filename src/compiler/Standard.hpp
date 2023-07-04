@@ -132,7 +132,7 @@ namespace Analyzer::Standard {
                 array.push_back(Data(c));
         }
 
-        IndirectReference get_property(Context & context, std::string name);
+        M<Data> & get_property(Context & context, std::string name);
     };
 
     // Definition of Function
@@ -196,43 +196,31 @@ namespace Analyzer::Standard {
             return *this;
         }
 
+        ~GlobalContext();
+
         friend Object* Context::new_object();
         friend Object* Context::new_object(Object && object);
         friend M<Data> & Context::new_reference(M<Data> const& data);
-        friend std::shared_ptr<Expression> analyze(std::shared_ptr<Parser::Expression> expression);
 
     };
 
-    class Context: public Parser::Context {
+    class FunctionContext: public Parser::Context {
 
     protected:
 
-        std::map<std::string, M<IndirectReference>> symbols;
+        Context & parent;
 
     public:
 
-        Context(std::shared_ptr<Parser::Expression> expression):
-            Parser::Context(expression) {}
+        FunctionContext(Context & parent, std::shared_ptr<Parser::Expression> expression):
+            Context(expression), parent(parent) {}
 
-        virtual Context& get_parent() override {
-            return this->parent;
-        }
-        virtual GlobalContext& get_global() {
-            return this->parent.get_global();
+        virtual GlobalContext & get_global() override {
+            return static_cast<GlobalContext &>(parent.get_global());
         }
 
-        Object* new_object();
-        Object* new_object(std::vector<M<Data>> const& array);
-        Object* new_object(std::string const& data);
-        IndirectReference new_reference(M<Data> data);
-
-        bool has_symbol(std::string const& symbol);
-        M<IndirectReference> & operator[](std::string const& symbol);
-        auto begin() {
-            return symbols.begin();
-        }
-        auto end() {
-            return symbols.end();
+        virtual Context & get_parent() override {
+            return parent;
         }
     };
 
@@ -256,12 +244,6 @@ namespace Analyzer::Standard {
             M<Reference> references;
             std::shared_ptr<Expression> expression;
         };
-
-        using It = std::map<std::string, M<IndirectReference>>::iterator;
-
-        void set_references(Context & function_context, std::shared_ptr<Parser::Expression> parameters, M<Reference> const& reference);
-        std::shared_ptr<Expression> set_references(Context & context, bool potential, Context & function_context, std::map<std::shared_ptr<Parser::Expression>, Analyzer::Analysis> & computed, std::shared_ptr<Parser::Expression> parameters, std::shared_ptr<Parser::Expression> arguments);
-        void call_reference(M<Reference> & references, bool potential, Function const& function, Context function_context, It const it, It const end);
 
     public:
 

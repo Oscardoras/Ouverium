@@ -59,7 +59,7 @@ namespace Interpreter {
         virtual GlobalContext & get_global() override {
             return *this;
         }
-        
+
         virtual Context & get_parent() override {
             return *this;
         }
@@ -83,8 +83,13 @@ namespace Interpreter {
         FunctionContext(Context & parent, std::shared_ptr<Parser::Expression> expression):
             Context(expression), parent(parent) {}
 
-        virtual GlobalContext & get_global() override;
-        virtual Context & get_parent() override;
+        virtual GlobalContext & get_global() override {
+            return static_cast<GlobalContext &>(parent.get_global());
+        }
+
+        virtual Context & get_parent() override {
+            return parent;
+        }
 
     };
 
