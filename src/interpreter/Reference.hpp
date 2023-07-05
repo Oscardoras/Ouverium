@@ -3,12 +3,13 @@
 
 #include <functional>
 
-#include "Object.hpp"
+#include "Data.hpp"
 
 
 namespace Interpreter {
 
     class Context;
+    class Object;
     class Reference;
 
     using TupleReference = std::vector<Reference>;
@@ -17,17 +18,13 @@ namespace Interpreter {
         std::reference_wrapper<Object> parent;
         std::reference_wrapper<Data> reference;
 
-        inline operator Data &() const {
-            return reference;
-        }
+        operator Data &() const;
     };
     struct ArrayReference {
         std::reference_wrapper<Object> array;
         size_t i;
 
-        inline operator Data &() const {
-            return array.get().array[i];
-        }
+        operator Data &() const;
     };
 
     class IndirectReference : public std::variant<SymbolReference, PropertyReference, ArrayReference> {
@@ -36,7 +33,7 @@ namespace Interpreter {
 
         using std::variant<SymbolReference, PropertyReference, ArrayReference>::variant;
 
-        operator Data &() const;
+        Data to_data(Context & context) const;
 
     };
 

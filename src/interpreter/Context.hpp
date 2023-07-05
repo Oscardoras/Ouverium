@@ -5,6 +5,7 @@
 #include <set>
 #include <string>
 
+#include "Object.hpp"
 #include "Reference.hpp"
 
 #include "../parser/Parser.hpp"
@@ -37,10 +38,6 @@ namespace Interpreter {
         auto begin() const {return symbols.begin();}
         auto end() const {return symbols.end();}
 
-        auto & get_function(std::string const& symbol) {
-            return static_cast<Data &>((*this)[symbol]).get<Object*>(*this)->functions;
-        }
-
     };
 
     class GlobalContext: public Context {
@@ -52,6 +49,8 @@ namespace Interpreter {
 
     public:
 
+        Object* const getter;
+
         std::map<std::string, std::shared_ptr<Parser::Expression>> sources;
 
         GlobalContext(std::shared_ptr<Parser::Expression> expression);
@@ -62,6 +61,10 @@ namespace Interpreter {
 
         virtual Context & get_parent() override {
             return *this;
+        }
+
+        auto & get_function(std::string const& symbol) {
+            return (*this)[symbol].to_data(*this).get<Object*>()->functions;
         }
 
         ~GlobalContext();

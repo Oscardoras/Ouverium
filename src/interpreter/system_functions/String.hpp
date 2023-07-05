@@ -34,7 +34,7 @@ namespace Interpreter {
         std::shared_ptr<Parser::Expression> assign_concat_p();
         Reference assign_concat(FunctionContext & context);
 
-        void init(Context & context);
+        void init(GlobalContext & context);
 
     }
 

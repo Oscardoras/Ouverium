@@ -328,7 +328,7 @@ namespace Interpreter {
             throw FunctionArgumentsError();
         }
 
-        void init(Context & context) {
+        void init(GlobalContext & context) {
             context.get_function("!").push_front(SystemFunction{a, logical_not});
             context.get_function("&").push_front(SystemFunction{a_b, logical_and});
             context.get_function("|").push_front(SystemFunction{a_b, logical_or});

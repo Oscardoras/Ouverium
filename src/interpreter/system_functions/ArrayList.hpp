@@ -48,7 +48,7 @@ namespace Interpreter {
         Reference iterator_index(FunctionContext & context);
     */
 
-        void init(Context & context);
+        void init(GlobalContext & context);
 
     }
 

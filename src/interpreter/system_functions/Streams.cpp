@@ -26,7 +26,7 @@ namespace Interpreter {
         auto read_args = std::make_shared<Parser::Tuple>();
         Reference read(FunctionContext & context) {
             try {
-                auto object = static_cast<Data &>(context["this"]).get<Object*>(context);
+                auto object = context["this"].to_data(context).get<Object*>();
                 auto stream = dynamic_cast<std::istream*>(static_cast<std::ios*>(object->c_pointer));
 
                 std::string str;
@@ -41,7 +41,7 @@ namespace Interpreter {
         auto has_args = std::make_shared<Parser::Tuple>();
         Reference has(FunctionContext & context) {
             try {
-                auto object = static_cast<Data &>(context["this"]).get<Object*>(context);
+                auto object = context["this"].to_data(context).get<Object*>();
                 auto stream = dynamic_cast<std::istream*>(static_cast<std::ios*>(object->c_pointer));
                 return Reference(Data(stream->operator bool()));
             } catch (Data::BadAccess & e) {
@@ -52,17 +52,17 @@ namespace Interpreter {
         void setInputStream(Context & context, Object & object) {
             Function f1 = SystemFunction{read_args, Streams::read};
             f1.extern_symbols.emplace("this", context.new_reference(&object));
-            object.get_property(context, "read").get<Object*>(context)->functions.push_front(f1);
+            IndirectReference(object["read"]).to_data(context).get<Object*>()->functions.push_front(f1);
 
             Function f2 = SystemFunction{has_args, Streams::has};
             f2.extern_symbols.emplace("this", context.new_reference(&object));
-            object.get_property(context, "has").get<Object*>(context)->functions.push_front(f2);
+            IndirectReference(object["has"]).to_data(context).get<Object*>()->functions.push_front(f2);
         }
 
         auto write_args = std::make_shared<Parser::Symbol>("data");
         Reference write(FunctionContext & context) {
             try {
-                auto object = static_cast<Data &>(context["this"]).get<Object*>(context);
+                auto object = context["this"].to_data(context).get<Object*>();
                 auto stream = dynamic_cast<std::ostream*>(static_cast<std::ios*>(object->c_pointer));
                 auto data = context["data"];
 
@@ -77,7 +77,7 @@ namespace Interpreter {
         auto flush_args = std::make_shared<Parser::Tuple>();
         Reference flush(FunctionContext & context) {
             try {
-                auto object = static_cast<Data &>(context["this"]).get<Object*>(context);
+                auto object = context["this"].to_data(context).get<Object*>();
                 auto stream = dynamic_cast<std::ostream*>(static_cast<std::ios*>(object->c_pointer));
 
                 stream->flush();
@@ -91,17 +91,17 @@ namespace Interpreter {
         void setOutputStream(Context & context, Object & object) {
             Function f1 = SystemFunction{write_args, Streams::write};
             f1.extern_symbols.emplace("this", context.new_reference(&object));
-            object.get_property(context, "write").get<Object*>(context)->functions.push_front(f1);
+            IndirectReference(object["write"]).to_data(context).get<Object*>()->functions.push_front(f1);
 
             Function f2 = SystemFunction{flush_args, Streams::flush};
             f2.extern_symbols.emplace("this", context.new_reference(&object));
-            object.get_property(context, "flush").get<Object*>(context)->functions.push_front(f2);
+            IndirectReference(object["flush"]).to_data(context).get<Object*>()->functions.push_front(f2);
         }
 
         auto input_file_args = std::make_shared<Parser::Symbol>("path");
         Reference input_file(FunctionContext & context) {
             try {
-                auto path = static_cast<Data &>(context["path"]).get<Object*>(context)->to_string(context);
+                auto path = context["path"].to_data(context).get<Object*>()->to_string();
 
                 auto object = context.new_object();
                 setInputStream(context, *object);
@@ -118,7 +118,7 @@ namespace Interpreter {
         auto output_file_args = std::make_shared<Parser::Symbol>("path");
         Reference output_file(FunctionContext & context) {
             try {
-                auto path = static_cast<Data &>(context["path"]).get<Object*>(context)->to_string(context);
+                auto path = context["path"].to_data(context).get<Object*>()->to_string();
 
                 auto object = context.new_object();
                 setOutputStream(context, *object);
@@ -132,14 +132,14 @@ namespace Interpreter {
             }
         }
 
-        void init(Context & context) {
+        void init(GlobalContext & context) {
             context.get_function("print").push_front(SystemFunction{print_args, print});
             context.get_function("scan").push_front(SystemFunction{scan_args, scan});
             context.get_function("InputFile").push_front(SystemFunction{input_file_args, input_file});
             context.get_function("OutputFile").push_front(SystemFunction{output_file_args, output_file});
 
 
-            auto console = static_cast<Data &>(context["Console"]).get<Object*>(context);
+            auto console = context["Console"].to_data(context).get<Object*>();
 
             auto in = context.new_object();
             setInputStream(context, *in);

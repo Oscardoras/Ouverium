@@ -14,7 +14,7 @@ namespace Interpreter {
 
         Reference set_type(FunctionContext & context);
 
-        void init(Context & context);
+        void init(GlobalContext & context);
 
     }
 

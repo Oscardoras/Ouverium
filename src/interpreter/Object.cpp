@@ -6,20 +6,15 @@
 
 namespace Interpreter {
 
-    Data & Object::get_property(Context & context, std::string name) {
-        auto & field = properties[name];
-
-        if (field == Data{})
-            field = context.new_object();
-
-        return field;
+    PropertyReference Object::operator[](std::string name) {
+        return PropertyReference{*this, properties[name]};
     }
 
-    std::string Object::to_string(Context & context) const {
+    std::string Object::to_string() const {
         std::string str;
 
         for (auto d : array)
-            str.push_back(d.get<char>(context));
+            str.push_back(d.get<char>());
 
         return str;
     }

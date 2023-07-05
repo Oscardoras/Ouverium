@@ -7,13 +7,11 @@ namespace Interpreter {
     namespace Types {
 
         bool check_type(Context & context, Data data, Data type) {
-            auto const& d = data.compute(context);
-
-            if (type == context["Char"]) return std::holds_alternative<char>(d);
-            else if (type == context["Float"]) return std::holds_alternative<double>(d);
-            else if (type == context["Int"]) return std::holds_alternative<long>(d);
-            else if (type == context["Bool"]) return std::holds_alternative<bool>(d);
-            else if (type == context["Array"]) return std::holds_alternative<Object*>(d);
+            if (type == context["Char"].to_data(context)) return std::holds_alternative<char>(data);
+            else if (type == context["Float"].to_data(context)) return std::holds_alternative<double>(data);
+            else if (type == context["Int"].to_data(context)) return std::holds_alternative<long>(data);
+            else if (type == context["Bool"].to_data(context)) return std::holds_alternative<bool>(data);
+            else if (type == context["Array"].to_data(context)) return std::holds_alternative<Object*>(data);
             else throw FunctionArgumentsError();
         }
 
@@ -22,8 +20,8 @@ namespace Interpreter {
             std::make_shared<Parser::Symbol>("type")
         }));
         Reference is_type(FunctionContext & context) {
-            auto data = context["data"];
-            auto type = context["type"];
+            auto data = context["data"].to_data(context);
+            auto type = context["type"].to_data(context);
 
             return Data(check_type(context, data, type));
         }
@@ -45,7 +43,7 @@ namespace Interpreter {
         }
 */
 
-        void init(Context & context) {
+        void init(GlobalContext & context) {
             Function f = SystemFunction{is_type_args, is_type};
             f.extern_symbols.emplace("Char", context["Char"]);
             f.extern_symbols.emplace("Float", context["Float"]);

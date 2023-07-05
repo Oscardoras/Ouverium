@@ -15,7 +15,7 @@ namespace Interpreter {
     Reference execute(Context & context, std::shared_ptr<Parser::Expression> expression);
 
     Reference run(Context & context, std::shared_ptr<Parser::Expression> expression);
-    bool print(Context & context, std::ostream & stream, Data data);
+    bool print(Context & context, std::ostream & stream, Reference const& reference);
 
 }
 

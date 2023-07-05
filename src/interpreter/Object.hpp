@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "Data.hpp"
+#include "Reference.hpp"
 
 
 namespace Interpreter {
@@ -44,8 +45,8 @@ namespace Interpreter {
                 array.push_back(c);
         }
 
-        Data & get_property(Context & context, std::string name);
-        std::string to_string(Context & context) const;
+        PropertyReference operator[](std::string name);
+        std::string to_string() const;
 
     };
 

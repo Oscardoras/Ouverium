@@ -3,14 +3,25 @@
 
 namespace Interpreter {
 
-    IndirectReference::operator Data &() const {
-        if (auto symbol_reference = std::get_if<SymbolReference>(this))
-            return *symbol_reference;
-        else if (auto property_reference = std::get_if<PropertyReference>(this))
-            return *property_reference;
-        else if (auto array_reference = std::get_if<ArrayReference>(this))
-            return *array_reference;
-        else return *((Data*) nullptr);
+    Data compute(Context & context, Reference const& reference, Data const& data) {
+        if (data == Data{}) {
+            return call_function(context, nullptr, static_cast<GlobalContext &>(context.get_global()).getter->functions, std::make_shared<Parser::Tuple>()).to_data(context);
+        } else
+            return data;
+    }
+
+    PropertyReference::operator Data &() const {
+        return reference;
+    }
+
+    ArrayReference::operator Data &() const {
+        return array.get().array[i];
+    }
+
+    Data IndirectReference::to_data(Context & context) const {
+        return std::visit([](auto const& arg) -> Data {
+            return arg;
+        }, *this);
     }
 
     Reference::Reference(IndirectReference const& indirect_reference) {

@@ -36,18 +36,13 @@ namespace Interpreter {
     }
 
     IndirectReference Context::add_symbol(std::string const& symbol, Reference const& reference) {
-        auto it = symbols.find(symbol);
-        if (it == symbols.end())
-            return symbols.emplace(symbol, reference.to_indirect_reference(*this)).first->second;
-        else {
-            return it->second;
-        }
+        return symbols.emplace(symbol, reference.to_indirect_reference(*this)).first->second;
     }
 
     IndirectReference Context::operator[](std::string const& symbol) {
         auto it = symbols.find(symbol);
         if (it == symbols.end())
-            return symbols.emplace(symbol, new_reference(new_object())).first->second;
+            return symbols.emplace(symbol, new_reference()).first->second;
         else {
             return it->second;
         }
@@ -58,7 +53,7 @@ namespace Interpreter {
         for (auto const& object : objects) {
             auto it = object.properties.find("destructor");
             if (it != object.properties.end())
-                call_function(get_global(), nullptr, it->second.get<Object*>(*this)->functions, std::make_shared<Parser::Tuple>());
+                call_function(get_global(), nullptr, it->second.get<Object*>()->functions, std::make_shared<Parser::Tuple>());
         }
     }
 
