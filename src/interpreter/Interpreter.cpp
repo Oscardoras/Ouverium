@@ -43,15 +43,15 @@ namespace Interpreter {
     }
 
 
-    using Expression = std::shared_ptr<Parser::Expression>;
-    class Computed : public std::map<std::shared_ptr<Parser::Expression>, Reference> {
+    using ParserExpression = std::shared_ptr<Parser::Expression>;
+    class Computed : public std::map<ParserExpression, Reference> {
 
     public:
 
-        using std::map<std::shared_ptr<Parser::Expression>, Reference>::map;
+        using std::map<ParserExpression, Reference>::map;
 
         Arguments get(Arguments const& arguments) const {
-            if (auto expression = std::get_if<Expression>(&arguments)) {
+            if (auto expression = std::get_if<ParserExpression>(&arguments)) {
                 auto it = find(*expression);
                 if (it != end())
                     return it->second;
@@ -60,7 +60,7 @@ namespace Interpreter {
         }
 
         Reference compute(Context & context, Arguments const& arguments) {
-            if (auto expression = std::get_if<Expression>(&arguments)) {
+            if (auto expression = std::get_if<ParserExpression>(&arguments)) {
                 return operator[](*expression) = Interpreter::execute(context, *expression);
             } else if (auto reference = std::get_if<Reference>(&arguments)) {
                 return *reference;
@@ -82,7 +82,7 @@ namespace Interpreter {
                 function_context.add_symbol(symbol->name, reference);
             }
         } else if (auto p_tuple = std::dynamic_pointer_cast<Parser::Tuple>(parameters)) {
-            if (auto expression = std::get_if<Expression>(&arguments)) {
+            if (auto expression = std::get_if<ParserExpression>(&arguments)) {
                 if (auto a_tuple = std::dynamic_pointer_cast<Parser::Tuple>(*expression)) {
                     if (p_tuple->objects.size() == a_tuple->objects.size()) {
                         for (size_t i = 0; i < p_tuple->objects.size(); i++)
@@ -126,7 +126,7 @@ namespace Interpreter {
                     auto function_definition = std::make_shared<Parser::FunctionDefinition>();
                     function_definition->parameters = p_function->arguments;
 
-                    if (auto expression = std::get_if<Expression>(&arguments)) {
+                    if (auto expression = std::get_if<ParserExpression>(&arguments)) {
                         auto it = computed.find(*expression);
                         if (it == computed.end()) {
                             function_definition->body = *expression;
@@ -159,7 +159,7 @@ namespace Interpreter {
             } catch (Data::BadAccess const& e) {}
 
             Arguments args;
-            if (auto expression = std::get_if<Expression>(&arguments)) {
+            if (auto expression = std::get_if<ParserExpression>(&arguments)) {
                 auto it = computed.find(*expression);
                 args = it != computed.end() ? it->second : arguments;
             } else {

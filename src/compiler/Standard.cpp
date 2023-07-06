@@ -89,7 +89,7 @@ namespace Analyzer::Standard {
         return symbols.find(symbol) != symbols.end();
     }
 
-    M<IndirectReference>& Context::operator[](std::string const& symbol) {
+    M<IndirectReference> Context::operator[](std::string const& symbol) {
         auto it = symbols.find(symbol);
         if (it == symbols.end())
             return symbols.emplace(symbol, new_reference(Data(new_object()))).first->second;
@@ -131,7 +131,33 @@ namespace Analyzer::Standard {
         } else throw FunctionArgumentsError();
     }
 
-    std::shared_ptr<Expression> Analyzer::set_arguments(Context & context, bool potential, Context & function_context, std::map<std::shared_ptr<Parser::Expression>, Analyzer::Analysis> & computed, std::shared_ptr<Parser::Expression> parameters, std::shared_ptr<Parser::Expression> arguments) {
+    using ParserExpression = std::shared_ptr<Parser::Expression>;
+    class Computed : public std::map<ParserExpression, Reference> {
+
+    public:
+
+        using std::map<ParserExpression, Reference>::map;
+
+        Analyzer::Arguments get(Analyzer::Arguments const& arguments) const {
+            if (auto expression = std::get_if<ParserExpression>(&arguments)) {
+                auto it = find(*expression);
+                if (it != end())
+                    return it->second;
+            }
+            return arguments;
+        }
+
+        Reference compute(Context & context, bool potential, Analyzer::Arguments const& arguments) {
+            if (auto expression = std::get_if<ParserExpression>(&arguments)) {
+                return operator[](*expression) = Analyzer::execute(context, potential, *expression);
+            } else if (auto reference = std::get_if<Reference>(&arguments)) {
+                return *reference;
+            } else return *((Reference*) nullptr);
+        }
+
+    };
+
+    std::shared_ptr<Expression> set_arguments(Context & context, bool potential, FunctionContext & function_context, Computed & computed, std::shared_ptr<Parser::Expression> parameters, Analyzer::Arguments const& arguments) {
         if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(parameters)) {
             auto it = computed.find(arguments);
             auto analyse = it != computed.end() ? it->second : (computed[arguments] = execute(context, potential, arguments));
@@ -174,7 +200,7 @@ namespace Analyzer::Standard {
 
     using It = std::map<std::string, M<IndirectReference>>::iterator;
 
-    void Analyzer::call_reference(M<Reference> & references, bool potential, Function const& function, Context function_context, It const it, It const end) {
+    void call_argument(M<Reference> & references, bool potential, Function const& function, FunctionContext function_context, It const it, It const end) {
         if (it != end) {
             bool success = false;
             for (auto const& m1 : it->second) {
@@ -216,7 +242,7 @@ namespace Analyzer::Standard {
         }
     }
 
-    Analyzer::Analysis Analyzer::call_function(Context & context, bool potential, std::shared_ptr<Parser::Position> position, M<std::list<Function>> const& all_functions, std::shared_ptr<Parser::Expression> arguments) {
+    Analyzer::Analysis Analyzer::call_function(Context & context, bool potential, std::shared_ptr<Parser::Expression> expression, M<std::list<Function>> const& functions, Arguments arguments) {
         Analysis analysis;
 
         std::map<std::shared_ptr<Parser::Expression>, Analysis> computed;
