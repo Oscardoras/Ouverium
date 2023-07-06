@@ -52,11 +52,11 @@ namespace Interpreter {
         void setInputStream(Context & context, Object & object) {
             Function f1 = SystemFunction{read_args, Streams::read};
             f1.extern_symbols.emplace("this", context.new_reference(&object));
-            IndirectReference(object["read"]).to_data(context).get<Object*>()->functions.push_front(f1);
+            object["read"].to_data(context).get<Object*>()->functions.push_front(f1);
 
             Function f2 = SystemFunction{has_args, Streams::has};
             f2.extern_symbols.emplace("this", context.new_reference(&object));
-            IndirectReference(object["has"]).to_data(context).get<Object*>()->functions.push_front(f2);
+            object["has"].to_data(context).get<Object*>()->functions.push_front(f2);
         }
 
         auto write_args = std::make_shared<Parser::Symbol>("data");
@@ -91,11 +91,11 @@ namespace Interpreter {
         void setOutputStream(Context & context, Object & object) {
             Function f1 = SystemFunction{write_args, Streams::write};
             f1.extern_symbols.emplace("this", context.new_reference(&object));
-            IndirectReference(object["write"]).to_data(context).get<Object*>()->functions.push_front(f1);
+            object["write"].to_data(context).get<Object*>()->functions.push_front(f1);
 
             Function f2 = SystemFunction{flush_args, Streams::flush};
             f2.extern_symbols.emplace("this", context.new_reference(&object));
-            IndirectReference(object["flush"]).to_data(context).get<Object*>()->functions.push_front(f2);
+            object["flush"].to_data(context).get<Object*>()->functions.push_front(f2);
         }
 
         auto input_file_args = std::make_shared<Parser::Symbol>("path");

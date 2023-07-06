@@ -8,11 +8,6 @@ namespace Interpreter {
 
     namespace Base {
 
-        Reference getter(FunctionContext & context);
-
-        Object* init_getter(GlobalContext & context);
-
-
         Reference separator(FunctionContext & context);
 
         Reference if_statement(FunctionContext & context);

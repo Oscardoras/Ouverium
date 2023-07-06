@@ -45,7 +45,8 @@ namespace Interpreter {
                 array.push_back(c);
         }
 
-        PropertyReference operator[](std::string name);
+        IndirectReference operator[](std::string name);
+
         std::string to_string() const;
 
     };

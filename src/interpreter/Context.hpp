@@ -50,7 +50,6 @@ namespace Interpreter {
     public:
 
         Object* const getter;
-
         std::map<std::string, std::shared_ptr<Parser::Expression>> sources;
 
         GlobalContext(std::shared_ptr<Parser::Expression> expression);

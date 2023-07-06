@@ -68,6 +68,10 @@ namespace Analyzer::Standard {
         using std::variant<Object*, bool, char, long, double>::variant;
 
         template<typename T>
+        T & get() {
+            return const_cast<T &>(const_cast<Data const&>(*this).get<T>());
+        }
+        template<typename T>
         T const& get() const {
             try {
                 return std::get<T>(*this);
@@ -75,46 +79,49 @@ namespace Analyzer::Standard {
                 throw BadAccess();
             }
         }
-
-        template<typename T>
-        T & get() {
-            return const_cast<T &>(const_cast<Data const&>(*this).get<T>());
-        }
     };
 
     // Definitions of References
 
-    using IndirectReference = std::reference_wrapper<M<Data>>;
+    class IndirectReference : public std::reference_wrapper<M<Data>> {
+
+    public:
+
+        using std::reference_wrapper<M<Data>>::reference_wrapper;
+
+        M<Data> to_data(Context & context) const;
+
+    };
     template<>
     class M<IndirectReference> : public M<IndirectReference, true> {
+
     public:
         using M<IndirectReference, true>::M;
 
-        operator M<Data &>() const {
-            M<Data> m;
-            for (auto & reference : *this)
-                for (auto & data : reference.get())
-                    m.add(data);
-            return m;
-        }
+        M<Data> to_data(Context & context) const;
+        
     };
 
     using TupleReference = std::vector<M<Reference>>;
 
     class Reference: public std::variant<M<Data>, IndirectReference, std::vector<M<Reference>>> {
+
     public:
         using std::variant<M<Data>, IndirectReference, TupleReference>::variant;
 
         M<Data> to_data(Context & context) const;
         IndirectReference to_indirect_reference(Context & context) const;
+
     };
     template<>
     class M<Reference> : public M<Reference, true> {
+
     public:
         using M<Reference, true>::M;
 
         M<Data> to_data(Context & context) const;
         M<IndirectReference> to_indirect_reference(Context & context) const;
+
     };
 
     // Definition of Object
@@ -132,7 +139,7 @@ namespace Analyzer::Standard {
                 array.push_back(Data(c));
         }
 
-        M<Data> & get_property(Context & context, std::string name);
+        IndirectReference operator[](std::string name);
     };
 
     // Definition of Function
@@ -169,7 +176,8 @@ namespace Analyzer::Standard {
         M<Data> & new_reference(M<Data> const& data = {});
 
         bool has_symbol(std::string const& symbol);
-        M<IndirectReference> & operator[](std::string const& symbol);
+        M<IndirectReference> add_symbol(std::string const& symbol, M<Reference> const& reference);
+        M<IndirectReference> operator[](std::string const& symbol);
         auto begin() { return symbols.begin(); }
         auto end() { return symbols.end(); }
     };
@@ -183,6 +191,7 @@ namespace Analyzer::Standard {
 
     public:
 
+        Object* const getter;
         std::map<std::string, std::shared_ptr<Parser::Expression>> files;
 
         GlobalContext(std::shared_ptr<Parser::Expression> expression):

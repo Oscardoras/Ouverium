@@ -95,12 +95,12 @@ namespace Interpreter {
 
         void init(GlobalContext & context) {
             auto array = context["array"].to_data(context).get<Object*>();
-            IndirectReference((*array)["lenght"]).to_data(context).get<Object*>()->functions.push_front(SystemFunction{lenght_args, lenght});
-            IndirectReference((*array)["get_capacity"]).to_data(context).get<Object*>()->functions.push_front(SystemFunction{get_capacity_args, get_capacity});
-            IndirectReference((*array)["set_capacity"]).to_data(context).get<Object*>()->functions.push_front(SystemFunction{set_capacity_args, set_capacity});
-            IndirectReference((*array)["get"]).to_data(context).get<Object*>()->functions.push_front(SystemFunction{get_args, get});
-            IndirectReference((*array)["add"]).to_data(context).get<Object*>()->functions.push_front(SystemFunction{add_args, add});
-            IndirectReference((*array)["remove"]).to_data(context).get<Object*>()->functions.push_front(SystemFunction{remove_args, remove});
+            (*array)["lenght"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{lenght_args, lenght});
+            (*array)["get_capacity"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{get_capacity_args, get_capacity});
+            (*array)["set_capacity"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{set_capacity_args, set_capacity});
+            (*array)["get"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{get_args, get});
+            (*array)["add"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{add_args, add});
+            (*array)["remove"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{remove_args, remove});
         }
 
     }

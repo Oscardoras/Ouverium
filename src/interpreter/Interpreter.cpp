@@ -19,8 +19,20 @@
 
 namespace Interpreter {
 
+    auto getter_args = std::make_shared<Parser::Symbol>("var");
+    Reference getter(FunctionContext & context) {
+        return context["var"] = context.new_object();
+    }
+
+    Object* init_getter(GlobalContext & context) {
+        auto object = context.new_object();
+        context["getter"] = object;
+        object->functions.push_front(SystemFunction{getter_args, getter});
+        return object;
+    }
+
     GlobalContext::GlobalContext(std::shared_ptr<Parser::Expression> expression):
-        Context(expression), getter(Base::init_getter(*this)) {
+        Context(expression), getter(init_getter(*this)) {
         Array::init(*this);
         //ArrayList::init(*this);
         Base::init(*this);

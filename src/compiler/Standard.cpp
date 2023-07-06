@@ -10,6 +10,24 @@
 
 namespace Analyzer::Standard {
 
+    M<Data> compute(Context & context, Reference const& reference, M<Data> const& data) {
+        if (data.empty())
+            return Analyzer::call_function(context, nullptr, static_cast<GlobalContext &>(context.get_global()).getter->functions, reference).to_data(context);
+        else
+            return data;
+    }
+
+    M<Data> IndirectReference::to_data(Context & context) const {
+        return compute(context, *this, this->get());
+    }
+
+    M<Data> M<IndirectReference>::to_data(Context & context) const {
+        M<Data> m;
+        for (auto const& e : *this)
+            m.add(e.to_data(context));
+        return m;
+    }
+
     M<Data> Reference::to_data(Context & context) const {
         if (auto data = std::get_if<M<Data>>(this))
             return *data;
@@ -45,13 +63,8 @@ namespace Analyzer::Standard {
         return m;
     }
 
-    M<Data> & Object::get_property(Context & context, std::string name) {
-        auto & field = properties[name];
-
-        if (field.empty())
-            field.add(context.new_object());
-
-        return field;
+    IndirectReference Object::operator[](std::string name) {
+        return IndirectReference{properties[name]};
     }
 
     Object* Context::new_object() {

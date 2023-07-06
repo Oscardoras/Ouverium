@@ -4,10 +4,9 @@
 namespace Interpreter {
 
     Data compute(Context & context, Reference const& reference, Data const& data) {
-        if (data == Data{}) {
-            Data d = call_function(context, nullptr, static_cast<GlobalContext &>(context.get_global()).getter->functions, reference).to_data(context);
-            return d;
-        } else
+        if (data == Data{})
+            return call_function(context, nullptr, static_cast<GlobalContext &>(context.get_global()).getter->functions, reference).to_data(context);
+        else
             return data;
     }
 

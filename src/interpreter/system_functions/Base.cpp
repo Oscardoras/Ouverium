@@ -33,18 +33,6 @@ namespace Interpreter {
         }
 
 
-        auto getter_args = std::make_shared<Parser::Symbol>("var");
-        Reference getter(FunctionContext & context) {
-            return assignation(context, context["var"], context.new_object());
-        }
-
-        Object* init_getter(GlobalContext & context) {
-            auto object = context.new_object();
-            context["getter"] = object;
-            object->functions.push_front(SystemFunction{getter_args, getter});
-            return object;
-        }
-
         auto separator_args = std::make_shared<Parser::Tuple>(Parser::Tuple({
             std::make_shared<Parser::Symbol>("a"),
             std::make_shared<Parser::Symbol>("b")
@@ -418,7 +406,6 @@ namespace Interpreter {
 
             context.get_function(":=").push_front(SystemFunction{assign_args, assign});
             context.get_function(":").push_front(SystemFunction{function_definition_args, function_definition});
-            context.get_function("=").push_front(SystemFunction{getter_args, getter});
 
             context.get_function("==").push_front(SystemFunction{equals_args, equals});
             context.get_function("!=").push_front(SystemFunction{equals_args, not_equals});

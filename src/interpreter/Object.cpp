@@ -6,7 +6,7 @@
 
 namespace Interpreter {
 
-    PropertyReference Object::operator[](std::string name) {
+    IndirectReference Object::operator[](std::string name) {
         return PropertyReference{*this, properties[name]};
     }
 
