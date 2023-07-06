@@ -12,7 +12,7 @@ namespace Interpreter {
         auto lenght_args = std::make_shared<Parser::Symbol>("array");
         Reference lenght(FunctionContext & context) {
             try {
-                auto array = static_cast<Data &>(context["array"]).get<Object*>(context);
+                auto array = context["array"].to_data(context).get<Object*>();
 
                 return Reference(Data((long) array->array.size()));
             } catch (Data::BadAccess & e) {
@@ -22,7 +22,7 @@ namespace Interpreter {
 
         auto get_capacity_args = std::make_shared<Parser::Symbol>("array");
         Reference get_capacity(FunctionContext & context) {
-            auto array = static_cast<Data &>(context["array"]).get<Object*>(context);
+            auto array = context["array"].to_data(context).get<Object*>();
 
             try {
                 return Data((long) array->array.capacity());
@@ -37,8 +37,8 @@ namespace Interpreter {
         }));
         Reference set_capacity(FunctionContext & context) {
             try {
-                auto array = static_cast<Data &>(context["array"]).get<Object*>(context);
-                auto capacity = static_cast<Data &>(context["capacity"]).get<long>(context);
+                auto array = context["array"].to_data(context).get<Object*>();
+                auto capacity = context["capacity"].to_data(context).get<long>();
 
                 array->array.reserve(capacity);
                 return Data();
@@ -53,8 +53,8 @@ namespace Interpreter {
         }));
         Reference get(FunctionContext & context) {
             try {
-                auto array = static_cast<Data &>(context["array"]).get<Object*>(context);
-                auto i = static_cast<Data &>(context["i"]).get<long>(context);
+                auto array = context["array"].to_data(context).get<Object*>();
+                auto i = context["i"].to_data(context).get<long>();
 
                 if (i >= 0 && i < (long) array->array.size())
                     return ArrayReference{*array, (size_t) i};
@@ -70,8 +70,8 @@ namespace Interpreter {
         }));
         Reference add(FunctionContext & context) {
             try {
-                auto array = static_cast<Data &>(context["array"]).get<Object*>(context);
-                auto element = context["element"];
+                auto array = context["array"].to_data(context).get<Object*>();
+                auto element = context["element"].to_data(context);
 
                 array->array.push_back(element);
                 return ArrayReference{*array, (size_t) array->array.size()-1};
@@ -83,7 +83,7 @@ namespace Interpreter {
         auto remove_args = std::make_shared<Parser::Symbol>("array");
         Reference remove(FunctionContext & context) {
             try {
-                auto array = static_cast<Data &>(context["array"]).get<Object*>(context);
+                auto array = context["array"].to_data(context).get<Object*>();
 
                 Data d = array->array.back();
                 array->array.pop_back();
@@ -94,13 +94,13 @@ namespace Interpreter {
         }
 
         void init(GlobalContext & context) {
-            auto array = static_cast<Data &>(context["Array"]).get<Object*>(context);
-            array->get_property(context, "lenght").get<Object*>(context)->functions.push_front(SystemFunction{lenght_args, lenght});
-            array->get_property(context, "get_capacity").get<Object*>(context)->functions.push_front(SystemFunction{get_capacity_args, get_capacity});
-            array->get_property(context, "set_capacity").get<Object*>(context)->functions.push_front(SystemFunction{set_capacity_args, set_capacity});
-            array->get_property(context, "get").get<Object*>(context)->functions.push_front(SystemFunction{get_args, get});
-            array->get_property(context, "add").get<Object*>(context)->functions.push_front(SystemFunction{add_args, add});
-            array->get_property(context, "remove").get<Object*>(context)->functions.push_front(SystemFunction{remove_args, remove});
+            auto array = context["array"].to_data(context).get<Object*>();
+            IndirectReference((*array)["lenght"]).to_data(context).get<Object*>()->functions.push_front(SystemFunction{lenght_args, lenght});
+            IndirectReference((*array)["get_capacity"]).to_data(context).get<Object*>()->functions.push_front(SystemFunction{get_capacity_args, get_capacity});
+            IndirectReference((*array)["set_capacity"]).to_data(context).get<Object*>()->functions.push_front(SystemFunction{set_capacity_args, set_capacity});
+            IndirectReference((*array)["get"]).to_data(context).get<Object*>()->functions.push_front(SystemFunction{get_args, get});
+            IndirectReference((*array)["add"]).to_data(context).get<Object*>()->functions.push_front(SystemFunction{add_args, add});
+            IndirectReference((*array)["remove"]).to_data(context).get<Object*>()->functions.push_front(SystemFunction{remove_args, remove});
         }
 
     }

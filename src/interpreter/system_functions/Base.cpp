@@ -13,7 +13,7 @@ namespace Interpreter {
 
     namespace Base {
 
-        Reference assignation(Context & context, Reference var, Data d) {
+        Reference assignation(Context & context, Reference const& var, Data const& d) {
             if (std::get_if<Data>(&var)) return d;
             else if (auto symbol_reference = std::get_if<SymbolReference>(&var)) symbol_reference->get() = d;
             else if (auto property_reference = std::get_if<PropertyReference>(&var)) static_cast<Data &>(*property_reference) = d;
@@ -39,7 +39,8 @@ namespace Interpreter {
         }
 
         Object* init_getter(GlobalContext & context) {
-            auto object = context["getter"].to_data(context).get<Object*>();
+            auto object = context.new_object();
+            context["getter"] = object;
             object->functions.push_front(SystemFunction{getter_args, getter});
             return object;
         }
@@ -370,15 +371,15 @@ namespace Interpreter {
         }
 
         Reference check_pointers(FunctionContext & context) {
-            auto a = context["a"];
-            auto b = context["b"];
+            auto a = context["a"].to_data(context);
+            auto b = context["b"].to_data(context);
 
             return Reference(Data(a == b));
         }
 
         Reference not_check_pointers(FunctionContext & context) {
-            auto a = context["a"];
-            auto b = context["b"];
+            auto a = context["a"].to_data(context);
+            auto b = context["b"].to_data(context);
 
             return Reference(Data(a != b));
         }
