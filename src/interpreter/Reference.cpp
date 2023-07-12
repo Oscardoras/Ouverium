@@ -24,22 +24,6 @@ namespace Interpreter {
         }, *this));
     }
 
-    IndirectReference & IndirectReference::operator=(Data const& data) {
-        std::visit([](auto const& arg) -> Data & {
-            return arg;
-        }, *this) = data;
-
-        return *this;
-    }
-
-    IndirectReference & IndirectReference::operator=(Data && data) {
-        std::visit([](auto const& arg) -> Data & {
-            return arg;
-        }, *this) = data;
-
-        return *this;
-    }
-
     Reference::Reference(IndirectReference const& indirect_reference) {
         if (auto symbol_reference = std::get_if<SymbolReference>(&indirect_reference))
             *this = *symbol_reference;

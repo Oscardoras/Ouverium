@@ -34,8 +34,6 @@ namespace Interpreter {
         using std::variant<SymbolReference, PropertyReference, ArrayReference>::variant;
 
         Data to_data(Context & context) const;
-        IndirectReference & operator=(Data const& data);
-        IndirectReference & operator=(Data && data);
 
     };
 

@@ -238,7 +238,7 @@ namespace Interpreter {
             auto a = context["a"];
 
             try {
-                return a = a.to_data(context).get<long>()+1;
+                return set(context, a, a.to_data(context).get<long>()+1);
             } catch (Data::BadAccess const& e) {
                 throw FunctionArgumentsError();
             }
@@ -248,7 +248,7 @@ namespace Interpreter {
             auto a = context["a"];
 
             try {
-                return a = a.to_data(context).get<long>()-1;
+                return set(context, a, a.to_data(context).get<long>()-1);
             } catch (Data::BadAccess const& e) {
                 throw FunctionArgumentsError();
             }
@@ -260,14 +260,14 @@ namespace Interpreter {
 
             if (auto a_int = std::get_if<long>(&a)) {
                 if (auto b_int = std::get_if<long>(&b))
-                    return context["a"] = Data(*a_int + *b_int);
+                    return set(context, context["a"], Data(*a_int + *b_int));
                 else if (auto b_float = std::get_if<double>(&b))
-                    return context["a"] = Data(*a_int + *b_float);
+                    return set(context, context["a"], Data(*a_int + *b_float));
             } else if (auto a_float = std::get_if<double>(&a)) {
                 if (auto b_int = std::get_if<long>(&b))
-                    return context["a"] = Data(*a_float + *b_int);
+                    return set(context, context["a"], Data(*a_float + *b_int));
                 else if (auto b_float = std::get_if<double>(&b))
-                    return context["a"] = Data(*a_float + *b_float);
+                    return set(context, context["a"], Data(*a_float + *b_float));
             }
             throw FunctionArgumentsError();
         }
@@ -278,14 +278,14 @@ namespace Interpreter {
 
             if (auto a_int = std::get_if<long>(&a)) {
                 if (auto b_int = std::get_if<long>(&b))
-                    return context["a"] = Data(*a_int - *b_int);
+                    return set(context, context["a"], Data(*a_int - *b_int));
                 else if (auto b_float = std::get_if<double>(&b))
-                    return context["a"] = Data(*a_int - *b_float);
+                    return set(context, context["a"], Data(*a_int - *b_float));
             } else if (auto a_float = std::get_if<double>(&a)) {
                 if (auto b_int = std::get_if<long>(&b))
-                    return context["a"] = Data(*a_float - *b_int);
+                    return set(context, context["a"], Data(*a_float - *b_int));
                 else if (auto b_float = std::get_if<double>(&b))
-                    return context["a"] = Data(*a_float - *b_float);
+                    return set(context, context["a"], Data(*a_float - *b_float));
             }
             throw FunctionArgumentsError();
         }
@@ -296,14 +296,14 @@ namespace Interpreter {
 
             if (auto a_int = std::get_if<long>(&a)) {
                 if (auto b_int = std::get_if<long>(&b))
-                    return context["a"] = Data(*a_int * *b_int);
+                    return set(context, context["a"], Data(*a_int * *b_int));
                 else if (auto b_float = std::get_if<double>(&b))
-                    return context["a"] = Data(*a_int * *b_float);
+                    return set(context, context["a"], Data(*a_int * *b_float));
             } else if (auto a_float = std::get_if<double>(&a)) {
                 if (auto b_int = std::get_if<long>(&b))
-                    return context["a"] = Data(*a_float * *b_int);
+                    return set(context, context["a"], Data(*a_float * *b_int));
                 else if (auto b_float = std::get_if<double>(&b))
-                    return context["a"] = Data(*a_float * *b_float);
+                    return set(context, context["a"], Data(*a_float * *b_float));
             }
             throw FunctionArgumentsError();
         }
@@ -314,14 +314,14 @@ namespace Interpreter {
 
             if (auto a_int = std::get_if<long>(&a)) {
                 if (auto b_int = std::get_if<long>(&b))
-                    return context["a"] = Data(*a_int / *b_int);
+                    return set(context, context["a"], Data(*a_int / *b_int));
                 else if (auto b_float = std::get_if<double>(&b))
-                    return context["a"] = Data(*a_int / *b_float);
+                    return set(context, context["a"], Data(*a_int / *b_float));
             } else if (auto a_float = std::get_if<double>(&a)) {
                 if (auto b_int = std::get_if<long>(&b))
-                    return context["a"] = Data(*a_float / *b_int);
+                    return set(context, context["a"], Data(*a_float / *b_int));
                 else if (auto b_float = std::get_if<double>(&b))
-                    return context["a"] = Data(*a_float / *b_float);
+                    return set(context, context["a"], Data(*a_float / *b_float));
             }
             throw FunctionArgumentsError();
         }

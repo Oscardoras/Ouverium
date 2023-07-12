@@ -21,12 +21,14 @@ namespace Interpreter {
 
     auto getter_args = std::make_shared<Parser::Symbol>("var");
     Reference getter(FunctionContext & context) {
-        return context["var"] = context.new_object();
+        return std::visit([](auto const& arg) -> Data & {
+            return arg;
+        }, context["var"]) = context.new_object();
     }
 
     Object* init_getter(GlobalContext & context) {
         auto object = context.new_object();
-        context["getter"] = object;
+        context.add_symbol("getter", context.new_reference(object));
         object->functions.push_front(SystemFunction{getter_args, getter});
         return object;
     }
@@ -297,6 +299,10 @@ namespace Interpreter {
                 if (print(context, stream, ArrayReference{**object, i})) printed = true;
             return printed;
         } else return false;
+    }
+
+    Reference set(Context & context, Reference const& var, Reference const& data) {
+        return call_function(context, context.expression, static_cast<GlobalContext &>(context.get_global()).get_function(":="), data);
     }
 
 }
