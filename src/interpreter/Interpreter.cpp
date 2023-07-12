@@ -172,7 +172,9 @@ namespace Interpreter {
             auto reference = computed.compute(context, arguments);
 
             if (auto property_reference = std::get_if<PropertyReference>(&reference)) {
-                set_arguments(context, function_context, computed, p_property->object, Reference(Data(&property_reference->parent.get())));
+                if (p_property->name == property_reference->name) {
+                    set_arguments(context, function_context, computed, p_property->object, Reference(Data(&property_reference->parent.get())));
+                } else throw Interpreter::FunctionArgumentsError();
             } else throw Interpreter::FunctionArgumentsError();
         } else throw Interpreter::FunctionArgumentsError();
     }

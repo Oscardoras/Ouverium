@@ -16,7 +16,7 @@ namespace Interpreter {
     using SymbolReference = std::reference_wrapper<Data>;
     struct PropertyReference {
         std::reference_wrapper<Object> parent;
-        std::reference_wrapper<Data> reference;
+        std::string name;
 
         operator Data &() const;
     };

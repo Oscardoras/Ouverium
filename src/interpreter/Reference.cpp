@@ -11,7 +11,7 @@ namespace Interpreter {
     }
 
     PropertyReference::operator Data &() const {
-        return reference;
+        return parent.get().properties[name];
     }
 
     ArrayReference::operator Data &() const {

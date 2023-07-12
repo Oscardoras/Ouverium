@@ -44,6 +44,12 @@ namespace Interpreter {
 */
 
         void init(GlobalContext & context) {
+            context["Char"].to_data(context);
+            context["Float"].to_data(context);
+            context["Int"].to_data(context);
+            context["Bool"].to_data(context);
+            context["Array"].to_data(context);
+
             Function f = SystemFunction{is_type_args, is_type};
             f.extern_symbols.emplace("Char", context["Char"]);
             f.extern_symbols.emplace("Float", context["Float"]);
