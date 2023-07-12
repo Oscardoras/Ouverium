@@ -99,7 +99,7 @@ namespace Analyzer::Standard {
         using M<IndirectReference, true>::M;
 
         M<Data> to_data(Context & context) const;
-        
+
     };
 
     using TupleReference = std::vector<M<Reference>>;
@@ -225,7 +225,7 @@ namespace Analyzer::Standard {
             Context(expression), parent(parent) {}
 
         virtual GlobalContext & get_global() override {
-            return static_cast<GlobalContext &>(parent.get_global());
+            return parent.get_global();
         }
 
         virtual Context & get_parent() override {

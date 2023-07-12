@@ -302,7 +302,7 @@ namespace Interpreter {
     }
 
     Reference set(Context & context, Reference const& var, Reference const& data) {
-        return call_function(context, context.expression, static_cast<GlobalContext &>(context.get_global()).get_function(":="), data);
+        return call_function(context, context.expression, context.get_global().get_function(":="), data);
     }
 
 }

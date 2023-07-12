@@ -12,7 +12,7 @@ namespace Analyzer::Standard {
 
     M<Data> compute(Context & context, Reference const& reference, M<Data> const& data) {
         if (data.empty())
-            return Analyzer::call_function(context, nullptr, static_cast<GlobalContext &>(context.get_global()).getter->functions, reference).to_data(context);
+            return Analyzer::call_function(context, nullptr, context.get_global().getter->functions, reference).to_data(context);
         else
             return data;
     }
@@ -68,19 +68,19 @@ namespace Analyzer::Standard {
     }
 
     Object* Context::new_object() {
-        auto & objects = static_cast<GlobalContext&>(get_global()).objects;
+        auto & objects = get_global().objects;
         objects.push_back(Object());
         return &objects.back();
     }
 
     Object* Context::new_object(Object && object) {
-        auto & objects = static_cast<GlobalContext&>(get_global()).objects;
+        auto & objects = get_global().objects;
         objects.push_back(std::move(object));
         return &objects.back();
     }
 
     M<Data> & Context::new_reference(M<Data> const& data) {
-        auto & references = static_cast<GlobalContext&>(get_global()).references;
+        auto & references = get_global().references;
         references.push_back(data);
         return references.back();
     }

@@ -7,19 +7,19 @@
 namespace Interpreter {
 
     Object* Context::new_object() {
-        auto & objects = static_cast<GlobalContext&>(get_global()).objects;
+        auto & objects = get_global().objects;
         objects.push_back(Object());
         return &objects.back();
     }
 
     Object* Context::new_object(Object && object) {
-        auto & objects = static_cast<GlobalContext&>(get_global()).objects;
+        auto & objects = get_global().objects;
         objects.push_back(std::move(object));
         return &objects.back();
     }
 
     Data & Context::new_reference(Data const& data) {
-        auto & references = static_cast<GlobalContext&>(get_global()).references;
+        auto & references = get_global().references;
         references.push_back(data);
         return references.back();
     }

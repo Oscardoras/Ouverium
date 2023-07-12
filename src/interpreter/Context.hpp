@@ -26,6 +26,8 @@ namespace Interpreter {
         Context(std::shared_ptr<Parser::Expression> expression):
             Parser::Context(expression) {}
 
+        virtual GlobalContext & get_global() = 0;
+
         Object* new_object();
         Object* new_object(Object && object);
 
@@ -86,7 +88,7 @@ namespace Interpreter {
             Context(expression), parent(parent) {}
 
         virtual GlobalContext & get_global() override {
-            return static_cast<GlobalContext &>(parent.get_global());
+            return parent.get_global();
         }
 
         virtual Context & get_parent() override {

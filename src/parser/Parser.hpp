@@ -41,12 +41,6 @@ namespace Parser {
             expression(expression) {}
 
         /**
-         * Gets the global context.
-         * @return the global context.
-        */
-        virtual Context & get_global() = 0;
-
-        /**
          * Gets the parent context.
          * @return the parent context.
         */
