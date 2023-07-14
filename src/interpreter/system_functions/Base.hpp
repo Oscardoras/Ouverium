@@ -8,6 +8,10 @@ namespace Interpreter {
 
     namespace Base {
 
+        Reference getter(FunctionContext & context);
+        Reference setter(FunctionContext & context);
+
+
         Reference separator(FunctionContext & context);
 
         Reference if_statement(FunctionContext & context);
@@ -43,8 +47,6 @@ namespace Interpreter {
         Reference assign(FunctionContext & context);
 
         Reference function_definition(FunctionContext & context);
-
-        Reference getter(FunctionContext & context);
 
         bool equals(Data a, Data b);
 

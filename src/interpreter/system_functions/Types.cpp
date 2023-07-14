@@ -57,7 +57,7 @@ namespace Interpreter {
             f.extern_symbols.emplace("Bool", context["Bool"]);
             f.extern_symbols.emplace("Array", context["Array"]);
             context.get_function("is").push_front(f);
-            context.get_function("~").push_front(f);
+            set(context, context["~"], context["is"]);
 
             //context.get_symbol(":~").to_object(context)->functions.push_front(std::make_unique<SystemFunction>(parameters, set_type));
         }

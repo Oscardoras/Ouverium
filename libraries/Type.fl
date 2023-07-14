@@ -19,4 +19,19 @@ is : (object, type) \ (type !== Char & type !== Int & type !== Float & type !== 
 
 (~) : is;
 
-abstract : f |-> f;
+
+_methods_getter : getter;
+
+getter : x |-> {
+    _methods_getter(x)
+};
+
+(::) : (type, method_getter) |-> {
+    filters : (a |-> false) : ((this. .) \ (this ~ type) |-> true);
+
+    mg := x \ ( filters(x) ) |-> {
+        method_getter(x)
+    };
+    _methods_getter : mg;
+    mg
+};

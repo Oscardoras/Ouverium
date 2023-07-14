@@ -5,7 +5,7 @@ namespace Interpreter {
 
     Data compute(Context & context, Reference const& reference, Data const& data) {
         if (data == Data{})
-            return call_function(context, context.expression, context.get_global().getter->functions, reference).to_data(context);
+            return call_function(context, context.expression, context.get_global()["getter"].to_data(context).get<Object*>()->functions, reference).to_data(context);
         else
             return data;
     }

@@ -19,22 +19,8 @@
 
 namespace Interpreter {
 
-    auto getter_args = std::make_shared<Parser::Symbol>("var");
-    Reference getter(FunctionContext & context) {
-        return std::visit([](auto const& arg) -> Data & {
-            return arg;
-        }, context["var"]) = context.new_object();
-    }
-
-    Object* init_getter(GlobalContext & context) {
-        auto object = context.new_object();
-        context.add_symbol("getter", context.new_reference(object));
-        object->functions.push_front(SystemFunction{getter_args, getter});
-        return object;
-    }
-
     GlobalContext::GlobalContext(std::shared_ptr<Parser::Expression> expression):
-        Context(expression), getter(init_getter(*this)) {
+        Context(expression) {
         Array::init(*this);
         //ArrayList::init(*this);
         Base::init(*this);
@@ -106,7 +92,7 @@ namespace Interpreter {
                 if (auto tuple_reference = std::get_if<TupleReference>(reference)) {
                     if (tuple_reference->size() == p_tuple->objects.size()) {
                         for (size_t i = 0; i < p_tuple->objects.size(); i++)
-                            set_arguments(context, function_context, computed, p_tuple->objects[i], tuple_reference[i]);
+                            set_arguments(context, function_context, computed, p_tuple->objects[i], (*tuple_reference)[i]);
                     } else throw Interpreter::FunctionArgumentsError();
                 } else {
                     auto data = reference->to_data(function_context);
@@ -174,7 +160,7 @@ namespace Interpreter {
             auto reference = computed.compute(context, arguments);
 
             if (auto property_reference = std::get_if<PropertyReference>(&reference)) {
-                if (p_property->name == property_reference->name) {
+                if (p_property->name == property_reference->name || p_property->name == ".") {
                     set_arguments(context, function_context, computed, p_property->object, Reference(Data(&property_reference->parent.get())));
                 } else throw Interpreter::FunctionArgumentsError();
             } else throw Interpreter::FunctionArgumentsError();
@@ -302,7 +288,7 @@ namespace Interpreter {
     }
 
     Reference set(Context & context, Reference const& var, Reference const& data) {
-        return call_function(context, context.expression, context.get_global().get_function(":="), data);
+        return call_function(context, context.expression, context.get_global().get_function("setter"), data);
     }
 
 }

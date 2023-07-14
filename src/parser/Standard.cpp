@@ -326,9 +326,9 @@ namespace Parser {
                 property->object = expression;
                 ++i;
                 property->name = words.at(i);
-                expression = property;
-                if (is_system(words.at(i)))
+                if (is_system(words.at(i)) && words.at(i) != ".")
                     errors.push_back(Standard::ParserError(words.at(i) + " is reserved", words.at(i).position));
+                expression = property;
                 ++i;
                 continue;
             }

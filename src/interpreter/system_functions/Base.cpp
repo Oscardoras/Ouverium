@@ -32,6 +32,27 @@ namespace Interpreter {
             return var;
         }
 
+        auto getter_args = std::make_shared<Parser::Symbol>("var");
+        Reference getter(FunctionContext & context) {
+            return std::visit([](auto const& arg) -> Data & {
+                return arg;
+            }, context["var"]) = context.new_object();
+        }
+
+        auto setter_args = std::make_shared<Parser::Tuple>(Parser::Tuple({
+            std::make_shared<Parser::FunctionCall>(
+                std::make_shared<Parser::Symbol>("var"),
+                std::make_shared<Parser::Tuple>()
+            ),
+            std::make_shared<Parser::Symbol>("data")
+        }));
+        Reference setter(FunctionContext & context) {
+            auto var = Interpreter::call_function(context.get_parent(), nullptr, context["var"].to_data(context).get<Object*>()->functions, std::make_shared<Parser::Tuple>());
+            auto data = context["data"].to_data(context);
+
+            return assignation(context, var, data);
+        }
+
 
         auto separator_args = std::make_shared<Parser::Tuple>(Parser::Tuple({
             std::make_shared<Parser::Symbol>("a"),
@@ -288,20 +309,6 @@ namespace Interpreter {
             return Reference(context["data"].to_data(context));
         }
 
-        auto assign_args = std::make_shared<Parser::Tuple>(Parser::Tuple({
-            std::make_shared<Parser::FunctionCall>(
-                std::make_shared<Parser::Symbol>("var"),
-                std::make_shared<Parser::Tuple>()
-            ),
-            std::make_shared<Parser::Symbol>("data")
-        }));
-        Reference assign(FunctionContext & context) {
-            auto var = Interpreter::call_function(context.get_parent(), nullptr, context["var"].to_data(context).get<Object*>()->functions, std::make_shared<Parser::Tuple>());
-            auto data = context["data"].to_data(context);
-
-            return assignation(context, var, data);
-        }
-
         auto function_definition_args = std::make_shared<Parser::Tuple>(Parser::Tuple({
             std::make_shared<Parser::Symbol>("var"),
             std::make_shared<Parser::Symbol>("data")
@@ -373,6 +380,14 @@ namespace Interpreter {
         }
 
         void init(GlobalContext & context) {
+            auto object = context.new_object();
+            object->functions.push_front(SystemFunction{getter_args, getter});
+            context.add_symbol("getter", context.new_reference(object));
+
+            context.get_function("setter").push_front(SystemFunction{setter_args, setter});
+            set(context, context[":="], context["setter"]);
+
+
             context.get_function(";").push_front(SystemFunction{separator_args, separator});
 
             Function if_s = SystemFunction{if_statement_args, if_statement};
@@ -404,7 +419,6 @@ namespace Interpreter {
             context.get_function("$").push_front(SystemFunction{copy_args, copy});
             context.get_function("$==").push_front(SystemFunction{copy_args, copy_pointer});
 
-            context.get_function(":=").push_front(SystemFunction{assign_args, assign});
             context.get_function(":").push_front(SystemFunction{function_definition_args, function_definition});
 
             context.get_function("==").push_front(SystemFunction{equals_args, equals});

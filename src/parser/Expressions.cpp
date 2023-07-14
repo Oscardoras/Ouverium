@@ -87,7 +87,8 @@ namespace Parser {
         s += "FunctionDefinition:\n";
         n++;
         s += tabu(n) + "parameters: " + parameters->to_string(n);
-        s += tabu(n) + "filter: " + filter->to_string(n);
+        if (filter != nullptr)
+            s += tabu(n) + "filter: " + filter->to_string(n);
         s += tabu(n) + "body: " + body->to_string(n);
         return s;
     }
@@ -96,8 +97,9 @@ namespace Parser {
         std::string s;
         s += "Property:\n";
         n++;
-        s += tabu(n) + "object: " + object->to_string(n);
-        s += tabu(n) + "name: " + name;
+        if (object != nullptr)
+            s += tabu(n) + "object: " + object->to_string(n);
+        s += tabu(n) + "name: " + name + "\n";
         return s;
     }
 
