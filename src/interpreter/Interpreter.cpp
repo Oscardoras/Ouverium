@@ -141,9 +141,10 @@ namespace Interpreter {
                     return;
                 }
             }
+            auto r = execute(context, p_function->function).to_data(context);
             std::list<Function> functions;
             try {
-                functions = Interpreter::execute(context, p_function->function).to_data(context).get<Object*>()->functions;
+                functions = r.get<Object*>()->functions;
             } catch (Data::BadAccess const& e) {}
 
             Arguments args;
@@ -154,7 +155,12 @@ namespace Interpreter {
                 args = arguments;
             }
 
-            auto reference = call_function(context, p_function, functions, args);
+            Reference reference;
+            try {
+                reference = call_function(context, p_function, functions, args);
+            } catch (Error const& e) {
+                throw Interpreter::FunctionArgumentsError();
+            }
             set_arguments(context, function_context, computed, p_function->arguments, reference);
         } else if (auto p_property = std::dynamic_pointer_cast<Parser::Property>(parameters)) {
             auto reference = computed.compute(context, arguments);

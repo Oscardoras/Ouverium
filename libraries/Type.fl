@@ -20,6 +20,16 @@ is : (object, type) \ (type !== Char & type !== Int & type !== Float & type !== 
 (~) : is;
 
 
+extends;
+
+class : (type, extends, parents, constructor) |-> {
+    type._parents := parents;
+
+    type : constructor;
+
+    type
+};
+
 _methods_getter : getter;
 
 getter : x |-> {
