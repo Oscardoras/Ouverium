@@ -22,15 +22,6 @@ namespace Interpreter {
 
         Reference for_step_statement(FunctionContext & context);
 
-        class Exception {
-
-        public:
-
-            Reference reference;
-            std::shared_ptr<Parser::Position> position;
-
-        };
-
         Reference try_statement(FunctionContext & context);
 
         Reference throw_statement(FunctionContext & context);

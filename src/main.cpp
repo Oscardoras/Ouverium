@@ -26,7 +26,7 @@ int main(int argc, char ** argv) {
                     symbols.insert(new_symbols.begin(), new_symbols.end());
 
                     auto r = Interpreter::run(context, expression);
-                    if (Interpreter::print(context, std::cout, r.to_data(context)))
+                    if (Interpreter::print(context, r.to_data(context)))
                         std::cout << std::endl;
                     code = "";
 

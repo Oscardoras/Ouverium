@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include <iostream>
+#include <sstream>
 
 #include "Function.hpp"
 #include "Interpreter.hpp"
@@ -158,7 +159,7 @@ namespace Interpreter {
             Reference reference;
             try {
                 reference = call_function(context, p_function, functions, args);
-            } catch (Error const& e) {
+            } catch (Exception const& e) {
                 throw Interpreter::FunctionArgumentsError();
             }
             set_arguments(context, function_context, computed, p_function->arguments, reference);
@@ -204,11 +205,12 @@ namespace Interpreter {
             } catch (FunctionArgumentsError & e) {}
         }
 
-        if (expression->position != nullptr) {
+        if (expression->position != nullptr)
             expression->position->store_stack_trace(context);
-            expression->position->notify_error(functions.empty() ? "Error: not a function" : "Error: incorrect function arguments");
-        }
-        throw Error();
+        throw Exception {
+            context.new_object(Object(functions.empty() ? "not a function" : "incorrect function arguments")),
+            expression->position
+        };
     }
 
     Reference execute(Context & context, std::shared_ptr<Parser::Expression> expression) {
@@ -262,33 +264,37 @@ namespace Interpreter {
     Reference run(Context & context, std::shared_ptr<Parser::Expression> expression) {
         try {
             return Interpreter::execute(context, expression);
-        } catch (Base::Exception & ex) {
-            ex.position->notify_error("An exception occured");
-            return Reference(context.new_object());
-        } catch (Error & e) {
+        } catch (Exception & ex) {
+            std::stringstream os;
+            os << "An exception occured: ";
+            print(context, ex.reference, os);
+
+            if (ex.position != nullptr)
+                ex.position->notify_error(os.str());
+
             return Reference(context.new_object());
         }
     }
 
-    bool print(Context & context, std::ostream & stream, Reference const& reference) {
+    bool print(Context & context, Reference const& reference, std::ostream & os) {
         Data data = reference.to_data(context);
 
         if (auto c = std::get_if<char>(&data)) {
-            std::cout << *c;
+            os << *c;
             return true;
         } else if (auto f = std::get_if<double>(&data)) {
-            std::cout << *f;
+            os << *f;
             return true;
         } else if (auto i = std::get_if<long>(&data)) {
-            std::cout << *i;
+            os << *i;
             return true;
         } else if (auto b = std::get_if<bool>(&data)) {
-            std::cout << *b;
+            os << *b;
             return true;
         } else if (auto object = std::get_if<Object*>(&data)) {
             bool printed = false;
             for (size_t i = 0; i < (*object)->array.size(); ++i)
-                if (print(context, stream, ArrayReference{**object, i})) printed = true;
+                if (print(context, ArrayReference{**object, i}, os)) printed = true;
             return printed;
         } else return false;
     }

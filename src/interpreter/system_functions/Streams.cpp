@@ -11,7 +11,7 @@ namespace Interpreter {
         auto print_args = std::make_shared<Parser::Symbol>("data");
         Reference print(FunctionContext & context) {
             auto data = context["data"];
-            Interpreter::print(context, std::cout, data);
+            Interpreter::print(context, data);
             return Reference(context.new_object());
         }
 
@@ -66,7 +66,7 @@ namespace Interpreter {
                 auto stream = dynamic_cast<std::ostream*>(static_cast<std::ios*>(object->c_pointer));
                 auto data = context["data"];
 
-                Interpreter::print(context, *stream, data);
+                Interpreter::print(context, data, *stream);
 
                 return Reference(Data(context.new_object()));
             } catch (Data::BadAccess & e) {

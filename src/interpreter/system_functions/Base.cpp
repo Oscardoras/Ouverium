@@ -218,7 +218,7 @@ namespace Interpreter {
             } catch (Exception & ex) {
                 try {
                     return Interpreter::call_function(context.get_parent(), nullptr, catch_function->functions, ex.reference);
-                } catch (Interpreter::Error & e) {
+                } catch (Interpreter::Exception & e) {
                     throw ex;
                 }
             }
@@ -278,9 +278,9 @@ namespace Interpreter {
 
                     return Interpreter::execute(global, expression);
                 } catch (Parser::Standard::IncompleteCode & e) {
-                    context.expression->position->store_stack_trace(context.get_parent());
-                    context.expression->position->notify_error("incomplete code, you must finish the last expression in file \"" + path + "\"");
-                    throw Error();
+                    if (context.expression->position != nullptr)
+                        context.expression->position->store_stack_trace(context.get_parent());
+                    throw Exception(context.new_object("incomplete code, you must finish the last expression in file \"" + path + "\""), context.expression->position);
                 }
             } else {
                 auto expression = it->second;
