@@ -280,7 +280,10 @@ namespace Interpreter {
                 } catch (Parser::Standard::IncompleteCode & e) {
                     if (context.expression->position != nullptr)
                         context.expression->position->store_stack_trace(context.get_parent());
-                    throw Exception(context.new_object("incomplete code, you must finish the last expression in file \"" + path + "\""), context.expression->position);
+                    throw Exception {
+                        context.new_object("incomplete code, you must finish the last expression in file \"" + path + "\""),
+                        context.expression->position
+                    };
                 }
             } else {
                 auto expression = it->second;
