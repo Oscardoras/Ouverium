@@ -93,6 +93,32 @@ namespace Interpreter {
             }
         }
 
+        auto foreach_args = std::make_shared<Parser::Tuple>(Parser::Tuple({
+            std::make_shared<Parser::FunctionCall>(
+                std::make_shared<Parser::Symbol>("array"),
+                std::make_shared<Parser::Tuple>()
+            ),
+            std::make_shared<Parser::Symbol>("function")
+        }));
+        Reference foreach(FunctionContext & context) {
+            try {
+                auto array = Interpreter::call_function(context, context.expression, context["array"].to_data(context).get<Object*>()->functions, std::make_shared<Parser::Tuple>());
+                auto functions = context["array"].to_data(context).get<Object*>()->functions;
+
+                if (auto tuple = std::get_if<TupleReference>(&array)) {
+                    for (auto const& r : *tuple)
+                        Interpreter::call_function(context, context.expression, functions, r);
+                } else {
+                    for (auto const& d : array.to_data(context).get<Object*>()->array)
+                        Interpreter::call_function(context, context.expression, functions, d);
+                }
+
+                return Data{};
+            } catch (Data::BadAccess & e) {
+                throw FunctionArgumentsError();
+            }
+        }
+
         void init(GlobalContext & context) {
             auto array = context["Array"].to_data(context).get<Object*>();
             (*array)["lenght"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{lenght_args, lenght});
@@ -101,6 +127,8 @@ namespace Interpreter {
             (*array)["get"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{get_args, get});
             (*array)["add"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{add_args, add});
             (*array)["remove"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{remove_args, remove});
+
+            context.get_function("foreach").push_front(SystemFunction{foreach_args, foreach});
         }
 
     }

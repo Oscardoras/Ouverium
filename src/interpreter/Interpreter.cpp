@@ -22,9 +22,9 @@ namespace Interpreter {
 
     GlobalContext::GlobalContext(std::shared_ptr<Parser::Expression> expression):
         Context(expression) {
+        Base::init(*this);
         Array::init(*this);
         //ArrayList::init(*this);
-        Base::init(*this);
         Math::init(*this);
         Streams::init(*this);
         //String::init(*this);
@@ -300,7 +300,7 @@ namespace Interpreter {
     }
 
     Reference set(Context & context, Reference const& var, Reference const& data) {
-        return call_function(context, context.expression, context.get_global().get_function("setter"), data);
+        return call_function(context, context.expression, context.get_global().get_function("setter"), TupleReference{var, data});
     }
 
 }

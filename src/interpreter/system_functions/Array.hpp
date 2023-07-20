@@ -20,6 +20,8 @@ namespace Interpreter {
 
         Reference remove(FunctionContext & context);
 
+        Reference foreach(FunctionContext & context);
+
         void init(GlobalContext & context);
 
     }
