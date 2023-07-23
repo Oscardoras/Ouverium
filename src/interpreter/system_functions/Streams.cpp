@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 #include "Streams.hpp"
 
@@ -11,8 +12,12 @@ namespace Interpreter {
         auto print_args = std::make_shared<Parser::Symbol>("data");
         Reference print(FunctionContext & context) {
             auto data = context["data"];
-            Interpreter::print(context, data);
-            return Reference(context.new_object());
+
+            auto str = Interpreter::to_string(context, data);
+            if (!str.empty())
+                std::cout << str << std::endl;
+
+            return Reference();
         }
 
         auto scan_args = std::make_shared<Parser::Tuple>();
@@ -27,7 +32,7 @@ namespace Interpreter {
         Reference read(FunctionContext & context) {
             try {
                 auto object = context["this"].to_data(context).get<Object*>();
-                auto stream = dynamic_cast<std::istream*>(static_cast<std::ios*>(object->c_pointer));
+                auto stream = dynamic_cast<std::istream*>(static_cast<std::ios*>(object->stream));
 
                 std::string str;
                 getline(*stream, str);
@@ -42,7 +47,7 @@ namespace Interpreter {
         Reference has(FunctionContext & context) {
             try {
                 auto object = context["this"].to_data(context).get<Object*>();
-                auto stream = dynamic_cast<std::istream*>(static_cast<std::ios*>(object->c_pointer));
+                auto stream = dynamic_cast<std::istream*>(static_cast<std::ios*>(object->stream));
                 return Reference(Data(stream->operator bool()));
             } catch (Data::BadAccess & e) {
                 throw FunctionArgumentsError();
@@ -63,10 +68,10 @@ namespace Interpreter {
         Reference write(FunctionContext & context) {
             try {
                 auto object = context["this"].to_data(context).get<Object*>();
-                auto stream = dynamic_cast<std::ostream*>(static_cast<std::ios*>(object->c_pointer));
-                auto data = context["data"];
+                auto stream = dynamic_cast<std::ostream*>(static_cast<std::ios*>(object->stream));
+                auto data = context["data"].to_data(context);
 
-                Interpreter::print(context, data, *stream);
+                *stream << Interpreter::to_string(context, data);
 
                 return Reference(Data(context.new_object()));
             } catch (Data::BadAccess & e) {
@@ -78,11 +83,11 @@ namespace Interpreter {
         Reference flush(FunctionContext & context) {
             try {
                 auto object = context["this"].to_data(context).get<Object*>();
-                auto stream = dynamic_cast<std::ostream*>(static_cast<std::ios*>(object->c_pointer));
+                auto stream = dynamic_cast<std::ostream*>(static_cast<std::ios*>(object->stream));
 
                 stream->flush();
 
-                return Reference(Data(context.new_object()));
+                return Reference();
             } catch (Data::BadAccess & e) {
                 throw FunctionArgumentsError();
             }
@@ -105,7 +110,7 @@ namespace Interpreter {
 
                 auto object = context.new_object();
                 setInputStream(context, *object);
-                object->c_pointer = std::make_unique<std::ifstream>(path);
+                object->stream = std::make_shared<std::ifstream>(path);
 
                 return Reference(Data(object));
             } catch (Data::BadAccess & e) {
@@ -122,7 +127,7 @@ namespace Interpreter {
 
                 auto object = context.new_object();
                 setOutputStream(context, *object);
-                object->c_pointer = std::make_unique<std::ofstream>(path);
+                object->stream = std::make_shared<std::ofstream>(path);
 
                 return Reference(object);
             } catch (Data::BadAccess & e) {
@@ -143,17 +148,17 @@ namespace Interpreter {
 
             auto in = context.new_object();
             setInputStream(context, *in);
-            in->c_pointer = std::cin;
+            in->stream = std::cin;
             console->properties["in"] = in;
 
             auto out = context.new_object();
             setOutputStream(context, *out);
-            out->c_pointer = std::cout;
+            out->stream = std::cout;
             console->properties["out"] = out;
 
             auto err = context.new_object();
             setOutputStream(context, *err);
-            err->c_pointer = std::cerr;
+            err->stream = std::cerr;
             console->properties["err"] = err;
         }
 

@@ -53,7 +53,7 @@ namespace Interpreter {
         for (auto const& object : objects) {
             auto it = object.properties.find("destructor");
             if (it != object.properties.end())
-                call_function(get_global(), nullptr, it->second.get<Object*>()->functions, std::make_shared<Parser::Tuple>());
+                call_function(get_global(), get_global().expression, it->second.get<Object*>()->functions, std::make_shared<Parser::Tuple>());
         }
     }
 

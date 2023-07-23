@@ -48,14 +48,6 @@ namespace Parser {
 
     };
 
-    class Parser {
-
-    public:
-
-        virtual std::shared_ptr<Expression> get_tree() const = 0;
-
-    };
-
 }
 
 

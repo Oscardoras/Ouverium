@@ -96,9 +96,8 @@ namespace Interpreter {
                             set_arguments(context, function_context, computed, p_tuple->objects[i], (*tuple_reference)[i]);
                     } else throw Interpreter::FunctionArgumentsError();
                 } else {
-                    auto data = reference->to_data(function_context);
                     try {
-                        auto object = data.get<Object*>();
+                        auto object = reference->to_data(function_context).get<Object*>();
                         if (object->array.size() == p_tuple->objects.size()) {
                             for (size_t i = 0; i < p_tuple->objects.size(); i++)
                                 set_arguments(context, function_context, computed, p_tuple->objects[i], ArrayReference{*object, i});
@@ -205,12 +204,10 @@ namespace Interpreter {
             } catch (FunctionArgumentsError & e) {}
         }
 
-        if (expression->position != nullptr)
-            expression->position->store_stack_trace(context);
-        throw Exception {
-            context.new_object(Object(functions.empty() ? "not a function" : "incorrect function arguments")),
-            expression->position
-        };
+        if (functions.empty())
+            throw get_exception(context, "not a function", context.get_global()["NotAFunction"].to_data(context), expression);
+        else
+            throw get_exception(context, "incorrect function arguments", context.get_global()["IncorrectFunctionArguments"].to_data(context), expression);
     }
 
     Reference execute(Context & context, std::shared_ptr<Parser::Expression> expression) {
@@ -237,7 +234,7 @@ namespace Interpreter {
                 auto object = data.get<Object*>();
                 return (*object)[property->name];
             } catch (Data::BadAccess const& e) {
-                return Data(context.new_object());
+                return Data{};
             }
         } else if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(expression)) {
             auto data = get_symbol(symbol->name);
@@ -266,8 +263,7 @@ namespace Interpreter {
             return Interpreter::execute(context, expression);
         } catch (Exception & ex) {
             std::stringstream os;
-            os << "An exception occured: ";
-            print(context, ex.reference, os);
+            os << "An exception occured: " << ex.reference.to_data(context);
 
             if (ex.position != nullptr)
                 ex.position->notify_error(os.str());
@@ -276,31 +272,29 @@ namespace Interpreter {
         }
     }
 
-    bool print(Context & context, Reference const& reference, std::ostream & os) {
-        Data data = reference.to_data(context);
-
-        if (auto c = std::get_if<char>(&data)) {
-            os << *c;
-            return true;
-        } else if (auto f = std::get_if<double>(&data)) {
-            os << *f;
-            return true;
-        } else if (auto i = std::get_if<long>(&data)) {
-            os << *i;
-            return true;
-        } else if (auto b = std::get_if<bool>(&data)) {
-            os << *b;
-            return true;
-        } else if (auto object = std::get_if<Object*>(&data)) {
-            bool printed = false;
-            for (size_t i = 0; i < (*object)->array.size(); ++i)
-                if (print(context, ArrayReference{**object, i}, os)) printed = true;
-            return printed;
-        } else return false;
-    }
-
     Reference set(Context & context, Reference const& var, Reference const& data) {
         return call_function(context, context.expression, context.get_global().get_function("setter"), TupleReference{var, data});
+    }
+
+    std::string to_string(Context & context, Reference const& data) {
+        std::ostringstream oss;
+        oss << call_function(context, context.expression, context.get_global().get_function("to_string"), data).to_data(context);
+        return oss.str();
+    }
+
+    Exception get_exception(Context & context, std::string const& message, Data const& type, std::shared_ptr<Parser::Expression> expression) {
+        if (expression->position != nullptr)
+            expression->position->store_stack_trace(context);
+
+        auto object = context.new_object(Object(message));
+        auto types = context.new_object();
+        types->array.push_back(type);
+        object->properties["_types"] = types;
+
+        return Exception {
+            object,
+            expression->position
+        };
     }
 
 }

@@ -23,7 +23,10 @@ namespace Interpreter {
         std::map<std::string, Data> properties;
         std::list<Function> functions;
         std::vector<Data> array;
-        struct CPointer: public std::variant<std::shared_ptr<std::ios>, std::reference_wrapper<std::ios>> {
+        class Stream: public std::variant<std::shared_ptr<std::ios>, std::reference_wrapper<std::ios>> {
+
+        public:
+
             using std::variant<std::shared_ptr<std::ios>, std::reference_wrapper<std::ios>>::variant;
 
             operator std::ios*() const {
@@ -33,7 +36,7 @@ namespace Interpreter {
                     return &ref->get();
                 else return nullptr;
             }
-        } c_pointer = nullptr;
+        } stream = nullptr;
 
         bool referenced = false;
 

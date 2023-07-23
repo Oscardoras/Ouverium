@@ -35,12 +35,11 @@ std::variant<nullptr_t, bool, long, double, std::string> get_symbol(std::string 
     if (name == "true") return true;
     if (name == "false") return false;
     try {
-        return std::stol(name);
-    } catch (std::invalid_argument const& ex1) {
-        try {
+        if (name.find('.') < name.size())
             return std::stod(name);
-        } catch (std::invalid_argument const& ex2) {
-            return nullptr;
-        }
+        else
+            return std::stol(name);
+    } catch (std::invalid_argument const& ex1) {
+        return nullptr;
     }
 }

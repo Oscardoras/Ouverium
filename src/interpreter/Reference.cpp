@@ -56,14 +56,21 @@ namespace Interpreter {
     }
 
     IndirectReference Reference::to_indirect_reference(Context & context) const {
-        if (auto symbol_reference = std::get_if<SymbolReference>(this))
+        if (auto data = std::get_if<Data>(this))
+            return context.new_reference(*data);
+        else if (auto symbol_reference = std::get_if<SymbolReference>(this))
             return *symbol_reference;
         else if (auto property_reference = std::get_if<PropertyReference>(this))
             return *property_reference;
         else if (auto array_reference = std::get_if<ArrayReference>(this))
             return *array_reference;
-        else
-            return context.new_reference(to_data(context));
+        else if (auto tuple_reference = std::get_if<TupleReference>(this)) {
+            auto object = context.new_object();
+            object->array.reserve(tuple_reference->size());
+            for (auto d : *tuple_reference)
+                object->array.push_back(d.to_data(context));
+            return context.new_reference(object);
+        } else return context.new_reference();
     }
 
 }

@@ -1,6 +1,7 @@
 #ifndef __PARSER_STANDARD_HPP__
 #define __PARSER_STANDARD_HPP__
 
+#include <iostream>
 #include <list>
 
 #include "Parser.hpp"
@@ -8,11 +9,9 @@
 
 namespace Parser {
 
-    class Standard: public Parser {
+    class Standard {
 
     public:
-
-        static std::string read_file(std::ifstream const& file);
 
         Standard(std::string const& code, std::string const& path);
 
@@ -37,23 +36,37 @@ namespace Parser {
 
         std::vector<Word> get_words() const;
 
-        struct ParserError {
+        struct ParsingError {
             std::string message;
             TextPosition position;
 
-            ParserError(std::string const& message, TextPosition const& position);
+            ParsingError(std::string const& message, TextPosition const& position):
+                message(message), position(position) {}
         };
 
-        class IncompleteCode: public std::exception {};
+        class Exception : std::exception {
 
-        virtual std::shared_ptr<Expression> get_tree() const override;
+        protected:
+
+            std::vector<ParsingError> errors;
+
+        public:
+
+            Exception(std::vector<ParsingError> const& errors = {}):
+                errors(errors) {}
+
+            virtual const char* what() const noexcept override;
+
+        };
+
+        class IncompleteCode: public Exception {};
+
+        std::shared_ptr<Expression> get_tree() const;
 
     protected:
 
         std::string code;
         std::string path;
-
-        std::shared_ptr<Expression> get_tree(std::vector<Standard::ParserError> & errors) const;
 
     };
 

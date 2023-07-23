@@ -16,7 +16,7 @@ namespace Interpreter {
         std::shared_ptr<Parser::Position> position;
 
     };
-    class FunctionArgumentsError: public std::exception {};
+    class FunctionArgumentsError {};
 
     using Arguments = std::variant<std::shared_ptr<Parser::Expression>, Reference>;
 
@@ -24,8 +24,9 @@ namespace Interpreter {
     Reference execute(Context & context, std::shared_ptr<Parser::Expression> expression);
 
     Reference run(Context & context, std::shared_ptr<Parser::Expression> expression);
-    bool print(Context & context, Reference const& reference, std::ostream & os = std::cout);
     Reference set(Context & context, Reference const& var, Reference const& data);
+    std::string to_string(Context & context, Reference const& data);
+    Exception get_exception(Context & context, std::string const& message, Data const& type, std::shared_ptr<Parser::Expression> expression);
 
 }
 

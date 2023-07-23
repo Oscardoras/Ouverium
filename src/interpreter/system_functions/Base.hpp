@@ -49,6 +49,8 @@ namespace Interpreter {
 
         Reference not_check_pointers(FunctionContext & context);
 
+        Reference to_string(FunctionContext & context);
+
 
         void init(GlobalContext & context);
 

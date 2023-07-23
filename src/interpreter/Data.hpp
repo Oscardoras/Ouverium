@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <variant>
+#include <ostream>
 
 
 namespace Interpreter {
@@ -33,6 +34,8 @@ namespace Interpreter {
         }
 
     };
+
+    std::ostream & operator<<(std::ostream & os, Data const& data);
 
 }
 

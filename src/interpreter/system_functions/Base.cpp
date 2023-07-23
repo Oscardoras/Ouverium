@@ -3,6 +3,7 @@
 #include <iostream>
 #include <filesystem>
 #include <fstream>
+#include <sstream>
 
 #include "Base.hpp"
 
@@ -47,7 +48,7 @@ namespace Interpreter {
             std::make_shared<Parser::Symbol>("data")
         }));
         Reference setter(FunctionContext & context) {
-            auto var = Interpreter::call_function(context.get_parent(), nullptr, context["var"].to_data(context).get<Object*>()->functions, std::make_shared<Parser::Tuple>());
+            auto var = Interpreter::call_function(context.get_parent(), context.expression, context["var"].to_data(context).get<Object*>()->functions, std::make_shared<Parser::Tuple>());
             auto data = context["data"].to_data(context);
 
             return assignation(context, var, data);
@@ -89,7 +90,7 @@ namespace Interpreter {
                                     } else return s;
                                 } else throw Interpreter::FunctionArgumentsError();
                             }
-                            return Reference(Data(context.new_object()));
+                            return Reference();
                         }
                     } else throw Interpreter::FunctionArgumentsError();
                 } else throw Interpreter::FunctionArgumentsError();
@@ -117,9 +118,9 @@ namespace Interpreter {
                 auto condition = context["condition"].to_data(context).get<Object*>();
                 auto block = context["block"].to_data(context).get<Object*>();
                 while (true) {
-                    auto c = Interpreter::call_function(parent, nullptr, condition->functions, std::make_shared<Parser::Tuple>()).to_data(context).get<bool>();
+                    auto c = Interpreter::call_function(parent, parent.expression, condition->functions, std::make_shared<Parser::Tuple>()).to_data(context).get<bool>();
                     if (c) {
-                        result = Interpreter::call_function(parent, nullptr, block->functions, std::make_shared<Parser::Tuple>());
+                        result = Interpreter::call_function(parent, parent.expression, block->functions, std::make_shared<Parser::Tuple>());
                         resulted = true;
                     } else break;
                 }
@@ -152,10 +153,10 @@ namespace Interpreter {
                 auto block = context["block"].to_data(context).get<Object*>();
 
                 for (long i = begin; i < end; i++) {
-                    assignation(context, variable, i);
-                    Interpreter::call_function(context.get_parent(), nullptr, block->functions, std::make_shared<Parser::Tuple>());
+                    Interpreter::set(context, variable, i);
+                    Interpreter::call_function(context.get_parent(), context.expression, block->functions, std::make_shared<Parser::Tuple>());
                 }
-                return Reference(context.new_object());
+                return Reference();
             } catch (Data::BadAccess & e) {
                 throw FunctionArgumentsError();
             }
@@ -186,13 +187,13 @@ namespace Interpreter {
 
                 if (s > 0) {
                     for (long i = begin; i < end; i += s) {
-                        assignation(context, variable, i);
-                        Interpreter::call_function(parent, nullptr, block->functions, std::make_shared<Parser::Tuple>());
+                        Interpreter::set(context, variable, i);
+                        Interpreter::call_function(parent, parent.expression, block->functions, std::make_shared<Parser::Tuple>());
                     }
                 } else if (s < 0) {
                     for (long i = begin; i > end; i += s) {
-                        assignation(context, variable, i);
-                        Interpreter::call_function(parent, nullptr, block->functions, std::make_shared<Parser::Tuple>());
+                        Interpreter::set(context, variable, i);
+                        Interpreter::call_function(parent, parent.expression, block->functions, std::make_shared<Parser::Tuple>());
                     }
                 } else throw Interpreter::FunctionArgumentsError();
                 return Reference(context.new_object());
@@ -214,10 +215,10 @@ namespace Interpreter {
             auto catch_function = context["catch_function"].to_data(context).get<Object*>();
 
             try {
-                return Interpreter::call_function(context.get_parent(), nullptr, try_block->functions, std::make_shared<Parser::Tuple>());
+                return Interpreter::call_function(context.get_parent(), context.expression, try_block->functions, std::make_shared<Parser::Tuple>());
             } catch (Exception & ex) {
                 try {
-                    return Interpreter::call_function(context.get_parent(), nullptr, catch_function->functions, ex.reference);
+                    return Interpreter::call_function(context.get_parent(), context.expression, catch_function->functions, ex.reference);
                 } catch (Interpreter::Exception & e) {
                     throw ex;
                 }
@@ -243,8 +244,6 @@ namespace Interpreter {
                         path = system_position.substr(0, system_position.find_last_of("/")+1) + path;
                     std::filesystem::path p(path);
                     return std::filesystem::canonical(p).string();
-                } catch (Data::BadAccess & e) {
-                    throw Interpreter::FunctionArgumentsError();
                 } catch (std::exception & e) {
                     throw Interpreter::FunctionArgumentsError();
                 }
@@ -259,7 +258,7 @@ namespace Interpreter {
 
             auto it = global.sources.find(path);
             if (it == global.sources.end()) {
-                std::string code = Parser::Standard::read_file(std::ifstream(path));
+                std::string code = (std::ostringstream{} << std::ifstream(path).rdbuf()).str();
 
                 try {
                     auto expression = Parser::Standard(code, path).get_tree();
@@ -278,12 +277,9 @@ namespace Interpreter {
 
                     return Interpreter::execute(global, expression);
                 } catch (Parser::Standard::IncompleteCode & e) {
-                    if (context.expression->position != nullptr)
-                        context.expression->position->store_stack_trace(context.get_parent());
-                    throw Exception {
-                        context.new_object("incomplete code, you must finish the last expression in file \"" + path + "\""),
-                        context.expression->position
-                    };
+                    throw get_exception(context, "incomplete code, you must finish the last expression in file \"" + path + "\"", context.get_global()["ParserException"].to_data(context), context.expression);
+                } catch (Parser::Standard::Exception & e) {
+                    throw get_exception(context, e.what(), context.get_global()["ParserException"].to_data(context), context.expression);
                 }
             } else {
                 auto expression = it->second;
@@ -292,7 +288,7 @@ namespace Interpreter {
                 symbols.insert(expression->symbols.begin(), expression->symbols.end());
                 root->compute_symbols(symbols);
 
-                return Reference(context.new_object());
+                return Reference();
             }
         }
 
@@ -319,9 +315,9 @@ namespace Interpreter {
         Reference function_definition(FunctionContext & context) {
             try {
                 auto var = context["var"].to_data(context).get<Object*>();
-                auto object = context["data"].to_data(context).get<Object*>();
+                auto functions = context["data"].to_data(context).get<Object*>()->functions;
 
-                for (auto it = object->functions.rbegin(); it != object->functions.rend(); it++)
+                for (auto it = functions.rbegin(); it != functions.rend(); it++)
                     var->functions.push_front(*it);
 
                 return context["var"];
@@ -382,7 +378,19 @@ namespace Interpreter {
             return Reference(Data(a != b));
         }
 
+        auto to_string_args = std::make_shared<Parser::Symbol>("data");
+        Reference to_string(FunctionContext & context) {
+            auto data = context["data"].to_data(context);
+
+            return Data(context.new_object((std::stringstream{} << data).str()));
+        }
+
         void init(GlobalContext & context) {
+            context.add_symbol("NotAFunction", context.new_reference());
+            context.add_symbol("IncorrectFunctionArguments", context.new_reference());
+            context.add_symbol("ParserException", context.new_reference());
+
+
             auto object = context.new_object();
             object->functions.push_front(SystemFunction{getter_args, getter});
             context.add_symbol("getter", context.new_reference(object));
@@ -414,7 +422,6 @@ namespace Interpreter {
             Function try_s = SystemFunction{try_statement_args, try_statement};
             try_s.extern_symbols.emplace("catch", context["catch"]);
             context.get_function("try").push_front(try_s);
-
             context.get_function("throw").push_front(SystemFunction{throw_statement_args, throw_statement});
 
             context.get_function("import").push_front(SystemFunction{path_args, import});
@@ -428,6 +435,8 @@ namespace Interpreter {
             context.get_function("!=").push_front(SystemFunction{equals_args, not_equals});
             context.get_function("===").push_front(SystemFunction{equals_args, check_pointers});
             context.get_function("!==").push_front(SystemFunction{equals_args, not_check_pointers});
+
+            context.get_function("to_string").push_front(SystemFunction{to_string_args, to_string});
         }
 
     }

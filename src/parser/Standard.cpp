@@ -8,12 +8,6 @@
 
 namespace Parser {
 
-    std::string Standard::read_file(std::ifstream const& file) {
-        std::ostringstream sstr;
-        sstr << file.rdbuf();
-        return sstr.str();
-    }
-
     Standard::Standard(std::string const& code, std::string const& path):
         code(code), path(path) {}
 
@@ -42,6 +36,15 @@ namespace Parser {
 
     Standard::Word::Word(std::string const& word, TextPosition const& position):
         std::string(word), position(position) {}
+
+    const char* Standard::Exception::what() const noexcept {
+        std::ostringstream oss;
+
+        for (auto & e : errors)
+            oss << e.message << " in file \"" << e.position.path << "\" at line " << e.position.line << ", column " << e.position.column << "." << std::endl;
+
+        return oss.str().c_str();
+    }
 
 
     std::string operators = "!$%&*+-/:;<=>?@^|~";
@@ -125,7 +128,7 @@ namespace Parser {
                     } else if (is_number(last) && !is_number(c) && b < i) {
                         words.push_back(Word(code.substr(b, i-b), position));
                         b = i;
-                    } else if (is_alphanum(last) && !is_alphanum(c) && b < i) {
+                    } else if (is_alphanum(last) && !is_alphanum(c) && b < i && !(is_number(code.substr(b, i-b)) && c == '.')) {
                         words.push_back(Word(code.substr(b, i-b), position));
                         b = i;
                     }
@@ -183,9 +186,7 @@ namespace Parser {
     }
 
 
-    Standard::ParserError::ParserError(std::string const& message, TextPosition const& position): message(message), position(position) {}
-
-    std::shared_ptr<Expression> expressions_to_expression(std::vector<Standard::ParserError> & errors, std::vector<std::shared_ptr<Expression>> expressions, std::shared_ptr<Expression> expression, bool is_function, std::vector<std::shared_ptr<Expression>> const& escaped) {
+    std::shared_ptr<Expression> expressions_to_expression(std::vector<Standard::ParsingError> & errors, std::vector<std::shared_ptr<Expression>> expressions, std::shared_ptr<Expression> expression, bool is_function, std::vector<std::shared_ptr<Expression>> const& escaped) {
         if (expressions.empty()) {
             return expression;
         } else {
@@ -246,7 +247,7 @@ namespace Parser {
                                     *(it-1) = function_call;
                                     it = expressions.erase(it);
                                     it = expressions.erase(it);
-                                } else errors.push_back(Standard::ParserError("operator " + symbol->name + " must be placed between two expressions", *std::static_pointer_cast<Standard::TextPosition>(symbol->position)));
+                                } else errors.push_back(Standard::ParsingError("operator " + symbol->name + " must be placed between two expressions", *std::static_pointer_cast<Standard::TextPosition>(symbol->position)));
                             } else it++;
                         } else it++;
                     }
@@ -257,7 +258,7 @@ namespace Parser {
         }
     }
 
-    std::shared_ptr<Expression> get_expression(std::vector<Standard::ParserError> & errors, std::vector<Standard::Word> const& words, size_t & i, std::vector<std::shared_ptr<Expression>> & escaped, bool in_tuple, bool in_function, bool in_operator, bool priority) {
+    std::shared_ptr<Expression> get_expression(std::vector<Standard::ParsingError> & errors, std::vector<Standard::Word> const& words, size_t & i, std::vector<std::shared_ptr<Expression>> & escaped, bool in_tuple, bool in_function, bool in_operator, bool priority) {
         std::shared_ptr<Expression> expression = nullptr;
 
         if (words.at(i) == "(") {
@@ -265,11 +266,11 @@ namespace Parser {
             expression = get_expression(errors, words, i, escaped, false, false, false, true);
             escaped.push_back(expression);
             if (words.at(i) == ")") ++i;
-            else errors.push_back(Standard::ParserError(") expected", words.at(i).position));
+            else errors.push_back(Standard::ParsingError(") expected", words.at(i).position));
         } else if (words.at(i) == ")") {
             expression = std::make_shared<Tuple>();
             if (words[i-1] != "(") {
-                errors.push_back(Standard::ParserError(") unexpected", words.at(i).position));
+                errors.push_back(Standard::ParsingError(") unexpected", words.at(i).position));
                 return expression;
             }
             escaped.push_back(expression);
@@ -279,11 +280,11 @@ namespace Parser {
             expression = get_expression(errors, words, i, escaped, false, false, false, true);
             escaped.push_back(expression);
             if (words.at(i) == "]") ++i;
-            else errors.push_back(Standard::ParserError("] expected", words.at(i).position));
+            else errors.push_back(Standard::ParsingError("] expected", words.at(i).position));
         } else if (words.at(i) == "]") {
             expression = std::make_shared<Tuple>();
             if (words[i-1] != "[") {
-                errors.push_back(Standard::ParserError("] unexpected", words.at(i).position));
+                errors.push_back(Standard::ParsingError("] unexpected", words.at(i).position));
                 return expression;
             }
             escaped.push_back(expression);
@@ -293,11 +294,11 @@ namespace Parser {
             expression = get_expression(errors, words, i, escaped, false, false, false, true);
             escaped.push_back(expression);
             if (words.at(i) == "}") ++i;
-            else errors.push_back(Standard::ParserError("} expected", words.at(i).position));
+            else errors.push_back(Standard::ParsingError("} expected", words.at(i).position));
         } else if (words.at(i) == "}") {
             expression = std::make_shared<Tuple>();
             if (words[i-1] != "{") {
-                errors.push_back(Standard::ParserError("} unexpected", words.at(i).position));
+                errors.push_back(Standard::ParsingError("} unexpected", words.at(i).position));
                 return expression;
             }
             escaped.push_back(expression);
@@ -308,7 +309,7 @@ namespace Parser {
             symbol->name = words.at(i);
             expression = symbol;
             if (is_system(words.at(i)))
-                errors.push_back(Standard::ParserError(words.at(i) + " is reserved", words.at(i).position));
+                errors.push_back(Standard::ParsingError(words.at(i) + " is reserved", words.at(i).position));
             ++i;
         }
 
@@ -327,7 +328,7 @@ namespace Parser {
                 ++i;
                 property->name = words.at(i);
                 if (is_system(words.at(i)) && words.at(i) != ".")
-                    errors.push_back(Standard::ParserError(words.at(i) + " is reserved", words.at(i).position));
+                    errors.push_back(Standard::ParsingError(words.at(i) + " is reserved", words.at(i).position));
                 expression = property;
                 ++i;
                 continue;
@@ -362,7 +363,7 @@ namespace Parser {
                         expression = function_definition;
                         continue;
                     } else {
-                        errors.push_back(Standard::ParserError("|-> expected", words.at(i).position));
+                        errors.push_back(Standard::ParsingError("|-> expected", words.at(i).position));
                         continue;
                     }
                 } else break;
@@ -426,28 +427,21 @@ namespace Parser {
         return expressions_to_expression(errors, expressions, expression, is_function, escaped);
     }
 
-    std::shared_ptr<Expression> Standard::get_tree(std::vector<Standard::ParserError> & errors) const {
+    std::shared_ptr<Expression> Standard::get_tree() const {
+        std::vector<Standard::ParsingError> errors;
+
         try {
             auto words = get_words();
             size_t i = 0;
             std::vector<std::shared_ptr<Expression>> escaped;
             auto expression = get_expression(errors, words, i, escaped, false, false, false, true);
 
-            return expression;
+            if (errors.empty())
+                return expression;
+            else
+                throw Standard::Exception(errors);
         } catch (std::out_of_range const& e) {
             throw Standard::IncompleteCode();
-        }
-    }
-
-    std::shared_ptr<Expression> Standard::get_tree() const {
-        std::vector<Standard::ParserError> errors;
-        auto tree = get_tree(errors);
-        if (errors.empty()) {
-            return tree;
-        } else {
-            for (auto & e : errors)
-                std::cerr << e.message << " in file \"" << e.position.path << "\" at line " << e.position.line << ", column " << e.position.column << "." << std::endl;
-            return nullptr;
         }
     }
 

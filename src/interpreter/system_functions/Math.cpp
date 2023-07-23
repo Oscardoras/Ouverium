@@ -36,7 +36,7 @@ namespace Interpreter {
                 auto b = context["b"].to_data(context).get<Object*>();
 
                 if (a)
-                    return Reference(Data(Interpreter::call_function(context.get_parent(), nullptr, b->functions, std::make_shared<Parser::Tuple>()).to_data(context).get<bool>()));
+                    return Reference(Data(Interpreter::call_function(context.get_parent(), context.expression, b->functions, std::make_shared<Parser::Tuple>()).to_data(context).get<bool>()));
                 else
                     return Reference(Data(false));
             } catch (Data::BadAccess & e) {
@@ -50,7 +50,7 @@ namespace Interpreter {
                 auto b = context["b"].to_data(context).get<Object*>();
 
                 if (!a)
-                    return Interpreter::call_function(context.get_parent(), nullptr, b->functions, std::make_shared<Parser::Tuple>()).to_data(context).get<bool>();
+                    return Interpreter::call_function(context.get_parent(), context.expression, b->functions, std::make_shared<Parser::Tuple>()).to_data(context).get<bool>();
                 else
                     return Reference(Data(true));
             } catch (Data::BadAccess & e) {
