@@ -31,6 +31,7 @@ int interactive_mode(std::string const& path) {
     while (std::getline(std::cin, line)) {
         if (line.length() > 0) {
             code += line + '\n';
+
             try {
                 auto expression = Parser::Standard(code, path).get_tree();
                 context.expression = expression;
@@ -38,18 +39,29 @@ int interactive_mode(std::string const& path) {
                 auto new_symbols = expression->compute_symbols(symbols);
                 symbols.insert(new_symbols.begin(), new_symbols.end());
 
-                auto r = Interpreter::run(context, expression);
+                try {
+                    auto r = Interpreter::execute(context, expression);
 
-                auto str = Interpreter::to_string(context, r);
-                if (!str.empty())
-                    std::cout << str << std::endl;
+                    auto str = Interpreter::to_string(context, r);
+                    if (!str.empty())
+                        std::cout << str << std::endl;
+                } catch (Interpreter::Exception const& ex) {
+                    if (!ex.positions.empty()) {
+                        ex.positions.front()->notify_error((std::ostringstream{} << "An exception occured: " << ex.reference.to_data(context)).str());
+                        for (auto const& p : ex.positions)
+                            p->notify_position();
+                    }
+                }
+
                 std::cout << "> ";
 
                 code = "";
-            } catch (Parser::Standard::IncompleteCode & e) {
+            } catch (Parser::Standard::IncompleteCode const& e) {
                 std::cout << '\t';
             } catch (Parser::Standard::Exception const& e) {
                 std::cerr << e.what();
+                std::cout << "> ";
+                code = "";
             }
         } else {
             std::cout << "> ";
@@ -68,14 +80,23 @@ int file_mode(std::string const& path, std::istream & is) {
 
         Interpreter::GlobalContext context(expression);
 
-        std::set<std::string> symbols = context.get_symbols();
-        expression->compute_symbols(symbols);
-
-        auto r = Interpreter::run(context, expression);
         try {
-            return static_cast<int>(r.to_data(context).get<long>());
-        } catch (Interpreter::Data::BadAccess const& e) {
-            return EXIT_SUCCESS;
+            std::set<std::string> symbols = context.get_symbols();
+            expression->compute_symbols(symbols);
+
+            auto r = Interpreter::execute(context, expression);
+            try {
+                return static_cast<int>(r.to_data(context).get<long>());
+            } catch (Interpreter::Data::BadAccess const& e) {
+                return EXIT_SUCCESS;
+            }
+        } catch (Interpreter::Exception const& ex) {
+            if (!ex.positions.empty()) {
+                ex.positions.front()->notify_error((std::ostringstream{} << "An exception occured: " << ex.reference.to_data(context)).str());
+                for (auto const& p : ex.positions)
+                    p->notify_position();
+            }
+            return EXIT_FAILURE;
         }
     } catch (Parser::Standard::IncompleteCode & e) {
         std::cerr << "incomplete code, you must finish the last expression in file \"" << path << "\"" << std::endl;

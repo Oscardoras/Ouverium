@@ -15,7 +15,7 @@ namespace Interpreter {
 
     class GlobalContext;
 
-    class Context: public Parser::Context {
+    class Context {
 
     protected:
 
@@ -23,9 +23,15 @@ namespace Interpreter {
 
     public:
 
-        Context(std::shared_ptr<Parser::Expression> expression):
-            Parser::Context(expression) {}
+        /**
+         * The expression from where the context was called.
+        */
+        std::shared_ptr<Parser::Expression> expression;
 
+        Context(std::shared_ptr<Parser::Expression> expression):
+            expression(expression) {}
+
+        virtual Context & get_parent() = 0;
         virtual GlobalContext & get_global() = 0;
 
         Object* new_object();

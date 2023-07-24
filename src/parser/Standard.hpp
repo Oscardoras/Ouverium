@@ -24,8 +24,8 @@ namespace Parser {
             TextPosition(TextPosition const&) = default;
             TextPosition(std::string const& path, unsigned int line, unsigned int column);
 
-            virtual void store_stack_trace(Context & context) override;
-            virtual void notify_error(std::string const& message, bool print_stack_trace) override;
+            virtual void notify_error(std::string const& message) const override;
+            virtual void notify_position() const override;
         };
 
         struct Word: public std::string {
@@ -46,14 +46,11 @@ namespace Parser {
 
         class Exception : std::exception {
 
-        protected:
-
-            std::vector<ParsingError> errors;
+            std::string message;
 
         public:
 
-            Exception(std::vector<ParsingError> const& errors = {}):
-                errors(errors) {}
+            Exception(std::vector<ParsingError> const& errors = {});
 
             virtual const char* what() const noexcept override;
 

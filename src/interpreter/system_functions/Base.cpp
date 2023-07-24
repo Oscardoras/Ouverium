@@ -227,11 +227,11 @@ namespace Interpreter {
 
         auto throw_statement_args = std::make_shared<Parser::Symbol>("throw_expression");
         Reference throw_statement(FunctionContext & context) {
-            Exception ex;
-            ex.reference = context["throw_expression"];
-            ex.position = context.expression->position;
-            ex.position->store_stack_trace(context.get_parent());
-            throw ex;
+            throw Exception(
+                context,
+                context["throw_expression"],
+                context.get_parent().expression
+            );
         }
 
         std::string get_canonical_path(FunctionContext & context) {
@@ -277,9 +277,9 @@ namespace Interpreter {
 
                     return Interpreter::execute(global, expression);
                 } catch (Parser::Standard::IncompleteCode & e) {
-                    throw get_exception(context, "incomplete code, you must finish the last expression in file \"" + path + "\"", context.get_global()["ParserException"].to_data(context), context.expression);
+                    throw Exception(context, "incomplete code, you must finish the last expression in file \"" + path + "\"", context.get_global()["ParserException"].to_data(context), context.expression);
                 } catch (Parser::Standard::Exception & e) {
-                    throw get_exception(context, e.what(), context.get_global()["ParserException"].to_data(context), context.expression);
+                    throw Exception(context, e.what(), context.get_global()["ParserException"].to_data(context), context.expression);
                 }
             } else {
                 auto expression = it->second;
@@ -382,7 +382,7 @@ namespace Interpreter {
         Reference to_string(FunctionContext & context) {
             auto data = context["data"].to_data(context);
 
-            return Data(context.new_object((std::stringstream{} << data).str()));
+            return Data(context.new_object((std::ostringstream{} << data).str()));
         }
 
         void init(GlobalContext & context) {

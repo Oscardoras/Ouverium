@@ -193,7 +193,7 @@ namespace Analyzer::Standard {
 
                 function_context[symbol->name] = SymbolReference(context.new_reference(Data(object)));
 
-                return std::make_shared<FunctionRun>(meta_data.function_definitions[(std::stringstream() << p_function).str()], std::make_shared<Tuple>());
+                return std::make_shared<FunctionRun>(meta_data.function_definitions[(std::ostringstream() << p_function).str()], std::make_shared<Tuple>());
             } else throw FunctionArgumentsError();
         } else throw FunctionArgumentsError();
     }

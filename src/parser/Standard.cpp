@@ -14,36 +14,28 @@ namespace Parser {
     Standard::TextPosition::TextPosition(std::string const& path, unsigned int line, unsigned int column):
         path(path), line(line), column(column) {}
 
-    void Standard::TextPosition::store_stack_trace(Context & context) {
-        stack_trace = "\tin file \"" + path + "\" at line " + std::to_string(line) + ", column " + std::to_string(column) + "\n";
-
-        Context* old_c = nullptr;
-        Context* c = &context;
-        while (c != old_c) {
-            if (c->expression->position != nullptr) {
-                auto text_position = std::static_pointer_cast<TextPosition>(c->expression->position);
-                stack_trace += "\tin file \"" + text_position->path + "\" at line " + std::to_string(text_position->line) + ", column " + std::to_string(text_position->column) + "\n";
-            }
-            old_c = c;
-            c = &c->get_parent();
-        }
+    void Standard::TextPosition::notify_error(std::string const& message) const {
+        std::cerr << message << std::endl;
     }
 
-    void Standard::TextPosition::notify_error(std::string const& message, bool print_stack_trace) {
-        std::cerr << message << std::endl;
-        if (print_stack_trace) std::cerr << stack_trace;
+    void Standard::TextPosition::notify_position() const {
+        std::cerr << "\tin file \"" << path << "\" at line " << std::to_string(line) << ", column " << std::to_string(column) << std::endl;
     }
 
     Standard::Word::Word(std::string const& word, TextPosition const& position):
         std::string(word), position(position) {}
 
-    const char* Standard::Exception::what() const noexcept {
+    Standard::Exception::Exception(std::vector<ParsingError> const& errors) {
         std::ostringstream oss;
 
         for (auto & e : errors)
             oss << e.message << " in file \"" << e.position.path << "\" at line " << e.position.line << ", column " << e.position.column << "." << std::endl;
 
-        return oss.str().c_str();
+        message = oss.str();
+    }
+
+    const char* Standard::Exception::what() const noexcept {
+        return message.c_str();
     }
 
 
