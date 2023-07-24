@@ -20,26 +20,38 @@ is : (object, type) \ (type !== Char & type !== Int & type !== Float & type !== 
 
 extends;
 
-class : (type, extends, parents, constructor) |-> {
+class : type |-> {
+    type
+};
+class : (type, extends, parents) |-> {
     type._parents := parents;
-
-    type : constructor;
 
     type
 };
 
-_methods_getter : getter;
+_methods_getter;
 
-getter : x |-> {
-    _methods_getter(x)
+getter : x \ {
+    try {
+        r := _methods_getter(x);
+        true
+    } catch (e |-> false)
+} |-> {
+    r
 };
 
 (::) : (type, method_getter) |-> {
     filters : (a |-> false) : ((this. .) \ (this ~ type) |-> true);
 
-    mg := x \ ( filters(x) ) |-> {
-        method_getter(x)
+    mg := x \ {
+        filters(x) &
+        try {
+            r := _methods_getter(x);
+            true
+        } catch (e |-> false)
+    } |-> {
+        r
     };
-    _methods_getter : mg;
+    _methods_getter : method_getter;
     mg
 };
