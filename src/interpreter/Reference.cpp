@@ -4,6 +4,7 @@
 namespace Interpreter {
 
     Data compute(Context & context, Reference const& reference, Data const& data) {
+        context.gettings.find(reference);
         if (data == Data{})
             return call_function(context, context.expression, context.get_global()["getter"].to_data(context).get<Object*>()->functions, reference).to_data(context);
         else
@@ -71,6 +72,18 @@ namespace Interpreter {
                 object->array.push_back(d.to_data(context));
             return context.new_reference(object);
         } else return context.new_reference();
+    }
+
+    bool operator<(SymbolReference const& a, SymbolReference const& b) {
+        return &a.get() < &b.get();
+    }
+
+    bool operator<(PropertyReference const& a, PropertyReference const& b) {
+        return &a.parent.get() < &b.parent.get() && a.name < b.name;
+    }
+
+    bool operator<(ArrayReference const& a, ArrayReference const& b) {
+        return &a.array.get() < &b.array.get() && a.i < b.i;
     }
 
 }

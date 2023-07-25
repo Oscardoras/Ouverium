@@ -22,6 +22,7 @@ namespace Interpreter {
         std::map<std::string, IndirectReference> symbols;
 
     public:
+        std::set<Reference, Comparator> gettings;
 
         /**
          * The expression from where the context was called.

@@ -52,6 +52,6 @@ getter : x \ {
     } |-> {
         r
     };
-    _methods_getter : method_getter;
+    _methods_getter : mg;
     mg
 };
