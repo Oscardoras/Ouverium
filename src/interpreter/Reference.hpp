@@ -52,12 +52,6 @@ namespace Interpreter {
     bool operator<(PropertyReference const& a, PropertyReference const& b);
     bool operator<(ArrayReference const& a, ArrayReference const& b);
 
-    struct Comparator {
-        bool operator()(Reference const& a, Reference const& b) const {
-            return a < b;
-        }
-    };
-
 }
 
 

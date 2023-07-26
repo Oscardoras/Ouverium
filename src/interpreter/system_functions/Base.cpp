@@ -14,6 +14,13 @@ namespace Interpreter {
 
     namespace Base {
 
+        auto getter_args = std::make_shared<Parser::Symbol>("var");
+        Reference getter(FunctionContext & context) {
+            return std::visit([](auto const& arg) -> Data & {
+                return arg;
+            }, context["var"]) = context.new_object();
+        }
+
         Reference assignation(Context & context, Reference const& var, Data const& d) {
             if (std::get_if<Data>(&var)) return d;
             else if (auto symbol_reference = std::get_if<SymbolReference>(&var)) symbol_reference->get() = d;
@@ -31,13 +38,6 @@ namespace Interpreter {
                 }
             }
             return var;
-        }
-
-        auto getter_args = std::make_shared<Parser::Symbol>("var");
-        Reference getter(FunctionContext & context) {
-            return std::visit([](auto const& arg) -> Data & {
-                return arg;
-            }, context["var"]) = context.new_object();
         }
 
         auto setter_args = std::make_shared<Parser::Tuple>(Parser::Tuple({

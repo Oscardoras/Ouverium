@@ -22,7 +22,7 @@ namespace Interpreter {
         std::map<std::string, IndirectReference> symbols;
 
     public:
-        std::set<Reference, Comparator> gettings;
+        std::set<Reference> gettings;
 
         /**
          * The expression from where the context was called.
@@ -91,7 +91,9 @@ namespace Interpreter {
     public:
 
         FunctionContext(Context & parent, std::shared_ptr<Parser::Expression> expression):
-            Context(expression), parent(parent) {}
+            Context(expression), parent(parent) {
+            gettings = parent.gettings;
+        }
 
         virtual GlobalContext & get_global() override {
             return parent.get_global();

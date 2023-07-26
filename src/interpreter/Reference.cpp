@@ -4,9 +4,19 @@
 namespace Interpreter {
 
     Data compute(Context & context, Reference const& reference, Data const& data) {
-        context.gettings.find(reference);
         if (data == Data{})
-            return call_function(context, context.expression, context.get_global()["getter"].to_data(context).get<Object*>()->functions, reference).to_data(context);
+            if (context.gettings.find(reference) == context.gettings.end()) {
+                context.gettings.insert(reference);
+                return call_function(context, context.expression, context.get_global()["getter"].to_data(context).get<Object*>()->functions, reference).to_data(context);
+            } else {
+                Data d = context.new_object();
+
+                if (auto symbol_reference = std::get_if<SymbolReference>(&reference)) symbol_reference->get() = d;
+                else if (auto property_reference = std::get_if<PropertyReference>(&reference)) static_cast<Data &>(*property_reference) = d;
+                else if (auto array_reference = std::get_if<ArrayReference>(&reference)) static_cast<Data &>(*array_reference) = d;
+
+                return d;
+            }
         else
             return data;
     }
@@ -85,5 +95,4 @@ namespace Interpreter {
     bool operator<(ArrayReference const& a, ArrayReference const& b) {
         return &a.array.get() < &b.array.get() && a.i < b.i;
     }
-
 }
