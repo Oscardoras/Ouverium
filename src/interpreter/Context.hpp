@@ -22,6 +22,7 @@ namespace Interpreter {
         std::map<std::string, IndirectReference> symbols;
 
     public:
+
         std::set<Reference> gettings;
 
         /**
@@ -34,6 +35,7 @@ namespace Interpreter {
 
         virtual Context & get_parent() = 0;
         virtual GlobalContext & get_global() = 0;
+        virtual unsigned int get_recurion_level() = 0;
 
         Object* new_object();
         Object* new_object(Object && object);
@@ -59,6 +61,7 @@ namespace Interpreter {
     public:
 
         std::map<std::string, std::shared_ptr<Parser::Expression>> sources;
+        unsigned int recursion_limit = 100;
 
         GlobalContext(std::shared_ptr<Parser::Expression> expression);
 
@@ -68,6 +71,10 @@ namespace Interpreter {
 
         virtual Context & get_parent() override {
             return *this;
+        }
+
+        virtual unsigned int get_recurion_level() override {
+            return 0;
         }
 
         auto & get_function(std::string const& symbol) {
@@ -87,11 +94,12 @@ namespace Interpreter {
     protected:
 
         Context & parent;
+        unsigned int recursion_level;
 
     public:
 
         FunctionContext(Context & parent, std::shared_ptr<Parser::Expression> expression):
-            Context(expression), parent(parent) {
+            Context(expression), parent(parent), recursion_level(parent.get_recurion_level()+1) {
             gettings = parent.gettings;
         }
 
@@ -101,6 +109,10 @@ namespace Interpreter {
 
         virtual Context & get_parent() override {
             return parent;
+        }
+
+        virtual unsigned int get_recurion_level() override {
+            return recursion_level;
         }
 
     };

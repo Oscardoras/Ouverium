@@ -46,7 +46,7 @@ getter : x \ {
     mg := x \ {
         filters(x) &
         try {
-            r := _methods_getter(x);
+            r := method_getter(x);
             true
         } catch (e |-> false)
     } |-> {

@@ -7,7 +7,9 @@ namespace Interpreter {
         if (data == Data{})
             if (context.gettings.find(reference) == context.gettings.end()) {
                 context.gettings.insert(reference);
-                return call_function(context, context.expression, context.get_global()["getter"].to_data(context).get<Object*>()->functions, reference).to_data(context);
+                auto r = call_function(context, context.expression, context.get_global()["getter"].to_data(context).get<Object*>()->functions, reference).to_data(context);
+                context.gettings.erase(reference);
+                return r;
             } else {
                 Data d = context.new_object();
 
