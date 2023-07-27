@@ -199,7 +199,7 @@ namespace Interpreter {
 
     Reference call_function(Context & context, std::shared_ptr<Parser::Expression> expression, std::list<Function> const& functions, Arguments const& arguments) {
         if (context.get_recurion_level() >= context.get_global().recursion_limit)
-            throw Exception(context, "recurion limit exceeded" , context.get_global()["RecurionLimitExceeded"].to_data(context), expression);
+            throw Exception(context, "recursion limit exceeded" , context.get_global()["RecursionLimitExceeded"].to_data(context), expression);
 
         Computed computed;
 

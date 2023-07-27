@@ -389,7 +389,7 @@ namespace Interpreter {
             context.add_symbol("NotAFunction", context.new_reference());
             context.add_symbol("IncorrectFunctionArguments", context.new_reference());
             context.add_symbol("ParserException", context.new_reference());
-            context.add_symbol("RecurionLimitExceeded", context.new_reference());
+            context.add_symbol("RecursionLimitExceeded", context.new_reference());
 
 
             auto object = context.new_object();

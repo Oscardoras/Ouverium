@@ -252,7 +252,7 @@ public:
     }
 
     template<typename T, size_t index = T::index>
-    T& get_component() {
+    T& get_property() {
         return *((T*)(data.data.ptr + data.virtual_table->tab[index].offset));
     }
 

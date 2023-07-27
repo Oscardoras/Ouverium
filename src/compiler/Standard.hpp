@@ -63,8 +63,6 @@ namespace Analyzer::Standard {
     struct Data: public std::variant<Object*, bool, char, long, double> {
         class BadAccess: public std::exception {};
 
-        bool defined = true;
-
         using std::variant<Object*, bool, char, long, double>::variant;
 
         template<typename T>
@@ -83,11 +81,26 @@ namespace Analyzer::Standard {
 
     // Definitions of References
 
-    class IndirectReference : public std::reference_wrapper<M<Data>> {
+    using TupleReference = std::vector<M<Reference>>;
+    using SymbolReference = std::reference_wrapper<M<Data>>;
+    struct PropertyReference {
+        std::reference_wrapper<Object> parent;
+        std::string name;
+
+        operator M<Data> &() const;
+    };
+    struct ArrayReference {
+        std::reference_wrapper<Object> array;
+        size_t i;
+
+        operator M<Data> &() const;
+    };
+
+    class IndirectReference : public std::variant<SymbolReference, PropertyReference, ArrayReference> {
 
     public:
 
-        using std::reference_wrapper<M<Data>>::reference_wrapper;
+        using std::variant<SymbolReference, PropertyReference, ArrayReference>::variant;
 
         M<Data> to_data(Context & context) const;
 
@@ -96,18 +109,19 @@ namespace Analyzer::Standard {
     class M<IndirectReference> : public M<IndirectReference, true> {
 
     public:
+
         using M<IndirectReference, true>::M;
 
         M<Data> to_data(Context & context) const;
 
     };
 
-    using TupleReference = std::vector<M<Reference>>;
-
-    class Reference: public std::variant<M<Data>, IndirectReference, std::vector<M<Reference>>> {
+    class Reference: public std::variant<M<Data>, TupleReference, SymbolReference, PropertyReference, ArrayReference> {
 
     public:
-        using std::variant<M<Data>, IndirectReference, TupleReference>::variant;
+
+        using std::variant<M<Data>, TupleReference, SymbolReference, PropertyReference, ArrayReference>::variant;
+        Reference(IndirectReference const& indirect_reference);
 
         M<Data> to_data(Context & context) const;
         IndirectReference to_indirect_reference(Context & context) const;
@@ -117,6 +131,7 @@ namespace Analyzer::Standard {
     class M<Reference> : public M<Reference, true> {
 
     public:
+
         using M<Reference, true>::M;
 
         M<Data> to_data(Context & context) const;
@@ -159,7 +174,7 @@ namespace Analyzer::Standard {
 
     // Definitions of Contexts
 
-    class Context: public Parser::Context {
+    class Context {
 
     protected:
 
@@ -167,8 +182,13 @@ namespace Analyzer::Standard {
 
     public:
 
+        std::shared_ptr<Parser::Expression> expression;
+
         Context(std::shared_ptr<Parser::Expression> expression):
-            Parser::Context(expression) {}
+            expression(expression) {}
+
+        virtual Context & get_parent() = 0;
+        virtual GlobalContext & get_global() = 0;
 
         Object* new_object();
         Object* new_object(Object && object);
@@ -191,11 +211,9 @@ namespace Analyzer::Standard {
 
     public:
 
-        Object* const getter;
-        std::map<std::string, std::shared_ptr<Parser::Expression>> files;
+        std::map<std::string, std::shared_ptr<Parser::Expression>> sources;
 
-        GlobalContext(std::shared_ptr<Parser::Expression> expression):
-            Context(expression) {}
+        GlobalContext(std::shared_ptr<Parser::Expression> expression);
 
         virtual GlobalContext& get_global() override {
             return *this;
@@ -213,7 +231,7 @@ namespace Analyzer::Standard {
 
     };
 
-    class FunctionContext: public Parser::Context {
+    class FunctionContext: public Context {
 
     protected:
 
@@ -246,8 +264,7 @@ namespace Analyzer::Standard {
         MetaData meta_data;
         std::map<std::shared_ptr<Parser::FunctionDefinition>, CacheContext> cache_contexts;
 
-        class Error: public std::exception {};
-        class FunctionArgumentsError: public Error {};
+        class FunctionArgumentsError {};
 
         struct Analysis {
             M<Reference> references;
@@ -257,8 +274,9 @@ namespace Analyzer::Standard {
     public:
 
         using Arguments = std::variant<std::shared_ptr<Parser::Expression>, Reference>;
-        Analysis call_function(Context & context, bool potential, std::shared_ptr<Parser::Expression> expression, M<std::list<Function>> const& functions, Arguments arguments);
-        Analysis execute(Context & context, bool potential, std::shared_ptr<Parser::Expression> expression);
+
+        Analysis call_function(Context & context, std::shared_ptr<Parser::Expression> expression, M<std::list<Function>> const& functions, Arguments arguments);
+        Analysis execute(Context & context, std::shared_ptr<Parser::Expression> expression);
 
         void create_structures(GlobalContext const& context);
 

@@ -25,9 +25,6 @@ namespace Interpreter {
 
         std::set<Reference> gettings;
 
-        /**
-         * The expression from where the context was called.
-        */
         std::shared_ptr<Parser::Expression> expression;
 
         Context(std::shared_ptr<Parser::Expression> expression):

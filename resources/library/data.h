@@ -36,13 +36,13 @@ extern "C" {
     */
     typedef struct __VirtualTable {
         struct __VirtualTable_Info info;
-        struct __VirtualTable_Element tab[];
+        struct __VirtualTable_Element* tab[];
     } __VirtualTable;
 
 #define __VirtualTable_size(size) \
     struct __VirtualTable ## tab_size { \
         struct __VirtualTable_Info info; \
-        union __VirtualTable_Element tab[size]; \
+        struct __VirtualTable_Element* tab[size]; \
     }
 
     /**

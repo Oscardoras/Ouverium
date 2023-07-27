@@ -54,7 +54,7 @@ void* __UnknownData_get_property(__UnknownData data, int hash) {
 __ArrayInfo __UnknownData_get_array(__UnknownData data) {
     __ArrayInfo array = {
         .vtable = data.virtual_table->info.array_vtable,
-        .array = __UnknownData_get_property(data, )
+        .array = __UnknownData_get_property(data, 0)
     };
     return array;
 }
