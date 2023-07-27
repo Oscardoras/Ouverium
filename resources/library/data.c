@@ -45,14 +45,28 @@ __UnknownData __UnknownData_from_ptr(__VirtualTable* vtable, void* ptr) {
     return data;
 }
 
-void* __UnknownData_get_component_at(size_t index, __UnknownData data) {
-    return ((char*)data.data.ptr) + data.virtual_table->tab[index].offset;
+void* __UnknownData_get_property(__UnknownData data, int hash) {
+    struct __VirtualTable_Element* list = data.virtual_table->tab[hash % data.virtual_table->info.array_size];
+    for (; list->hash != hash; list = list->next);
+    return ((char*)data.data.ptr) + list->offset;
 }
 
 __ArrayInfo __UnknownData_get_array(__UnknownData data) {
     __ArrayInfo array = {
         .vtable = data.virtual_table->info.array_vtable,
-        .array = __UnknownData_get_component(__Array, data)
+        .array = __UnknownData_get_property(data, )
     };
     return array;
+}
+
+int hash(const char *string) {
+    int hash = 0;
+    int pow = 31;
+
+    for (; *string != '\0'; ++string) {
+        hash += *string * pow;
+        pow = pow * 31;
+    }
+
+    return hash;
 }

@@ -18,15 +18,10 @@ namespace Translator::CStandard {
 
     };
     using Declarations = std::map<std::string, std::weak_ptr<Type>>;
-    struct Component {
-        std::string name;
-        size_t offset;
+    struct Class: public Type {
         Declarations properties;
     };
-    std::shared_ptr<Type> Unknown = nullptr;
-    struct Class: public Type {
-        std::set<std::weak_ptr<Component>> components;
-    };
+    inline std::shared_ptr<Type> Unknown = nullptr;
     inline std::shared_ptr<Type> Bool = std::make_shared<Type>();
     inline std::shared_ptr<Type> Char = std::make_shared<Type>();
     inline std::shared_ptr<Type> Int = std::make_shared<Type>();
