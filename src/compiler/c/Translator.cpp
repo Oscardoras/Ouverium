@@ -184,27 +184,17 @@ namespace Translator::CStandard {
             auto o = get_expression(property->object, instructions);
 
             if (auto type = o->type.lock()) {
-                std::shared_ptr<Component> component;
-                for (auto const& c : std::dynamic_pointer_cast<Class>(type)->components) {
-                    auto comp = c.lock();
-                    if (comp->properties.find(property->name) != comp->properties.end()) {
-                        component = comp;
-                        break;
-                    }
-                }
+                if (auto cl = std::dynamic_pointer_cast<Class>(type)) {
+                    return std::make_shared<Property>(Property {
+                        {
+                            type_table.get(expression->types)
+                        },
+                        o,
+                        property->name,
+                        true
+                    });
 
-                return std::make_shared<Property>(Property {
-                    {
-                        type_table.get(expression->types)
-                    },
-                    std::make_shared<Property>(Property {
-                        .object = o,
-                        .name = component->name,
-                        .pointer = true
-                    }),
-                    property->name,
-                    false
-                });
+                }
             } else {
                 std::map<std::shared_ptr<Component>, std::set<std::shared_ptr<Class>>> components;
                 for (auto const& t : property->object->types)
