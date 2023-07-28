@@ -1,4 +1,5 @@
 #include <stdarg.h>
+#include <stdint.h>
 
 #include "data.h"
 #include "virtual_tables.h"
@@ -59,13 +60,13 @@ __ArrayInfo __UnknownData_get_array(__UnknownData data) {
     return array;
 }
 
-int hash(const char *string) {
-    int hash = 0;
-    int pow = 31;
+int32_t hash(const char *string) {
+    int32_t hash = 0;
+    int32_t pow = 31;
 
     for (; *string != '\0'; ++string) {
         hash += *string * pow;
-        pow = pow * 31;
+        pow *= 31;
     }
 
     return hash;

@@ -41,7 +41,7 @@ namespace Translator::CStandard {
 
     public:
 
-        std::pair<std::set<std::shared_ptr<Component>>, std::set<std::shared_ptr<Class>>> create_structures(std::set<std::shared_ptr<Analyzer::Structure>> const& structures);
+        std::set<std::shared_ptr<Class>> create_structures(std::set<std::shared_ptr<Analyzer::Structure>> const& structures);
         std::set<std::shared_ptr<FunctionDefinition>> create_functions(std::set<std::shared_ptr<Analyzer::FunctionDefinition>> const& functions);
 
         std::shared_ptr<Expression> eval_system_function(Analyzer::SystemFunction const& function, std::shared_ptr<Analyzer::Expression> arguments, Instructions & instructions);

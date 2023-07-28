@@ -10,53 +10,27 @@
 
 namespace Translator::CStandard {
 
-    std::pair<std::set<std::shared_ptr<Component>>, std::set<std::shared_ptr<Class>>> Translator::create_structures(std::set<std::shared_ptr<Analyzer::Structure>> const& structures) {
-        using AnalyzedProperty = std::pair<std::string, std::set<std::weak_ptr<Analyzer::Type>>>;
-        using AnalyzedProperties = std::map<std::string, std::set<std::weak_ptr<Analyzer::Type>>>;
-
-        std::map<AnalyzedProperty, std::set<std::shared_ptr<Analyzer::Structure>>> properties;
-        for (auto const& s : structures) {
-            for (auto const& p : s->properties) {
-                properties[p].insert(s);
-            }
-        }
-
-        std::map<std::set<std::shared_ptr<Analyzer::Structure>>, AnalyzedProperties> groups;
-        for (auto const& p : properties) {
-            groups[p.second][p.first.first] = p.first.second;
-        }
-
-        std::map<AnalyzedProperties, std::set<std::shared_ptr<Analyzer::Structure>>> compos;
-        for (auto const& g : groups) {
-            compos[g.second] = g.first;
-        }
-
-
+    std::set<std::shared_ptr<Class>> Translator::create_structures(std::set<std::shared_ptr<Analyzer::Structure>> const& structures) {
         std::set<std::shared_ptr<Class>> classes;
-        for (auto const& s : structures) {
+
+        for (auto s : structures) {
             auto cl = std::make_shared<Class>();
             classes.insert(cl);
             type_table[s] = cl;
         }
 
-        std::set<std::shared_ptr<Component>> components;
-        for (auto const& c : compos) {
-            auto component = std::make_shared<Component>();
-            for (auto const& p : c.first) {
+        for (auto s : structures) {
+            auto cl = std::static_pointer_cast<Class>(type_table[s]);
+            for (auto const& p : s->properties) {
                 if (p.second.size() == 1) {
-                    component->properties[p.first] = type_table[p.second.begin()->lock()];
+                    cl->properties[p.first] = type_table[p.second.begin()->lock()];
                 } else {
-                    component->properties[p.first] = Unknown;
+                    cl->properties[p.first] = Unknown;
                 }
-            }
-            components.insert(component);
-
-            for (auto const& s : c.second) {
-                std::static_pointer_cast<Class>(type_table[s])->components.insert(component);
             }
         }
 
-        return {components, classes};
+        return classes;
     }
 
     std::set<std::shared_ptr<FunctionDefinition>> Translator::create_functions(std::set<std::shared_ptr<Analyzer::FunctionDefinition>> const& functions) {

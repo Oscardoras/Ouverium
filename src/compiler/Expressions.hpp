@@ -23,6 +23,7 @@ namespace Analyzer {
 
         std::map<std::string, std::set<std::weak_ptr<Type>>> properties;
         std::set<std::weak_ptr<Type>> array;
+        bool function;
 
         Structure(std::map<std::string, std::set<std::weak_ptr<Type>>> const& properties = {}, std::set<std::weak_ptr<Type>> const& array = {}):
             properties(properties), array(array) {}
