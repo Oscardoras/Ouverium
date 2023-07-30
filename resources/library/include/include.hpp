@@ -1,10 +1,17 @@
-#ifndef __TYPE_HPP__
-#define __TYPE_HPP__
+#ifndef __INCLUDE_HPP__
+#define __INCLUDE_HPP__
 
-#include <array>
+#include <cstdint>
+#include <string>
 #include <vector>
 
-#include "virtual_tables.h"
+#include "include.h"
+
+
+class ArrayInfo;
+class UnknownData;
+class Reference;
+class Function;
 
 
 template<typename T, __VirtualTable* vtable = &T::vtable>
@@ -12,12 +19,10 @@ class Array : protected __Array {
 
 public:
 
-    static constexpr size_t index = __Component___Array_index;
-
     Array(size_t capacity = 0, size_t size = 0) {
         __Array::capacity = capacity;
         __Array::size = size;
-        tab = calloc(capacity, vtable->info.size);
+        tab = calloc(capacity, vtable->size);
     }
 
     operator __ArrayInfo() const {
@@ -59,7 +64,7 @@ public:
     public:
 
         iterator(Array<T>& array, size_t const i) :
-            array{array}, i{ i } {}
+            array{ array }, i{ i } {}
 
         size_t operator++() {
             return i++;
@@ -198,12 +203,24 @@ protected:
 
     __UnknownData data;
 
+    static constexpr uint32_t hash(const char* string) {
+        uint32_t hash = 0;
+        uint32_t pow = 31;
+
+        for (; *string != '\0'; ++string) {
+            hash += *string * pow;
+            pow *= 31;
+        }
+
+        return hash;
+    }
+
 public:
 
     UnknownData(__UnknownData const& data) :
         data{ data } {}
 
-    UnknownData(__VirtualTable* vtable, void* d, ...) :
+    UnknownData(__VirtualTable* vtable, union __Data d) :
         data{ __UnknownData_from_data(vtable, d) } {}
 
     UnknownData(__VirtualTable* vtable, void* ptr) :
@@ -251,14 +268,17 @@ public:
         return data.data.ptr;
     }
 
-    template<typename T, size_t index = T::index>
-    T& get_property() {
-        return *((T*)(data.data.ptr + data.virtual_table->tab[index].offset));
+    template<typename T>
+    T& get_property(const char* name) {
+        constexpr auto h = hash(name);
+        return __UnknownData_get_property(data, h);
     }
 
     ArrayInfo get_array() {
         return __UnknownData_get_array(data);
     }
+
+    Function get_function();
 
     __VirtualTable* virtual_table() const {
         return data.virtual_table;
@@ -420,19 +440,19 @@ public:
 
 protected:
 
-    __Function_Stack& stack;
+    __Function& function;
 
 public:
 
-    Function(__Function_Stack& function) :
-        stack{ function } {}
+    Function(__Function& function) :
+        function{ function } {}
 
-    operator __Function_Stack() const {
-        return stack;
+    operator __Function& () const {
+        return function;
     }
 
     void push(__FunctionBody body, __FunctionFilter filter = nullptr, std::vector<Reference>&& references = {}) {
-        __Function_push(&stack, body, filter, (__Reference_Owned*)references.data(), references.size());
+        __Function_push(&function, body, filter, (__Reference_Owned*)references.data(), references.size());
     }
 
     template<Body body, Filter filter = nullptr>
@@ -441,96 +461,21 @@ public:
     }
 
     void pop() {
-        __Function_pop(&stack);
+        __Function_pop(&function);
     }
 
     Reference operator()(Reference const& args) const {
-        return std::move(Reference(__Function_eval(stack, args)));
+        return Reference(__Function_eval(function, args));
     }
 
     void clear() {
-        __Function_free(&stack);
+        __Function_free(&function);
     }
 
 };
 
-template<typename ArrayType, typename... Components>
-class Type : public Components... {
-
-private:
-
-    template<size_t size>
-    struct VirtualTable {
-        __VirtualTable_Info info;
-        __VirtualTable_TabElement tab[size];
-    };
-
-    static constexpr Type<ArrayType, Components...> prototype = Type<ArrayType, Components...>();
-
-    static constexpr size_t max() {
-        return 0;
-    }
-    template<typename A, typename... B>
-    static constexpr size_t max(A a, B... b...) {
-        size_t c = max(b...);
-        if (a > c)
-            return a;
-        else
-            return c;
-    }
-    static constexpr size_t size = max(Components::index...);
-
-    static constexpr void set_offset(__VirtualTable_TabElement* tab) {}
-    template<typename C, typename... Cs>
-    static constexpr void set_offset(__VirtualTable_TabElement* tab, C* component, Cs *... components...) {
-        tab[C::index].offset = ptrdiff_t(component) - ptrdiff_t(&prototype);
-        set_offset(tab, components...);
-    }
-
-    static constexpr VirtualTable<size> create_vtable() {
-        VirtualTable<size> vtable;
-        vtable.info.size = sizeof(Type<ArrayType, Components...>);
-        vtable.info.gc_iterator = __GC_iterator;
-        if constexpr (std::is_same<ArrayType, void>::value)
-            vtable.info.array_vtable = nullptr;
-        else
-            vtable.info.array_vtable = &ArrayType::vtable;
-        set_offset(vtable.tab, static_cast<Components const*>(&prototype)...);
-        return vtable;
-    }
-
-    static void iterate() {}
-    template<typename C, typename... Cs>
-    static void iterate(C* component, Cs *... components...) {
-        component->iterate();
-        iterate(components...);
-    }
-
-public:
-
-    static void __GC_iterator(void* object) {
-        auto ptr = reinterpret_cast<Type<ArrayType, Components...>*>(object);
-        iterate(static_cast<Components*>(ptr)...);
-    }
-
-    inline static VirtualTable<size> const vtable = create_vtable();
-
-};
-
-struct Compo {
-    static constexpr size_t index = 0;
-    void iterate() const {}
-};
-
-struct GHDFZGY {
-    inline static __VirtualTable vtable;
-};
-
-typedef Type<GHDFZGY, Compo> Integer;
-
-void tes() {
-    Integer i;
-    auto s = Integer::vtable.info.size;
+Function UnknownData::get_function() {
+    return *__UnknownData_get_function(data);
 }
 
 

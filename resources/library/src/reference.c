@@ -1,8 +1,7 @@
-#include <stdarg.h>
 #include <string.h>
 
+#include "include.h"
 #include "gc.h"
-#include "virtual_tables.h"
 
 
 __Reference_Owned __Reference_new_data(__UnknownData data) {

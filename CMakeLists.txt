@@ -14,10 +14,12 @@ FILE(GLOB_RECURSE interpreter_sources
 add_executable(interpreter ${interpreter_sources})
 
 FILE(GLOB_RECURSE capi_sources
-    resources/library/*
+    resources/library/src/*
 )
 add_library(capi SHARED ${capi_sources})
+target_include_directories(capi PUBLIC resources/library/include)
 set_property(TARGET capi PROPERTY C_STANDARD 90)
+
 link_libraries(interpreter PUBLIC capi)
 
 

@@ -1,13 +1,21 @@
-#include <string.h>
-
 #include "gc.h"
-#include "system_functions.h"
-#include "virtual_tables.h"
+#include "include.h"
+#include "function.h"
 
 
 __Reference_Owned __system_function_separator_body(__Reference_Shared args) {
     return __Reference_get_element(args, __Reference_get_size(args));
 }
+
+__FunctionCell __system_function_separator = {
+    .next = NULL,
+    .filter = NULL,
+    .body = __system_function_separator_body,
+    .references = {
+        .size = 0,
+        .tab = NULL
+    }
+};
 
 bool __system_function_copy_filter(__Reference_Shared args) {
     __VirtualTable* vtable = __Reference_get(args).virtual_table;
@@ -24,11 +32,31 @@ __Reference_Owned __system_function_copy_body(__Reference_Shared args) {
     return __Reference_new_data(data);
 }
 
+__FunctionCell __system_function_copy = {
+    .next = NULL,
+    .filter = __system_function_copy_filter,
+    .body = __system_function_copy_body,
+    .references = {
+        .size = 0,
+        .tab = NULL
+    }
+};
+
 __Reference_Owned __system_function_copy_pointer_body(__Reference_Shared args) {
     __UnknownData data = __Reference_get(args);
 
     return __Reference_new_data(data);
 }
+
+__FunctionCell __system_function_copy_pointer = {
+    .next = NULL,
+    .filter = NULL,
+    .body = __system_function_copy_pointer_body,
+    .references = {
+        .size = 0,
+        .tab = NULL
+    }
+};
 
 static void assign(__GC_Reference* variable, __UnknownData value) {
     switch (variable->type) {
@@ -87,3 +115,13 @@ __Reference_Owned __system_function_assign_body(__Reference_Shared args) {
     __Reference_free(data);
     return var;
 }
+
+__FunctionCell __system_function_assign = {
+    .next = NULL,
+    .filter = NULL,
+    .body = __system_function_assign_body,
+    .references = {
+        .size = 0,
+        .tab = NULL
+    }
+};

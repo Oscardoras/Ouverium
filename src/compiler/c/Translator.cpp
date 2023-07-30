@@ -196,51 +196,55 @@ namespace Translator::CStandard {
 
                 }
             } else {
-                std::map<std::shared_ptr<Component>, std::set<std::shared_ptr<Class>>> components;
-                for (auto const& t : property->object->types)
-                    if (auto type = std::dynamic_pointer_cast<Class>(type_table[t.lock()]))
-                        for (auto const& c : type->components) {
-                            auto component = c.lock();
-                            auto it = component->properties.find(property->name);
-                            if (it != component->properties.end())
-                                components[component].insert(type);
-                        }
-                if (components.size() == 1) {
-                    auto component = components.begin()->first;
-
-                    return std::make_shared<Property>(Property {
-                        {
-                            type_table.get(expression->types)
-                        },
-                        UnknownData_from_data(type_table[function_call->arguments->types.begin()->lock()], get_expression(function_call->arguments, instructions)),
-                        property->name,
-                        true
-                    });
-                } else {
-                    // TODO
-                }
+                // TODO
             }
         } else if (auto symbol = std::dynamic_pointer_cast<Analyzer::Symbol>(expression)) {
             return std::make_shared<VariableCall>(VariableCall {
                 {
-                    type_table.get(expression->types)
+                    type_table.get(expression->types),
+                    Expression::Reference::Shared
                 },
                 symbol->name
             });
         } else if (auto tuple = std::dynamic_pointer_cast<Analyzer::Tuple>(expression)) {
-            auto list = std::make_shared<List>(List {
+            auto list = std::make_shared<List>();
+            for (auto const& o : tuple->objects) {
+                auto expression = get_expression(o, instructions);
+                list->objects.push_back(expression);
+            }
+
+            return std::make_shared<FunctionCall>(FunctionCall {
                 {
-                    type_table.get(expression->types)
+                    type_table.get(expression->types),
+                    Expression::Reference::Owned
+                },
+                {},
+                std::make_shared<VariableCall>(VariableCall {
+                    .name = "__Reference_new_tuple"
+                }),
+                {
+                    list,
+                    std::make_shared<Value>(Value { .value = static_cast<long>(list->objects.size()) })
                 }
             });
-            for (auto const& o : tuple->objects)
-                list->objects.push_back(get_expression(o, instructions));
         } else if (auto value = std::dynamic_pointer_cast<Analyzer::Value>(expression)) {
-            return std::make_shared<Value>(Value {
+            return std::make_shared<FunctionCall>(FunctionCall {
                 {
-                    type_table.get(expression->types)
+                    type_table.get(expression->types),
+                    Expression::Reference::Owned
                 },
-                value->value
+                {},
+                std::make_shared<VariableCall>(VariableCall {
+                    .name = "__Reference_new_data"
+                }),
+                {
+                    get_unknown_data(std::make_shared<Value>(Value {
+                        {
+                            type_table.get(expression->types)
+                        },
+                        value->value
+                    }))
+                }
             });
         } else return nullptr;
     }

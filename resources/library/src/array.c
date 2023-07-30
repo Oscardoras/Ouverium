@@ -1,23 +1,22 @@
 #include <stdlib.h>
 
-#include "data.h"
+#include "include.h"
 
 
-size_t max(size_t a, size_t b);
-inline size_t max(size_t a, size_t b) {
+size_t max(size_t a, size_t b) {
     return a > b ? a : b;
 }
 
 __Array __Array_new(__VirtualTable* vtable, size_t capacity) {
     __Array array = {
-        .tab = calloc(capacity, vtable->info.size),
+        .tab = calloc(capacity, vtable->size),
         .size = 0,
         .capacity = capacity
     };
 }
 
 void* __Array_get(__ArrayInfo array, size_t i) {
-    return array.array->tab + (array.vtable->info.size) * i;
+    return array.array->tab + (array.vtable->size) * i;
 }
 
 void __Array_set_size(__ArrayInfo array, size_t size) {
@@ -32,6 +31,6 @@ void __Array_set_size(__ArrayInfo array, size_t size) {
 }
 
 void __Array_set_capacity(__ArrayInfo array, size_t capacity) {
-    array.array->tab = realloc(array.array->tab, array.vtable->info.size * capacity);
+    array.array->tab = realloc(array.array->tab, array.vtable->size * capacity);
     array.array->capacity = capacity;
 }
