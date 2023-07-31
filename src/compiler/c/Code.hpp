@@ -28,18 +28,16 @@ namespace Translator::CStandard {
     inline std::shared_ptr<Type> Float = std::make_shared<Type>();
 
 
-    struct Expression {
-        std::weak_ptr<Type> type;
-        enum class Reference {
-            None,
-            Owned,
-            Shared,
-        } reference;
-    };
+    struct Expression {};
     struct LValue: public Expression {};
     struct Instruction {};
     struct Block: public Instruction, public std::vector<std::shared_ptr<Instruction>> {
         using std::vector<std::shared_ptr<Instruction>>::vector;
+    };
+
+    struct Reference: public LValue {
+        bool owned;
+        std::weak_ptr<Type> type;
     };
 
     struct If: public Instruction {

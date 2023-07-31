@@ -85,11 +85,6 @@ namespace Translator::CStandard {
         });
     }
 
-    void Translator::get_instructions(std::shared_ptr<Analyzer::Expression> expression, Instructions & instructions) {
-        if (auto exp = std::dynamic_pointer_cast<Instruction>(get_expression(expression, instructions)))
-            instructions.push_back(exp);
-    }
-
     auto UnknownData_from_data(std::shared_ptr<Type> type, std::shared_ptr<Expression> value) {
         return std::make_shared<FunctionCall>(FunctionCall {
             .function = std::make_shared<VariableCall>(VariableCall {
@@ -112,7 +107,7 @@ namespace Translator::CStandard {
         }
     }
 
-    std::shared_ptr<Expression> Translator::get_expression(std::shared_ptr<Analyzer::Expression> expression, Instructions & instructions) {
+    std::shared_ptr<Reference> Translator::get_expression(std::shared_ptr<Analyzer::Expression> expression, Instructions & instructions, Instructions::iterator it) {
         if (auto function_call = std::dynamic_pointer_cast<Analyzer::FunctionCall>(expression)) {
             auto r = std::make_shared<FunctionCall>(FunctionCall {
                 .function = std::make_shared<VariableCall>(VariableCall {
@@ -199,53 +194,73 @@ namespace Translator::CStandard {
                 // TODO
             }
         } else if (auto symbol = std::dynamic_pointer_cast<Analyzer::Symbol>(expression)) {
-            return std::make_shared<VariableCall>(VariableCall {
-                {
-                    type_table.get(expression->types),
-                    Expression::Reference::Shared
-                },
-                symbol->name
+            auto r = std::make_shared<Reference>(Reference {
+                .owned = false,
+                .type = Unknown
             });
+
+            instructions.insert(it, std::make_shared<Affectation>(Affectation {
+                .lvalue = r,
+                .value = std::make_shared<FunctionCall>(FunctionCall {
+                    .function = std::make_shared<VariableCall>(VariableCall {
+                        .name = "__Reference_share"
+                    }),
+                    .parameters = {
+                        std::make_shared<VariableCall>(VariableCall {
+                            .name = symbol->name
+                        })
+                    }
+                })
+            }));
+
+            return r;
         } else if (auto tuple = std::dynamic_pointer_cast<Analyzer::Tuple>(expression)) {
+            auto r = std::make_shared<Reference>(Reference {
+                .owned = true,
+                .type = Unknown
+            });
+
             auto list = std::make_shared<List>();
             for (auto const& o : tuple->objects) {
-                auto expression = get_expression(o, instructions);
+                auto expression = get_expression(o, instructions, it);
                 list->objects.push_back(expression);
             }
 
-            return std::make_shared<FunctionCall>(FunctionCall {
-                {
-                    type_table.get(expression->types),
-                    Expression::Reference::Owned
-                },
-                {},
-                std::make_shared<VariableCall>(VariableCall {
-                    .name = "__Reference_new_tuple"
-                }),
-                {
-                    list,
-                    std::make_shared<Value>(Value { .value = static_cast<long>(list->objects.size()) })
-                }
-            });
+            instructions.insert(it, std::make_shared<Affectation>(Affectation {
+                .lvalue = r,
+                .value = std::make_shared<FunctionCall>(FunctionCall {
+                    .function = std::make_shared<VariableCall>(VariableCall {
+                        .name = "__Reference_new_tuple"
+                    }),
+                    .parameters = {
+                        list,
+                        std::make_shared<Value>(Value { .value = static_cast<long>(list->objects.size()) })
+                    }
+                })
+            }));
+
+            return r;
         } else if (auto value = std::dynamic_pointer_cast<Analyzer::Value>(expression)) {
-            return std::make_shared<FunctionCall>(FunctionCall {
-                {
-                    type_table.get(expression->types),
-                    Expression::Reference::Owned
-                },
-                {},
-                std::make_shared<VariableCall>(VariableCall {
-                    .name = "__Reference_new_data"
-                }),
-                {
-                    get_unknown_data(std::make_shared<Value>(Value {
-                        {
-                            type_table.get(expression->types)
-                        },
-                        value->value
-                    }))
-                }
+            auto r = std::make_shared<Reference>(Reference {
+                .owned = true,
+                .type = Unknown
             });
+
+            instructions.insert(it, std::make_shared<Affectation>(Affectation {
+                .lvalue = r,
+                .value = std::make_shared<FunctionCall>(FunctionCall {
+                    .function = std::make_shared<VariableCall>(VariableCall {
+                        .name = "__Reference_new_data"
+                    }),
+                    .parameters = {
+                        get_unknown_data(std::make_shared<Value>(Value {
+                            .value = value->value
+                        }))
+                    }
+                })
+            }));
+
+            return r;
         } else return nullptr;
     }
 

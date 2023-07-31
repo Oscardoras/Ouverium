@@ -30,7 +30,7 @@ namespace Translator::CStandard {
     };
     using FunctionTable = std::map<std::shared_ptr<Analyzer::FunctionDefinition>, std::shared_ptr<FunctionDefinition>>;
 
-    using Instructions = std::vector<std::shared_ptr<Instruction>>;
+    using Instructions = std::list<std::shared_ptr<Instruction>>;
 
     class Translator {
 
@@ -47,8 +47,7 @@ namespace Translator::CStandard {
         std::shared_ptr<Expression> eval_system_function(Analyzer::SystemFunction const& function, std::shared_ptr<Analyzer::Expression> arguments, Instructions & instructions);
 
         std::shared_ptr<FunctionDefinition> get_function(std::shared_ptr<Analyzer::FunctionDefinition> function);
-        void get_instructions(std::shared_ptr<Analyzer::Expression> expression, Instructions & instructions);
-        std::shared_ptr<Expression> get_expression(std::shared_ptr<Analyzer::Expression> expression, Instructions & instructions);
+        std::shared_ptr<Reference> get_expression(std::shared_ptr<Analyzer::Expression> expression, Instructions & instructions, Instructions::iterator it);
 
     };
 
