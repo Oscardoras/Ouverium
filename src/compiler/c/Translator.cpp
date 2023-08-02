@@ -176,23 +176,54 @@ namespace Translator::CStandard {
                 return r;
             }
         } else if (auto property = std::dynamic_pointer_cast<Analyzer::Property>(expression)) {
-            auto o = get_expression(property->object, instructions);
+            auto r = std::make_shared<Reference>(Reference {
+                .owned = false,
+                .type = Unknown
+            });
 
-            if (auto type = o->type.lock()) {
-                if (auto cl = std::dynamic_pointer_cast<Class>(type)) {
-                    return std::make_shared<Property>(Property {
-                        {
-                            type_table.get(expression->types)
-                        },
-                        o,
-                        property->name,
-                        true
-                    });
+            auto ref = get_expression(property->object, instructions, it);
 
-                }
-            } else {
-                // TODO
+            instructions.insert(it, std::make_shared<Affectation>(Affectation {
+                .lvalue = r,
+                .value = std::make_shared<FunctionCall>(FunctionCall {
+                    .function = std::make_shared<VariableCall>(VariableCall {
+                        .name = "__UnknownData_get_property"
+                    }),
+                    .parameters = {
+                        std::make_shared<FunctionCall>(FunctionCall {
+                            .function = std::make_shared<VariableCall>(VariableCall {
+                                .name = "__Reference_get"
+                            }),
+                            .parameters = {
+                                std::make_shared<FunctionCall>(FunctionCall {
+                                    .function = std::make_shared<VariableCall>(VariableCall {
+                                        .name = "__Reference_share"
+                                    }),
+                                    .parameters = {
+                                        ref
+                                    }
+                                })
+                            }
+                        }),
+                        get_unknown_data(std::make_shared<Value>(Value {
+                            .value = hash(property->name)
+                        }))
+                    }
+                })
+            }));
+
+            if (ref->owned) {
+                instructions.insert(it, std::make_shared<FunctionCall>(FunctionCall {
+                    .function = std::make_shared<VariableCall>(VariableCall {
+                        .name = "__Reference_free"
+                    }),
+                    .parameters = {
+                        ref
+                    }
+                }));
             }
+
+            return r;
         } else if (auto symbol = std::dynamic_pointer_cast<Analyzer::Symbol>(expression)) {
             auto r = std::make_shared<Reference>(Reference {
                 .owned = false,
@@ -220,10 +251,13 @@ namespace Translator::CStandard {
                 .type = Unknown
             });
 
+            std::vector<std::shared_ptr<Reference>> tmp;
             auto list = std::make_shared<List>();
             for (auto const& o : tuple->objects) {
-                auto expression = get_expression(o, instructions, it);
-                list->objects.push_back(expression);
+                auto ref = get_expression(o, instructions, it);
+                if (ref->owned)
+                    tmp.push_back(ref);
+                list->objects.push_back(ref);
             }
 
             instructions.insert(it, std::make_shared<Affectation>(Affectation {
@@ -238,6 +272,17 @@ namespace Translator::CStandard {
                     }
                 })
             }));
+
+            for (auto ref : tmp) {
+                instructions.insert(it, std::make_shared<FunctionCall>(FunctionCall {
+                    .function = std::make_shared<VariableCall>(VariableCall {
+                        .name = "__Reference_free"
+                    }),
+                    .parameters = {
+                        ref
+                    }
+                }));
+            }
 
             return r;
         } else if (auto value = std::dynamic_pointer_cast<Analyzer::Value>(expression)) {
