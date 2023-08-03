@@ -18,8 +18,6 @@ namespace Interpreter {
 
     struct Object {
 
-        std::list<Data> prototypes;
-
         std::map<std::string, Data> properties;
         std::list<Function> functions;
         std::vector<Data> array;
