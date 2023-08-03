@@ -203,18 +203,6 @@ protected:
 
     __UnknownData data;
 
-    static constexpr uint32_t hash(const char* string) {
-        uint32_t hash = 0;
-        uint32_t pow = 31;
-
-        for (; *string != '\0'; ++string) {
-            hash += *string * pow;
-            pow *= 31;
-        }
-
-        return hash;
-    }
-
 public:
 
     UnknownData(__UnknownData const& data) :

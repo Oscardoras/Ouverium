@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <hash_string.h>
 #include <map>
 #include <set>
 #include <stdexcept>
@@ -99,14 +100,6 @@ namespace Translator::CStandard {
         });
     }
 
-    std::shared_ptr<Expression> Translator::get_unknown_data(std::shared_ptr<Expression> expression) {
-        if (auto type = expression->type.lock()) {
-            return UnknownData_from_data(type, expression);
-        } else {
-            return expression;
-        }
-    }
-
     std::shared_ptr<Reference> Translator::get_expression(std::shared_ptr<Analyzer::Expression> expression, Instructions & instructions, Instructions::iterator it) {
         if (auto function_call = std::dynamic_pointer_cast<Analyzer::FunctionCall>(expression)) {
             auto r = std::make_shared<FunctionCall>(FunctionCall {
@@ -145,7 +138,7 @@ namespace Translator::CStandard {
             return r;
         } else if (auto function_run = std::dynamic_pointer_cast<Analyzer::FunctionRun>(expression)) {
             if (auto system_function = std::get_if<Analyzer::SystemFunction>(&function_run->function)) {
-                return eval_system_function(*system_function, function_run->arguments, instructions);
+                return eval_system_function(*system_function, function_run->arguments, instructions, it);
             } else if (auto function_definition = std::get_if<std::weak_ptr<Analyzer::FunctionDefinition>>(&function_run->function)) {
                 auto function = function_table[function_definition->lock()];
 
@@ -205,9 +198,9 @@ namespace Translator::CStandard {
                                 })
                             }
                         }),
-                        get_unknown_data(std::make_shared<Value>(Value {
+                        std::make_shared<Value>(Value {
                             .value = hash(property->name)
-                        }))
+                        })
                     }
                 })
             }));
@@ -291,6 +284,16 @@ namespace Translator::CStandard {
                 .type = Unknown
             });
 
+            std::shared_ptr<Type> type = nullptr;
+            if (std::holds_alternative<char>(value->value))
+                type = Char;
+            else if (std::holds_alternative<bool>(value->value))
+                type = Bool;
+            else if (std::holds_alternative<long>(value->value))
+                type = Int;
+            else if (std::holds_alternative<double>(value->value))
+                type = Float;
+
             instructions.insert(it, std::make_shared<Affectation>(Affectation {
                 .lvalue = r,
                 .value = std::make_shared<FunctionCall>(FunctionCall {
@@ -298,9 +301,12 @@ namespace Translator::CStandard {
                         .name = "__Reference_new_data"
                     }),
                     .parameters = {
-                        get_unknown_data(std::make_shared<Value>(Value {
-                            .value = value->value
-                        }))
+                        UnknownData_from_data(
+                            type,
+                            std::make_shared<Value>(Value {
+                                .value = value->value
+                            })
+                        )
                     }
                 })
             }));

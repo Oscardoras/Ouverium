@@ -46,8 +46,7 @@ __Reference_Owned __Function_eval(__Function function, __Reference_Shared args) 
     __FunctionCell* ptr;
     for (ptr = function; ptr != NULL; ptr = ptr->next) {
         if (ptr->filter == NULL || ptr->filter(args)) {
-            ptr->body(args);
-            break;
+            return ptr->body(args);
         }
     }
 }
