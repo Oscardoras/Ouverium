@@ -1,6 +1,5 @@
 #include "gc.h"
 #include "include.h"
-#include "function.h"
 
 
 __Reference_Owned __system_function_separator_body(__Reference_Shared args) {

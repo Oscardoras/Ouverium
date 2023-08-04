@@ -1,7 +1,6 @@
 #include <stdlib.h>
 
 #include "include.h"
-#include "function.h"
 
 
 __Function __Function_new() {
@@ -25,7 +24,7 @@ void __Function_push(__Function* function, __FunctionBody body, __FunctionFilter
 }
 
 void __Function_pop(__Function* function) {
-    __FunctionCell* f = *((__FunctionCell**)function);
+    __FunctionCell* f = *function;
     __FunctionCell* next = f->next;
 
     size_t i;

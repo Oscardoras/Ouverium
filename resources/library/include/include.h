@@ -91,10 +91,31 @@ extern "C" {
     typedef bool (*__FunctionFilter)(__Reference_Shared args);
     typedef __Reference_Owned(*__FunctionBody)(__Reference_Shared args);
 
+    struct __FunctionCell {
+        struct __FunctionCell* next;
+        __FunctionFilter filter;
+        __FunctionBody body;
+        struct {
+            unsigned short size;
+            __Reference_Owned* tab;
+        } references;
+    };
+
     /**
      * Represents a function component to add in a type.
     */
-    typedef void* __Function;
+    typedef struct __FunctionCell* __Function;
+
+    typedef struct __Expression {
+        enum {
+            __EXPRESSION_REFERENCE,
+            __EXPRESSION_LAMBDA,
+        } type;
+        union {
+            __Reference_Shared reference;
+            __FunctionCell lambda;
+        };
+    } __Expression;
 
 
     /**
