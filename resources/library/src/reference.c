@@ -49,7 +49,7 @@ __Reference_Owned __Reference_new_tuple(__Reference_Shared references[], size_t 
 
     size_t i;
     for (i = 0; i < references_size; i++)
-        reference->tuple.references[i] = *((__GC_Reference*)__Reference_copy(references[i]));
+        reference->tuple.references[i] = *((__GC_Reference*) references[i]);
 
     return (__Reference_Owned)reference;
 }
@@ -66,7 +66,6 @@ __UnknownData __Reference_get(__Reference_Shared r) {
         return __UnknownData_from_ptr(reference->property.virtual_table, reference->property.property);
     case ARRAY: {
         __ArrayInfo array = __UnknownData_get_array(reference->array.array);
-        void* ptr = __Array_get(array, reference->array.i);
         return  __UnknownData_from_ptr(array.vtable, __Array_get(array, reference->array.i));
     }
     case TUPLE: {

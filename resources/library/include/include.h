@@ -1,6 +1,7 @@
 #ifndef __INCLUDE_H__
 #define __INCLUDE_H__
 
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -88,18 +89,19 @@ extern "C" {
         struct __Array* array;
     } __ArrayInfo;
 
-    typedef bool (*__FunctionFilter)(__Reference_Shared args);
-    typedef __Reference_Owned(*__FunctionBody)(__Reference_Shared args);
+    typedef bool (*__FunctionFilter)(__Reference_Owned capture[], __Reference_Shared args[]);
+    typedef __Reference_Owned(*__FunctionBody)(__Reference_Owned capture[], __Reference_Shared args[]);
 
-    struct __FunctionCell {
+    typedef struct __FunctionCell {
         struct __FunctionCell* next;
+        const char* arguments;
         __FunctionFilter filter;
         __FunctionBody body;
         struct {
             unsigned short size;
-            __Reference_Owned* tab;
+            __Reference_Owned tab[];
         } references;
-    };
+    } __FunctionCell;
 
     /**
      * Represents a function component to add in a type.
@@ -108,12 +110,16 @@ extern "C" {
 
     typedef struct __Expression {
         enum {
+            __EXPRESSION_TUPLE,
             __EXPRESSION_REFERENCE,
-            __EXPRESSION_LAMBDA,
+            __EXPRESSION_LAMBDA
         } type;
         union {
+            struct {
+                size_t size;
+            } tuple;
             __Reference_Shared reference;
-            __FunctionCell lambda;
+            __Function lambda;
         };
     } __Expression;
 
@@ -350,7 +356,7 @@ extern "C" {
      * @param args the arguments to give to the function.
      * @return the return reference.
     */
-    __Reference_Owned __Function_eval(__Function function, __Reference_Shared args);
+    __Reference_Owned __Function_eval(__Function function, __Expression expression, ...);
 
 
     extern __VirtualTable __VirtualTable_UnknownData;

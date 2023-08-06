@@ -13,6 +13,8 @@ __Array __Array_new(__VirtualTable* vtable, size_t capacity) {
         .size = 0,
         .capacity = capacity
     };
+
+    return array;
 }
 
 void* __Array_get(__ArrayInfo array, size_t i) {

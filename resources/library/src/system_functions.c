@@ -2,8 +2,8 @@
 #include "include.h"
 
 
-__Reference_Owned __system_function_separator_body(__Reference_Shared args) {
-    return __Reference_get_element(args, __Reference_get_size(args));
+__Reference_Owned __system_function_separator_body(__Reference_Owned capture[], __Reference_Shared args[]) {
+    return __Reference_get_element(args[0], __Reference_get_size(args[0])-1);
 }
 
 __FunctionCell __system_function_separator = {
@@ -12,12 +12,11 @@ __FunctionCell __system_function_separator = {
     .body = __system_function_separator_body,
     .references = {
         .size = 0,
-        .tab = NULL
     }
 };
 
-bool __system_function_copy_filter(__Reference_Shared args) {
-    __VirtualTable* vtable = __Reference_get(args).virtual_table;
+bool __system_function_copy_filter(__Reference_Owned capture[], __Reference_Shared args[]) {
+    __VirtualTable* vtable = __Reference_get(args[0]).virtual_table;
 
     return
         vtable == &__VirtualTable_Int ||
@@ -25,8 +24,8 @@ bool __system_function_copy_filter(__Reference_Shared args) {
         vtable == &__VirtualTable_Char ||
         vtable == &__VirtualTable_Bool;
 }
-__Reference_Owned __system_function_copy_body(__Reference_Shared args) {
-    __UnknownData data = __Reference_get(args);
+__Reference_Owned __system_function_copy_body(__Reference_Owned capture[], __Reference_Shared args[]) {
+    __UnknownData data = __Reference_get(args[0]);
 
     return __Reference_new_data(data);
 }
@@ -37,12 +36,11 @@ __FunctionCell __system_function_copy = {
     .body = __system_function_copy_body,
     .references = {
         .size = 0,
-        .tab = NULL
     }
 };
 
-__Reference_Owned __system_function_copy_pointer_body(__Reference_Shared args) {
-    __UnknownData data = __Reference_get(args);
+__Reference_Owned __system_function_copy_pointer_body(__Reference_Owned capture[], __Reference_Shared args[]) {
+    __UnknownData data = __Reference_get(args[0]);
 
     return __Reference_new_data(data);
 }
@@ -53,7 +51,6 @@ __FunctionCell __system_function_copy_pointer = {
     .body = __system_function_copy_pointer_body,
     .references = {
         .size = 0,
-        .tab = NULL
     }
 };
 
@@ -104,15 +101,13 @@ static void assign(__GC_Reference* variable, __UnknownData value) {
     }
     }
 }
-__Reference_Owned __system_function_assign_body(__Reference_Shared args) {
-    __Reference_Owned var = __Reference_get_element(args, 0);
-    __Reference_Owned data = __Reference_get_element(args, 1);
+__Reference_Owned __system_function_assign_body(__Reference_Owned capture[], __Reference_Shared args[]) {
+    __Reference_Shared var = args[0];
+    __Reference_Shared data = args[1];
 
-    assign((__GC_Reference*)var, __Reference_get(__Reference_share(data)));
+    assign((__GC_Reference*)var, __Reference_get(data));
 
-    __Reference_free(var);
-    __Reference_free(data);
-    return var;
+    return __Reference_copy(var);
 }
 
 __FunctionCell __system_function_assign = {
@@ -121,6 +116,5 @@ __FunctionCell __system_function_assign = {
     .body = __system_function_assign_body,
     .references = {
         .size = 0,
-        .tab = NULL
     }
 };

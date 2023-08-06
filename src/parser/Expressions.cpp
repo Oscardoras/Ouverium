@@ -103,7 +103,7 @@ namespace Parser {
         return s;
     }
 
-    std::string Symbol::to_string(unsigned int n) const {
+    std::string Symbol::to_string(unsigned int) const {
         return "Symbol: " + name + "\n";
     }
 
