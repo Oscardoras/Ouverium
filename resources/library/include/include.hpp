@@ -2,6 +2,7 @@
 #define __INCLUDE_HPP__
 
 #include <cstdint>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -452,12 +453,64 @@ public:
         __Function_pop(&function);
     }
 
-    Reference operator()(Reference const& args) const {
-        return Reference(__Function_eval(function, args));
-    }
-
     void clear() {
         __Function_free(&function);
+    }
+
+private:
+
+    struct Lambda: std::function<Reference()> {
+        using std::function<Reference()>::function;
+        __FunctionCell cell;
+    };
+
+    template<typename... T>
+    struct Tuple: public std::tuple<T...> {
+        using std::tuple<T...>::tuple;
+        std::array<__Expression, sizeof...(T)> array;
+    };
+
+    __Expression get_expression(Reference const& args) const {
+        return __Expression {
+            .type = __Expression::__EXPRESSION_REFERENCE,
+            .reference = args
+        };
+    }
+
+    __Expression get_expression(Lambda & lambda) const {
+        lambda.cell = {
+            .next = NULL,
+            .arguments = NULL,
+            .filter = NULL,
+            .body = lambda.,
+
+        };
+        return __Expression {
+            .type = __Expression::__EXPRESSION_LAMBDA,
+            .lambda = args
+        };
+    }
+
+    template<typename... T, size_t... I>
+    std::array<__Expression, sizeof...(I)> get_expression(Tuple<T...> & tuple, std::index_sequence<sizeof...(I)>) const {
+        return {get_expression(std::get<I>(tuple))...};
+    }
+
+    template<typename... T>
+    __Expression get_expression(Tuple<T...> const& tuple) const {
+        tuple.array = get_expression(tuple, std::make_index_sequence<sizeof...(T)>);
+        return __Expression {
+            .type = __Expression::__EXPRESSION_TUPLE,
+            .tuple.size = sizeof...(T),
+            .tuple.tab = tuple.array.data()
+        };
+    }
+
+public:
+
+    template<typename... T>
+    Reference operator()(T... args) const {
+        return Reference(__Function_eval(function, get_expression(args)...));
     }
 
 };

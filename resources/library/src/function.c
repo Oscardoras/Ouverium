@@ -40,69 +40,94 @@ void __Function_free(__Function* function) {
         __Function_pop(function);
 }
 
-__Reference_Owned __Function_execute(va_list* args) {
-    __Expression expr = va_arg(*args, __Expression);
-    switch (expr.type) {
+__Reference_Owned __Function_execute(__Expression* args) {
+    switch (args->type) {
     case __EXPRESSION_TUPLE: {
-        __Reference_Owned ref[expr.tuple.size];
+        __Reference_Owned ref[args->tuple.size];
 
         size_t i;
-        for (i = 0; i < expr.tuple.size; ++i)
-            ref[i] = __Function_execute(args);
+        for (i = 0; i < args->tuple.size; ++i)
+            ref[i] = __Function_execute(&args->tuple.tab[i]);
 
-        __Reference_Owned r = __Reference_new_tuple((__Reference_Shared*) ref, expr.tuple.size);
+        __Reference_Owned r = __Reference_new_tuple((__Reference_Shared*) ref, args->tuple.size);
 
-        for (i = 0; i < expr.tuple.size; ++i)
+        for (i = 0; i < args->tuple.size; ++i)
             __Reference_free(ref[i]);
 
         return r;
     }
     case __EXPRESSION_REFERENCE:
-        return __Reference_copy(expr.reference);
+        return __Reference_copy(args->reference);
     case __EXPRESSION_LAMBDA:
         __Expression expr = {
             .type = __EXPRESSION_TUPLE,
             .tuple.size = 0
         };
-        return __Function_eval(expr.lambda, expr);
+        return __Function_eval(args->lambda, expr);
     default:
         return NULL;
     }
 }
 
-bool __Function_parse(__Reference_Shared *vars, bool *owned, size_t* i, const char** params, va_list* args) {
+bool __Function_parse(__Reference_Shared *vars, bool *owned, size_t* i, const char** params, __Expression* args) {
     if (**params == 'r') {
-        __Expression expr = va_arg(*args, __Expression);
-        switch (expr.type) {
-        case __EXPRESSION_TUPLE:
+        if (args->type == __EXPRESSION_REFERENCE) {
+            vars[*i] = args->reference;
+            owned[*i] = false;
+        } else {
             vars[*i] = (__Reference_Shared) __Function_execute(args);
             owned[*i] = true;
-            break;
-        case __EXPRESSION_REFERENCE:
-            vars[*i] = expr.reference;
-            owned[*i] = false;
-            break;
-        case __EXPRESSION_LAMBDA:
-            __Expression expr = {
-                .type = __EXPRESSION_TUPLE,
-                .tuple.size = 0
-            };
-            vars[*i] = (__Reference_Shared) __Function_eval(expr.lambda, expr);
-            owned[*i] = true;
-            break;
         }
 
         ++(*params);
         ++(*i);
         return true;
     } else if (**params == '(') {
-        do {
-            ++(*params);
-            __Function_parse(vars, owned, i, params, args);
-        } while (**params == ',');
+        size_t j = 0;
+        size_t size;
 
-        ++(*params);
-        return true;
+        switch (args->type) {
+        case __EXPRESSION_TUPLE:
+            size = args->tuple.size;
+            while (**params != ')' && j < args->tuple.size) {
+                ++(*params);
+                __Function_parse(vars, owned, i, params, &args->tuple.tab[j]);
+                ++j;
+            }
+            break;
+        case __EXPRESSION_REFERENCE:
+            size = __Reference_get_size(args->reference);
+            while (**params != ')' && j < size) {
+                ++(*params);
+                __Expression expr = {
+                    .type = __EXPRESSION_REFERENCE,
+                    .reference = __Reference_get_element(args->reference, j)
+                };
+                __Function_parse(vars, owned, i, params, &expr);
+                ++j;
+            }
+            break;
+        case __EXPRESSION_LAMBDA:
+            __Reference_Owned ref = __Function_execute(args);
+            size = __Reference_get_size(ref);
+            while (**params != ')' && j < size) {
+                ++(*params);
+                __Expression expr = {
+                    .type = __EXPRESSION_REFERENCE,
+                    .reference = __Reference_get_element(__Reference_share(ref), j)
+                };
+                __Function_parse(vars, owned, i, params, &expr);
+                ++j;
+            }
+            __Reference_free(ref);
+            break;
+        }
+
+        if (**params == ')' && j == size) {
+            ++(*params);
+            return true;
+        } else
+            return false;
     } else if ('0' < **params && **params > '9') {
         size_t n = 0;
         do {
@@ -111,7 +136,7 @@ bool __Function_parse(__Reference_Shared *vars, bool *owned, size_t* i, const ch
             ++(*params);
         } while ('0' < **params && **params > '9');
 
-        
+
     }
 
     return false;
@@ -129,11 +154,13 @@ __Reference_Owned __Function_eval(__Function function, __Expression expression, 
         __Reference_Shared vars[size];
         bool owned[size];
 
-        size_t i;
+        size_t i = 0;
         c = ptr->arguments;
+        bool parsed = true;
         va_list args;
         va_start(args, expression);
-        bool parsed = __Function_parse(vars, owned, &i, &c, &args);
+        while (c != '\0' && parsed)
+            parsed = __Function_parse(vars, owned, &i, &c, &args);
         va_end(args);
 
         __Reference_Owned ref = NULL;

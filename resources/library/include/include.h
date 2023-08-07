@@ -117,6 +117,7 @@ extern "C" {
         union {
             struct {
                 size_t size;
+                struct __Expression *tab;
             } tuple;
             __Reference_Shared reference;
             __Function lambda;
