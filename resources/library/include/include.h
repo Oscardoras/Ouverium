@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 
 #ifdef __cplusplus
@@ -94,7 +95,7 @@ extern "C" {
 
     typedef struct __FunctionCell {
         struct __FunctionCell* next;
-        const char* arguments;
+        const char* parameters;
         __FunctionFilter filter;
         __FunctionBody body;
         struct {

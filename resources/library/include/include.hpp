@@ -408,8 +408,34 @@ class Function {
 
 public:
 
-    using Filter = bool (*)(Reference const& args);
-    using Body = Reference(*)(Reference const& args);
+    struct Lambda {
+
+        const char *parameters;
+
+        Lambda(const char *parameters):
+            parameters{parameters} {}
+
+        virtual bool filter(Reference const& args) {
+            return true;
+        };
+        virtual Reference operator()(Reference const& args) = 0;
+
+        virtual void iterate() {};
+        virtual ~Lambda() = default;
+
+        __FunctionCell* new_function() const noexcept {
+            return new __FunctionCell {
+                .next = nullptr,
+                .parameters = parameters,
+                .filter = nullptr,
+                .body = nullptr,
+                .references = {
+                    .size = 0
+                }
+            };
+        }
+
+    };
 
     template<Filter f>
     static bool filter(__Reference_Shared args) {

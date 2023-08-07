@@ -148,14 +148,14 @@ __Reference_Owned __Function_eval(__Function function, __Expression expression, 
         const char* c;
 
         size_t size = 0;
-        for (c = ptr->arguments; *c != '\0'; c++)
+        for (c = ptr->parameters; *c != '\0'; c++)
             if (*c == 'r')
                 ++size;
         __Reference_Shared vars[size];
         bool owned[size];
 
         size_t i = 0;
-        c = ptr->arguments;
+        c = ptr->parameters;
         bool parsed = true;
         va_list args;
         va_start(args, expression);
