@@ -412,22 +412,32 @@ class Function {
 
 public:
 
-    class Lambda: public std::function<Reference(Reference args[])> {
+    template<typename R, typename... Args>
+    class Lambda;
+
+    template<typename R, typename... Args>
+    class Lambda<R(Args...)>: public std::function<R(Args...)> {
 
     protected:
 
+        template<typename U, size_t... I>
+        static U eval(std::function<U(Args...)> f, __Reference_Shared args[], std::index_sequence<sizeof...(I)>) {
+            return f(Reference(args[I])...);
+        }
+
         static bool _filter(__Reference_Owned capture[], __Reference_Shared args[]) {
-            auto f = static_cast<Lambda*>(__Reference_get(__Reference_share(capture[0])).data.ptr)->filter;
+            auto f = static_cast<Lambda<R(Args...)>*>(__Reference_get(__Reference_share(capture[0])).data.ptr)->filter;
             if (f)
-                return f(reinterpret_cast<Reference *>(args));
+                return eval(f, args, std::make_index_sequence<sizeof...(Args)>{});
         }
 
         static __Reference_Owned _body(__Reference_Owned capture[], __Reference_Shared args[]) {
-            return static_cast<Lambda*>(__Reference_get(__Reference_share(capture[0])).data.ptr)->operator()(reinterpret_cast<Reference *>(args));
+            auto f = static_cast<Lambda<R(Args...)>*>(__Reference_get(__Reference_share(capture[0])).data.ptr);
+            return eval(f, args, std::make_index_sequence<sizeof...(Args)>{});
         }
 
         static void iterator(void* lambda) {
-            auto f = static_cast<Lambda*>(lambda)->iterate;
+            auto f = static_cast<Lambda<R(Args...)>*>(lambda)->iterate;
             if (f)
                 f();
         }
@@ -436,16 +446,14 @@ public:
 
     public:
 
-        const char *parameters = nullptr;
-
         std::function<bool(Reference args[])> filter;
 
         std::function<void()> iterate;
 
-        using std::function<Reference(Reference args[])>::function;
+        using std::function<R(Args...)>::function;
 
-        __FunctionCell* new_function() noexcept {
-            auto cell = static_cast<__FunctionCell*>(malloc(sizeof(__FunctionCell) + sizeof(__Reference_Owned)));
+        __FunctionCell* new_function() {
+            auto cell = static_cast<__FunctionCell*>(malloc(sizeof(__FunctionCell) + sizeof(__Reference_Owned) + sizeof(Lambda)));
 
             cell->next = nullptr;
             cell->parameters = parameters;
@@ -480,7 +488,8 @@ public:
         __Function_push(&function, parameters, body, filter, (__Reference_Owned*)std::data(references), references.size());
     }
 
-    void push(Lambda & lambda) {
+    template<typename R, typename... Args>
+    void push(Lambda<R(Args...)> const& lambda) {
         auto f = lambda.new_function();
         f->next = function;
         function = f;
