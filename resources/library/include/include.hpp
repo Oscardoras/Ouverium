@@ -259,7 +259,7 @@ public:
     }
 
     template<typename T>
-    T& get_property(const char *name) {
+    T& get_property(const char* name) {
         constexpr auto h = hash(name);
         return *static_cast<T*>(__UnknownData_get_property(data, h));
     }
@@ -416,13 +416,36 @@ public:
     class Lambda;
 
     template<typename R, typename... Args>
-    class Lambda<R(Args...)>: public std::function<R(Args...)> {
+    class Lambda<R(Args...)> : public std::function<R(Args...)> {
 
     protected:
 
-        template<typename U, size_t... I>
-        static U eval(std::function<U(Args...)> f, __Reference_Shared args[], std::index_sequence<sizeof...(I)>) {
-            return f(Reference(args[I])...);
+        template<size_t I, typename Arg>
+        struct Pair {
+            static constexpr size_t index = I;
+            using Type = Arg;
+        };
+
+        template<typename... T>
+        struct List : std::tuple<> {};
+
+        template<typename Pair, typename... Pairs>
+        struct List<Pair, Pairs...> : std::pair<Pair, List<Pairs...>> {};
+
+        template<size_t I, typename... As>
+        using Arguments = std::tuple<>;
+
+        template<size_t I, typename A, typename... As>
+        using Arguments = std::pair<Pair<I, A>, Arguments<I+1, As...>>;
+
+        template<typename Pair>
+        static Pair::Type get_arg(__Reference_Shared args[]) {
+            return args[Pair::index];
+        }
+
+        template<typename U, typename... Pairs>
+        static U eval(std::function<U(Pairs::Type...)> f, __Reference_Shared args[]) {
+            return f(get_arg<Pairs>(args)...);
         }
 
         static bool _filter(__Reference_Owned capture[], __Reference_Shared args[]) {
@@ -480,11 +503,11 @@ public:
         return function;
     }
 
-    void push(const char *parameters, __FunctionBody body, __FunctionFilter filter = nullptr, std::initializer_list<Reference> references = {}) {
+    void push(const char* parameters, __FunctionBody body, __FunctionFilter filter = nullptr, std::initializer_list<Reference> references = {}) {
         __Function_push(&function, parameters, body, filter, (__Reference_Owned*)std::data(references), references.size());
     }
 
-    void push(const char *parameters, __FunctionBody body, __FunctionFilter filter = nullptr, std::vector<Reference>&& references = {}) {
+    void push(const char* parameters, __FunctionBody body, __FunctionFilter filter = nullptr, std::vector<Reference>&& references = {}) {
         __Function_push(&function, parameters, body, filter, (__Reference_Owned*)std::data(references), references.size());
     }
 
@@ -500,9 +523,9 @@ public:
         Lambda lambda;
 
         lambda = [function](Reference args[]) -> Reference {
-            std::initializer_list<Reference> list = {A<Args>::get_args(args)...};
+            std::initializer_list<Reference> list = { A<Args>::get_args(args)... };
             return function(std::data(list));
-        };
+            };
 
         push(lambda);
     }
@@ -518,34 +541,34 @@ public:
 private:
 
     template<typename... T>
-    struct Tuple: public std::tuple<T...> {
+    struct Tuple : public std::tuple<T...> {
         using std::tuple<T...>::tuple;
         std::array<__Expression, sizeof...(T)> array;
     };
 
     __Expression get_expression(Reference const& args) const {
-        return __Expression {
+        return __Expression{
             .type = __Expression::__EXPRESSION_REFERENCE,
             .reference = args
         };
     }
 
-    __Expression get_expression(Lambda & lambda) const {
-        return __Expression {
+    __Expression get_expression(Lambda& lambda) const {
+        return __Expression{
             .type = __Expression::__EXPRESSION_LAMBDA,
             .lambda = lambda.new_function()
         };
     }
 
     template<typename... T, size_t... I>
-    std::array<__Expression, sizeof...(I)> get_expression(Tuple<T...> & tuple, std::index_sequence<sizeof...(I)>) const {
-        return {get_expression(std::get<I>(tuple))...};
+    std::array<__Expression, sizeof...(I)> get_expression(Tuple<T...>& tuple, std::index_sequence<sizeof...(I)>) const {
+        return { get_expression(std::get<I>(tuple))... };
     }
 
     template<typename... T>
     __Expression get_expression(Tuple<T...> const& tuple) const {
         tuple.array = get_expression(tuple, std::make_index_sequence<sizeof...(T)>{});
-        return __Expression {
+        return __Expression{
             .type = __Expression::__EXPRESSION_TUPLE,
             .tuple = {
                 .size = sizeof...(T),
@@ -582,7 +605,7 @@ struct A<std::function<Reference()>> {
     static std::function<Reference()> get_arg(Reference arg) {
         return [arg]() -> Reference {
             arg.
-        };
+            };
     }
 };
 
