@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+#include "hash_string.h"
 #include "include.h"
 
 
@@ -258,9 +259,9 @@ public:
     }
 
     template<typename T>
-    T& get_property(const char* name) {
+    T& get_property(const char *name) {
         constexpr auto h = hash(name);
-        return __UnknownData_get_property(data, h);
+        return *static_cast<T*>(__UnknownData_get_property(data, h));
     }
 
     ArrayInfo get_array() {
@@ -335,10 +336,10 @@ public:
         return (__Reference_Shared)reference;
     }
 
-    operator __UnknownData() const {
+    operator UnknownData() const {
         return get();
     }
-    __UnknownData get() const {
+    UnknownData get() const {
         return __Reference_get((__Reference_Shared)reference);
     }
 
@@ -404,54 +405,59 @@ public:
 
 };
 
+template<typename T>
+struct A;
+
 class Function {
 
 public:
 
-    struct Lambda {
+    class Lambda: public std::function<Reference(Reference args[])> {
 
-        const char *parameters;
+    protected:
 
-        Lambda(const char *parameters):
-            parameters{parameters} {}
+        static bool _filter(__Reference_Owned capture[], __Reference_Shared args[]) {
+            auto f = static_cast<Lambda*>(__Reference_get(__Reference_share(capture[0])).data.ptr)->filter;
+            if (f)
+                return f(reinterpret_cast<Reference *>(args));
+        }
 
-        virtual bool filter(Reference const& args) {
-            return true;
-        };
-        virtual Reference operator()(Reference const& args) = 0;
+        static __Reference_Owned _body(__Reference_Owned capture[], __Reference_Shared args[]) {
+            return static_cast<Lambda*>(__Reference_get(__Reference_share(capture[0])).data.ptr)->operator()(reinterpret_cast<Reference *>(args));
+        }
 
-        virtual void iterate() {};
-        virtual ~Lambda() = default;
+        static void iterator(void* lambda) {
+            auto f = static_cast<Lambda*>(lambda)->iterate;
+            if (f)
+                f();
+        }
 
-        __FunctionCell* new_function() const noexcept {
-            return new __FunctionCell {
-                .next = nullptr,
-                .parameters = parameters,
-                .filter = nullptr,
-                .body = nullptr,
-                .references = {
-                    .size = 0
-                }
-            };
+        static __VirtualTable vtable;
+
+    public:
+
+        const char *parameters = nullptr;
+
+        std::function<bool(Reference args[])> filter;
+
+        std::function<void()> iterate;
+
+        using std::function<Reference(Reference args[])>::function;
+
+        __FunctionCell* new_function() noexcept {
+            auto cell = static_cast<__FunctionCell*>(malloc(sizeof(__FunctionCell) + sizeof(__Reference_Owned)));
+
+            cell->next = nullptr;
+            cell->parameters = parameters;
+            cell->filter = _filter;
+            cell->body = _body;
+            cell->captures.size = 1;
+            cell->captures.tab[0] = Reference(UnknownData(&vtable, __Data{ .ptr = this }));
+
+            return cell;
         }
 
     };
-
-    template<Filter f>
-    static bool filter(__Reference_Shared args) {
-        Reference r{ (__Reference_Owned)args };
-        bool b = f(r);
-        r = (Reference)NULL;
-        return b;
-    }
-
-    template<Body f>
-    static __Reference_Owned body(__Reference_Shared args) {
-        Reference r{ (__Reference_Owned)args };
-        __Reference_Owned o = f(r);
-        r = (Reference)NULL;
-        return o;
-    }
 
 protected:
 
@@ -466,13 +472,30 @@ public:
         return function;
     }
 
-    void push(__FunctionBody body, __FunctionFilter filter = nullptr, std::vector<Reference>&& references = {}) {
-        __Function_push(&function, body, filter, (__Reference_Owned*)references.data(), references.size());
+    void push(const char *parameters, __FunctionBody body, __FunctionFilter filter = nullptr, std::initializer_list<Reference> references = {}) {
+        __Function_push(&function, parameters, body, filter, (__Reference_Owned*)std::data(references), references.size());
     }
 
-    template<Body body, Filter filter = nullptr>
-    void push(std::vector<Reference>&& references = {}) {
-        push(Function::body<body>, Function::filter<filter>, references);
+    void push(const char *parameters, __FunctionBody body, __FunctionFilter filter = nullptr, std::vector<Reference>&& references = {}) {
+        __Function_push(&function, parameters, body, filter, (__Reference_Owned*)std::data(references), references.size());
+    }
+
+    void push(Lambda & lambda) {
+        auto f = lambda.new_function();
+        f->next = function;
+        function = f;
+    }
+
+    template<typename R, typename... Args>
+    void push(std::function<R(Args...)> function) {
+        Lambda lambda;
+
+        lambda = [function](Reference args[]) -> Reference {
+            std::initializer_list<Reference> list = {A<Args>::get_args(args)...};
+            return function(std::data(list));
+        };
+
+        push(lambda);
     }
 
     void pop() {
@@ -484,11 +507,6 @@ public:
     }
 
 private:
-
-    struct Lambda: std::function<Reference()> {
-        using std::function<Reference()>::function;
-        __FunctionCell cell;
-    };
 
     template<typename... T>
     struct Tuple: public std::tuple<T...> {
@@ -504,16 +522,9 @@ private:
     }
 
     __Expression get_expression(Lambda & lambda) const {
-        lambda.cell = {
-            .next = NULL,
-            .arguments = NULL,
-            .filter = NULL,
-            .body = lambda.,
-
-        };
         return __Expression {
             .type = __Expression::__EXPRESSION_LAMBDA,
-            .lambda = args
+            .lambda = lambda.new_function()
         };
     }
 
@@ -524,21 +535,62 @@ private:
 
     template<typename... T>
     __Expression get_expression(Tuple<T...> const& tuple) const {
-        tuple.array = get_expression(tuple, std::make_index_sequence<sizeof...(T)>);
+        tuple.array = get_expression(tuple, std::make_index_sequence<sizeof...(T)>{});
         return __Expression {
             .type = __Expression::__EXPRESSION_TUPLE,
-            .tuple.size = sizeof...(T),
-            .tuple.tab = tuple.array.data()
+            .tuple = {
+                .size = sizeof...(T),
+                .tab = tuple.array.data()
+            }
         };
     }
 
 public:
 
     template<typename... T>
-    Reference operator()(T... args) const {
+    Reference operator()(T&&... args) const {
         return Reference(__Function_eval(function, get_expression(args)...));
     }
 
+};
+
+template<>
+struct A<Reference> {
+    static Reference get_arg(Reference arg) {
+        return arg;
+    }
+};
+
+template<>
+struct A<UnknownData> {
+    static UnknownData get_arg(Reference arg) {
+        return arg;
+    }
+};
+
+template<>
+struct A<std::function<Reference()>> {
+    static std::function<Reference()> get_arg(Reference arg) {
+        return [arg]() -> Reference {
+            arg.
+        };
+    }
+};
+
+__VirtualTable Function::Lambda::vtable = {
+    .size = sizeof(Function::Lambda),
+    .gc_iterator = Function::Lambda::iterator,
+    .array = {
+        .vtable = nullptr,
+        .offset = 0
+    },
+    .function = {
+        .offset = 0
+    },
+    .table = {
+        .size = 0,
+        .tab = {}
+    }
 };
 
 Function UnknownData::get_function() {

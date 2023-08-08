@@ -1,6 +1,6 @@
 #include <stdlib.h>
 
-#include "include.h"
+#include "include.hpp"
 
 int main(int argc, char** argv) {
     __GC_init();

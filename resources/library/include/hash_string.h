@@ -5,10 +5,12 @@
 
 
 #ifdef __cplusplus
-extern "C" {
-#endif
+#include <string>
 
-uint32_t hash(const char* string) {
+extern "C" {
+constexpr
+#endif
+uint32_t hash(const char *string) {
     uint32_t hash = 0;
     uint32_t pow = 31;
 
@@ -21,10 +23,6 @@ uint32_t hash(const char* string) {
 }
 
 #ifdef __cplusplus
-}
-
-constexpr uint32_t hash(std::string const& string) {
-    return hash(string.c_str());
 }
 #endif
 

@@ -10,7 +10,7 @@ __FunctionCell __system_function_separator = {
     .next = NULL,
     .filter = NULL,
     .body = __system_function_separator_body,
-    .references = {
+    .captures = {
         .size = 0,
     }
 };
@@ -34,7 +34,7 @@ __FunctionCell __system_function_copy = {
     .next = NULL,
     .filter = __system_function_copy_filter,
     .body = __system_function_copy_body,
-    .references = {
+    .captures = {
         .size = 0,
     }
 };
@@ -49,7 +49,7 @@ __FunctionCell __system_function_copy_pointer = {
     .next = NULL,
     .filter = NULL,
     .body = __system_function_copy_pointer_body,
-    .references = {
+    .captures = {
         .size = 0,
     }
 };
@@ -114,7 +114,7 @@ __FunctionCell __system_function_assign = {
     .next = NULL,
     .filter = NULL,
     .body = __system_function_assign_body,
-    .references = {
+    .captures = {
         .size = 0,
     }
 };

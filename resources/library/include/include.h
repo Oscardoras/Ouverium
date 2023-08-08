@@ -1,10 +1,8 @@
 #ifndef __INCLUDE_H__
 #define __INCLUDE_H__
 
-#include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h>
 
 
 #ifdef __cplusplus
@@ -101,7 +99,7 @@ extern "C" {
         struct {
             unsigned short size;
             __Reference_Owned tab[];
-        } references;
+        } captures;
     } __FunctionCell;
 
     /**
@@ -333,12 +331,13 @@ extern "C" {
     /**
      * Pushes a new implementation in a Function.
      * @param function a pointer to the Function.
+     * @param parameters the format of the parameters.
      * @param body the body of the function.
      * @param filter the filter of the function.
      * @param references a array of the references used by the function.
      * @param references_size the number of references.
     */
-    void __Function_push(__Function* function, __FunctionBody body, __FunctionFilter filter, __Reference_Owned references[], size_t references_size);
+    void __Function_push(__Function* function, const char *parameters, __FunctionBody body, __FunctionFilter filter, __Reference_Owned references[], size_t references_size);
 
     /**
      * Pops the last implementation from a Function.
@@ -358,7 +357,7 @@ extern "C" {
      * @param args the arguments to give to the function.
      * @return the return reference.
     */
-    __Reference_Owned __Function_eval(__Function function, __Expression expression, ...);
+    __Reference_Owned __Function_eval(__Function function, __Expression args);
 
 
     extern __VirtualTable __VirtualTable_UnknownData;
