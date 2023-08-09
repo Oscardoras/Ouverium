@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdint.h>
 
 
 #ifdef __cplusplus
@@ -34,7 +35,7 @@ extern "C" {
         struct {
             size_t size;
             struct __VirtualTable_Element {
-                int hash;
+                uint32_t hash;
                 union {
                     size_t offset;
                     void (*ptr)();
@@ -191,6 +192,12 @@ extern "C" {
      * @param capacity the new capacity.
     */
     void __Array_set_capacity(__ArrayInfo array, size_t capacity);
+
+    /**
+     * Frees an array.
+     * @param array the array to free.
+    */
+    void __Array_free(__ArrayInfo array);
 
     /**
      * UnknownData

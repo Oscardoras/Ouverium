@@ -221,3 +221,22 @@ __Reference_Owned __Function_eval(__Function function, __Expression args) {
     return NULL;
     //throw exception
 }
+
+void __VirtualTable_Function_gc_iterator(void* ptr) {
+    __FunctionCell* f;
+    for (f = *((__Function*)ptr); f != NULL; f = f->next) {
+        size_t i;
+        for (i = 0; i < f->captures.size; ++i) {
+            __UnknownData data = __Reference_get(__Reference_share(f->captures.tab[i]));
+            __VirtualTable_UnknownData.gc_iterator(&data);
+        }
+    }
+}
+__VirtualTable __VirtualTable_Function = {
+    .size = sizeof(__Function),
+    .gc_iterator = __VirtualTable_Function_gc_iterator,
+    .array.vtable = NULL,
+    .array.offset = 0,
+    .function.offset = 0,
+    .table.size = 0
+};

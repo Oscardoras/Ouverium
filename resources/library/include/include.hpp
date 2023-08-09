@@ -479,8 +479,7 @@ public:
 
         template<size_t I>
         struct Pair {
-            static constexpr std::tuple<Parameters...> tuple{};
-            using Type = decltype(std::get<I>(tuple));
+            using Type = decltype(std::get<I>(std::tuple<Parameters...> {}));
             static constexpr size_t Index = I;
         };
 
