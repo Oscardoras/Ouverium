@@ -26,17 +26,12 @@ extern "C" {
             TUPLE
         } type;
         union {
-            struct {
-                size_t size;
-                struct __GC_Reference* next;
-            } none;
-
             __UnknownData data;
             __UnknownData* symbol;
             struct {
                 __UnknownData parent;
                 __VirtualTable* virtual_table;
-                void* property;
+                uint32_t hash;
             } property;
             struct {
                 __UnknownData array;

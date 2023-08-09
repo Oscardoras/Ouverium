@@ -17,7 +17,7 @@ class Reference;
 class Function;
 
 
-template<typename T, __VirtualTable* vtable = &T::vtable>
+template<typename T = __UnknownData, __VirtualTable* vtable = &T::vtable>
 class Array : protected __Array {
 
 public:
@@ -277,29 +277,28 @@ public:
 
 };
 
-class Reference {
-
-protected:
-
-    void* reference;
+template<typename T = UnknownData>
+class Reference : protected __Reference {
 
 public:
+
+    Reference() = delete;
 
     Reference(UnknownData const& data) :
         reference{ __Reference_new_data(data) } {}
     Reference() :
         reference{ __Reference_new_symbol() } {}
-    Reference(UnknownData const& parent, __VirtualTable* const virtual_table, void* const property) :
+    Reference(UnknownData const& parent, __VirtualTable* const virtual_table, uint32_t const hash) :
         reference{ __Reference_new_property(parent, virtual_table, property) } {}
     Reference(UnknownData const& array, size_t const i) :
         reference{ __Reference_new_array(array, i) } {}
     Reference(std::initializer_list<Reference> const& list) :
         reference{ __Reference_new_tuple((__Reference_Shared*)std::data(list), list.size()) } {}
 
-    Reference(__Reference_Owned const reference) :
+    Reference(__Reference const& reference) :
         reference{ reference } {}
-    Reference(__Reference_Shared const reference) :
-        reference{ __Reference_copy(reference) } {}
+    Reference(__Reference&& reference) :
+        reference{ reference } {}
 
     Reference(Reference const& reference) :
         reference{ __Reference_copy(reference) } {}
@@ -452,7 +451,7 @@ struct LambdaParameter<std::function<Reference()>> {
                 }
             };
             return __Function_eval(*__UnknownData_get_function(__Reference_get(arg)), expr);
-        };
+            };
     }
 };
 
@@ -469,7 +468,7 @@ public:
     protected:
 
         static void iterator(void* lambda) {
-            if (auto & f = static_cast<Lambda<R(Parameters...)>*>(lambda)->iterate)
+            if (auto& f = static_cast<Lambda<R(Parameters...)>*>(lambda)->iterate)
                 f();
         }
 
@@ -489,19 +488,19 @@ public:
         }
 
         template<typename U, size_t... I>
-        static U eval(std::function<U(Parameters...)> & f, [[maybe_unused]] __Reference_Shared args[], std::index_sequence<I...>) {
+        static U eval(std::function<U(Parameters...)>& f, [[maybe_unused]] __Reference_Shared args[], std::index_sequence<I...>) {
             return f(get_arg<Pair<I>>(args)...);
         }
 
     public:
 
         static bool _filter(__Reference_Owned capture[], __Reference_Shared args[]) {
-            if (auto & f = static_cast<Lambda<R(Parameters...)>*>(__Reference_get(__Reference_share(capture[0])).data.ptr)->filter)
+            if (auto& f = static_cast<Lambda<R(Parameters...)>*>(__Reference_get(__Reference_share(capture[0])).data.ptr)->filter)
                 return eval(f, args, std::make_index_sequence<sizeof...(Parameters)>{});
         }
 
         static __Reference_Owned _body(__Reference_Owned capture[], __Reference_Shared args[]) {
-            if (auto & f = *static_cast<Lambda<R(Parameters...)>*>(__Reference_get(__Reference_share(capture[0])).data.ptr))
+            if (auto& f = *static_cast<Lambda<R(Parameters...)>*>(__Reference_get(__Reference_share(capture[0])).data.ptr))
                 return eval(f, args, std::make_index_sequence<sizeof...(Parameters)>{});
         }
 
