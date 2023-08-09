@@ -12,6 +12,7 @@ extern "C" {
 
     typedef struct __GC_Element {
         struct __GC_Element* next;
+        __VirtualTable* vtable;
         bool iterated;
     } __GC_Element;
 

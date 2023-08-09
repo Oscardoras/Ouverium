@@ -13,7 +13,7 @@ __Reference_Owned __Reference_new_data(__UnknownData data) {
 }
 
 __Reference_Owned __Reference_new_symbol() {
-    __UnknownData* data = __GC_alloc_object(sizeof(__UnknownData));
+    __UnknownData* data = __GC_alloc_object(&__VirtualTable_UnknownData);
 
     __GC_Reference* reference = __GC_alloc_references(1);
     reference->type = SYMBOL;
@@ -71,7 +71,7 @@ __UnknownData __Reference_get(__Reference_Shared r) {
     case TUPLE: {
         __ArrayInfo array = {
             .vtable = &__VirtualTable_UnknownData,
-            .array = __GC_alloc_object(sizeof(__Array))
+            .array = __GC_alloc_object(&__VirtualTable_Array)
         };
         __Array_set_capacity(array, reference->tuple.size);
 

@@ -6,8 +6,6 @@
 __GC_Element* __GC_list;
 __GC_Roots* __GC_roots;
 
-void __GC_NULL_iterator(void*) {}
-
 void __GC_init(void) {
     __GC_list = NULL;
     __GC_roots = __GC_init_roots(ROOTS_CAPACITY);
@@ -68,18 +66,19 @@ void __GC_free_reference(__GC_Reference* reference) {
     roots->free_list = reference;
 }
 
-void* __GC_alloc_object(size_t size) {
-    __GC_Element* ptr = malloc(sizeof(__GC_Element) + size);
+void* __GC_alloc_object(__VirtualTable* vtable) {
+    __GC_Element* ptr = malloc(sizeof(__GC_Element) + vtable->size);
 
     if (ptr == NULL) {
         __GC_collect();
 
-        ptr = malloc(sizeof(__GC_Element) + size);
+        ptr = malloc(sizeof(__GC_Element) + vtable->size);
         if (ptr == NULL)
             return NULL;
     }
 
     ptr->next = __GC_list;
+    ptr->vtable = vtable;
     ptr->iterated = false;
     __GC_list = ptr;
     return ptr + 1;
@@ -89,7 +88,8 @@ void __GC_iterate(__GC_Iterator iterator, void* object) {
     __GC_Element* element = ((__GC_Element*)object) - 1;
 
     if (!element->iterated) {
-        iterator(object);
+        if (iterator != NULL)
+            iterator(object);
         element->iterated = true;
     }
 }
@@ -161,6 +161,8 @@ void __GC_collect(void) {
     for (ptr = &__GC_list; *ptr != NULL;) {
         if (!(*ptr)->iterated) {
             __GC_Element* next = (*ptr)->next;
+            if ((*ptr)->vtable->gc_destructor != NULL)
+                (*ptr)->vtable->gc_destructor(*ptr);
             free(*ptr);
             *ptr = next;
         }

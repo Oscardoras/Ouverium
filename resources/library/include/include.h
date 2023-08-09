@@ -15,7 +15,7 @@ extern "C" {
     */
     typedef void (*__GC_Iterator)(void*);
 
-    void __GC_NULL_iterator(void*);
+    typedef void (*__GC_Destructor)(void*);
 
     /**
      * Contains information about a data type.
@@ -23,6 +23,7 @@ extern "C" {
     typedef struct __VirtualTable {
         size_t size;
         __GC_Iterator gc_iterator;
+        __GC_Destructor gc_destructor;
         struct {
             struct __VirtualTable* vtable;
             size_t offset;
@@ -140,10 +141,10 @@ extern "C" {
 
     /**
      * Allocates a new object in the memory.
-     * @param the size in bytes of the object.
+     * @param vtable the vtable of the object.
      * @return a pointer to the object.
     */
-    void* __GC_alloc_object(size_t size);
+    void* __GC_alloc_object(__VirtualTable* vtable);
 
     /**
      * Iterates an object for the garbage collection.
@@ -323,10 +324,17 @@ extern "C" {
     */
 
     /**
-     * Creates a new Function.
+     * Creates a new function.
      * @return an empty function.
     */
     __Function __Function_new();
+
+    /**
+     * Copies a function.
+     * @param function the function to copy.
+     * @return a copy of the function.
+    */
+    __Function __Function_copy(__Function function);
 
     /**
      * Pushes a new implementation in a Function.
@@ -362,6 +370,7 @@ extern "C" {
 
     extern __VirtualTable __VirtualTable_UnknownData;
     extern __VirtualTable __VirtualTable_Array;
+    extern __VirtualTable __VirtualTable_Function;
     extern __VirtualTable __VirtualTable_Int;
     extern __VirtualTable __VirtualTable_Float;
     extern __VirtualTable __VirtualTable_Char;

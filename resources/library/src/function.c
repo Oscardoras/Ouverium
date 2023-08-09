@@ -7,6 +7,29 @@ __Function __Function_new() {
     return NULL;
 }
 
+__Function __Function_copy(__Function function) {
+    __Function cpy = NULL;
+
+    __FunctionCell* cell;
+    for (cell = function; cell != NULL; cell = cell->next) {
+        __FunctionCell* f = malloc(sizeof(__Function) + cell->captures.size * sizeof(__Reference_Owned));
+
+        f->next = cpy;
+        f->parameters = cell->parameters;
+        f->filter = cell->filter;
+        f->body = cell->body;
+        f->captures.size = cell->captures.size;
+
+        size_t i;
+        for (i = 0; i < cell->captures.size; ++i)
+            f->captures.tab[i] = __Reference_copy(__Reference_share(cell->captures.tab[i]));
+
+        cpy = f;
+    }
+
+    return cpy;
+}
+
 void __Function_push(__Function* function, const char *parameters, __FunctionBody body, __FunctionFilter filter, __Reference_Owned captures[], size_t captures_size) {
     __FunctionCell* f = malloc(sizeof(__Function) + captures_size * sizeof(__Reference_Owned));
 
@@ -72,15 +95,38 @@ __Reference_Owned __Function_execute(__Expression args) {
 
 bool __Function_parse(__Reference_Owned captures[], __Reference_Shared *vars, bool *owned, size_t* i, const char** params, __Expression args) {
     if (**params == 'r') {
-        if (args.type == __EXPRESSION_REFERENCE) {
-            vars[*i] = args.reference;
-            owned[*i] = false;
-        } else {
-            vars[*i] = (__Reference_Shared) __Function_execute(args);
+        ++(*params);
+
+        if (**params == '(') {
+            ++(*params);
+
+            union __Data data = {
+                .ptr = __GC_alloc_object(&__VirtualTable_Function)
+            };
+            vars[*i] = (__Reference_Shared) __Reference_new_data(__UnknownData_from_data(&__VirtualTable_Function, data));
             owned[*i] = true;
+
+            *((__Function*) data.ptr) = __Function_copy(args.lambda);
+        } else if (**params == '.') {
+            ++(*params);
+
+            union __Data data = {
+                .ptr = __GC_alloc_object(&__VirtualTable_Function)
+            };
+            vars[*i] = (__Reference_Shared) __Reference_new_data(__UnknownData_from_data(&__VirtualTable_Function, data));
+            owned[*i] = true;
+
+            *((__Function*) data.ptr) = __Function_copy(args.lambda);
+        } else {
+            if (args.type == __EXPRESSION_REFERENCE) {
+                vars[*i] = args.reference;
+                owned[*i] = false;
+            } else {
+                vars[*i] = (__Reference_Shared) __Function_execute(args);
+                owned[*i] = true;
+            }
         }
 
-        ++(*params);
         ++(*i);
         return true;
     } else if (**params == '(') {

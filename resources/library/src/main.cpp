@@ -2,7 +2,7 @@
 
 #include "include.hpp"
 
-int main(int argc, char** argv) {
+int main(int, char**) {
     __GC_init();
 
     __GC_end();

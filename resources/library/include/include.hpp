@@ -2,6 +2,7 @@
 #define __INCLUDE_HPP__
 
 #include <cstdint>
+#include <cstring>
 #include <functional>
 #include <string>
 #include <vector>
@@ -297,6 +298,8 @@ public:
 
     Reference(__Reference_Owned const reference) :
         reference{ reference } {}
+    Reference(__Reference_Shared const reference) :
+        reference{ __Reference_copy(reference) } {}
 
     Reference(Reference const& reference) :
         reference{ __Reference_copy(reference) } {}
@@ -405,88 +408,112 @@ public:
 
 };
 
-template<typename T>
-struct A;
+template<typename... Parameters>
+struct LambdaParameter {
+    static inline const std::string params = "";
+    static inline const std::string parameters = "";
+};
+
+template<typename Parameter0, typename Parameter1, typename... Parameters>
+struct LambdaParameter<Parameter0, Parameter1, Parameters...> {
+    static inline const std::string params = LambdaParameter<Parameter0>::params + "," + LambdaParameter<Parameter1, Parameters...>::params;
+    static inline const std::string parameters = "(" + params + ")";
+};
+
+template<>
+struct LambdaParameter<Reference> {
+    static inline const std::string params = "r";
+    static inline const std::string parameters = params;
+    static Reference get_arg(__Reference_Shared arg) {
+        return arg;
+    }
+};
+
+template<>
+struct LambdaParameter<UnknownData> {
+    static inline const std::string params = "r";
+    static inline const std::string parameters = params;
+    static UnknownData get_arg(__Reference_Shared arg) {
+        return __Reference_get(arg);
+    }
+};
+
+template<>
+struct LambdaParameter<std::function<Reference()>> {
+    static inline const std::string params = "r()";
+    static inline const std::string parameters = params;
+    static std::function<Reference()> get_arg(__Reference_Shared arg) {
+        return [arg]() -> Reference {
+            __Expression expr = {
+                .type = __Expression::__EXPRESSION_TUPLE,
+                .tuple = {
+                    .size = 0,
+                    .tab = nullptr
+                }
+            };
+            return __Function_eval(*__UnknownData_get_function(__Reference_get(arg)), expr);
+        };
+    }
+};
 
 class Function {
 
 public:
 
-    template<typename R, typename... Args>
+    template<typename R, typename... Parameters>
     class Lambda;
 
-    template<typename R, typename... Args>
-    class Lambda<R(Args...)> : public std::function<R(Args...)> {
+    template<typename R, typename... Parameters>
+    class Lambda<R(Parameters...)> : public std::function<R(Parameters...)> {
 
     protected:
 
-        template<size_t I, typename Arg>
-        struct Pair {
-            static constexpr size_t index = I;
-            using Type = Arg;
-        };
-
-        template<typename... T>
-        struct List : std::tuple<> {};
-
-        template<typename Pair, typename... Pairs>
-        struct List<Pair, Pairs...> : std::pair<Pair, List<Pairs...>> {};
-
-        template<size_t I, typename... As>
-        using Arguments = std::tuple<>;
-
-        template<size_t I, typename A, typename... As>
-        using Arguments = std::pair<Pair<I, A>, Arguments<I+1, As...>>;
-
-        template<typename Pair>
-        static Pair::Type get_arg(__Reference_Shared args[]) {
-            return args[Pair::index];
-        }
-
-        template<typename U, typename... Pairs>
-        static U eval(std::function<U(Pairs::Type...)> f, __Reference_Shared args[]) {
-            return f(get_arg<Pairs>(args)...);
-        }
-
-        static bool _filter(__Reference_Owned capture[], __Reference_Shared args[]) {
-            auto f = static_cast<Lambda<R(Args...)>*>(__Reference_get(__Reference_share(capture[0])).data.ptr)->filter;
-            if (f)
-                return eval(f, args, std::make_index_sequence<sizeof...(Args)>{});
-        }
-
-        static __Reference_Owned _body(__Reference_Owned capture[], __Reference_Shared args[]) {
-            auto f = static_cast<Lambda<R(Args...)>*>(__Reference_get(__Reference_share(capture[0])).data.ptr);
-            return eval(f, args, std::make_index_sequence<sizeof...(Args)>{});
-        }
-
         static void iterator(void* lambda) {
-            auto f = static_cast<Lambda<R(Args...)>*>(lambda)->iterate;
-            if (f)
+            if (auto & f = static_cast<Lambda<R(Parameters...)>*>(lambda)->iterate)
                 f();
         }
 
-        static __VirtualTable vtable;
+        static void destructor(void* lambda) {
+            static_cast<Lambda<R(Parameters...)>*>(lambda)->~Lambda();
+        }
+
+        template<size_t I>
+        struct Pair {
+            static constexpr std::tuple<Parameters...> tuple{};
+            using Type = decltype(std::get<I>(tuple));
+            static constexpr size_t Index = I;
+        };
+
+        template<typename P>
+        static typename P::Type get_arg(__Reference_Shared args[]) {
+            return get_arg<P::Type>(args[P::I]);
+        }
+
+        template<typename U, size_t... I>
+        static U eval(std::function<U(Parameters...)> & f, [[maybe_unused]] __Reference_Shared args[], std::index_sequence<I...>) {
+            return f(get_arg<Pair<I>>(args)...);
+        }
 
     public:
 
-        std::function<bool(Reference args[])> filter;
+        static bool _filter(__Reference_Owned capture[], __Reference_Shared args[]) {
+            if (auto & f = static_cast<Lambda<R(Parameters...)>*>(__Reference_get(__Reference_share(capture[0])).data.ptr)->filter)
+                return eval(f, args, std::make_index_sequence<sizeof...(Parameters)>{});
+        }
+
+        static __Reference_Owned _body(__Reference_Owned capture[], __Reference_Shared args[]) {
+            if (auto & f = *static_cast<Lambda<R(Parameters...)>*>(__Reference_get(__Reference_share(capture[0])).data.ptr))
+                return eval(f, args, std::make_index_sequence<sizeof...(Parameters)>{});
+        }
+
+        static __VirtualTable vtable;
+        static inline const std::string parameters = LambdaParameter<Parameters...>::parameters;
+
+        std::function<bool(Parameters...)> filter;
 
         std::function<void()> iterate;
 
-        using std::function<R(Args...)>::function;
-
-        __FunctionCell* new_function() {
-            auto cell = static_cast<__FunctionCell*>(malloc(sizeof(__FunctionCell) + sizeof(__Reference_Owned) + sizeof(Lambda)));
-
-            cell->next = nullptr;
-            cell->parameters = parameters;
-            cell->filter = _filter;
-            cell->body = _body;
-            cell->captures.size = 1;
-            cell->captures.tab[0] = Reference(UnknownData(&vtable, __Data{ .ptr = this }));
-
-            return cell;
-        }
+        using std::function<R(Parameters...)>::function;
 
     };
 
@@ -513,21 +540,16 @@ public:
 
     template<typename R, typename... Args>
     void push(Lambda<R(Args...)> const& lambda) {
-        auto f = lambda.new_function();
-        f->next = function;
-        function = f;
-    }
+        auto cell = static_cast<__FunctionCell*>(malloc(sizeof(__FunctionCell) + sizeof(__Reference_Owned)));
 
-    template<typename R, typename... Args>
-    void push(std::function<R(Args...)> function) {
-        Lambda lambda;
+        cell->next = function;
+        cell->parameters = Lambda<R(Args...)>::parameters.c_str();
+        cell->filter = &Lambda<R(Args...)>::_filter;
+        cell->body = &Lambda<R(Args...)>::_body;
+        cell->captures.size = 1;
+        cell->captures.tab[0] = Reference(UnknownData(&Lambda<R(Args...)>::vtable, __Data{ .ptr = new (__GC_alloc_object(&Lambda<R(Args...)>::vtable)) Lambda<R(Args...)>(lambda) }));
 
-        lambda = [function](Reference args[]) -> Reference {
-            std::initializer_list<Reference> list = { A<Args>::get_args(args)... };
-            return function(std::data(list));
-            };
-
-        push(lambda);
+        function = cell;
     }
 
     void pop() {
@@ -538,7 +560,7 @@ public:
         __Function_free(&function);
     }
 
-private:
+protected:
 
     template<typename... T>
     struct Tuple : public std::tuple<T...> {
@@ -553,11 +575,13 @@ private:
         };
     }
 
-    __Expression get_expression(Lambda& lambda) const {
-        return __Expression{
+    __Expression get_expression(Lambda<Reference()>& lambda) const {
+        auto expr = __Expression{
             .type = __Expression::__EXPRESSION_LAMBDA,
-            .lambda = lambda.new_function()
+            .lambda = NULL
         };
+        Function(expr.lambda).push(lambda);
+        return expr;
     }
 
     template<typename... T, size_t... I>
@@ -579,39 +603,23 @@ private:
 
 public:
 
-    template<typename... T>
-    Reference operator()(T&&... args) const {
-        return Reference(__Function_eval(function, get_expression(args)...));
+    template<typename... Args>
+    Reference operator()(Args&&... args) const {
+        return Reference(__Function_eval(function, get_expression(Tuple<Args...>{args...})));
+    }
+
+    template<typename Arg>
+    Reference operator()(Arg&& arg) const {
+        return Reference(__Function_eval(function, get_expression(arg)));
     }
 
 };
 
-template<>
-struct A<Reference> {
-    static Reference get_arg(Reference arg) {
-        return arg;
-    }
-};
-
-template<>
-struct A<UnknownData> {
-    static UnknownData get_arg(Reference arg) {
-        return arg;
-    }
-};
-
-template<>
-struct A<std::function<Reference()>> {
-    static std::function<Reference()> get_arg(Reference arg) {
-        return [arg]() -> Reference {
-            arg.
-            };
-    }
-};
-
-__VirtualTable Function::Lambda::vtable = {
-    .size = sizeof(Function::Lambda),
-    .gc_iterator = Function::Lambda::iterator,
+template<typename R, typename... Parameters>
+__VirtualTable Function::Lambda<R(Parameters...)>::vtable = {
+    .size = sizeof(Function::Lambda<R(Parameters...)>),
+    .gc_iterator = Function::Lambda<R(Parameters...)>::iterator,
+    .gc_destructor = Function::Lambda<R(Parameters...)>::destructor,
     .array = {
         .vtable = nullptr,
         .offset = 0
