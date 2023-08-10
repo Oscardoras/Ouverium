@@ -63,9 +63,38 @@ extern "C" {
 
     /**
      * References an UnknownData.
-     * It belongs to the owner of this object to free the reference with __Reference_free when it is no longer used.
+     * This object can only be used on the stack.
+     * It is created with the function __Reference_new and then must be deleted in the end of the scope with the function __Reference_free.
+     * An other option is to move it with __Reference_move to free the old reference and initialize the new one, for example at function return.
     */
-    typedef struct __Reference_t {} __Reference;
+    typedef struct __Reference {
+        enum {
+            NONE = 0,
+            DATA,
+            SYMBOL,
+            PROPERTY,
+            ARRAY,
+            TUPLE
+        } type;
+        union {
+            __UnknownData data;
+            __UnknownData* symbol;
+            struct {
+                __UnknownData parent;
+                __VirtualTable* virtual_table;
+                uint32_t hash;
+            } property;
+            struct {
+                __UnknownData array;
+                size_t i;
+            } array;
+            struct {
+                bool heap_allocation;
+                size_t size;
+                struct __Reference* tab;
+            } tuple;
+        };
+    } __Reference;
 
     /**
      * An array component to add in a type.
@@ -240,42 +269,52 @@ extern "C" {
     */
 
     /**
-     * Creates a new data reference.
-     * @param data the UnknownData to reference.
-     * @return a reference.
+     * Initializes a new data reference.
+     * @param reference the reference to initialize.
+     * @param data the data.
     */
-    __Reference __Reference_new_data(__UnknownData data);
+    void __Reference_new_data(__Reference* reference, __UnknownData data);
 
     /**
-     * Creates a new symbol reference ie. a reference to a variable containing a data.
-     * @return an owned reference.
+     * Initializes a new symbol reference ie. a reference to a variable containing a data.
+     * @param reference the reference to initialize.
+     * @param data the data.
     */
-    __Reference __Reference_new_symbol();
+    void __Reference_new_symbol(__Reference* reference, __UnknownData data);
 
     /**
-     * Creates a new property reference ie. a reference to the property of an object and that contains a data.
+     * Initializes a new property reference ie. a reference to the property of an object and that contains a data.
+     * @param reference the reference to initialize.
      * @param parent the object in which the property is.
      * @param virtual_table a virtual table of the property type.
      * @param hash the hash of the property.
-     * @return an owned reference.
     */
-    __Reference __Reference_new_property(__UnknownData parent, __VirtualTable* virtual_table, uint32_t hash);
+    void __Reference_new_property(__Reference* reference, __UnknownData parent, __VirtualTable* virtual_table, uint32_t hash);
 
     /**
-     * Creates a new array reference ie. a reference to a data inside an array.
+     * Initializes a new array reference ie. a reference to a data inside an array.
+     * @param reference the reference to initialize.
      * @param array the array.
      * @param i the index of the element in the array.
-     * @return an owned reference.
     */
-    __Reference __Reference_new_array(__UnknownData array, size_t i);
+    void __Reference_new_array(__Reference* reference,__UnknownData array, size_t i);
 
     /**
-     * Creates a new tuple reference ie. a list of references.
-     * @param references references that will be copied in the tuple.
+     * Initializes a new tuple reference ie. a list of references.
+     * @param reference the reference to initialize.
+     * @param references the references contained in the tuple, they must be on the stack.
      * @param size the size of the tuple.
-     * @return an owned reference.
     */
-    __Reference __Reference_new_tuple(__Reference references[], size_t references_size);
+    void __Reference_new_tuple(__Reference* reference, __Reference references[], size_t references_size);
+
+    /**
+     * Initializes a new reference by moving an old one.
+     * This functions need to be called when getting a reference as the return of a function.
+     * @param reference the reference to initialize.
+     * @param old the old reference that will be free during the process.
+     * @return a Reference.
+    */
+    void __Reference_new_from(__Reference* reference, __Reference old);
 
     /**
      * Gets the UnknownData referenced by a reference.
@@ -300,18 +339,16 @@ extern "C" {
     size_t __Reference_get_size(__Reference reference);
 
     /**
-     * Moves a reference.
-     * This functions need to be called when returning a reference from a function
+     * Moves a reference for function return.
      * @param reference the reference.
-     * @return a Reference.
     */
-    __Reference __Reference_move(__Reference reference);
+    __Reference __Reference_move(__Reference* reference);
 
     /**
-     * Frees a reference when it has been used.
-     * @param reference an reference.
+     * Frees the reference.
+     * @param reference the reference.
     */
-    void __Reference_free(__Reference reference);
+    void __Reference_free(__Reference* reference);
 
     /**
      * Function

@@ -13,6 +13,7 @@
 
 class ArrayInfo;
 class UnknownData;
+template<typename T = UnknownData>
 class Reference;
 class Function;
 
@@ -277,39 +278,47 @@ public:
 
 };
 
-template<typename T = UnknownData>
-class Reference : protected __Reference {
+template<typename T>
+class Reference final : protected __Reference {
 
 public:
 
     Reference() = delete;
 
-    Reference(UnknownData const& data) :
-        reference{ __Reference_new_data(data) } {}
-    Reference() :
-        reference{ __Reference_new_symbol() } {}
-    Reference(UnknownData const& parent, __VirtualTable* const virtual_table, uint32_t const hash) :
-        reference{ __Reference_new_property(parent, virtual_table, property) } {}
-    Reference(UnknownData const& array, size_t const i) :
-        reference{ __Reference_new_array(array, i) } {}
-    Reference(std::initializer_list<Reference> const& list) :
-        reference{ __Reference_new_tuple((__Reference_Shared*)std::data(list), list.size()) } {}
+    Reference(T const& data) {
+        __Reference_new_data(this, UnknownData(data));
+    }
+    static Reference new_symbol(T const& data) {
+        Reference r{UnknownData(nullptr, nullptr)};
+        __Reference_new_symbol(r, UnknownData(data));
+        return r;
+    }
+    Reference(UnknownData const& parent, __VirtualTable* const vtable, uint32_t const hash) {
+        __Reference_new_property(this, parent, vtable, hash);
+    }
+    Reference(UnknownData const& array, size_t const i) {
+        __Reference_new_array(this, array, i);
+    }
+    Reference(std::initializer_list<Reference> const& list) {
+        __Reference_new_tuple(this, std::data(list), list.size());
+    }
 
-    Reference(__Reference const& reference) :
-        reference{ reference } {}
-    Reference(__Reference&& reference) :
-        reference{ reference } {}
+    Reference(__Reference const& reference) {
+        __Reference_new_from(this, reference);
+    }
+    Reference(__Reference&& reference) {
+        __Reference_new_from(this, __Reference_move(&reference));
+    }
 
-    Reference(Reference const& reference) :
-        reference{ __Reference_copy(reference) } {}
-    Reference(Reference&& reference) :
-        reference{ reference.reference } {
-        reference.reference = nullptr;
+    Reference(Reference const& reference) {
+        __Reference_new_from(this, reference);
+    }
+    Reference(Reference&& reference) {
+        __Reference_new_from(this, __Reference_move(&reference));
     }
 
     ~Reference() {
-        if (reference != nullptr)
-            __Reference_free((__Reference_Owned)reference);
+        __Reference_free(this);
     }
 
     Reference& operator=(Reference const& reference) {

@@ -2,7 +2,7 @@
 #include "include.h"
 
 
-__Reference_Owned __system_function_separator_body(__Reference_Owned capture[], __Reference_Shared args[]) {
+__Reference __system_function_separator_body(__Reference capture[], __Reference args[]) {
     return __Reference_get_element(args[0], __Reference_get_size(args[0])-1);
 }
 

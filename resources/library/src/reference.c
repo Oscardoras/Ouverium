@@ -1,79 +1,76 @@
+#include <stdlib.h>
 #include <string.h>
 
 #include "include.h"
 #include "gc.h"
 
 
-__Reference_Owned __Reference_new_data(__UnknownData data) {
-    __GC_Reference* reference = __GC_alloc_references(1);
+void __Reference_new_data(__Reference* reference, __UnknownData data) {
     reference->type = DATA;
     reference->data = data;
 
-    return (__Reference_Owned)reference;
+    __GC_add_reference(reference);
 }
 
-__Reference_Owned __Reference_new_symbol() {
-    __UnknownData* data = __GC_alloc_object(&__VirtualTable_UnknownData);
-
-    __GC_Reference* reference = __GC_alloc_references(1);
+void __Reference_new_symbol(__Reference* reference, __UnknownData data) {
     reference->type = SYMBOL;
-    reference->symbol = data;
+    reference->symbol = malloc(__VirtualTable_UnknownData.size);
 
-    return (__Reference_Owned)reference;
+    *reference->symbol = data;
+
+    __GC_add_reference(reference);
 }
 
-__Reference_Owned __Reference_new_property(__UnknownData parent, __VirtualTable* virtual_table, void* property) {
-    __GC_Reference* reference = __GC_alloc_references(1);
+void __Reference_new_property(__Reference* reference, __UnknownData parent, __VirtualTable* virtual_table, uint32_t hash) {
     reference->type = PROPERTY;
     reference->property.parent = parent;
     reference->property.virtual_table = virtual_table;
-    reference->property.property = property;
+    reference->property.hash = hash;
 
-    return (__Reference_Owned)reference;
+    __GC_add_reference(reference);
 }
 
-__Reference_Owned __Reference_new_array(__UnknownData array, size_t i) {
-    __GC_Reference* reference = __GC_alloc_references(1);
+void __Reference_new_array(__Reference* reference, __UnknownData array, size_t i) {
     reference->type = PROPERTY;
     reference->array.array = array;
     reference->array.i = i;
 
-    return (__Reference_Owned)reference;
+    __GC_add_reference(reference);
 }
 
-__Reference_Owned __Reference_new_tuple(__Reference_Shared references[], size_t references_size) {
-    __GC_Reference* reference = __GC_alloc_references(1);
+void __Reference_new_tuple(__Reference* reference, __Reference references[], size_t references_size) {
     reference->type = TUPLE;
-    reference->tuple.references = __GC_alloc_references(references_size);
+    reference->tuple.heap_allocation = false;
     reference->tuple.size = references_size;
+    reference->tuple.tab = references;
 
-    size_t i;
-    for (i = 0; i < references_size; i++)
-        reference->tuple.references[i] = *((__GC_Reference*) references[i]);
-
-    return (__Reference_Owned)reference;
+    __GC_add_reference(reference);
 }
 
-__UnknownData __Reference_get(__Reference_Shared r) {
-    __GC_Reference* reference = (__GC_Reference*)r;
+void __Reference_new_from(__Reference* reference, __Reference old) {
+    *reference = old;
 
-    switch (reference->type) {
+    __GC_add_reference(reference);
+}
+
+__UnknownData __Reference_get(__Reference reference) {
+    switch (reference.type) {
     case DATA:
-        return reference->data;
+        return reference.data;
     case SYMBOL:
-        return *reference->symbol;
+        return *reference.symbol;
     case PROPERTY:
-        return __UnknownData_from_ptr(reference->property.virtual_table, reference->property.property);
+        return __UnknownData_from_ptr(reference.property.virtual_table, __UnknownData_get_property(reference.property.parent, reference.property.hash));
     case ARRAY: {
-        __ArrayInfo array = __UnknownData_get_array(reference->array.array);
-        return  __UnknownData_from_ptr(array.vtable, __Array_get(array, reference->array.i));
+        __ArrayInfo array = __UnknownData_get_array(reference.array.array);
+        return  __UnknownData_from_ptr(array.vtable, __Array_get(array, reference.array.i));
     }
     case TUPLE: {
         __ArrayInfo array = {
             .vtable = &__VirtualTable_UnknownData,
             .array = __GC_alloc_object(&__VirtualTable_Array)
         };
-        __Array_set_capacity(array, reference->tuple.size);
+        __Array_set_capacity(array, reference.tuple.size);
 
         __UnknownData data = {
             .virtual_table = &__VirtualTable_Array,
@@ -91,53 +88,57 @@ __UnknownData __Reference_get(__Reference_Shared r) {
     }
 }
 
-__Reference_Owned __Reference_get_element(__Reference_Shared r, size_t i) {
-    __GC_Reference* reference = (__GC_Reference*)r;
-
-    if (reference->type == TUPLE) {
-        return __Reference_copy(__Reference_share(&reference->tuple.references[i]));
+__Reference __Reference_get_element(__Reference reference, size_t i) {
+    if (reference.type == TUPLE) {
+        return reference.tuple.tab[i];
     }
     else {
-        __UnknownData data = __Reference_get(__Reference_share(reference));
-        return __Reference_new_array(data, i);
+        __UnknownData data = __Reference_get(reference);
+        __Reference r;
+        __Reference_new_array(&r, data, i);
+        return r;
     }
 }
 
-size_t __Reference_get_size(__Reference_Shared r) {
-    __GC_Reference* reference = (__GC_Reference*)r;
-
-    if (reference->type == TUPLE) {
-        return reference->tuple.size;
+size_t __Reference_get_size(__Reference reference) {
+    if (reference.type == TUPLE) {
+        return reference.tuple.size;
     }
     else {
-        __UnknownData data = __Reference_get(__Reference_share(reference));
+        __UnknownData data = __Reference_get(reference);
         __ArrayInfo array = __UnknownData_get_array(data);
         return array.array->size;
     }
 }
 
-__Reference_Owned __Reference_copy(__Reference_Shared r) {
-    __GC_Reference* reference = (__GC_Reference*)r;
+void __Reference_move_data(__Reference* dest, __Reference* src) {
+    *dest = *src;
 
-    __GC_Reference* new_reference = __GC_alloc_references(1);
-    *new_reference = *reference;
-
-    if (new_reference->type == TUPLE) {
-        new_reference->tuple.references = __GC_alloc_references(new_reference->tuple.size);
-        memcpy(new_reference->tuple.references, reference->tuple.references, sizeof(__GC_Reference) * new_reference->tuple.size);
+    if (src->type == TUPLE && !src->tuple.heap_allocation) {
+        dest->tuple.tab = malloc(sizeof(__Reference) * src->tuple.size);
+        size_t i;
+        for (i = 0; i < src->tuple.size; ++i)
+            __Reference_move_data(&dest->tuple.tab[i], &src->tuple.tab[i]);
     }
-
-    return (__Reference_Owned)new_reference;
 }
 
-void __Reference_free(__Reference_Owned r) {
-    __GC_Reference* reference = (__GC_Reference*)r;
+__Reference __Reference_move(__Reference* reference) {
+    __Reference r;
+    __Reference_move_data(&r, reference);
+    __GC_move_reference(reference);
+    return r;
+}
 
-    if (reference->type == TUPLE) {
+void __Reference_free_data(__Reference* reference) {
+    if (reference->type == TUPLE && reference->tuple.heap_allocation) {
         size_t i;
-        for (i = 0; i < reference->tuple.size; i++)
-            __Reference_free((__Reference_Owned)reference->tuple.references + i);
+        for (i = 0; i < reference->tuple.size; ++i)
+            __Reference_free_data(&reference->tuple.tab[i]);
+        free(reference->tuple.tab);
     }
+}
 
-    __GC_free_reference(reference);
+void __Reference_free(__Reference* reference) {
+    __GC_remove_reference(reference);
+    __Reference_free_data(reference);
 }
