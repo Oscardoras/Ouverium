@@ -1,7 +1,6 @@
 #ifndef __INCLUDE_HPP__
 #define __INCLUDE_HPP__
 
-#include <cstdint>
 #include <cstring>
 #include <functional>
 #include <string>
@@ -70,19 +69,19 @@ public:
             array{ array }, i{ i } {}
 
         size_t operator++() {
-            return i++;
-        }
-
-        size_t operator++(int) {
             return ++i;
         }
 
+        size_t operator++(int) {
+            return i++;
+        }
+
         size_t operator--() {
-            return i--;
+            return --i;
         }
 
         size_t operator--(int) {
-            return --i;
+            return i--;
         }
 
         bool operator==(iterator const& it) const {
@@ -160,19 +159,19 @@ public:
             array{ array }, i{ i } {}
 
         size_t operator++() {
-            return i++;
-        }
-
-        size_t operator++(int) {
             return ++i;
         }
 
+        size_t operator++(int) {
+            return i++;
+        }
+
         size_t operator--() {
-            return i--;
+            return --i;
         }
 
         size_t operator--(int) {
-            return --i;
+            return i--;
         }
 
         bool operator==(iterator const& it) const {
@@ -287,10 +286,11 @@ public:
 
     Reference(UnknownData const& data) :
         reference{ __Reference_new_data(data) } {}
-    Reference() :
-        reference{ __Reference_new_symbol() } {}
-    Reference(UnknownData const& parent, __VirtualTable* const virtual_table, void* const property) :
-        reference{ __Reference_new_property(parent, virtual_table, property) } {}
+    static Reference new_symbol(UnknownData const& data) {
+        return __Reference_new_symbol(data);
+    }
+    Reference(UnknownData const& parent, __VirtualTable* const virtual_table, unsigned int const hash) :
+        reference{ __Reference_new_property(parent, virtual_table, hash) } {}
     Reference(UnknownData const& array, size_t const i) :
         reference{ __Reference_new_array(array, i) } {}
     Reference(std::initializer_list<Reference> const& list) :
@@ -369,19 +369,19 @@ public:
             reference{ reference }, i{ i } {}
 
         size_t operator++() {
-            return i++;
-        }
-
-        size_t operator++(int) {
             return ++i;
         }
 
+        size_t operator++(int) {
+            return i++;
+        }
+
         size_t operator--() {
-            return i--;
+            return --i;
         }
 
         size_t operator--(int) {
-            return --i;
+            return i--;
         }
 
         bool operator==(iterator const& it) const {
@@ -452,7 +452,7 @@ struct LambdaParameter<std::function<Reference()>> {
                 }
             };
             return __Function_eval(*__UnknownData_get_function(__Reference_get(arg)), expr);
-        };
+            };
     }
 };
 
@@ -469,7 +469,7 @@ public:
     protected:
 
         static void iterator(void* lambda) {
-            if (auto & f = static_cast<Lambda<R(Parameters...)>*>(lambda)->iterate)
+            if (auto& f = static_cast<Lambda<R(Parameters...)>*>(lambda)->iterate)
                 f();
         }
 
@@ -489,19 +489,19 @@ public:
         }
 
         template<typename U, size_t... I>
-        static U eval(std::function<U(Parameters...)> & f, [[maybe_unused]] __Reference_Shared args[], std::index_sequence<I...>) {
+        static U eval(std::function<U(Parameters...)>& f, [[maybe_unused]] __Reference_Shared args[], std::index_sequence<I...>) {
             return f(get_arg<Pair<I>>(args)...);
         }
 
     public:
 
         static bool _filter(__Reference_Owned capture[], __Reference_Shared args[]) {
-            if (auto & f = static_cast<Lambda<R(Parameters...)>*>(__Reference_get(__Reference_share(capture[0])).data.ptr)->filter)
+            if (auto& f = static_cast<Lambda<R(Parameters...)>*>(__Reference_get(__Reference_share(capture[0])).data.ptr)->filter)
                 return eval(f, args, std::make_index_sequence<sizeof...(Parameters)>{});
         }
 
         static __Reference_Owned _body(__Reference_Owned capture[], __Reference_Shared args[]) {
-            if (auto & f = *static_cast<Lambda<R(Parameters...)>*>(__Reference_get(__Reference_share(capture[0])).data.ptr))
+            if (auto& f = *static_cast<Lambda<R(Parameters...)>*>(__Reference_get(__Reference_share(capture[0])).data.ptr))
                 return eval(f, args, std::make_index_sequence<sizeof...(Parameters)>{});
         }
 
@@ -539,16 +539,9 @@ public:
 
     template<typename R, typename... Args>
     void push(Lambda<R(Args...)> const& lambda) {
-        auto cell = static_cast<__FunctionCell*>(malloc(sizeof(__FunctionCell) + sizeof(__Reference_Owned)));
+        Reference r(UnknownData(&Lambda<R(Args...)>::vtable, __Data{ .ptr = new (__GC_alloc_object(&Lambda<R(Args...)>::vtable)) Lambda<R(Args...)>(lambda) }));
 
-        cell->next = function;
-        cell->parameters = Lambda<R(Args...)>::parameters.c_str();
-        cell->filter = &Lambda<R(Args...)>::_filter;
-        cell->body = &Lambda<R(Args...)>::_body;
-        cell->captures.size = 1;
-        cell->captures.tab[0] = Reference(UnknownData(&Lambda<R(Args...)>::vtable, __Data{ .ptr = new (__GC_alloc_object(&Lambda<R(Args...)>::vtable)) Lambda<R(Args...)>(lambda) }));
-
-        function = cell;
+        return __Function_push(&function, Lambda<R(Args...)>::parameters.c_str(), &Lambda<R(Args...)>::_body, &Lambda<R(Args...)>::_filter, (__Reference_Owned*)&r, 1);
     }
 
     void pop() {

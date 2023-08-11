@@ -3,7 +3,6 @@
 
 #include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h>
 
 
 #ifdef __cplusplus
@@ -35,7 +34,7 @@ extern "C" {
         struct {
             size_t size;
             struct __VirtualTable_Element {
-                uint32_t hash;
+                unsigned int hash;
                 union {
                     size_t offset;
                     void (*ptr)();
@@ -93,6 +92,26 @@ extern "C" {
     typedef bool (*__FunctionFilter)(__Reference_Owned capture[], __Reference_Shared args[]);
     typedef __Reference_Owned(*__FunctionBody)(__Reference_Owned capture[], __Reference_Shared args[]);
 
+    struct __FunctionCapture {
+        enum {
+            __FUNCTIONCAPTURE_SYMBOL,
+            __FUNCTIONCAPTURE_PROPERTY,
+            __FUNCTIONCAPTURE_ARRAY
+        } type;
+        union {
+            __UnknownData* symbol;
+            struct {
+                __UnknownData parent;
+                __VirtualTable* virtual_table;
+                unsigned int hash;
+            } property;
+            struct {
+                __UnknownData array;
+                size_t i;
+            } array;
+        };
+    };
+
     typedef struct __FunctionCell {
         struct __FunctionCell* next;
         const char* parameters;
@@ -100,7 +119,7 @@ extern "C" {
         __FunctionBody body;
         struct {
             unsigned short size;
-            __Reference_Owned tab[];
+            struct __FunctionCapture tab[];
         } captures;
     } __FunctionCell;
 
@@ -118,7 +137,7 @@ extern "C" {
         union {
             struct {
                 size_t size;
-                struct __Expression *tab;
+                struct __Expression* tab;
             } tuple;
             __Reference_Shared reference;
             __Function lambda;
@@ -254,18 +273,19 @@ extern "C" {
 
     /**
      * Creates a new symbol reference ie. a reference to a variable containing a data.
+     * @param data the UnknownData to reference.
      * @return an owned reference.
     */
-    __Reference_Owned __Reference_new_symbol();
+    __Reference_Owned __Reference_new_symbol(__UnknownData data);
 
     /**
      * Creates a new property reference ie. a reference to the property of an object and that contains a data.
      * @param parent the object in which the property is.
      * @param virtual_table a virtual table of the property type.
-     * @param property a pointer to the property.
+     * @param hash the hash of the property.
      * @return an owned reference.
     */
-    __Reference_Owned __Reference_new_property(__UnknownData parent, __VirtualTable* virtual_table, void* property);
+    __Reference_Owned __Reference_new_property(__UnknownData parent, __VirtualTable* virtual_table, unsigned int hash);
 
     /**
      * Creates a new array reference ie. a reference to a data inside an array.
@@ -352,7 +372,7 @@ extern "C" {
      * @param references a array of the references used by the function.
      * @param references_size the number of references.
     */
-    void __Function_push(__Function* function, const char *parameters, __FunctionBody body, __FunctionFilter filter, __Reference_Owned references[], size_t references_size);
+    void __Function_push(__Function* function, const char* parameters, __FunctionBody body, __FunctionFilter filter, __Reference_Owned references[], size_t references_size);
 
     /**
      * Pops the last implementation from a Function.

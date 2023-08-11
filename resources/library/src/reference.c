@@ -12,22 +12,23 @@ __Reference_Owned __Reference_new_data(__UnknownData data) {
     return (__Reference_Owned)reference;
 }
 
-__Reference_Owned __Reference_new_symbol() {
-    __UnknownData* data = __GC_alloc_object(&__VirtualTable_UnknownData);
+__Reference_Owned __Reference_new_symbol(__UnknownData data) {
+    __UnknownData* d = __GC_alloc_object(&__VirtualTable_UnknownData);
+    *d = data;
 
     __GC_Reference* reference = __GC_alloc_references(1);
     reference->type = SYMBOL;
-    reference->symbol = data;
+    reference->symbol = d;
 
     return (__Reference_Owned)reference;
 }
 
-__Reference_Owned __Reference_new_property(__UnknownData parent, __VirtualTable* virtual_table, void* property) {
+__Reference_Owned __Reference_new_property(__UnknownData parent, __VirtualTable* virtual_table, unsigned int hash) {
     __GC_Reference* reference = __GC_alloc_references(1);
     reference->type = PROPERTY;
     reference->property.parent = parent;
     reference->property.virtual_table = virtual_table;
-    reference->property.property = property;
+    reference->property.hash = hash;
 
     return (__Reference_Owned)reference;
 }
@@ -49,7 +50,7 @@ __Reference_Owned __Reference_new_tuple(__Reference_Shared references[], size_t 
 
     size_t i;
     for (i = 0; i < references_size; i++)
-        reference->tuple.references[i] = *((__GC_Reference*) references[i]);
+        reference->tuple.references[i] = *((__GC_Reference*)references[i]);
 
     return (__Reference_Owned)reference;
 }
@@ -63,7 +64,7 @@ __UnknownData __Reference_get(__Reference_Shared r) {
     case SYMBOL:
         return *reference->symbol;
     case PROPERTY:
-        return __UnknownData_from_ptr(reference->property.virtual_table, reference->property.property);
+        return __UnknownData_from_ptr(reference->property.virtual_table, __UnknownData_get_property(reference->property.parent, reference->property.hash));
     case ARRAY: {
         __ArrayInfo array = __UnknownData_get_array(reference->array.array);
         return  __UnknownData_from_ptr(array.vtable, __Array_get(array, reference->array.i));
@@ -73,7 +74,11 @@ __UnknownData __Reference_get(__Reference_Shared r) {
             .vtable = &__VirtualTable_UnknownData,
             .array = __GC_alloc_object(&__VirtualTable_Array)
         };
-        __Array_set_capacity(array, reference->tuple.size);
+        *array.array = __Array_new(&__VirtualTable_UnknownData, reference->tuple.size);
+
+        size_t i;
+        for (i = 0; i < reference->tuple.size; ++i)
+            *((__UnknownData*)__Array_get(array, i)) = __Reference_get((__Reference_Shared)&reference->tuple.references[i]);
 
         __UnknownData data = {
             .virtual_table = &__VirtualTable_Array,

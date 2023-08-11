@@ -40,7 +40,8 @@ void __Array_set_capacity(__ArrayInfo array, size_t capacity) {
             free(array.array->tab);
             array.array->tab = NULL;
         }
-    } else
+    }
+    else
         array.array->tab = calloc(capacity, array.vtable->size);
     array.array->capacity = capacity;
 }

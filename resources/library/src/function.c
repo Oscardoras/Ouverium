@@ -1,7 +1,68 @@
 #include <stdlib.h>
 
+#include "hash_string.h"
 #include "include.h"
+#include "gc.h"
 
+
+struct __FunctionCapture __GC_reference_to_capture(__GC_Reference* reference) {
+    struct __FunctionCapture capture;
+
+    switch (reference->type) {
+    case DATA:
+        __UnknownData* d = __GC_alloc_object(&__VirtualTable_UnknownData);
+        *d = reference->data;
+
+        capture.type = __FUNCTIONCAPTURE_SYMBOL;
+        capture.symbol = d;
+        break;
+    case SYMBOL:
+        capture.type = __FUNCTIONCAPTURE_SYMBOL;
+        capture.symbol = reference->symbol;
+        break;
+    case PROPERTY:
+        capture.type = __FUNCTIONCAPTURE_PROPERTY;
+        capture.property.parent = reference->property.parent;
+        capture.property.virtual_table = reference->property.virtual_table;
+        capture.property.hash = reference->property.hash;
+        break;
+    case ARRAY: {
+        capture.type = __FUNCTIONCAPTURE_ARRAY;
+        capture.array.array = reference->array.array;
+        capture.array.i = reference->array.i;
+        break;
+    }
+    case TUPLE: {
+        __UnknownData* d = __GC_alloc_object(&__VirtualTable_UnknownData);
+        *d = __Reference_get((__Reference_Shared)reference);
+
+        capture.type = __FUNCTIONCAPTURE_SYMBOL;
+        capture.symbol = d;
+        break;
+    }
+    default:
+        break;
+    }
+
+    return capture;
+}
+
+__Reference_Owned __GC_capture_to_reference(struct __FunctionCapture capture) {
+    switch (capture.type) {
+    case __FUNCTIONCAPTURE_SYMBOL:
+        __GC_Reference* reference = __GC_alloc_references(1);
+        reference->type = SYMBOL;
+        reference->symbol = capture.symbol;
+
+        return (__Reference_Owned)reference;
+    case __FUNCTIONCAPTURE_PROPERTY:
+        return __Reference_new_property(capture.property.parent, capture.property.virtual_table, capture.property.hash);
+    case __FUNCTIONCAPTURE_ARRAY:
+        return __Reference_new_array(capture.array.array, capture.array.i);
+    default:
+        return NULL;
+    }
+}
 
 __Function __Function_new() {
     return NULL;
@@ -22,7 +83,7 @@ __Function __Function_copy(__Function function) {
 
         size_t i;
         for (i = 0; i < cell->captures.size; ++i)
-            f->captures.tab[i] = __Reference_copy(__Reference_share(cell->captures.tab[i]));
+            f->captures.tab[i] = cell->captures.tab[i];
 
         cpy = f;
     }
@@ -30,7 +91,7 @@ __Function __Function_copy(__Function function) {
     return cpy;
 }
 
-void __Function_push(__Function* function, const char *parameters, __FunctionBody body, __FunctionFilter filter, __Reference_Owned captures[], size_t captures_size) {
+void __Function_push(__Function* function, const char* parameters, __FunctionBody body, __FunctionFilter filter, __Reference_Owned captures[], size_t captures_size) {
     __FunctionCell* f = malloc(sizeof(__Function) + captures_size * sizeof(__Reference_Owned));
 
     f->next = *function;
@@ -41,7 +102,7 @@ void __Function_push(__Function* function, const char *parameters, __FunctionBod
 
     size_t i;
     for (i = 0; i < captures_size; ++i)
-        f->captures.tab[i] = captures[i];
+        f->captures.tab[i] = __GC_reference_to_capture((__GC_Reference*)captures[i]);
 
     *function = f;
 }
@@ -49,10 +110,6 @@ void __Function_push(__Function* function, const char *parameters, __FunctionBod
 void __Function_pop(__Function* function) {
     __FunctionCell* f = *function;
     __FunctionCell* next = f->next;
-
-    size_t i;
-    for (i = 0; i < f->captures.size; ++i)
-        __Reference_free(f->captures.tab[i]);
 
     free(*function);
 
@@ -73,7 +130,7 @@ __Reference_Owned __Function_execute(__Expression args) {
         for (i = 0; i < args.tuple.size; ++i)
             ref[i] = __Function_execute(args.tuple.tab[i]);
 
-        __Reference_Owned r = __Reference_new_tuple((__Reference_Shared*) ref, args.tuple.size);
+        __Reference_Owned r = __Reference_new_tuple((__Reference_Shared*)ref, args.tuple.size);
 
         for (i = 0; i < args.tuple.size; ++i)
             __Reference_free(ref[i]);
@@ -93,7 +150,7 @@ __Reference_Owned __Function_execute(__Expression args) {
     }
 }
 
-bool __Function_parse(__Reference_Owned captures[], __Reference_Shared *vars, bool *owned, size_t* i, const char** params, __Expression args) {
+bool __Function_parse(__Reference_Owned captures[], __Reference_Shared* vars, bool* owned, size_t* i, const char** params, __Expression args) {
     if (**params == 'r') {
         ++(*params);
 
@@ -103,33 +160,45 @@ bool __Function_parse(__Reference_Owned captures[], __Reference_Shared *vars, bo
             union __Data data = {
                 .ptr = __GC_alloc_object(&__VirtualTable_Function)
             };
-            vars[*i] = (__Reference_Shared) __Reference_new_data(__UnknownData_from_data(&__VirtualTable_Function, data));
+            vars[*i] = (__Reference_Shared)__Reference_new_data(__UnknownData_from_data(&__VirtualTable_Function, data));
             owned[*i] = true;
 
-            *((__Function*) data.ptr) = __Function_copy(args.lambda);
-        } else if (**params == '.') {
+            *((__Function*)data.ptr) = __Function_copy(args.lambda);
+        }
+        else if (**params == '.') {
             ++(*params);
 
-            union __Data data = {
-                .ptr = __GC_alloc_object(&__VirtualTable_Function)
-            };
-            vars[*i] = (__Reference_Shared) __Reference_new_data(__UnknownData_from_data(&__VirtualTable_Function, data));
-            owned[*i] = true;
+            unsigned int n = 0;
+            do {
+                n *= 10;
+                n += **params - '0';
+                ++(*params);
+            } while ('0' < **params && **params > '9');
 
-            *((__Function*) data.ptr) = __Function_copy(args.lambda);
-        } else {
+            __Function* f = __UnknownData_get_function(__Reference_get(__Reference_share(captures[n])));
+            __GC_Reference* r = (__GC_Reference*)__Function_eval(*f, args);
+
+            if (r->type == PROPERTY && (r->property.hash == n || n == hash("."))) {
+                vars[*i] = (__Reference_Shared)__Reference_new_data(r->property.parent);
+                owned[*i] = true;
+            }
+            else return false;
+        }
+        else {
             if (args.type == __EXPRESSION_REFERENCE) {
                 vars[*i] = args.reference;
                 owned[*i] = false;
-            } else {
-                vars[*i] = (__Reference_Shared) __Function_execute(args);
+            }
+            else {
+                vars[*i] = (__Reference_Shared)__Function_execute(args);
                 owned[*i] = true;
             }
         }
 
         ++(*i);
         return true;
-    } else if (**params == '(') {
+    }
+    else if (**params == '(') {
         size_t j = 0;
         size_t size;
 
@@ -173,9 +242,11 @@ bool __Function_parse(__Reference_Owned captures[], __Reference_Shared *vars, bo
         if (**params == ')' && j == size) {
             ++(*params);
             return true;
-        } else
+        }
+        else
             return false;
-    } else if ('0' < **params && **params > '9') {
+    }
+    else if ('0' < **params && **params > '9') {
         size_t n = 0;
         do {
             n *= 10;
@@ -212,7 +283,7 @@ __Reference_Owned __Function_eval(__Function function, __Expression args) {
 
         for (i = 0; i < size; ++i)
             if (owned[i])
-                __Reference_free((__Reference_Owned) vars[i]);
+                __Reference_free((__Reference_Owned)vars[i]);
 
         if (ref != NULL)
             return ref;
@@ -227,8 +298,10 @@ void __VirtualTable_Function_gc_iterator(void* ptr) {
     for (f = *((__Function*)ptr); f != NULL; f = f->next) {
         size_t i;
         for (i = 0; i < f->captures.size; ++i) {
-            __UnknownData data = __Reference_get(__Reference_share(f->captures.tab[i]));
+            __Reference_Owned ref = __GC_capture_to_reference(f->captures.tab[i]);
+            __UnknownData data = __Reference_get(__Reference_share(ref));
             __VirtualTable_UnknownData.gc_iterator(&data);
+            __Reference_free(ref);
         }
     }
 }

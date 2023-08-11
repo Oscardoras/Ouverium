@@ -3,11 +3,13 @@
 
 
 __Reference_Owned __system_function_separator_body(__Reference_Owned capture[], __Reference_Shared args[]) {
-    return __Reference_get_element(args[0], __Reference_get_size(args[0])-1);
+    (void)(capture);
+    return __Reference_get_element(args[0], __Reference_get_size(args[0]) - 1);
 }
 
 __FunctionCell __system_function_separator = {
     .next = NULL,
+    .parameters = "r",
     .filter = NULL,
     .body = __system_function_separator_body,
     .captures = {
@@ -16,6 +18,7 @@ __FunctionCell __system_function_separator = {
 };
 
 bool __system_function_copy_filter(__Reference_Owned capture[], __Reference_Shared args[]) {
+    (void)(capture);
     __VirtualTable* vtable = __Reference_get(args[0]).virtual_table;
 
     return
@@ -25,6 +28,7 @@ bool __system_function_copy_filter(__Reference_Owned capture[], __Reference_Shar
         vtable == &__VirtualTable_Bool;
 }
 __Reference_Owned __system_function_copy_body(__Reference_Owned capture[], __Reference_Shared args[]) {
+    (void)(capture);
     __UnknownData data = __Reference_get(args[0]);
 
     return __Reference_new_data(data);
@@ -32,6 +36,7 @@ __Reference_Owned __system_function_copy_body(__Reference_Owned capture[], __Ref
 
 __FunctionCell __system_function_copy = {
     .next = NULL,
+    .parameters = "r",
     .filter = __system_function_copy_filter,
     .body = __system_function_copy_body,
     .captures = {
@@ -40,6 +45,7 @@ __FunctionCell __system_function_copy = {
 };
 
 __Reference_Owned __system_function_copy_pointer_body(__Reference_Owned capture[], __Reference_Shared args[]) {
+    (void)(capture);
     __UnknownData data = __Reference_get(args[0]);
 
     return __Reference_new_data(data);
@@ -47,6 +53,7 @@ __Reference_Owned __system_function_copy_pointer_body(__Reference_Owned capture[
 
 __FunctionCell __system_function_copy_pointer = {
     .next = NULL,
+    .parameters = "r",
     .filter = NULL,
     .body = __system_function_copy_pointer_body,
     .captures = {
@@ -60,18 +67,19 @@ static void assign(__GC_Reference* variable, __UnknownData value) {
         *variable->symbol = value;
         break;
     case PROPERTY: {
+        void* property = __UnknownData_get_property(variable->property.parent, variable->property.hash);
         if (variable->property.virtual_table == &__VirtualTable_UnknownData)
-            *((__UnknownData*)variable->property.property) = value;
+            *((__UnknownData*)property) = value;
         else if (variable->property.virtual_table == &__VirtualTable_Int)
-            *((long*)variable->property.property) = value.data.i;
+            *((long*)property) = value.data.i;
         else if (variable->property.virtual_table == &__VirtualTable_Float)
-            *((double*)variable->property.property) = value.data.f;
+            *((double*)property) = value.data.f;
         else if (variable->property.virtual_table == &__VirtualTable_Char)
-            *((char*)variable->property.property) = value.data.c;
+            *((char*)property) = value.data.c;
         else if (variable->property.virtual_table == &__VirtualTable_Bool)
-            *((bool*)variable->property.property) = value.data.b;
+            *((bool*)property) = value.data.b;
         else
-            *((void**)variable->property.property) = value.data.ptr;
+            *((void**)property) = value.data.ptr;
         break;
     }
     case ARRAY: {
@@ -99,9 +107,12 @@ static void assign(__GC_Reference* variable, __UnknownData value) {
             assign(&variable->tuple.references[i], __UnknownData_from_ptr(array.vtable, __Array_get(array, i)));
         break;
     }
+    default:
+        break;
     }
 }
 __Reference_Owned __system_function_assign_body(__Reference_Owned capture[], __Reference_Shared args[]) {
+    (void)(capture);
     __Reference_Shared var = args[0];
     __Reference_Shared data = args[1];
 
@@ -112,6 +123,7 @@ __Reference_Owned __system_function_assign_body(__Reference_Owned capture[], __R
 
 __FunctionCell __system_function_assign = {
     .next = NULL,
+    .parameters = "r",
     .filter = NULL,
     .body = __system_function_assign_body,
     .captures = {

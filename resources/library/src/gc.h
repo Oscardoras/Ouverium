@@ -36,7 +36,7 @@ extern "C" {
             struct {
                 __UnknownData parent;
                 __VirtualTable* virtual_table;
-                void* property;
+                unsigned int hash;
             } property;
             struct {
                 __UnknownData array;
@@ -58,6 +58,9 @@ extern "C" {
     __GC_Roots* __GC_init_roots(size_t c);
     __GC_Reference* __GC_alloc_references(size_t n);
     void __GC_free_reference(__GC_Reference* reference);
+    
+    struct __FunctionCapture __GC_reference_to_capture(__GC_Reference* reference);
+    __Reference_Owned __GC_capture_to_reference(struct __FunctionCapture capture);
 
 #ifdef __cplusplus
 }
