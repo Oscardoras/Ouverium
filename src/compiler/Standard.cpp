@@ -10,11 +10,27 @@
 
 namespace Analyzer::Standard {
 
-    M<Data> compute(Context & context, Reference const& reference, M<Data> const& data) {
-        if (data.empty())
-            return Analyzer::call_function(context, nullptr, context.get_global().getter->functions, reference).to_data(context);
-        else
-            return data;
+    M<Data> compute(Context & context, Reference const& reference, M<Data> const& datas) {
+        M<Data> m;
+        for (auto const& data : datas) {
+            if (data == Data{})
+                if (context.gettings.find(reference) == context.gettings.end()) {
+                    context.gettings.insert(reference);
+                    auto r = call_function(context, context.expression, context.get_global()["getter"].to_data(context).get<Object*>()->functions, reference).to_data(context);
+                    context.gettings.erase(reference);
+                    m.add(r);
+                } else {
+                    Data d = context.new_object();
+
+                    if (auto symbol_reference = std::get_if<SymbolReference>(&reference)) symbol_reference->get() = d;
+                    else if (auto property_reference = std::get_if<PropertyReference>(&reference)) static_cast<Data &>(*property_reference) = d;
+                    else if (auto array_reference = std::get_if<ArrayReference>(&reference)) static_cast<Data &>(*array_reference) = d;
+
+                    m.add(d);
+                }
+            else
+                m.add(data);
+        }
     }
 
     M<Data> IndirectReference::to_data(Context & context) const {

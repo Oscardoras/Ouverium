@@ -44,7 +44,6 @@ namespace Analyzer::Standard {
         using std::list<T>::back;
         using std::list<T>::begin;
         using std::list<T>::end;
-        using std::list<T>::operator==;
 
         void add(T const& t) {
             if (find(std::list<T>::begin(), std::list<T>::end(), t) == std::list<T>::end())
@@ -61,9 +60,10 @@ namespace Analyzer::Standard {
     // Definition of Data
 
     struct Data: public std::variant<Object*, bool, char, long, double> {
-        class BadAccess: public std::exception {};
 
         using std::variant<Object*, bool, char, long, double>::variant;
+
+        class BadAccess: public std::exception {};
 
         template<typename T>
         T & get() {
@@ -163,7 +163,7 @@ namespace Analyzer::Standard {
 
     struct SystemFunction {
         std::shared_ptr<Parser::Expression> parameters;
-        M<Reference> (*pointer)(Context&, bool);
+        M<Reference> (*pointer)(Context&);
     };
 
     struct Function : public std::variant<CustomFunction, SystemFunction> {
@@ -251,10 +251,6 @@ namespace Analyzer::Standard {
         }
     };
 
-    class CacheContext {
-        std::map<std::string, M<Reference>> symbols;
-    };
-
     // Analyzer
 
     class Analyzer: public ::Analyzer::Analyzer {
@@ -262,9 +258,7 @@ namespace Analyzer::Standard {
     protected:
 
         MetaData meta_data;
-        std::map<std::shared_ptr<Parser::FunctionDefinition>, CacheContext> cache_contexts;
-
-        class FunctionArgumentsError {};
+        std::map<std::shared_ptr<Parser::FunctionDefinition>, std::vector<Object*>> cache_contexts;
 
         struct Analysis {
             M<Reference> references;
@@ -272,6 +266,8 @@ namespace Analyzer::Standard {
         };
 
     public:
+
+        class FunctionArgumentsError {};
 
         using Arguments = std::variant<std::shared_ptr<Parser::Expression>, Reference>;
 

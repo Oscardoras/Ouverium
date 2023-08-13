@@ -38,6 +38,7 @@ namespace Analyzer {
     struct Expression {
 
         Types types;
+        bool lambda = false;
 
         virtual ~Expression() = default;
 
