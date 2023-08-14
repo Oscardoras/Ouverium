@@ -273,13 +273,21 @@ __Reference_Owned __Function_eval(__Function function, __Expression args) {
         __Reference_Shared vars[size];
         bool owned[size];
 
+        __Reference_Owned captures[ptr->captures.size];
+        size_t j;
+        for (j = 0; j < ptr->captures.size; ++j)
+            captures[j] = __GC_capture_to_reference(ptr->captures.tab[j]);
+
         size_t i = 0;
         c = ptr->parameters;
-        bool parsed = __Function_parse(ptr->captures.tab, vars, owned, &i, &c, args);
+        bool parsed = __Function_parse(captures, vars, owned, &i, &c, args);
 
         __Reference_Owned ref = NULL;
-        if (parsed && (ptr->filter == NULL || ptr->filter(ptr->captures.tab, vars)))
-            ref = ptr->body(ptr->captures.tab, vars);
+        if (parsed && (ptr->filter == NULL || ptr->filter(captures, vars)))
+            ref = ptr->body(captures, vars);
+
+        for (j = 0; j < ptr->captures.size; ++j)
+            __Reference_free(captures[j]);
 
         for (i = 0; i < size; ++i)
             if (owned[i])
