@@ -19,6 +19,11 @@ namespace Analyzer::Standard {
     class Context;
     class GlobalContext;
 
+    struct Analysis {
+        M<Reference> references;
+        std::shared_ptr<Expression> expression;
+    };
+
     // Definition of a Multiple (M)
 
     template<typename T, bool Specialized = false>
@@ -102,7 +107,7 @@ namespace Analyzer::Standard {
 
         using std::variant<SymbolReference, PropertyReference, ArrayReference>::variant;
 
-        M<Data> to_data(Context & context) const;
+        Analysis to_data(Context & context) const;
 
     };
     template<>
@@ -112,7 +117,7 @@ namespace Analyzer::Standard {
 
         using M<IndirectReference, true>::M;
 
-        M<Data> to_data(Context & context) const;
+        Analysis to_data(Context & context) const;
 
     };
 
@@ -123,7 +128,7 @@ namespace Analyzer::Standard {
         using std::variant<M<Data>, TupleReference, SymbolReference, PropertyReference, ArrayReference>::variant;
         Reference(IndirectReference const& indirect_reference);
 
-        M<Data> to_data(Context & context) const;
+        Analysis to_data(Context & context) const;
         IndirectReference to_indirect_reference(Context & context) const;
 
     };
@@ -134,7 +139,7 @@ namespace Analyzer::Standard {
 
         using M<Reference, true>::M;
 
-        M<Data> to_data(Context & context) const;
+        Analysis to_data(Context & context) const;
         M<IndirectReference> to_indirect_reference(Context & context) const;
 
     };
@@ -181,6 +186,8 @@ namespace Analyzer::Standard {
         std::map<std::string, M<IndirectReference>> symbols;
 
     public:
+
+        std::set<Reference> gettings;
 
         std::shared_ptr<Parser::Expression> expression;
 
@@ -259,11 +266,6 @@ namespace Analyzer::Standard {
 
         MetaData meta_data;
         std::map<std::shared_ptr<Parser::FunctionDefinition>, std::vector<Object*>> cache_contexts;
-
-        struct Analysis {
-            M<Reference> references;
-            std::shared_ptr<Expression> expression;
-        };
 
     public:
 
