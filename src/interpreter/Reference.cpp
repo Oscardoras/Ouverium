@@ -32,7 +32,7 @@ namespace Interpreter {
     }
 
     Data IndirectReference::to_data(Context & context) const {
-        return compute(context, *this, std::visit([](auto const& arg) -> Data {
+        return compute(context, *this, std::visit([](auto const& arg) -> Data& {
             return arg;
         }, *this));
     }

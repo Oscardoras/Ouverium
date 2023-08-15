@@ -7,7 +7,9 @@
 #include <set>
 #include <variant>
 
-#include "Analyzer.hpp"
+#include "Expressions.hpp"
+
+#include "../parser/Parser.hpp"
 
 
 namespace Analyzer::Standard {
@@ -18,11 +20,6 @@ namespace Analyzer::Standard {
     class Reference;
     class Context;
     class GlobalContext;
-
-    struct Analysis {
-        M<Reference> references;
-        std::shared_ptr<Expression> expression;
-    };
 
     // Definition of a Multiple (M)
 
@@ -107,7 +104,7 @@ namespace Analyzer::Standard {
 
         using std::variant<SymbolReference, PropertyReference, ArrayReference>::variant;
 
-        Analysis to_data(Context & context) const;
+        M<Data> to_data(Context & context) const;
 
     };
     template<>
@@ -117,7 +114,7 @@ namespace Analyzer::Standard {
 
         using M<IndirectReference, true>::M;
 
-        Analysis to_data(Context & context) const;
+        M<Data> to_data(Context & context) const;
 
     };
 
@@ -128,7 +125,7 @@ namespace Analyzer::Standard {
         using std::variant<M<Data>, TupleReference, SymbolReference, PropertyReference, ArrayReference>::variant;
         Reference(IndirectReference const& indirect_reference);
 
-        Analysis to_data(Context & context) const;
+        M<Data> to_data(Context & context) const;
         IndirectReference to_indirect_reference(Context & context) const;
 
     };
@@ -139,7 +136,7 @@ namespace Analyzer::Standard {
 
         using M<Reference, true>::M;
 
-        Analysis to_data(Context & context) const;
+        M<Data> to_data(Context & context) const;
         M<IndirectReference> to_indirect_reference(Context & context) const;
 
     };
@@ -236,6 +233,9 @@ namespace Analyzer::Standard {
         friend Object* Context::new_object(Object && object);
         friend M<Data> & Context::new_reference(M<Data> const& data);
 
+        MetaData meta_data;
+        std::map<std::shared_ptr<Parser::FunctionDefinition>, std::vector<Object*>> cache_contexts;
+
     };
 
     class FunctionContext: public Context {
@@ -260,27 +260,21 @@ namespace Analyzer::Standard {
 
     // Analyzer
 
-    class Analyzer: public ::Analyzer::Analyzer {
-
-    protected:
-
-        MetaData meta_data;
-        std::map<std::shared_ptr<Parser::FunctionDefinition>, std::vector<Object*>> cache_contexts;
-
-    public:
-
-        class FunctionArgumentsError {};
-
-        using Arguments = std::variant<std::shared_ptr<Parser::Expression>, Reference>;
-
-        Analysis call_function(Context & context, std::shared_ptr<Parser::Expression> expression, M<std::list<Function>> const& functions, Arguments arguments);
-        Analysis execute(Context & context, std::shared_ptr<Parser::Expression> expression);
-
-        void create_structures(GlobalContext const& context);
-
-        virtual std::pair<std::shared_ptr<Expression>, MetaData> analyze(std::shared_ptr<Parser::Expression> expression) override;
-
+    struct Analysis {
+        M<Reference> references;
+        std::shared_ptr<Expression> expression;
     };
+
+    class FunctionArgumentsError {};
+
+    using Arguments = std::variant<std::shared_ptr<Parser::Expression>, M<Reference>>;
+
+    Analysis call_function(Context & context, std::shared_ptr<Parser::Expression> expression, M<std::list<Function>> const& functions, Arguments arguments);
+    Analysis execute(Context & context, std::shared_ptr<Parser::Expression> expression);
+
+    void create_structures(GlobalContext const& context);
+
+    std::pair<std::shared_ptr<Expression>, MetaData> analyze(std::shared_ptr<Parser::Expression> expression);
 
 }
 
