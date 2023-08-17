@@ -40,20 +40,20 @@ namespace Analyzer {
         Types types;
         bool lambda = false;
 
-        virtual ~Expression() = default;
+        virtual ~Expression() = 0;
 
     };
 
-    struct FunctionDefinition {
+    struct FunctionDefinition: public Expression {
 
-        std::set<std::weak_ptr<Type>> return_type;
+        std::vector<std::string> captures;
         std::shared_ptr<Expression> parameters;
         std::map<std::string, Types> local_variables;
         std::shared_ptr<Expression> filter;
         std::shared_ptr<Expression> body;
 
-        FunctionDefinition(std::set<std::weak_ptr<Type>> const& return_type = {}, std::shared_ptr<Expression> parameters = nullptr, std::shared_ptr<Expression> filter = nullptr, std::shared_ptr<Expression> body = nullptr):
-            return_type(return_type), parameters(parameters), filter(filter), body(body) {}
+        FunctionDefinition(std::vector<std::string> captures = {}, std::shared_ptr<Expression> parameters = nullptr, std::map<std::string, Types> local_variables = {}, std::shared_ptr<Expression> filter = nullptr, std::shared_ptr<Expression> body = nullptr):
+            captures(captures), parameters(parameters), local_variables(local_variables), filter(filter), body(body) {}
 
     };
 
@@ -64,9 +64,11 @@ namespace Analyzer {
         std::shared_ptr<Expression> function;
         std::shared_ptr<Expression> arguments;
 
-        FunctionCall(std::shared_ptr<Expression> function = nullptr, std::shared_ptr<Expression> arguments = nullptr) {}
+        FunctionCall(std::shared_ptr<Expression> function = nullptr, std::shared_ptr<Expression> arguments = nullptr):
+            function{ function }, arguments{ arguments } {}
 
     };
+    /*
     struct FunctionRun: public Expression {
 
         std::variant<std::weak_ptr<FunctionDefinition>, SystemFunction> function;
@@ -76,6 +78,7 @@ namespace Analyzer {
             function(function), arguments(arguments) {}
 
     };
+    */
 
     struct Property: public Expression {
 

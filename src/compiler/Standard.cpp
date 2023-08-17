@@ -243,7 +243,7 @@ namespace Analyzer::Standard {
 
     using It = std::map<std::string, M<IndirectReference>>::iterator;
 
-    void call_argument(M<Reference> & references, bool potential, Function const& function, FunctionContext function_context, It const it, It const end) {
+    void call_argument(M<Reference> & references, Function const& function, FunctionContext function_context, It const it, It const end) {
         if (it != end) {
             bool success = false;
             for (auto const& m1 : it->second) {
@@ -285,7 +285,7 @@ namespace Analyzer::Standard {
         }
     }
 
-    Analyzer::Analysis Analyzer::call_function(Context & context, bool potential, std::shared_ptr<Parser::Expression> expression, M<std::list<Function>> const& functions, Arguments arguments) {
+    Analyzer::Analysis Analyzer::call_function(Context & context, std::shared_ptr<Parser::Expression> expression, M<std::list<Function>> const& functions, Arguments arguments) {
         Analysis analysis;
 
         std::map<std::shared_ptr<Parser::Expression>, Analysis> computed;
@@ -315,34 +315,29 @@ namespace Analyzer::Standard {
         return analysis;
     }
 
-    Analyzer::Analysis Analyzer::execute(Context & context, bool potential, std::shared_ptr<Parser::Expression> expression) {
+    Analysis execute(Context & context, std::shared_ptr<Parser::Expression> expression) {
         if (auto function_call = std::dynamic_pointer_cast<Parser::FunctionCall>(expression)) {
             M<Reference> m;
             std::vector<FunctionPointer> called_functions;
 
-            auto f = execute(context, potential, function_call->function);
+            auto function = execute(context, function_call->function);
 
             for (auto reference : f.references) {
                 for (auto d : reference.to_data(context)) {
                     std::list<Function> functions;
                     if (auto object = std::get_if<Object*>(&d))
                         functions = (*object)->functions;
-                    auto result = call_function(context, potential, function_call->position, functions, function_call->arguments);
+                    auto result = call_function(context, function_call->position, functions, function_call->arguments);
                     m.add(result.first);
                     called_functions.push_back(result.second);
                 }
             }
 
-            if (called_functions.size() == 1) {
-                return Analysis {
-                    .references = m,
-                    .expression = std::make_shared<FunctionRun>(, )
-                };
-            }
-
             return Analysis {
                 .references = m,
-                .expression = std::make_shared<Property>(a.expression)
+                .expression = std::make_shared<FunctionCall>(
+                    function.expression,
+                )
             };
         } else if (auto function_definition = std::dynamic_pointer_cast<Parser::FunctionDefinition>(expression)) {
             auto object = context.new_object();
@@ -356,7 +351,10 @@ namespace Analyzer::Standard {
                         f.extern_symbols[symbol] = context[symbol];
             object->functions.push_front(f);
 
-            return Reference(Data(object));
+            return Analysis {
+                .references = Reference(Data(object)),
+                .expression = std::make_shared<FunctionDefinition>()
+            };
         } else if (auto property = std::dynamic_pointer_cast<Parser::Property>(expression)) {
             M<Reference> m;
 

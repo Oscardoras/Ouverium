@@ -10,8 +10,6 @@ FILE(GLOB_RECURSE interpreter_sources
     src/Utils.cpp src/Utils.hpp
     src/parser/*
     src/interpreter/*
-    #src/compiler/Analyzer.cpp src/compiler/Analyzer.hpp
-    #src/compiler/Functions.cpp src/compiler/Functions.hpp
 )
 add_executable(interpreter ${interpreter_sources})
 
@@ -26,6 +24,6 @@ link_libraries(interpreter PUBLIC capi)
 
 
 FILE(GLOB_RECURSE compiler_sources
-    src/compiler/c/*
+    src/compiler/*
 )
-#add_executable(compiler ${compiler_sources})
+add_executable(compiler ${compiler_sources})
