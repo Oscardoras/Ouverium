@@ -12,6 +12,7 @@ namespace Analyzer::Standard {
 
     M<Data> compute(Context & context, Reference const& reference, M<Data> const& datas) {
         M<Data> m;
+
         for (auto const& data : datas) {
             if (data == Data{})
                 if (context.gettings.find(reference) == context.gettings.end()) {
@@ -34,6 +35,8 @@ namespace Analyzer::Standard {
             else
                 m.add(data);
         }
+
+        return m;
     }
 
     M<Data> IndirectReference::to_data(Context & context) const {
@@ -243,7 +246,7 @@ namespace Analyzer::Standard {
 
     using It = std::map<std::string, M<IndirectReference>>::iterator;
 
-    void call_argument(M<Reference> & references, Function const& function, FunctionContext function_context, It const it, It const end) {
+    void call_argument(Function const& function, FunctionContext function_context, M<Reference> & references, It const it, It const end) {
         if (it != end) {
             bool success = false;
             for (auto const& m1 : it->second) {
@@ -285,16 +288,36 @@ namespace Analyzer::Standard {
         }
     }
 
-    Analyzer::Analysis Analyzer::call_function(Context & context, std::shared_ptr<Parser::Expression> expression, M<std::list<Function>> const& functions, Arguments arguments) {
+    Analysis call_function(Context & context, std::shared_ptr<Parser::Expression> expression, M<std::list<Function>> const& all_functions, Arguments arguments) {
         Analysis analysis;
 
-        std::map<std::shared_ptr<Parser::Expression>, Analysis> computed;
         for (auto const& functions : all_functions) {
             for (auto const& function : functions) {
                 try {
-                    Context function_context(context);
+                    FunctionContext function_context(context, expression);
                     for (auto & symbol : function.extern_symbols)
-                        function_context[symbol.first] = symbol.second;
+                        function_context.add_symbol(symbol.first, symbol.second);
+
+                    if (auto custom_function = std::get_if<CustomFunction>(&function)) {
+                        set_arguments(context, function_context, computed, (*custom_function)->parameters, arguments);
+
+                        Data filter = true;
+                        if ((*custom_function)->filter != nullptr)
+                            filter = execute(function_context, (*custom_function)->filter).to_data(context);
+
+                        try {
+                            if (filter.get<bool>())
+                                return Interpreter::execute(function_context, (*custom_function)->body);
+                            else continue;
+                        } catch (Data::BadAccess & e) {
+                            throw FunctionArgumentsError();
+                        }
+                    } else if (auto system_function = std::get_if<SystemFunction>(&function)) {
+                        set_arguments(context, function_context, computed, system_function->parameters, arguments);
+
+                        return system_function->pointer(function_context);
+                    }
+
 
                     std::shared_ptr<Parser::Expression> parameters = nullptr;
                     if (auto custom = std::get_if<std::shared_ptr<Parser::FunctionDefinition>>(&function.ptr))
@@ -302,14 +325,13 @@ namespace Analyzer::Standard {
                     else if (auto system = std::get_if<SystemFunction>(&function.ptr))
                         parameters = (*system).parameters;
 
-                    set_references(context, potential, function_context, computed, parameters, arguments);
+                    set_references(context, potential, function_context, parameters, arguments);
 
                     call_reference(analysis, potential, function, function_context, function_context.begin(), function_context.end());
                 } catch (FunctionArgumentsError & e) {}
             }
 
-            if (position != nullptr)
-                position->notify_error("The arguments given to the function don't match");
+            //TODO : exceptions
         }
 
         return analysis;
@@ -317,26 +339,24 @@ namespace Analyzer::Standard {
 
     Analysis execute(Context & context, std::shared_ptr<Parser::Expression> expression) {
         if (auto function_call = std::dynamic_pointer_cast<Parser::FunctionCall>(expression)) {
-            M<Reference> m;
-            std::vector<FunctionPointer> called_functions;
-
             auto function = execute(context, function_call->function);
 
-            for (auto reference : f.references) {
+            M<std::list<Function>> all_functions;
+            for (auto reference : function.references) {
                 for (auto d : reference.to_data(context)) {
-                    std::list<Function> functions;
-                    if (auto object = std::get_if<Object*>(&d))
-                        functions = (*object)->functions;
-                    auto result = call_function(context, function_call->position, functions, function_call->arguments);
-                    m.add(result.first);
-                    called_functions.push_back(result.second);
+                    try {
+                        all_functions.add(d.get<Object*>()->functions);
+                    } catch (Data::BadAccess const& e) {}
                 }
             }
 
+            auto result = call_function(context, function_call, all_functions, function_call->arguments);
+
             return Analysis {
-                .references = m,
+                .references = result.references,
                 .expression = std::make_shared<FunctionCall>(
                     function.expression,
+                    result.expression
                 )
             };
         } else if (auto function_definition = std::dynamic_pointer_cast<Parser::FunctionDefinition>(expression)) {
