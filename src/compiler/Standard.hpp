@@ -7,9 +7,7 @@
 #include <set>
 #include <variant>
 
-#include "Expressions.hpp"
-
-#include "../parser/Parser.hpp"
+#include "Analyzer.hpp"
 
 
 namespace Analyzer::Standard {
@@ -34,12 +32,6 @@ namespace Analyzer::Standard {
             add(t);
         }
 
-        template<typename U>
-        M(M<U> const& m) {
-            for (U const& e : m)
-                add(T(e));
-        }
-
         using std::list<T>::size;
         using std::list<T>::empty;
         using std::list<T>::front;
@@ -48,13 +40,28 @@ namespace Analyzer::Standard {
         using std::list<T>::end;
 
         void add(T const& t) {
-            if (find(std::list<T>::begin(), std::list<T>::end(), t) == std::list<T>::end())
+            if (find(begin(), end(), t) == end())
                 std::list<T>::push_back(t);
         }
 
         void add(M<T> const& m) {
             for (auto const& t : m)
                 add(t);
+        }
+
+        friend bool operator==(M<T> const& a, M<T> const& b) {
+            if (a.size() == b.size())
+                return false;
+
+            for (auto const& e : a)
+                if (find(b.begin(), b.end(), e) == b.end())
+                    return false;
+
+            return true;
+        }
+
+        friend bool operator!=(M<T> const& a, M<T> const& b) {
+            return !(a == b);
         }
 
     };
@@ -135,6 +142,11 @@ namespace Analyzer::Standard {
     public:
 
         using M<Reference, true>::M;
+
+        M(M<IndirectReference> const& indirect_reference) {
+            for (auto const& e : indirect_reference)
+                add(e);
+        }
 
         M<Data> to_data(Context & context) const;
         M<IndirectReference> to_indirect_reference(Context & context) const;
@@ -260,21 +272,20 @@ namespace Analyzer::Standard {
 
     // Analyzer
 
-    struct Analysis {
-        M<Reference> references;
-        std::shared_ptr<Expression> expression;
-    };
-
     class FunctionArgumentsError {};
 
-    using Arguments = std::variant<std::shared_ptr<Parser::Expression>, M<Reference>>;
+    struct Arguments : public std::variant<std::shared_ptr<Parser::Expression>, M<Reference>> {
+        using std::variant<std::shared_ptr<Parser::Expression>, M<Reference>>::variant;
 
-    Analysis call_function(Context & context, std::shared_ptr<Parser::Expression> expression, M<std::list<Function>> const& functions, Arguments arguments);
-    Analysis execute(Context & context, std::shared_ptr<Parser::Expression> expression);
+        M<Reference> compute(Context & context) const;
+    };
+
+    M<Reference> call_function(Context & context, std::shared_ptr<Parser::Expression> expression, M<std::list<Function>> const& functions, Arguments arguments);
+    M<Reference> execute(Context & context, std::shared_ptr<Parser::Expression> expression);
 
     void create_structures(GlobalContext const& context);
 
-    std::pair<std::shared_ptr<Expression>, MetaData> analyze(std::shared_ptr<Parser::Expression> expression);
+    MetaData analyze(std::shared_ptr<Parser::Expression> expression);
 
 }
 

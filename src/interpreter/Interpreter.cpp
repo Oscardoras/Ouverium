@@ -165,6 +165,7 @@ namespace Interpreter {
                     return;
                 }
             }
+            
             auto r = execute(context, p_function->function).to_data(context);
             std::list<Function> functions;
             try {

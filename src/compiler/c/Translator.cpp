@@ -34,19 +34,7 @@ namespace Translator::CStandard {
         return classes;
     }
 
-    std::set<std::shared_ptr<FunctionDefinition>> Translator::create_functions(std::set<std::shared_ptr<Analyzer::FunctionDefinition>> const& functions) {
-        std::set<std::shared_ptr<FunctionDefinition>> funcs;
-
-        for (auto const& f : functions) {
-            auto func = std::make_shared<FunctionDefinition>();
-            funcs.insert(func);
-            function_table[f] = func;
-        }
-
-        return funcs;
-    }
-
-    std::shared_ptr<FunctionDefinition> Translator::get_function(std::shared_ptr<Analyzer::FunctionDefinition> function_definition) {
+    std::shared_ptr<FunctionDefinition> Translator::get_function(std::shared_ptr<Parser::FunctionDefinition> function_definition) {
         FunctionDefinition::Parameters parameters;
         if (auto tuple = std::dynamic_pointer_cast<Analyzer::Tuple>(function_definition->parameters)) {
             size_t i = 0;
@@ -100,7 +88,7 @@ namespace Translator::CStandard {
         });
     }
 
-    std::shared_ptr<Reference> Translator::get_expression(std::shared_ptr<Analyzer::Expression> expression, Instructions & instructions, Instructions::iterator it) {
+    std::shared_ptr<Reference> Translator::get_expression(std::shared_ptr<Parser::Expression> expression, Instructions & instructions, Instructions::iterator it) {
         if (auto function_call = std::dynamic_pointer_cast<Analyzer::FunctionCall>(expression)) {
             auto r = std::make_shared<FunctionCall>(FunctionCall {
                 .function = std::make_shared<VariableCall>(VariableCall {

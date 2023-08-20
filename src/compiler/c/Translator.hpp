@@ -28,12 +28,13 @@ namespace Translator::CStandard {
         }
 
     };
-    using FunctionTable = std::map<std::shared_ptr<Analyzer::FunctionDefinition>, std::shared_ptr<FunctionDefinition>>;
+    using FunctionTable = std::map<std::shared_ptr<Parser::FunctionDefinition>, std::shared_ptr<FunctionDefinition>>;
 
     using Instructions = std::list<std::shared_ptr<Instruction>>;
 
     class Translator {
 
+        Analyzer::MetaData meta_data;
         TypeTable type_table;
         FunctionTable function_table;
 
@@ -42,12 +43,12 @@ namespace Translator::CStandard {
     public:
 
         std::set<std::shared_ptr<Class>> create_structures(std::set<std::shared_ptr<Analyzer::Structure>> const& structures);
-        std::set<std::shared_ptr<FunctionDefinition>> create_functions(std::set<std::shared_ptr<Analyzer::FunctionDefinition>> const& functions);
 
-        std::shared_ptr<Reference> eval_system_function(Analyzer::SystemFunction const& function, std::shared_ptr<Analyzer::Expression> arguments, Instructions & instructions, Instructions::iterator it);
 
-        std::shared_ptr<FunctionDefinition> get_function(std::shared_ptr<Analyzer::FunctionDefinition> function);
-        std::shared_ptr<Reference> get_expression(std::shared_ptr<Analyzer::Expression> expression, Instructions & instructions, Instructions::iterator it);
+        //std::shared_ptr<Reference> eval_system_function(Analyzer::SystemFunction const& function, std::shared_ptr<Analyzer::Expression> arguments, Instructions & instructions, Instructions::iterator it);
+
+        std::shared_ptr<FunctionDefinition> get_function(std::shared_ptr<Parser::FunctionDefinition> function);
+        std::shared_ptr<Reference> get_expression(std::shared_ptr<Parser::Expression> expression, Instructions & instructions, Instructions::iterator it);
 
     };
 

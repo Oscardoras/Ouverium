@@ -6,9 +6,6 @@
 
 namespace Parser {
 
-    class Context;
-    class Expression;
-
     class Position {
 
     public:
