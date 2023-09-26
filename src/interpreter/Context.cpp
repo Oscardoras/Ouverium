@@ -35,8 +35,8 @@ namespace Interpreter {
         return symbols.find(symbol) != symbols.end();
     }
 
-    IndirectReference Context::add_symbol(std::string const& symbol, Reference const& reference) {
-        return symbols.emplace(symbol, reference.to_indirect_reference(*this)).first->second;
+    void Context::add_symbol(std::string const& symbol, Reference const& reference) {
+        symbols.emplace(symbol, reference.to_indirect_reference(*this));
     }
 
     IndirectReference Context::operator[](std::string const& symbol) {
@@ -50,10 +50,12 @@ namespace Interpreter {
 
 
     GlobalContext::~GlobalContext() {
-        for (auto const& object : objects) {
-            auto it = object.properties.find("destructor");
-            if (it != object.properties.end())
-                call_function(get_global(), get_global().expression, it->second.get<Object*>()->functions, std::make_shared<Parser::Tuple>());
+        for (auto & object : objects) {
+            try {
+                auto functions = object["destructor"].to_data(*this).get<Object*>()->functions;
+                if (!functions.empty())
+                    call_function(get_global(), get_global().expression, functions, std::make_shared<Parser::Tuple>());
+            } catch (Data::BadAccess & e) {}
         }
     }
 

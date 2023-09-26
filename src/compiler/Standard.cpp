@@ -10,7 +10,7 @@
 
 namespace Analyzer::Standard {
 
-    M<Data> compute(Context & context, Reference const& reference, M<Data> const& datas) {
+    M<Data> compute(Context & context, std::shared_ptr<Parser::Expression> expression, Reference const& reference, M<Data> const& datas) {
         M<Data> m;
 
         for (auto const& data : datas) {
@@ -18,15 +18,15 @@ namespace Analyzer::Standard {
                 if (context.gettings.find(reference) == context.gettings.end()) {
                     context.gettings.insert(reference);
                     M<std::list<Function>> functions;
-                    for (auto const& d : context.get_global()["getter"].to_data(context))
+                    for (auto const& d : context.get_global()["getter"].to_data(context, expression))
                         functions.add(d.get<Object*>()->functions);
-                    auto r = call_function(context, context.expression, functions, reference).to_data(context);
+                    auto r = call_function(context, functions, Arguments(expression, reference)).to_data(context, expression);
                     context.gettings.erase(reference);
                     m.add(r);
                 } else {
-                    Data d = context.new_object();
+                    Data d = context.get_object(expression);
 
-                    if (auto symbol_reference = std::get_if<SymbolReference>(&reference)) symbol_reference->get().add(d);
+                    if (auto symbol_reference = std::get_if<SymbolReference>(&reference)) static_cast<M<Data> &>(*symbol_reference).add(d);
                     else if (auto property_reference = std::get_if<PropertyReference>(&reference)) static_cast<M<Data> &>(*property_reference).add(d);
                     else if (auto array_reference = std::get_if<ArrayReference>(&reference)) static_cast<M<Data> &>(*array_reference).add(d);
 
@@ -39,21 +39,21 @@ namespace Analyzer::Standard {
         return m;
     }
 
-    M<Data> IndirectReference::to_data(Context & context) const {
-        return compute(context, *this, std::visit([](auto const& arg) -> M<Data>& {
+    M<Data> IndirectReference::to_data(Context & context, std::shared_ptr<Parser::Expression> expression) const {
+        return compute(context, expression, *this, std::visit([](auto const& arg) -> M<Data>& {
             return arg;
         }, *this));
     }
 
-    M<Data> M<IndirectReference>::to_data(Context & context) const {
+    M<Data> M<IndirectReference>::to_data(Context & context, std::shared_ptr<Parser::Expression> expression) const {
         M<Data> m;
         for (auto const& e : *this)
-            m.add(e.to_data(context));
+            m.add(e.to_data(context, expression));
         return m;
     }
 
-    M<Data> Reference::to_data(Context & context) const {
-        auto get_data = [this, &context]() -> M<Data> {
+    M<Data> Reference::to_data(Context & context, std::shared_ptr<Parser::Expression> expression) const {
+        auto get_data = [this, &context, &expression]() -> M<Data> {
             if (auto data = std::get_if<M<Data>>(this))
                 return *data;
             else if (auto symbol_reference = std::get_if<SymbolReference>(this))
@@ -63,103 +63,101 @@ namespace Analyzer::Standard {
             else if (auto array_reference = std::get_if<ArrayReference>(this))
                 return *array_reference;
             else if (auto tuple_reference = std::get_if<TupleReference>(this)) {
-                auto object = context.new_object();
-                object->array.reserve(tuple_reference->size());
+                auto object = context.get_object(expression);
                 for (auto d : *tuple_reference)
-                    object->array.push_back(d.to_data(context));
+                    object->array.add(d.to_data(context, expression));
                 return Data(object);
             } else return {};
         };
 
-        return compute(context, *this, get_data());
+        return compute(context, expression, *this, get_data());
     }
 
-    IndirectReference Reference::to_indirect_reference(Context & context) const {
-        if (auto data = std::get_if<M<Data>>(this))
-            return context.new_reference(*data);
-        else if (auto symbol_reference = std::get_if<SymbolReference>(this))
-            return *symbol_reference;
-        else if (auto property_reference = std::get_if<PropertyReference>(this))
-            return *property_reference;
-        else if (auto array_reference = std::get_if<ArrayReference>(this))
-            return *array_reference;
-        else if (auto tuple_reference = std::get_if<TupleReference>(this)) {
-            auto object = context.new_object();
-            object->array.reserve(tuple_reference->size());
-            for (auto d : *tuple_reference)
-                object->array.push_back(d.to_data(context));
-            return context.new_reference(Data(object));
-        } else return context.new_reference();
-    }
-
-    M<Data> M<Reference>::to_data(Context & context) const {
+    M<Data> M<Reference>::to_data(Context & context, std::shared_ptr<Parser::Expression> expression) const {
         M<Data> m;
         for (auto const& e : *this)
-            m.add(e.to_data(context));
+            m.add(e.to_data(context, expression));
         return m;
     }
 
-    M<IndirectReference> M<Reference>::to_indirect_reference(Context & context) const {
-        M<IndirectReference> m;
-        for (auto const& e : *this)
-            m.add(e.to_indirect_reference(context));
-        return m;
+    SymbolReference::operator M<Data> &() const {
+        return context.symbol_references[symbol];
+    }
+
+    PropertyReference::operator M<Data> &() const {
+        return parent->properties[name];
+    }
+
+    ArrayReference::operator M<Data> &() const {
+        return array->array;
     }
 
     IndirectReference Object::operator[](std::string name) {
-        return PropertyReference{*this, name};
+        return PropertyReference{this, name};
     }
 
-    Object* Context::new_object() {
+    Object* Context::get_object(std::shared_ptr<Parser::Expression> expression) {
         auto & objects = get_global().objects;
-        objects.push_back(Object());
-        return &objects.back();
-    }
-
-    Object* Context::new_object(Object && object) {
-        auto & objects = get_global().objects;
-        objects.push_back(std::move(object));
-        return &objects.back();
-    }
-
-    M<Data> & Context::new_reference(M<Data> const& data) {
-        auto & references = get_global().references;
-        references.push_back(data);
-        return references.back();
+        return &objects[expression];
     }
 
     bool Context::has_symbol(std::string const& symbol) {
         return symbols.find(symbol) != symbols.end();
     }
 
+    void Context::add_symbol(std::string const& symbol, M<Reference> const& reference) {
+        auto create_symbol_reference = [this, &symbol](M<Data> const& data) -> SymbolReference {
+            auto r = SymbolReference{ *this, symbol };
+            static_cast<M<Data>&>(r).add(data);
+            return r;
+        };
+
+        for (auto const& ref : reference) {
+            if (auto data = std::get_if<M<Data>>(&ref))
+                symbols[symbol].add(IndirectReference(create_symbol_reference(*data)));
+            else if (auto symbol_reference = std::get_if<SymbolReference>(&ref))
+                symbols[symbol].add(IndirectReference(*symbol_reference));
+            else if (auto property_reference = std::get_if<PropertyReference>(&ref))
+                symbols[symbol].add(IndirectReference(*property_reference));
+            else if (auto array_reference = std::get_if<ArrayReference>(&ref))
+                symbols[symbol].add(IndirectReference(*array_reference));
+            else if (auto tuple_reference = std::get_if<TupleReference>(&ref)) {
+                auto object = get_object(expression);
+                for (auto d : *tuple_reference)
+                    object->array.add(d.to_data(*this, expression));
+                return symbols[symbol].add(IndirectReference(create_symbol_reference(Data(object))));
+            }
+        }
+    }
+
     M<IndirectReference> Context::operator[](std::string const& symbol) {
         auto it = symbols.find(symbol);
-        if (it == symbols.end())
-            return symbols.emplace(symbol, new_reference()).first->second;
-        else {
+        if (it == symbols.end()) {
+            return symbols.emplace(symbol, SymbolReference{ *this, symbol }).first->second;
+        } else {
             return it->second;
         }
     }
 
     GlobalContext::~GlobalContext() {
-        for (auto const& object : objects) {
-            auto it = object.properties.find("destructor");
-            if (it != object.properties.end()) {
+        for (auto & object : objects) {
+            try {
                 M<std::list<Function>> functions;
-                for (auto const& d : it->second)
+                for (auto const& d : object.second["destructor"].to_data(*this))
                     functions.add(d.get<Object*>()->functions);
-                call_function(get_global(), get_global().expression, functions, std::make_shared<Parser::Tuple>());
-            }
+
+                if (!functions.empty())
+                    call_function(get_global(), get_global().expression, functions, std::make_shared<Parser::Tuple>());
+            } catch (Data::BadAccess & e) {}
         }
     }
 
 
     M<Reference> Arguments::compute(Context & context) const {
-        if (auto expression = std::get_if<const std::shared_ptr<Parser::Expression>>(this)) {
-            return execute(context, *expression);
-        } else if (auto reference = std::get_if<const M<Reference>>(this)) {
-            return *reference;
-        } else return {};
+        if (reference)
+            return reference.value();
+        else
+            return execute(context, expression);
     }
 
     using ParserExpression = std::shared_ptr<Parser::Expression>;
@@ -169,7 +167,7 @@ namespace Analyzer::Standard {
             auto reference = arguments.compute(context);
 
             if (function_context.has_symbol(symbol->name)) {
-                if (reference.to_data(context) != function_context[symbol->name].to_data(context))
+                if (reference.to_data(context, symbol) != function_context[symbol->name].to_data(context, arguments.expression))
                     throw FunctionArgumentsError();
             } else {
                 function_context.add_symbol(symbol->name, reference);
@@ -215,24 +213,22 @@ namespace Analyzer::Standard {
         } else if (auto p_function = std::dynamic_pointer_cast<Parser::FunctionCall>(parameters)) {
             if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(p_function->function)) {
                 if (!function_context.has_symbol(symbol->name)) {
-                    Object* object = context.new_object();
-                    auto function_definition = std::make_shared<Parser::FunctionDefinition>();
+                    Object* object = context.get_object(symbol);
+                    auto function_definition = context.get_global().lambdas[p_function].function_definition;
                     function_definition->parameters = p_function->arguments;
 
-                    if (auto expression = std::get_if<ParserExpression>(&arguments)) {
-                        function_definition->body = *expression;
+                    if (arguments.reference) {
+                        function_definition->body = context.get_global().lambdas[p_function].symbol;
 
-                        object->functions.push_front(CustomFunction{function_definition});
-                        auto & f = object->functions.back();
+                        auto & function_context = context.get_global().contexts[function_definition];
+                        function_context.add_symbol("#cached", arguments.reference.value());
+                    } else {
+                        function_definition->body = arguments.expression;
+
                         for (auto symbol : function_definition->body->symbols)
-                            f.extern_symbols.emplace(symbol, context[symbol]);
-
-                    } else if (auto reference = std::get_if<Reference>(&arguments)) {
-                        function_definition->body = std::make_shared<Parser::Symbol>("#cached");
-
-                        object->functions.push_front(CustomFunction{function_definition});
-                        object->functions.back().extern_symbols.emplace("#cached", reference->to_indirect_reference(context));
+                           function_context.add_symbol(symbol, context[symbol]);
                     }
+                    object->functions.push_front(CustomFunction{function_definition, function_context});
 
                     function_context.add_symbol(symbol->name, Reference(Data(object)));
                     return;
@@ -240,22 +236,22 @@ namespace Analyzer::Standard {
             }
 
             M<std::list<Function>> all_functions;
-            for (auto data : execute(context, p_function->function).to_data(context)) {
+            for (auto data : execute(context, p_function->function).to_data(context, p_function->function)) {
                 try {
                     all_functions.add(data.get<Object*>()->functions);
                 } catch (Data::BadAccess const& e) {}
             }
 
-            M<Reference> reference = call_function(context, p_function, all_functions, arguments);
+            M<Reference> reference = call_function(context, all_functions, arguments);
             // TODO : catch exception
-            set_arguments(context, function_context, p_function->arguments, reference);
+            set_arguments(context, function_context, p_function->arguments, Arguments(arguments.expression, reference));
         } else if (auto p_property = std::dynamic_pointer_cast<Parser::Property>(parameters)) {
             bool success = false;
             for (auto reference : arguments.compute(context)) {
                 try {
                     if (auto property_reference = std::get_if<PropertyReference>(&reference)) {
                         if (p_property->name == property_reference->name || p_property->name == ".") {
-                            set_arguments(context, function_context, p_property->object, Reference(Data(&property_reference->parent.get())));
+                            set_arguments(context, function_context, p_property->object, Arguments(arguments.expression, Reference(Data(property_reference->parent))));
                         } else throw FunctionArgumentsError();
                     } else throw FunctionArgumentsError();
                     success = true;
@@ -269,7 +265,7 @@ namespace Analyzer::Standard {
 
     using It = std::map<std::string, M<IndirectReference>>::iterator;
 
-    void call_argument(M<Reference> & result, Function const& function, FunctionContext function_context, It const it, It const end) {
+    void call_argument(M<Reference> & result, CustomFunction const& function, FunctionContext function_context, It const it, It const end) {
         if (it != end) {
             bool success = false;
             for (auto const& m1 : it->second) {
@@ -283,48 +279,37 @@ namespace Analyzer::Standard {
             if (!success)
                 throw FunctionArgumentsError();
         } else {
-            if (auto custom = std::get_if<CustomFunction>(&function)) {
-                bool filter = false;
-                if ((*custom)->filter != nullptr) {
-                    for (auto data : execute(function_context, (*custom)->filter).to_data(function_context)) {
-                        try {
-                            if (data.get<bool>())
-                                filter = true;
-                        } catch (Data::BadAccess const& e) {
-                            // TODO : exception
-                        }
+            if (function->filter != nullptr) {
+                for (auto data : execute(function_context, function->filter).to_data(function_context, function_context.expression)) {
+                    try {
+                        data.get<bool>();
+                    } catch (Data::BadAccess const& e) {
+                        // TODO : exception
                     }
-                } else filter = true;
+                }
+            }
 
-                if (filter) {
-                    result.add(execute(function_context, (*custom)->body));
-                } else throw FunctionArgumentsError();
-            } else if (auto system = std::get_if<SystemFunction>(&function))
-                result.add((*system).pointer(function_context));
+            result.add(execute(function_context, function->body));
         }
     }
 
-    M<Reference> call_function(Context & context, std::shared_ptr<Parser::Expression> expression, M<std::list<Function>> const& all_functions, Arguments arguments) {
+    M<Reference> call_function(Context & context, M<std::list<Function>> const& all_functions, Arguments arguments) {
         M<Reference> m;
 
         for (auto const& functions : all_functions) {
             for (auto const& function : functions) {
                 try {
-                    FunctionContext function_context(context, expression);
-                    for (auto & symbol : function.extern_symbols)
-                        function_context.add_symbol(symbol.first, symbol.second);
+                    if (auto custom = std::get_if<CustomFunction>(&function)) {
+                        auto function_context = custom->context;
 
-                    std::shared_ptr<Parser::Expression> parameters = nullptr;
-                    if (auto custom = std::get_if<CustomFunction>(&function))
-                        parameters = (*custom)->parameters;
-                    else if (auto system = std::get_if<SystemFunction>(&function))
-                        parameters = (*system).parameters;
+                        set_arguments(context, function_context, (*custom)->parameters, arguments);
 
-                    set_arguments(context, function_context, parameters, arguments);
-
-                    M<Reference> result;
-                    call_argument(result, function, function_context, function_context.begin(), function_context.end());
-                    return result;
+                        M<Reference> result;
+                        call_argument(result, *custom, function_context, function_context.begin(), function_context.end());
+                        return result;
+                    } else if (auto system = std::get_if<SystemFunction>(&function)) {
+                        return (*system)(arguments);
+                    }
                 } catch (FunctionArgumentsError & e) {}
             }
 
@@ -339,31 +324,34 @@ namespace Analyzer::Standard {
             auto function = execute(context, function_call->function);
 
             M<std::list<Function>> all_functions;
-            for (auto data : function.to_data(context)) {
+            for (auto data : function.to_data(context, expression)) {
                 try {
                     all_functions.add(data.get<Object*>()->functions);
                 } catch (Data::BadAccess const& e) {}
             }
 
-            return call_function(context, function_call, all_functions, function_call->arguments);
+            return call_function(context, all_functions, function_call->arguments);
         } else if (auto function_definition = std::dynamic_pointer_cast<Parser::FunctionDefinition>(expression)) {
-            auto object = context.new_object();
-            Function f = {function_definition};
+            auto object = context.get_object(function_definition);
+
+            context.get_global().contexts.emplace(function_definition, FunctionContext(context.get_global()));
+            CustomFunction f{function_definition, context.get_global().contexts[function_definition]};
             for (auto symbol : function_definition->body->symbols)
                 if (context.has_symbol(symbol))
-                    f.extern_symbols[symbol] = context[symbol];
+                    f.context.add_symbol(symbol, context[symbol]);
             if (function_definition->filter != nullptr)
                 for (auto symbol : function_definition->filter->symbols)
                     if (context.has_symbol(symbol))
-                        f.extern_symbols[symbol] = context[symbol];
-            object->functions.push_front(f);
+                        f.context.add_symbol(symbol, context[symbol]);
+
+            object->functions.push_front(Function(f));
 
             return Reference(Data(object));
         } else if (auto property = std::dynamic_pointer_cast<Parser::Property>(expression)) {
             M<Reference> m;
 
             for (auto r : execute(context, property->object)) {
-                auto data = r.to_data(context);
+                auto data = r.to_data(context, expression);
                 for (auto d : data) {
                     try {
                         auto object = d.get<Object*>();
@@ -384,7 +372,10 @@ namespace Analyzer::Standard {
             } else if (auto d = std::get_if<double>(&data)) {
                 return Reference(Data(*d));
             } else if (auto str = std::get_if<std::string>(&data)) {
-                return Reference(Data(context.new_object(*str)));
+                std::vector<M<Reference>> string;
+                for (auto c : *str)
+                    string.push_back(Reference(Data{c}));
+                return Reference(TupleReference(string));
             } else {
                 return context[symbol->name];
             }
@@ -405,10 +396,10 @@ namespace Analyzer::Standard {
         }
     }
 
-    std::pair<std::shared_ptr<Expression>, MetaData> Analyzer::analyze(std::shared_ptr<Parser::Expression> expression) {
-        GlobalContext context;
+    MetaData analyze(std::shared_ptr<Parser::Expression> expression) {
+        GlobalContext context(expression);
 
-        auto analysis = execute(context, false, expression);
+        auto analysis = execute(context, expression);
 
         for (auto const& symbol : context) {
             meta_data.global_variables[symbol.first] = symbol.second;

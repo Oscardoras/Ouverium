@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <list>
 #include <map>
+#include <optional>
 #include <set>
 #include <variant>
 
@@ -12,12 +13,13 @@
 
 namespace Analyzer::Standard {
 
-    struct Function;
     struct Object;
     struct Data;
     class Reference;
     class Context;
     class GlobalContext;
+    class FunctionContext;
+    struct Arguments;
 
     // Definition of a Multiple (M)
 
@@ -69,7 +71,6 @@ namespace Analyzer::Standard {
     // Definition of Data
 
     struct Data: public std::variant<Object*, bool, char, long, double> {
-
         using std::variant<Object*, bool, char, long, double>::variant;
 
         class BadAccess: public std::exception {};
@@ -91,18 +92,34 @@ namespace Analyzer::Standard {
     // Definitions of References
 
     using TupleReference = std::vector<M<Reference>>;
-    using SymbolReference = std::reference_wrapper<M<Data>>;
+    struct SymbolReference {
+        Context & context;
+        std::string symbol;
+
+        operator M<Data> &() const;
+
+        friend bool operator==(SymbolReference const& a, SymbolReference const& b) {
+            return &a.context == &b.context && a.symbol == b.symbol;
+        }
+    };
     struct PropertyReference {
-        std::reference_wrapper<Object> parent;
+        Object* parent;
         std::string name;
 
         operator M<Data> &() const;
+
+        friend bool operator==(PropertyReference const& a, PropertyReference const& b) {
+            return &a.parent == &b.parent && a.name == b.name;
+        }
     };
     struct ArrayReference {
-        std::reference_wrapper<Object> array;
-        size_t i;
+        Object* array;
 
         operator M<Data> &() const;
+
+        friend bool operator==(ArrayReference const& a, ArrayReference const& b) {
+            return &a.array == &b.array;
+        }
     };
 
     class IndirectReference : public std::variant<SymbolReference, PropertyReference, ArrayReference> {
@@ -111,7 +128,7 @@ namespace Analyzer::Standard {
 
         using std::variant<SymbolReference, PropertyReference, ArrayReference>::variant;
 
-        M<Data> to_data(Context & context) const;
+        M<Data> to_data(Context & context, std::shared_ptr<Parser::Expression> expression) const;
 
     };
     template<>
@@ -121,7 +138,7 @@ namespace Analyzer::Standard {
 
         using M<IndirectReference, true>::M;
 
-        M<Data> to_data(Context & context) const;
+        M<Data> to_data(Context & context, std::shared_ptr<Parser::Expression> expression) const;
 
     };
 
@@ -132,8 +149,7 @@ namespace Analyzer::Standard {
         using std::variant<M<Data>, TupleReference, SymbolReference, PropertyReference, ArrayReference>::variant;
         Reference(IndirectReference const& indirect_reference);
 
-        M<Data> to_data(Context & context) const;
-        IndirectReference to_indirect_reference(Context & context) const;
+        M<Data> to_data(Context & context, std::shared_ptr<Parser::Expression> expression) const;
 
     };
     template<>
@@ -148,42 +164,28 @@ namespace Analyzer::Standard {
                 add(e);
         }
 
-        M<Data> to_data(Context & context) const;
-        M<IndirectReference> to_indirect_reference(Context & context) const;
+        M<Data> to_data(Context & context, std::shared_ptr<Parser::Expression> expression) const;
 
     };
+
+    // Definition of Function
+
+    struct CustomFunction : public std::shared_ptr<Parser::FunctionDefinition> {
+        FunctionContext & context;
+    };
+
+    using SystemFunction = M<Reference> (*)(Arguments);
+
+    using Function = std::variant<CustomFunction, SystemFunction>;
 
     // Definition of Object
 
     struct Object {
         std::map<std::string, M<Data>> properties;
         std::list<Function> functions;
-        std::vector<M<Data>> array;
-
-        Object() = default;
-
-        Object(std::string const& str) {
-            array.reserve(str.size());
-            for (auto c : str)
-                array.push_back(Data(c));
-        }
+        M<Data> array;
 
         IndirectReference operator[](std::string name);
-    };
-
-    // Definition of Function
-
-    using CustomFunction = std::shared_ptr<Parser::FunctionDefinition>;
-
-    struct SystemFunction {
-        std::shared_ptr<Parser::Expression> parameters;
-        M<Reference> (*pointer)(Context&);
-    };
-
-    struct Function : public std::variant<CustomFunction, SystemFunction> {
-        std::map<std::string, M<IndirectReference>> extern_symbols;
-
-        using std::variant<CustomFunction, SystemFunction>::variant;
     };
 
     // Definitions of Contexts
@@ -193,60 +195,55 @@ namespace Analyzer::Standard {
     protected:
 
         std::map<std::string, M<IndirectReference>> symbols;
+        std::map<std::string, M<Data>> symbol_references;
 
     public:
 
         std::set<Reference> gettings;
 
-        std::shared_ptr<Parser::Expression> expression;
-
-        Context(std::shared_ptr<Parser::Expression> expression):
-            expression(expression) {}
-
-        virtual Context & get_parent() = 0;
         virtual GlobalContext & get_global() = 0;
 
-        Object* new_object();
-        Object* new_object(Object && object);
-
-        M<Data> & new_reference(M<Data> const& data = {});
+        Object* get_object(std::shared_ptr<Parser::Expression> expression);
 
         bool has_symbol(std::string const& symbol);
-        M<IndirectReference> add_symbol(std::string const& symbol, M<Reference> const& reference);
+        void add_symbol(std::string const& symbol, M<Reference> const& reference);
         M<IndirectReference> operator[](std::string const& symbol);
         auto begin() { return symbols.begin(); }
         auto end() { return symbols.end(); }
+
+        friend SymbolReference::operator M<Data> &() const;
+
     };
 
     class GlobalContext: public Context {
 
     protected:
 
-        std::list<Object> objects;
-        std::list<M<Data>> references;
+        std::map<std::shared_ptr<Parser::Expression>, Object> objects;
 
     public:
 
         std::map<std::string, std::shared_ptr<Parser::Expression>> sources;
 
-        GlobalContext(std::shared_ptr<Parser::Expression> expression);
-
         virtual GlobalContext& get_global() override {
-            return *this;
-        }
-
-        virtual Context& get_parent() override {
             return *this;
         }
 
         ~GlobalContext();
 
-        friend Object* Context::new_object();
-        friend Object* Context::new_object(Object && object);
-        friend M<Data> & Context::new_reference(M<Data> const& data);
+        friend Object* Context::get_object(std::shared_ptr<Parser::Expression> expression);
+        friend M<IndirectReference> Context::operator[](std::string const& symbol);
 
         MetaData meta_data;
-        std::map<std::shared_ptr<Parser::FunctionDefinition>, std::vector<Object*>> cache_contexts;
+        struct Lambda {
+            std::shared_ptr<Parser::FunctionDefinition> function_definition;
+            std::shared_ptr<Parser::Symbol> symbol;
+
+            Lambda() :
+                function_definition{ std::make_shared<Parser::FunctionDefinition>() }, symbol{ std::make_shared<Parser::Symbol>("#cached") } {}
+        };
+        std::map<std::shared_ptr<Parser::FunctionCall>, Lambda> lambdas;
+        std::map<std::shared_ptr<Parser::FunctionDefinition>, FunctionContext> contexts;
 
     };
 
@@ -254,19 +251,15 @@ namespace Analyzer::Standard {
 
     protected:
 
-        Context & parent;
+        GlobalContext & global;
 
     public:
 
-        FunctionContext(Context & parent, std::shared_ptr<Parser::Expression> expression):
-            Context(expression), parent(parent) {}
+        FunctionContext(GlobalContext & global):
+            global(global) {}
 
         virtual GlobalContext & get_global() override {
-            return parent.get_global();
-        }
-
-        virtual Context & get_parent() override {
-            return parent;
+            return global;
         }
     };
 
@@ -274,13 +267,18 @@ namespace Analyzer::Standard {
 
     class FunctionArgumentsError {};
 
-    struct Arguments : public std::variant<std::shared_ptr<Parser::Expression>, M<Reference>> {
-        using std::variant<std::shared_ptr<Parser::Expression>, M<Reference>>::variant;
+    struct Arguments {
+
+        std::shared_ptr<Parser::Expression> expression;
+        std::optional<M<Reference>> reference;
+
+        Arguments(std::shared_ptr<Parser::Expression> const& expression, std::optional<M<Reference>> const& reference = {}) :
+            expression{ expression }, reference{ reference } {}
 
         M<Reference> compute(Context & context) const;
     };
 
-    M<Reference> call_function(Context & context, std::shared_ptr<Parser::Expression> expression, M<std::list<Function>> const& functions, Arguments arguments);
+    M<Reference> call_function(Context & context, M<std::list<Function>> const& functions, Arguments arguments);
     M<Reference> execute(Context & context, std::shared_ptr<Parser::Expression> expression);
 
     void create_structures(GlobalContext const& context);

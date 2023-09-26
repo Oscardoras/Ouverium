@@ -41,7 +41,7 @@ namespace Interpreter {
 
         std::set<std::string> get_symbols() const;
         bool has_symbol(std::string const& symbol) const;
-        IndirectReference add_symbol(std::string const& symbol, Reference const& reference);
+        void add_symbol(std::string const& symbol, Reference const& reference);
         IndirectReference operator[](std::string const& symbol);
         auto begin() const {return symbols.begin();}
         auto end() const {return symbols.end();}
