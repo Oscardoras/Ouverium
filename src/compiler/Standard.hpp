@@ -128,7 +128,7 @@ namespace Analyzer::Standard {
 
         using std::variant<SymbolReference, PropertyReference, ArrayReference>::variant;
 
-        M<Data> to_data(Context & context, std::shared_ptr<Parser::Expression> expression) const;
+        M<Data> to_data(Context & context, ObjectKey const& key) const;
 
     };
     template<>
@@ -138,7 +138,7 @@ namespace Analyzer::Standard {
 
         using M<IndirectReference, true>::M;
 
-        M<Data> to_data(Context & context, std::shared_ptr<Parser::Expression> expression) const;
+        M<Data> to_data(Context & context, ObjectKey const& key) const;
 
     };
 
@@ -149,7 +149,7 @@ namespace Analyzer::Standard {
         using std::variant<M<Data>, TupleReference, SymbolReference, PropertyReference, ArrayReference>::variant;
         Reference(IndirectReference const& indirect_reference);
 
-        M<Data> to_data(Context & context, std::shared_ptr<Parser::Expression> expression) const;
+        M<Data> to_data(Context & context, ObjectKey const& key) const;
 
     };
     template<>
@@ -164,7 +164,7 @@ namespace Analyzer::Standard {
                 add(e);
         }
 
-        M<Data> to_data(Context & context, std::shared_ptr<Parser::Expression> expression) const;
+        M<Data> to_data(Context & context, ObjectKey const& key) const;
 
     };
 
@@ -179,6 +179,8 @@ namespace Analyzer::Standard {
     using Function = std::variant<CustomFunction, SystemFunction>;
 
     // Definition of Object
+
+    using ObjectKey = std::variant<std::shared_ptr<Parser::Expression>, SymbolReference>;
 
     struct Object {
         std::map<std::string, M<Data>> properties;
@@ -203,7 +205,7 @@ namespace Analyzer::Standard {
 
         virtual GlobalContext & get_global() = 0;
 
-        Object* get_object(std::shared_ptr<Parser::Expression> expression);
+        Object* new_object(ObjectKey const& key);
 
         bool has_symbol(std::string const& symbol);
         void add_symbol(std::string const& symbol, M<Reference> const& reference);
@@ -219,7 +221,7 @@ namespace Analyzer::Standard {
 
     protected:
 
-        std::map<std::shared_ptr<Parser::Expression>, Object> objects;
+        std::map<ObjectKey, Object> objects;
 
     public:
 
@@ -231,7 +233,7 @@ namespace Analyzer::Standard {
 
         ~GlobalContext();
 
-        friend Object* Context::get_object(std::shared_ptr<Parser::Expression> expression);
+        friend Object* Context::new_object(ObjectKey const& key);
         friend M<IndirectReference> Context::operator[](std::string const& symbol);
 
         MetaData meta_data;
