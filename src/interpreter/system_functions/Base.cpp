@@ -258,7 +258,9 @@ namespace Interpreter {
 
             auto it = global.sources.find(path);
             if (it == global.sources.end()) {
-                std::string code = (std::ostringstream{} << std::ifstream(path).rdbuf()).str();
+                std::ostringstream oss;
+                oss << std::ifstream(path).rdbuf();
+                std::string code = oss.str();
 
                 try {
                     auto expression = Parser::Standard(code, path).get_tree();
@@ -382,7 +384,9 @@ namespace Interpreter {
         Reference to_string(FunctionContext & context) {
             auto data = context["data"].to_data(context);
 
-            return Data(context.new_object((std::ostringstream{} << data).str()));
+            std::ostringstream oss;
+            oss << data;
+            return Data(context.new_object(oss.str()));
         }
 
         void init(GlobalContext & context) {

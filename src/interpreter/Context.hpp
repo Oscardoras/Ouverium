@@ -23,8 +23,6 @@ namespace Interpreter {
 
     public:
 
-        std::set<Reference> gettings;
-
         std::shared_ptr<Parser::Expression> expression;
 
         Context(std::shared_ptr<Parser::Expression> expression):
@@ -96,9 +94,7 @@ namespace Interpreter {
     public:
 
         FunctionContext(Context & parent, std::shared_ptr<Parser::Expression> expression):
-            Context(expression), parent(parent), recursion_level(parent.get_recurion_level()+1) {
-            gettings = parent.gettings;
-        }
+            Context(expression), parent(parent), recursion_level(parent.get_recurion_level()+1) {}
 
         virtual GlobalContext & get_global() override {
             return parent.get_global();

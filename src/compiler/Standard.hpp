@@ -201,8 +201,6 @@ namespace Analyzer::Standard {
 
     public:
 
-        std::set<Reference> gettings;
-
         virtual GlobalContext & get_global() = 0;
 
         Object* new_object(ObjectKey const& key);
@@ -271,11 +269,13 @@ namespace Analyzer::Standard {
 
     struct Arguments {
 
-        std::shared_ptr<Parser::Expression> expression;
-        std::optional<M<Reference>> reference;
+        std::variant<std::shared_ptr<Parser::Expression>, M<Reference>> arg;
+        ObjectKey key;
 
-        Arguments(std::shared_ptr<Parser::Expression> const& expression, std::optional<M<Reference>> const& reference = {}) :
-            expression{ expression }, reference{ reference } {}
+        Arguments(std::variant<std::shared_ptr<Parser::Expression>, M<Reference>> const& arg, ObjectKey const& key):
+            arg(arg), key(key) {}
+        Arguments(std::shared_ptr<Parser::Expression> const& expression):
+            arg(expression), key(expression) {}
 
         M<Reference> compute(Context & context) const;
     };

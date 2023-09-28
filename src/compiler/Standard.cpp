@@ -14,25 +14,13 @@ namespace Analyzer::Standard {
         M<Data> m;
 
         for (auto const& data : datas) {
-            if (data == Data{})
-                if (context.gettings.find(reference) == context.gettings.end()) {
-                    context.gettings.insert(reference);
-                    M<std::list<Function>> functions;
-                    for (auto const& d : context.get_global()["getter"].to_data(context, key))
-                        functions.add(d.get<Object*>()->functions);
-                    auto r = call_function(context, functions, Arguments(key, reference)).to_data(context, key);
-                    context.gettings.erase(reference);
-                    m.add(r);
-                } else {
-                    Data d = context.new_object(key);
-
-                    if (auto symbol_reference = std::get_if<SymbolReference>(&reference)) static_cast<M<Data> &>(*symbol_reference).add(d);
-                    else if (auto property_reference = std::get_if<PropertyReference>(&reference)) static_cast<M<Data> &>(*property_reference).add(d);
-                    else if (auto array_reference = std::get_if<ArrayReference>(&reference)) static_cast<M<Data> &>(*array_reference).add(d);
-
-                    m.add(d);
-                }
-            else
+            if (data == Data{}) {
+                M<std::list<Function>> functions;
+                for (auto const& d : context.get_global()["getter"].to_data(context, key))
+                    functions.add(d.get<Object*>()->functions);
+                auto r = call_function(context, functions, Arguments(key, reference)).to_data(context, key);
+                m.add(r);
+            } else
                 m.add(data);
         }
 
@@ -123,7 +111,7 @@ namespace Analyzer::Standard {
                 symbols[symbol].add(IndirectReference(*array_reference));
             else if (auto tuple_reference = std::get_if<TupleReference>(&ref)) {
                 auto key = SymbolReference{ *this, symbol };
-                auto object = get_object(key);
+                auto object = new_object(key);
                 for (auto d : *tuple_reference)
                     object->array.add(d.to_data(*this, key));
                 return symbols[symbol].add(IndirectReference(create_symbol_reference(Data(object))));
@@ -155,10 +143,10 @@ namespace Analyzer::Standard {
 
 
     M<Reference> Arguments::compute(Context & context) const {
-        if (reference)
-            return reference.value();
-        else
-            return execute(context, expression);
+        if (auto expression = std::get_if<std::shared_ptr<Parser::Expression>>(&arg))
+            return execute(context, *expression);
+        else if (auto reference = std::get_if<M<Reference>>(&arg))
+            return *reference;
     }
 
     using ParserExpression = std::shared_ptr<Parser::Expression>;
@@ -218,16 +206,16 @@ namespace Analyzer::Standard {
                     auto function_definition = context.get_global().lambdas[p_function].function_definition;
                     function_definition->parameters = p_function->arguments;
 
-                    if (arguments.reference) {
-                        function_definition->body = context.get_global().lambdas[p_function].symbol;
-
-                        auto & function_context = context.get_global().contexts[function_definition];
-                        function_context.add_symbol("#cached", arguments.reference.value());
-                    } else {
-                        function_definition->body = arguments.expression;
+                    if (auto expression = std::get_if<std::shared_ptr<Parser::Expression>>(&arguments.arg)) {
+                        function_definition->body = *expression;
 
                         for (auto symbol : function_definition->body->symbols)
                            function_context.add_symbol(symbol, context[symbol]);
+                    } else if (auto reference = std::get_if<M<Reference>>(&arguments.arg)) {
+                        function_definition->body = context.get_global().lambdas[p_function].symbol;
+
+                        auto & function_context = context.get_global().contexts[function_definition];
+                        function_context.add_symbol("#cached", *reference);
                     }
                     object->functions.push_front(CustomFunction{function_definition, function_context});
 
@@ -245,14 +233,14 @@ namespace Analyzer::Standard {
 
             M<Reference> reference = call_function(context, all_functions, arguments);
             // TODO : catch exception
-            set_arguments(context, function_context, p_function->arguments, Arguments(arguments.expression, reference));
+            set_arguments(context, function_context, p_function->arguments, Arguments(reference, arguments.key));
         } else if (auto p_property = std::dynamic_pointer_cast<Parser::Property>(parameters)) {
             bool success = false;
             for (auto reference : arguments.compute(context)) {
                 try {
                     if (auto property_reference = std::get_if<PropertyReference>(&reference)) {
                         if (p_property->name == property_reference->name || p_property->name == ".") {
-                            set_arguments(context, function_context, p_property->object, Arguments(arguments.expression, Reference(Data(property_reference->parent))));
+                            set_arguments(context, function_context, p_property->object, Arguments(Reference(Data(property_reference->parent)), arguments.key));
                         } else throw FunctionArgumentsError();
                     } else throw FunctionArgumentsError();
                     success = true;
@@ -281,7 +269,7 @@ namespace Analyzer::Standard {
                 throw FunctionArgumentsError();
         } else {
             if (function->filter != nullptr) {
-                for (auto data : execute(function_context, function->filter).to_data(function_context, function_context.expression)) {
+                for (auto data : execute(function_context, function->filter).to_data(function_context, function->filter)) {
                     try {
                         data.get<bool>();
                     } catch (Data::BadAccess const& e) {

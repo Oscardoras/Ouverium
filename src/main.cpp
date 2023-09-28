@@ -47,7 +47,9 @@ int interactive_mode(std::string const& path) {
                         std::cout << str << std::endl;
                 } catch (Interpreter::Exception const& ex) {
                     if (!ex.positions.empty()) {
-                        ex.positions.front()->notify_error((std::ostringstream{} << "An exception occured: " << ex.reference.to_data(context)).str());
+                        std::ostringstream oss;
+                        oss << "An exception occured: " << ex.reference.to_data(context);
+                        ex.positions.front()->notify_error(oss.str());
                         for (auto const& p : ex.positions)
                             p->notify_position();
                     }
@@ -73,7 +75,9 @@ int interactive_mode(std::string const& path) {
 }
 
 int file_mode(std::string const& path, std::istream & is) {
-    std::string code = (std::ostringstream{} << is.rdbuf()).str();
+    std::ostringstream oss;
+    oss << is.rdbuf();
+    std::string code = oss.str();
 
     try {
         auto expression = Parser::Standard(code, path).get_tree();
@@ -92,7 +96,9 @@ int file_mode(std::string const& path, std::istream & is) {
             }
         } catch (Interpreter::Exception const& ex) {
             if (!ex.positions.empty()) {
-                ex.positions.front()->notify_error((std::ostringstream{} << "An exception occured: " << ex.reference.to_data(context)).str());
+                std::ostringstream oss;
+                oss << "An exception occured: " << ex.reference.to_data(context);
+                ex.positions.front()->notify_error(oss.str());
                 for (auto const& p : ex.positions)
                     p->notify_position();
             }
