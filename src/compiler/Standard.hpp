@@ -217,12 +217,9 @@ namespace Analyzer::Standard {
 
     class GlobalContext: public Context {
 
-    protected:
-
-        std::map<ObjectKey, Object> objects;
-
     public:
 
+        std::map<ObjectKey, Object> objects;
         std::map<std::string, std::shared_ptr<Parser::Expression>> sources;
 
         virtual GlobalContext& get_global() override {
@@ -230,9 +227,6 @@ namespace Analyzer::Standard {
         }
 
         ~GlobalContext();
-
-        friend Object* Context::new_object(ObjectKey const& key);
-        friend M<IndirectReference> Context::operator[](std::string const& symbol);
 
         MetaData meta_data;
         struct Lambda {
@@ -282,8 +276,6 @@ namespace Analyzer::Standard {
 
     M<Reference> call_function(Context & context, M<std::list<Function>> const& functions, Arguments arguments);
     M<Reference> execute(Context & context, std::shared_ptr<Parser::Expression> expression);
-
-    void create_structures(GlobalContext const& context);
 
     MetaData analyze(std::shared_ptr<Parser::Expression> expression);
 

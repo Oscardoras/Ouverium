@@ -18,7 +18,7 @@ namespace Analyzer::Standard {
                 M<std::list<Function>> functions;
                 for (auto const& d : context.get_global()["getter"].to_data(context, key))
                     functions.add(d.get<Object*>()->functions);
-                auto r = call_function(context, functions, Arguments(key, reference)).to_data(context, key);
+                auto r = call_function(context, functions, Arguments(reference, key)).to_data(context, key);
                 m.add(r);
             } else
                 m.add(data);
@@ -156,37 +156,37 @@ namespace Analyzer::Standard {
             auto reference = arguments.compute(context);
 
             if (function_context.has_symbol(symbol->name)) {
-                if (reference.to_data(context, symbol) != function_context[symbol->name].to_data(context, arguments.expression))
+                if (reference.to_data(context, symbol) != function_context[symbol->name].to_data(context, arguments.key))
                     throw FunctionArgumentsError();
             } else {
                 function_context.add_symbol(symbol->name, reference);
             }
         } else if (auto p_tuple = std::dynamic_pointer_cast<Parser::Tuple>(parameters)) {
-            if (auto expression = std::get_if<ParserExpression>(&arguments)) {
+            if (auto expression = std::get_if<ParserExpression>(&arguments.arg)) {
                 if (auto a_tuple = std::dynamic_pointer_cast<Parser::Tuple>(*expression)) {
                     if (p_tuple->objects.size() == a_tuple->objects.size()) {
                         for (size_t i = 0; i < p_tuple->objects.size(); i++)
                             set_arguments(context, function_context, p_tuple->objects[i], a_tuple->objects[i]);
                     } else throw FunctionArgumentsError();
                 } else {
-                    set_arguments(context, function_context, parameters, arguments.compute(context));
+                    set_arguments(context, function_context, parameters, Arguments(arguments.compute(context), arguments.key));
                 }
-            } else if (auto reference = std::get_if<M<Reference>>(&arguments)) {
+            } else if (auto reference = std::get_if<M<Reference>>(&arguments.arg)) {
                 bool success = false;
                 for (auto ref : *reference) {
                     try {
                         if (auto tuple_reference = std::get_if<TupleReference>(&ref)) {
                             if (tuple_reference->size() == p_tuple->objects.size()) {
                                 for (size_t i = 0; i < p_tuple->objects.size(); i++)
-                                    set_arguments(context, function_context, p_tuple->objects[i], (*tuple_reference)[i]);
+                                    set_arguments(context, function_context, p_tuple->objects[i], Arguments((*tuple_reference)[i], arguments.key));
                             } else throw FunctionArgumentsError();
                         } else {
                             try {
-                                for (auto d : ref.to_data(function_context)) {
+                                for (auto d : ref.to_data(function_context, arguments.key)) {
                                     auto object = d.get<Object*>();
                                     if (object->array.size() == p_tuple->objects.size()) {
                                         for (size_t i = 0; i < p_tuple->objects.size(); i++)
-                                            set_arguments(context, function_context, p_tuple->objects[i], Reference(ArrayReference{*object, i}));
+                                            set_arguments(context, function_context, p_tuple->objects[i], Arguments(Reference(ArrayReference{object}), arguments.key));
                                     } else throw FunctionArgumentsError();
                                 }
                             } catch (Data::BadAccess const& e) {
@@ -378,29 +378,26 @@ namespace Analyzer::Standard {
         } else return {};
     }
 
-    void create_structures(GlobalContext const& context) {
-
-        for (auto const& o : context.objects) {
-            o.
-        }
-    }
-
     MetaData analyze(std::shared_ptr<Parser::Expression> expression) {
-        GlobalContext context(expression);
+        GlobalContext context;
 
-        auto analysis = execute(context, expression);
+        auto r = execute(context, expression);
 
-        for (auto const& symbol : context) {
-            meta_data.global_variables[symbol.first] = symbol.second;
-        }
-        meta_data.global_variables = std::move(context.symbols);
+        std::map<std::shared_ptr<Structure>, std::set<Object*>> structures;
+        auto get_structure = [&structures](Object* object) -> std::shared_ptr<Structure> {
+            for (auto const& s : structures) {
+                if (s.second.find(object) != s.second.end())
+                    return s.first;
+            }
 
-        for (auto & object : context.objects) {
-            MetaData::Structure structure;
+            auto s = std::make_shared<Structure>();
+            structures[s].insert(object);
+            return s;
+        };
+        for (auto & [key, object] : context.objects) {
+            auto structure = get_structure(&object);
 
             for (auto const& pair : object.properties) {
-                auto & types = structure[pair.first];
-
                 for (auto const& data : pair.second) {
                     if (std::get_if<Object*>(&data)) types.insert(MetaData::Pointer);
                     else if (std::get_if<bool>(&data)) types.insert(MetaData::Bool);
@@ -410,10 +407,12 @@ namespace Analyzer::Standard {
                 }
             }
 
-            meta_data.structures.insert(structure);
+            structure->function = object.functions.empty();
+
+            structures[structure].insert(&object);
         }
 
-        return meta_data;
+        return std::move(context.meta_data);
     }
 
 }

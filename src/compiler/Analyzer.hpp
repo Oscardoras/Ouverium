@@ -24,7 +24,7 @@ namespace Analyzer {
     struct Structure: public Type {
         std::map<std::string, std::set<std::weak_ptr<Type>>> properties;
         std::set<std::weak_ptr<Type>> array;
-        bool function;
+        bool function = false;
     };
 
 
