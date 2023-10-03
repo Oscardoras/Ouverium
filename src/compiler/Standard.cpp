@@ -383,33 +383,14 @@ namespace Analyzer::Standard {
 
         auto r = execute(context, expression);
 
-        std::map<std::shared_ptr<Structure>, std::set<Object*>> structures;
-        auto get_structure = [&structures](Object* object) -> std::shared_ptr<Structure> {
-            for (auto const& s : structures) {
-                if (s.second.find(object) != s.second.end())
-                    return s.first;
-            }
-
-            auto s = std::make_shared<Structure>();
-            structures[s].insert(object);
-            return s;
-        };
+        std::map<std::tuple<std::set<std::string>, bool, bool>, std::shared_ptr<Structure>> structures;
         for (auto & [key, object] : context.objects) {
-            auto structure = get_structure(&object);
+            std::tuple<std::set<std::string>, bool, bool> structure;
 
-            for (auto const& pair : object.properties) {
-                for (auto const& data : pair.second) {
-                    if (std::get_if<Object*>(&data)) types.insert(MetaData::Pointer);
-                    else if (std::get_if<bool>(&data)) types.insert(MetaData::Bool);
-                    else if (std::get_if<char>(&data)) types.insert(MetaData::Char);
-                    else if (std::get_if<long>(&data)) types.insert(MetaData::Int);
-                    else if (std::get_if<double>(&data)) types.insert(MetaData::Float);
-                }
-            }
-
-            structure->function = object.functions.empty();
-
-            structures[structure].insert(&object);
+            for (auto const& pair : object.properties)
+                std::get<0>(structure).insert(pair.first);
+            std::get<1>(structure) = !object.array.empty();
+            std::get<2>(structure) = !object.functions.empty();
         }
 
         return std::move(context.meta_data);
