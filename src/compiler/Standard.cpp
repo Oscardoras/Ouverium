@@ -383,14 +383,62 @@ namespace Analyzer::Standard {
 
         auto r = execute(context, expression);
 
-        std::map<std::tuple<std::set<std::string>, bool, bool>, std::shared_ptr<Structure>> structures;
-        for (auto & [key, object] : context.objects) {
-            std::tuple<std::set<std::string>, bool, bool> structure;
+        {
+            std::map<std::set<std::string>, std::shared_ptr<Structure>> structures;
+            auto get_structure = [&structures](Object* object) {
+                std::set<std::string> structure;
 
-            for (auto const& pair : object.properties)
-                std::get<0>(structure).insert(pair.first);
-            std::get<1>(structure) = !object.array.empty();
-            std::get<2>(structure) = !object.functions.empty();
+                for (auto const& pair : object->properties)
+                    structure.insert(pair.first);
+
+                return structure;
+            };
+            for (auto & [key, object] : context.objects) {
+                auto structure = get_structure(&object);
+
+                auto & s = structures[structure];
+                if (s == nullptr)
+                    s = std::make_shared<Structure>();
+            }
+            for (auto & [key, object] : context.objects) {
+                auto structure = get_structure(&object);
+
+                auto & s = structures[structure];
+                for (auto const&p : object.properties) {
+                    auto & property = s->properties[p.first];
+                    for (auto data : p.second) {
+                        if (auto o = std::get_if<Object*>(&data))
+                            property.insert(structures[get_structure(*o)]);
+                        else if (std::holds_alternative<bool>(data))
+                            property.insert(Bool);
+                        else if (std::holds_alternative<char>(data))
+                            property.insert(Char);
+                        else if (std::holds_alternative<long>(data))
+                            property.insert(Int);
+                        else if (std::holds_alternative<double>(data))
+                            property.insert(Float);
+                    }
+                }
+
+                for (auto data : object.array) {
+                    if (auto o = std::get_if<Object*>(&data))
+                        s->array.insert(structures[get_structure(*o)]);
+                    else if (std::holds_alternative<bool>(data))
+                        s->array.insert(Bool);
+                    else if (std::holds_alternative<char>(data))
+                        s->array.insert(Char);
+                    else if (std::holds_alternative<long>(data))
+                        s->array.insert(Int);
+                    else if (std::holds_alternative<double>(data))
+                        s->array.insert(Float);
+                }
+
+                if (!object.functions.empty())
+                    s->function = true;
+            }
+
+            for (auto const& s : structures)
+                context.meta_data.structures.insert(s.second);
         }
 
         return std::move(context.meta_data);
