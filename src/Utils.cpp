@@ -3,7 +3,7 @@
 #include "Utils.hpp"
 
 
-std::variant<nullptr_t, bool, long, double, std::string> get_symbol(std::string const& name) {
+std::variant<std::nullptr_t, bool, long, double, std::string> get_symbol(std::string const& name) {
     if (name[0] == '\"') {
         std::string str;
 
