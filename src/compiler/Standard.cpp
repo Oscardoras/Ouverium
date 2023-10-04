@@ -128,15 +128,15 @@ namespace Analyzer::Standard {
         }
     }
 
-    GlobalContext::~GlobalContext() {
+    void GlobalContext::destruct() {
         for (auto & object : objects) {
             try {
                 M<std::list<Function>> functions;
-                for (auto const& d : object.second["destructor"].to_data(*this))
+                for (auto const& d : object.second["destructor"].to_data(*this, expression))
                     functions.add(d.get<Object*>()->functions);
 
                 if (!functions.empty())
-                    call_function(get_global(), get_global().expression, functions, std::make_shared<Parser::Tuple>());
+                    call_function(*this, functions, Arguments(expression));
             } catch (Data::BadAccess & e) {}
         }
     }

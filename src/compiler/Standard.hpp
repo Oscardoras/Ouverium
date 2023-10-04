@@ -196,6 +196,8 @@ namespace Analyzer::Standard {
 
     protected:
 
+        inline static const auto expression = std::make_shared<Parser::Tuple>();
+
         std::map<std::string, M<IndirectReference>> symbols;
         std::map<std::string, M<Data>> symbol_references;
 
@@ -226,7 +228,7 @@ namespace Analyzer::Standard {
             return *this;
         }
 
-        ~GlobalContext();
+        void destruct();
 
         MetaData meta_data;
         struct Lambda {
