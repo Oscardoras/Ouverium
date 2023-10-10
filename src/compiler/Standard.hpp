@@ -36,8 +36,6 @@ namespace Analyzer::Standard {
 
         using std::list<T>::size;
         using std::list<T>::empty;
-        using std::list<T>::front;
-        using std::list<T>::back;
         using std::list<T>::begin;
         using std::list<T>::end;
 
@@ -77,7 +75,11 @@ namespace Analyzer::Standard {
 
         template<typename T>
         T & get() {
-            return const_cast<T &>(const_cast<Data const&>(*this).get<T>());
+            try {
+                return std::get<T>(*this);
+            } catch (std::bad_variant_access & e) {
+                throw BadAccess();
+            }
         }
         template<typename T>
         T const& get() const {
@@ -124,41 +126,27 @@ namespace Analyzer::Standard {
 
     using ObjectKey = std::variant<std::shared_ptr<Parser::Expression>, SymbolReference>;
 
-    class IndirectReference : public std::variant<SymbolReference, PropertyReference, ArrayReference> {
-
-    public:
-
+    struct IndirectReference : public std::variant<SymbolReference, PropertyReference, ArrayReference> {
         using std::variant<SymbolReference, PropertyReference, ArrayReference>::variant;
 
         M<Data> to_data(Context & context, ObjectKey const& key) const;
-
     };
     template<>
-    class M<IndirectReference> : public M<IndirectReference, true> {
-
-    public:
-
+    struct M<IndirectReference> : public M<IndirectReference, true> {
         using M<IndirectReference, true>::M;
 
         M<Data> to_data(Context & context, ObjectKey const& key) const;
-
     };
 
-    class Reference: public std::variant<M<Data>, TupleReference, SymbolReference, PropertyReference, ArrayReference> {
-
-    public:
-
+    struct Reference: public std::variant<M<Data>, TupleReference, SymbolReference, PropertyReference, ArrayReference> {
         using std::variant<M<Data>, TupleReference, SymbolReference, PropertyReference, ArrayReference>::variant;
+
         Reference(IndirectReference const& indirect_reference);
 
         M<Data> to_data(Context & context, ObjectKey const& key) const;
-
     };
     template<>
-    class M<Reference> : public M<Reference, true> {
-
-    public:
-
+    struct M<Reference> : public M<Reference, true> {
         using M<Reference, true>::M;
 
         M(M<IndirectReference> const& indirect_reference) {
@@ -167,7 +155,6 @@ namespace Analyzer::Standard {
         }
 
         M<Data> to_data(Context & context, ObjectKey const& key) const;
-
     };
 
     // Definition of Function
@@ -217,6 +204,9 @@ namespace Analyzer::Standard {
         auto begin() { return symbols.begin(); }
         auto end() { return symbols.end(); }
 
+        virtual void store_objects_version() = 0;
+        virtual bool compare_objects_version() const = 0;
+
         friend SymbolReference::operator M<Data> &() const;
 
     };
@@ -231,6 +221,9 @@ namespace Analyzer::Standard {
         virtual GlobalContext& get_global() override {
             return *this;
         }
+
+        virtual void store_objects_version() override;
+        virtual bool compare_objects_version() const override;
 
         void destruct();
 
@@ -264,8 +257,8 @@ namespace Analyzer::Standard {
             return global;
         }
 
-        void store_objects_version();
-        bool compare_objects_version();
+        virtual void store_objects_version() override;
+        virtual bool compare_objects_version() const override;
     };
 
     // Analyzer
