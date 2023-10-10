@@ -122,6 +122,8 @@ namespace Analyzer::Standard {
         }
     };
 
+    using ObjectKey = std::variant<std::shared_ptr<Parser::Expression>, SymbolReference>;
+
     class IndirectReference : public std::variant<SymbolReference, PropertyReference, ArrayReference> {
 
     public:
@@ -180,17 +182,19 @@ namespace Analyzer::Standard {
 
     // Definition of Object
 
-    using ObjectKey = std::variant<std::shared_ptr<Parser::Expression>, SymbolReference>;
-
     struct Object {
         std::map<std::string, M<Data>> properties;
         std::list<Function> functions;
         M<Data> array;
 
+        size_t version = 0;
+
         IndirectReference operator[](std::string name);
     };
 
     // Definitions of Contexts
+
+    using ObjectsVersion = std::map<Object*, size_t>;
 
     class Context {
 
@@ -251,12 +255,17 @@ namespace Analyzer::Standard {
 
     public:
 
+        ObjectsVersion objects_version;
+
         FunctionContext(GlobalContext & global):
             global(global) {}
 
         virtual GlobalContext & get_global() override {
             return global;
         }
+
+        void store_objects_version();
+        bool compare_objects_version();
     };
 
     // Analyzer

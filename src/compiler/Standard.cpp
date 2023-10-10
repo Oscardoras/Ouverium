@@ -141,12 +141,107 @@ namespace Analyzer::Standard {
         }
     }
 
+    void FunctionContext::store_objects_version() {
+        std::set<Object*> done;
+
+        std::function<void(M<Data> const&)> iterate = [this, &iterate, &done](M<Data> const& m) {
+            for (auto const& data : m) {
+                if (auto o = std::get_if<Object*>(&data)) {
+                    auto object = *o;
+                    if (done.find(object) != done.end()) {
+                        done.insert(object);
+                        objects_version[object] = object->version;
+
+                        for (auto const& property : object->properties)
+                            iterate(property.second);
+
+                        iterate(object->array);
+
+                        for (auto const& f : object->functions) {
+                            if (auto custom = std::get_if<CustomFunction>(&f)) {
+                                for (auto const& [_, m] : custom->context) {
+                                    for (auto const& ref : m) {
+                                        std::visit([&iterate](auto const& arg) {
+                                            iterate(static_cast<M<Data> const&>(arg));
+                                        }, ref);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        for (auto const& [_, m] : *this) {
+            for (auto const& ref : m) {
+                std::visit([&iterate](auto const& arg) {
+                    iterate(static_cast<M<Data> const&>(arg));
+                }, ref);
+            }
+        }
+    }
+
+    struct Different {};
+
+    bool FunctionContext::compare_objects_version() {
+        std::set<Object*> done;
+
+        std::function<void(M<Data> const&)> iterate = [this, &iterate, &done](M<Data> const& m) {
+            for (auto const& data : m) {
+                if (auto o = std::get_if<Object*>(&data)) {
+                    auto object = *o;
+                    if (done.find(object) != done.end()) {
+                        done.insert(object);
+
+                        auto it = objects_version.find(object);
+                        if (it == objects_version.end() || it->second != object->version)
+                            throw Different{};
+
+                        for (auto const& property : object->properties)
+                            iterate(property.second);
+
+                        iterate(object->array);
+
+                        for (auto const& f : object->functions) {
+                            if (auto custom = std::get_if<CustomFunction>(&f)) {
+                                for (auto const& [_, m] : custom->context) {
+                                    for (auto const& ref : m) {
+                                        std::visit([&iterate](auto const& arg) {
+                                            iterate(static_cast<M<Data> const&>(arg));
+                                        }, ref);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        try {
+            for (auto const& [_, m] : *this) {
+                for (auto const& ref : m) {
+                    std::visit([&iterate](auto const& arg) {
+                        iterate(static_cast<M<Data> const&>(arg));
+                    }, ref);
+                }
+            }
+
+            return true;
+        } catch (Different const&) {
+            return false;
+        }
+    }
+
 
     M<Reference> Arguments::compute(Context & context) const {
         if (auto expression = std::get_if<std::shared_ptr<Parser::Expression>>(&arg))
             return execute(context, *expression);
         else if (auto reference = std::get_if<M<Reference>>(&arg))
             return *reference;
+        else
+            return {};
     }
 
     using ParserExpression = std::shared_ptr<Parser::Expression>;

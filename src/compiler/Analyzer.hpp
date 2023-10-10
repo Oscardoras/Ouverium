@@ -30,8 +30,8 @@ namespace Analyzer {
 
     struct MetaData {
         std::set<std::shared_ptr<Structure>> structures;
-        std::map<std::shared_ptr<Parser::Expression>, std::set<std::shared_ptr<Type>>> types;
-        std::set<std::shared_ptr<Parser::Expression>> lambdas;
+        //std::map<std::shared_ptr<Parser::Expression>, std::set<std::shared_ptr<Type>>> types;
+        //std::set<std::shared_ptr<Parser::Expression>> lambdas;
     };
 
 }
