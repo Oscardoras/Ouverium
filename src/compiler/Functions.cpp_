@@ -1,17 +1,16 @@
 #include <filesystem>
 #include <fstream>
 
-#include "../parser/Standard.hpp"
-
-#include "Functions.hpp"
+#include "Standard.hpp"
 
 
-namespace Analyzer {
+namespace Analyzer::Standard {
 
     namespace Functions {
 
-        inline auto & get_function(M<SymbolReference> reference) {
-            return std::get<Object*>(reference.front().get().front())->functions;
+        template<unsigned int size>
+        std::array<M<Reference>, size> get_tuple(COntext & context, Arguments const& arguments) {
+            M<Reference> ref = arguments.compute(context);<
         }
 
         void assignation(M<Reference> const& var, M<Data> const& data, bool potential) {
@@ -34,11 +33,7 @@ namespace Analyzer {
             }
         }
 
-        auto separator_args = std::make_shared<Parser::Tuple>(Parser::Tuple {
-            std::make_shared<Parser::Symbol>("a"),
-            std::make_shared<Parser::Symbol>("b")
-        });
-        M<Reference> separator(Context & context, bool potential) {
+        M<Reference> separator(Arguments const& arguments) {
             return context["b"];
         }
 

@@ -80,7 +80,7 @@ namespace Analyzer::Standard {
         return array->array;
     }
 
-    IndirectReference Object::operator[](std::string name) {
+    IndirectReference Object::operator[](std::string const& name) {
         return PropertyReference{this, name};
     }
 

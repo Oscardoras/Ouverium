@@ -176,7 +176,7 @@ namespace Analyzer::Standard {
         FunctionContext & context;
     };
 
-    using SystemFunction = M<Reference> (*)(Arguments);
+    using SystemFunction = M<Reference> (*)(Arguments const&);
 
     using Function = std::variant<CustomFunction, SystemFunction>;
 
@@ -189,7 +189,7 @@ namespace Analyzer::Standard {
 
         size_t version = 0;
 
-        IndirectReference operator[](std::string name);
+        IndirectReference operator[](std::string const& name);
     };
 
     // Definitions of Contexts
