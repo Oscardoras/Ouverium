@@ -48,10 +48,6 @@ namespace Interpreter {
         IndirectReference to_indirect_reference(Context & context) const;
 
     };
-    
-    bool operator<(SymbolReference const& a, SymbolReference const& b);
-    bool operator<(PropertyReference const& a, PropertyReference const& b);
-    bool operator<(ArrayReference const& a, ArrayReference const& b);
 
 }
 

@@ -37,13 +37,13 @@ void* __UnknownData_get_property(__UnknownData data, unsigned int hash) {
 __ArrayInfo __UnknownData_get_array(__UnknownData data) {
     __ArrayInfo array = {
         .vtable = data.virtual_table->array.vtable,
-        .array = data.data.ptr + data.virtual_table->array.offset
+        .array = (__Array*) ((BYTE*) data.data.ptr) + data.virtual_table->array.offset
     };
     return array;
 }
 
 __Function* __UnknownData_get_function(__UnknownData data) {
-    return data.data.ptr + data.virtual_table->function.offset;
+    return (__Function*) ((BYTE*) data.data.ptr) + data.virtual_table->function.offset;
 }
 
 void __VirtualTable_UnknownData_gc_iterator(void* ptr) {

@@ -72,16 +72,4 @@ namespace Interpreter {
             return context.new_reference(object);
         } else return context.new_reference();
     }
-
-    bool operator<(SymbolReference const& a, SymbolReference const& b) {
-        return &a.get() < &b.get();
-    }
-
-    bool operator<(PropertyReference const& a, PropertyReference const& b) {
-        return &a.parent.get() < &b.parent.get() && a.name < b.name;
-    }
-
-    bool operator<(ArrayReference const& a, ArrayReference const& b) {
-        return &a.array.get() < &b.array.get() && a.i < b.i;
-    }
 }

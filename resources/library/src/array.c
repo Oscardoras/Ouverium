@@ -18,7 +18,7 @@ __Array __Array_new(__VirtualTable* vtable, size_t capacity) {
 }
 
 void* __Array_get(__ArrayInfo array, size_t i) {
-    return array.array->tab + (array.vtable->size) * i;
+    return ((BYTE*) array.array->tab) + (array.vtable->size) * i;
 }
 
 void __Array_set_size(__ArrayInfo array, size_t size) {

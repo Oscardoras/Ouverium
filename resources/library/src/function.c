@@ -9,23 +9,26 @@ struct __FunctionCapture __GC_reference_to_capture(__GC_Reference* reference) {
     struct __FunctionCapture capture;
 
     switch (reference->type) {
-    case DATA:
+    case DATA: {
         __UnknownData* d = __GC_alloc_object(&__VirtualTable_UnknownData);
         *d = reference->data;
 
         capture.type = __FUNCTIONCAPTURE_SYMBOL;
         capture.symbol = d;
         break;
-    case SYMBOL:
+    }
+    case SYMBOL: {
         capture.type = __FUNCTIONCAPTURE_SYMBOL;
         capture.symbol = reference->symbol;
         break;
-    case PROPERTY:
+    }
+    case PROPERTY: {
         capture.type = __FUNCTIONCAPTURE_PROPERTY;
         capture.property.parent = reference->property.parent;
         capture.property.virtual_table = reference->property.virtual_table;
         capture.property.hash = reference->property.hash;
         break;
+    }
     case ARRAY: {
         capture.type = __FUNCTIONCAPTURE_ARRAY;
         capture.array.array = reference->array.array;
@@ -49,12 +52,13 @@ struct __FunctionCapture __GC_reference_to_capture(__GC_Reference* reference) {
 
 __Reference_Owned __GC_capture_to_reference(struct __FunctionCapture capture) {
     switch (capture.type) {
-    case __FUNCTIONCAPTURE_SYMBOL:
+    case __FUNCTIONCAPTURE_SYMBOL: {
         __GC_Reference* reference = __GC_alloc_references(1);
         reference->type = SYMBOL;
         reference->symbol = capture.symbol;
 
         return (__Reference_Owned)reference;
+    }
     case __FUNCTIONCAPTURE_PROPERTY:
         return __Reference_new_property(capture.property.parent, capture.property.virtual_table, capture.property.hash);
     case __FUNCTIONCAPTURE_ARRAY:
@@ -137,14 +141,16 @@ __Reference_Owned __Function_execute(__Expression args) {
 
         return r;
     }
-    case __EXPRESSION_REFERENCE:
+    case __EXPRESSION_REFERENCE: {
         return __Reference_copy(args.reference);
-    case __EXPRESSION_LAMBDA:
+    }
+    case __EXPRESSION_LAMBDA: {
         __Expression expr = {
             .type = __EXPRESSION_TUPLE,
             .tuple.size = 0
         };
         return __Function_eval(args.lambda, expr);
+    }
     default:
         return NULL;
     }
@@ -203,7 +209,7 @@ bool __Function_parse(__Reference_Owned captures[], __Reference_Shared* vars, bo
         size_t size;
 
         switch (args.type) {
-        case __EXPRESSION_TUPLE:
+        case __EXPRESSION_TUPLE: {
             size = args.tuple.size;
             while (**params != ')' && j < args.tuple.size) {
                 ++(*params);
@@ -211,7 +217,8 @@ bool __Function_parse(__Reference_Owned captures[], __Reference_Shared* vars, bo
                 ++j;
             }
             break;
-        case __EXPRESSION_REFERENCE:
+        }
+        case __EXPRESSION_REFERENCE: {
             size = __Reference_get_size(args.reference);
             while (**params != ')' && j < size) {
                 ++(*params);
@@ -223,7 +230,8 @@ bool __Function_parse(__Reference_Owned captures[], __Reference_Shared* vars, bo
                 ++j;
             }
             break;
-        case __EXPRESSION_LAMBDA:
+        }
+        case __EXPRESSION_LAMBDA: {
             __Reference_Owned ref = __Function_execute(args);
             size = __Reference_get_size(__Reference_share(ref));
             while (**params != ')' && j < size) {
@@ -237,6 +245,7 @@ bool __Function_parse(__Reference_Owned captures[], __Reference_Shared* vars, bo
             }
             __Reference_free(ref);
             break;
+        }
         }
 
         if (**params == ')' && j == size) {

@@ -17,7 +17,6 @@ std::variant<std::nullptr_t, bool, long, double, std::string> get_symbol(std::st
             } else {
                 escape = false;
                 if (c == 'b') str += '\b';
-                if (c == 'e') str += '\e';
                 if (c == 'f') str += '\f';
                 if (c == 'n') str += '\n';
                 if (c == 'r') str += '\r';

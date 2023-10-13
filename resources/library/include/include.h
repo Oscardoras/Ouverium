@@ -9,6 +9,8 @@
 extern "C" {
 #endif
 
+#define BYTE unsigned char
+
     /**
      * Type of a function iterator called by the garbage collector.
      * This function musts call __GC_iterate on each child element.

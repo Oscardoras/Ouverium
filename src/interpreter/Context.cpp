@@ -51,6 +51,9 @@ namespace Interpreter {
 
     GlobalContext::~GlobalContext() {
         for (auto & object : objects) {
+            if (object.array.size() == 0 && object.functions.size() == 0 && object.properties.size() == 0 && object.stream == nullptr)
+                break;
+
             try {
                 auto functions = object["destructor"].to_data(*this).get<Object*>()->functions;
                 if (!functions.empty())

@@ -22,7 +22,11 @@ namespace Interpreter {
 
         template<typename T>
         T & get() {
-            return const_cast<T &>(const_cast<Data const&>(*this).get<T>());
+            try {
+                return std::get<T>(*this);
+            } catch (std::bad_variant_access & e) {
+                throw BadAccess();
+            }
         }
         template<typename T>
         T const& get() const {
