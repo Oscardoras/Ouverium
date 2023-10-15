@@ -10,6 +10,8 @@
 #include "../../parser/Standard.hpp"
 
 
+extern std::vector<std::string> include_path;
+
 namespace Interpreter {
 
     namespace Base {
@@ -19,6 +21,12 @@ namespace Interpreter {
             return std::visit([](auto const& arg) -> Data & {
                 return arg;
             }, context["var"]) = context.new_object();
+        }
+
+        Reference defined(FunctionContext & context) {
+            return Data(std::visit([](auto const& arg) -> Data & {
+                return arg;
+            }, context["var"]) != Data{});
         }
 
         Reference assignation(Context & context, Reference const& var, Data const& d) {
@@ -217,6 +225,15 @@ namespace Interpreter {
             try {
                 return Interpreter::call_function(context.get_parent(), context.expression, try_block->functions, std::make_shared<Parser::Tuple>());
             } catch (Exception & ex) {
+                /*
+                if (!ex.positions.empty()) {
+                    std::ostringstream oss;
+                    oss << "An exception occured: " << ex.reference.to_data(context);
+                    ex.positions.front()->notify_error(oss.str());
+                    for (auto const& p : ex.positions)
+                        p->notify_position();
+                }
+                */
                 try {
                     return Interpreter::call_function(context.get_parent(), context.expression, catch_function->functions, ex.reference);
                 } catch (Interpreter::Exception & e) {
@@ -237,14 +254,22 @@ namespace Interpreter {
         std::string get_canonical_path(FunctionContext & context) {
             if (auto position = std::dynamic_pointer_cast<Parser::Standard::TextPosition>(context.expression->position)) {
                 try {
-                    auto path = context["path"].to_data(context).get<Object*>()->to_string();
-                    auto system_position = position->path;
+                    auto path = std::filesystem::path(context["path"].to_data(context).get<Object*>()->to_string());
 
-                    if (path[0] != '/')
-                        path = system_position.substr(0, system_position.find_last_of("/")+1) + path;
-                    std::filesystem::path p(path);
-                    return std::filesystem::canonical(p).string();
+                    if (!path.is_absolute())
+                        path = std::filesystem::path(position->path) / path;
+                    return std::filesystem::canonical(path).string();
                 } catch (std::exception & e) {
+                    for (auto const& i : include_path) {
+                        try {
+                            auto path = std::filesystem::path(context["path"].to_data(context).get<Object*>()->to_string());
+
+                            if (!path.is_absolute())
+                                path = std::filesystem::path(i) / path;
+                            return std::filesystem::canonical(path).string();
+                        } catch (std::exception & e) {}
+                    }
+
                     throw Interpreter::FunctionArgumentsError();
                 }
             } else throw Interpreter::FunctionArgumentsError();
@@ -380,8 +405,8 @@ namespace Interpreter {
             return Reference(Data(a != b));
         }
 
-        auto to_string_args = std::make_shared<Parser::Symbol>("data");
-        Reference to_string(FunctionContext & context) {
+        auto string_from_args = std::make_shared<Parser::Symbol>("data");
+        Reference string_from(FunctionContext & context) {
             auto data = context["data"].to_data(context);
 
             std::ostringstream oss;
@@ -390,15 +415,17 @@ namespace Interpreter {
         }
 
         void init(GlobalContext & context) {
-            context.add_symbol("NotAFunction", context.new_reference());
-            context.add_symbol("IncorrectFunctionArguments", context.new_reference());
-            context.add_symbol("ParserException", context.new_reference());
-            context.add_symbol("RecursionLimitExceeded", context.new_reference());
+            context.add_symbol("NotAFunction", context.new_object());
+            context.add_symbol("IncorrectFunctionArguments", context.new_object());
+            context.add_symbol("ParserException", context.new_object());
+            context.add_symbol("RecursionLimitExceeded", context.new_object());
 
 
             auto object = context.new_object();
             object->functions.push_front(SystemFunction{getter_args, getter});
             context.add_symbol("getter", context.new_reference(object));
+
+            context.get_function("defined").push_front(SystemFunction{getter_args, defined});
 
             context.get_function("setter").push_front(SystemFunction{setter_args, setter});
             set(context, context[":="], context["setter"]);
@@ -406,6 +433,8 @@ namespace Interpreter {
 
             context.get_function(";").push_front(SystemFunction{separator_args, separator});
 
+            context.add_symbol("if", context.new_object());
+            context.add_symbol("else", context.new_object());
             Function if_s = SystemFunction{if_statement_args, if_statement};
             if_s.extern_symbols.emplace("if", context["if"]);
             if_s.extern_symbols.emplace("else", context["else"]);
@@ -413,17 +442,21 @@ namespace Interpreter {
 
             context.get_function("while").push_front(SystemFunction{while_statement_args, while_statement});
 
+            context.add_symbol("from", context.new_object());
+            context.add_symbol("to", context.new_object());
             Function for_s = SystemFunction{for_statement_args, for_statement};
             for_s.extern_symbols.emplace("from", context["from"]);
             for_s.extern_symbols.emplace("to", context["to"]);
             context.get_function("for").push_front(for_s);
 
+            context.add_symbol("step", context.new_object());
             Function for_step_s = SystemFunction{for_step_statement_args, for_step_statement};
             for_step_s.extern_symbols.emplace("from", context["from"]);
             for_step_s.extern_symbols.emplace("to", context["to"]);
             for_step_s.extern_symbols.emplace("step", context["step"]);
             context.get_function("for").push_front(for_step_s);
 
+            context.add_symbol("catch", context.new_object());
             Function try_s = SystemFunction{try_statement_args, try_statement};
             try_s.extern_symbols.emplace("catch", context["catch"]);
             context.get_function("try").push_front(try_s);
@@ -441,7 +474,7 @@ namespace Interpreter {
             context.get_function("===").push_front(SystemFunction{equals_args, check_pointers});
             context.get_function("!==").push_front(SystemFunction{equals_args, not_check_pointers});
 
-            context.get_function("to_string").push_front(SystemFunction{to_string_args, to_string});
+            context.get_function("string_from").push_front(SystemFunction{string_from_args, string_from});
         }
 
     }

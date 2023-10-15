@@ -8,11 +8,6 @@ namespace Analyzer::Standard {
 
     namespace Functions {
 
-        template<unsigned int size>
-        std::array<M<Reference>, size> get_tuple(COntext & context, Arguments const& arguments) {
-            M<Reference> ref = arguments.compute(context);<
-        }
-
         void assignation(M<Reference> const& var, M<Data> const& data, bool potential) {
             for (auto reference : var) {
                 if (auto ref = std::get_if<SymbolReference>(&reference)) {
@@ -33,35 +28,8 @@ namespace Analyzer::Standard {
             }
         }
 
-        M<Reference> separator(Arguments const& arguments) {
-            return context["b"];
-        }
-
-        enum class Condition {
-            TRUE,
-            FALSE,
-            UNDEFINED
-        };
-        Condition eval_condition(M<Data> conditions) {
-            Condition r = Condition::UNDEFINED;
-            for (auto condition : conditions) {
-                if (auto c = std::get_if<bool>(&condition)) {
-                    if (!condition.defined) {
-                        r = Condition::UNDEFINED;
-                        break;
-                    }
-
-                    if (r != Condition::FALSE && *c)
-                        r = Condition::TRUE;
-                    else if (r != Condition::TRUE && !*c)
-                        r = Condition::FALSE;
-                    else {
-                        r = Condition::UNDEFINED;
-                        break;
-                    }
-                } else throw FunctionArgumentsError();
-            }
-            return r;
+        M<Reference> separator(Context & context, Arguments const& arguments) {
+            return arguments.get_tuple<2>(context)[1];
         }
 
         void if_function(M<Reference> & m, Context & context, bool potential, std::shared_ptr<Parser::Tuple> const& tuple, size_t i) {
@@ -86,11 +54,32 @@ namespace Analyzer::Standard {
             }
         }
 
-        auto if_statement_args = std::make_shared<FunctionCall>(
-            std::make_shared<Parser::Symbol>("function"),
-            std::make_shared<Parser::Tuple>()
-        );
-        M<Reference> if_statement(Context & context, bool potential) {
+        M<Reference> if_statement(Context & context, Arguments const& arguments) {
+            if (auto expression = std::get_if<std::shared_ptr<Parser::Expression>>(&arguments.arg)) {
+                if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(*expression)) {
+                    if (tuple->objects.size() >= 2) {
+                        if (execute(context, tuple->objects[0]).to_data(context).get<bool>())
+                            return Interpreter::execute(parent, tuple->objects[1]);
+                        else {
+                            unsigned long i = 2;
+                            while (i < tuple->objects.size()) {
+                                auto else_s = Interpreter::execute(parent, tuple->objects[i]).to_data(context);
+                                if (else_s == context["else"].to_data(context) && i+1 < tuple->objects.size()) {
+                                    auto s = Interpreter::execute(parent, tuple->objects[i+1]).to_data(context);
+                                    if (s == context["if"].to_data(context) && i+3 < tuple->objects.size()) {
+                                        if (Interpreter::execute(parent, tuple->objects[i+2]).to_data(context).get<bool>())
+                                            return Interpreter::execute(parent, tuple->objects[i+3]);
+                                        else i += 4;
+                                    } else return s;
+                                } else throw Interpreter::FunctionArgumentsError();
+                            }
+                            return Reference();
+                        }
+                    } else throw Interpreter::FunctionArgumentsError();
+                } else throw Interpreter::FunctionArgumentsError();
+            }
+
+
             auto function = std::get<std::shared_ptr<FunctionDefinition>>(get_function(context["function"]).front().ptr)->body;
             if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(function)) {
                 if (tuple->objects.size() >= 3) {

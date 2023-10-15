@@ -6,13 +6,7 @@
 
 namespace Interpreter {
 
-    Object* Context::new_object() {
-        auto & objects = get_global().objects;
-        objects.push_back(Object());
-        return &objects.back();
-    }
-
-    Object* Context::new_object(Object && object) {
+    Object* Context::new_object(Object const& object) {
         auto & objects = get_global().objects;
         objects.push_back(std::move(object));
         return &objects.back();

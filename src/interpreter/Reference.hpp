@@ -39,6 +39,11 @@ namespace Interpreter {
 
     class Reference : public std::variant<Data, TupleReference, SymbolReference, PropertyReference, ArrayReference> {
 
+    protected:
+
+        Data get_data(Context & context) const;
+        friend Data compute(Context &, Reference const&, Data const&);
+
     public:
 
         using std::variant<Data, TupleReference, SymbolReference, PropertyReference, ArrayReference>::variant;

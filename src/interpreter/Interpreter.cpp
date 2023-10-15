@@ -6,11 +6,9 @@
 #include "Interpreter.hpp"
 
 #include "system_functions/Array.hpp"
-#include "system_functions/ArrayList.hpp"
 #include "system_functions/Base.hpp"
 #include "system_functions/Math.hpp"
 #include "system_functions/Streams.hpp"
-#include "system_functions/String.hpp"
 #include "system_functions/Types.hpp"
 
 #include "../parser/Standard.hpp"
@@ -24,10 +22,8 @@ namespace Interpreter {
         Context(expression) {
         Base::init(*this);
         Array::init(*this);
-        //ArrayList::init(*this);
         Math::init(*this);
         Streams::init(*this);
-        //String::init(*this);
         Types::init(*this);
     }
 
@@ -165,7 +161,7 @@ namespace Interpreter {
                     return;
                 }
             }
-            
+
             auto r = execute(context, p_function->function).to_data(context);
             std::list<Function> functions;
             try {
@@ -240,11 +236,18 @@ namespace Interpreter {
 
     Reference execute(Context & context, std::shared_ptr<Parser::Expression> expression) {
         if (auto function_call = std::dynamic_pointer_cast<Parser::FunctionCall>(expression)) {
-            auto data = execute(context, function_call->function).to_data(context);
+            auto reference = execute(context, function_call->function);
+
             std::list<Function> functions;
             try {
-                functions = data.get<Object*>()->functions;
+                functions = reference.to_data(context).get<Object*>()->functions;
             } catch (Data::BadAccess const& e) {}
+
+            try {
+                if (functions.empty())
+                    functions = call_function(context, context.expression, context.get_global()["getter"].to_data(context).get<Object*>()->functions, reference).to_data(context).get<Object*>()->functions;
+            } catch (Data::BadAccess const& e) {}
+
             return call_function(context, function_call, functions, function_call->arguments);
         } else if (auto function_definition = std::dynamic_pointer_cast<Parser::FunctionDefinition>(expression)) {
             auto object = context.new_object();
@@ -290,9 +293,9 @@ namespace Interpreter {
         return call_function(context, context.expression, context.get_global().get_function("setter"), TupleReference{var, data});
     }
 
-    std::string to_string(Context & context, Reference const& data) {
+    std::string string_from(Context & context, Reference const& data) {
         std::ostringstream oss;
-        oss << call_function(context, context.expression, context.get_global().get_function("to_string"), data).to_data(context);
+        oss << call_function(context, context.expression, context.get_global().get_function("string_from"), data).to_data(context);
         return oss.str();
     }
 

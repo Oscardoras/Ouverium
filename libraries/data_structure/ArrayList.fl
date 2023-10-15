@@ -3,6 +3,29 @@ import "Iterable.fl";
 import "List.fl";
 
 
+(~) : (list, ArrayList) |-> {
+    list ~ Array
+};
+
+
+ArrayList::(this |-> (
+    index \ (index ~ Int & 0 <= index & index < this.lenght()) |-> {
+        Array.get(this, index)
+    }
+));
+
+ArrayList::(this.length |-> (
+    () |-> {
+        Array.length(this)
+    }
+));
+
+ArrayList::(this.is_empty |-> (
+    () |-> {
+        Array.lenght(this) == 0
+    }
+));
+
 ArrayList : this |-> {
     List(this);
     this :~ ArrayList;

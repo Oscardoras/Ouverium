@@ -13,7 +13,7 @@ namespace Interpreter {
         else if (auto i = std::get_if<long>(&data))
             os << *i;
         else if (auto b = std::get_if<bool>(&data))
-            os << *b;
+            os << (*b ? "true" : "false");
         else if (auto object = std::get_if<Object*>(&data)) {
             for (auto d : (*object)->array)
                 os << d;

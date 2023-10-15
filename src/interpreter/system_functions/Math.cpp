@@ -1,6 +1,8 @@
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <fstream>
+#include <limits>
 
 #include "Math.hpp"
 
@@ -326,6 +328,94 @@ namespace Interpreter {
             throw FunctionArgumentsError();
         }
 
+        auto for_args = std::make_shared<Parser::Tuple>(Parser::Tuple({
+            std::make_shared<Parser::FunctionCall>(
+                std::make_shared<Parser::Symbol>("array"),
+                std::make_shared<Parser::Tuple>()
+            ),
+            std::make_shared<Parser::Symbol>("function")
+        }));
+        Reference forall(FunctionContext & context) {
+            try {
+                auto array = Interpreter::call_function(context.get_parent(), context.expression, context["array"].to_data(context).get<Object*>()->functions, std::make_shared<Parser::Tuple>());
+                auto functions = context["function"].to_data(context).get<Object*>()->functions;
+
+                bool value = true;
+
+                if (auto tuple = std::get_if<TupleReference>(&array)) {
+                    for (auto const& r : *tuple) {
+                        if (!Interpreter::call_function(context.get_parent(), context.expression, functions, r).to_data(context).get<bool>()) {
+                            value = false;
+                            break;
+                        }
+                    }
+                } else {
+                    for (auto const& d : array.to_data(context).get<Object*>()->array) {
+                        if (!Interpreter::call_function(context.get_parent(), context.expression, functions, d).to_data(context).get<bool>()) {
+                            value = false;
+                            break;
+                        }
+                    }
+                }
+
+                return Data{value};
+            } catch (Data::BadAccess & e) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        Reference exists(FunctionContext & context) {
+            try {
+                auto array = Interpreter::call_function(context.get_parent(), context.expression, context["array"].to_data(context).get<Object*>()->functions, std::make_shared<Parser::Tuple>());
+                auto functions = context["function"].to_data(context).get<Object*>()->functions;
+
+                bool value = false;
+
+                if (auto tuple = std::get_if<TupleReference>(&array)) {
+                    for (auto const& r : *tuple) {
+                        if (Interpreter::call_function(context.get_parent(), context.expression, functions, r).to_data(context).get<bool>()) {
+                            value = true;
+                            break;
+                        }
+                    }
+                } else {
+                    for (auto const& d : array.to_data(context).get<Object*>()->array) {
+                        if (Interpreter::call_function(context.get_parent(), context.expression, functions, d).to_data(context).get<bool>()) {
+                            value = true;
+                            break;
+                        }
+                    }
+                }
+
+                return Data{value};
+            } catch (Data::BadAccess & e) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        double get_double(Data const& data) {
+            if (auto data_int = std::get_if<long>(&data))
+                return static_cast<double>(*data_int);
+            else if (auto data_float = std::get_if<double>(&data))
+                return *data_float;
+            else throw FunctionArgumentsError();
+        }
+
+        template<double (*function)(double)>
+        Reference function1(FunctionContext & context) {
+            return Data(function(get_double(context["a"].to_data(context))));
+        }
+
+        template<double (*function)(double, double)>
+        Reference function2(FunctionContext & context) {
+            return Data(function(get_double(context["a"].to_data(context)), get_double(context["b"].to_data(context))));
+        }
+
+        template<bool (*function)(double)>
+        Reference function_bool(FunctionContext & context) {
+            return Data(function(get_double(context["a"].to_data(context))));
+        }
+
         void init(GlobalContext & context) {
             context.get_function("!").push_front(SystemFunction{a, logical_not});
             context.get_function("&").push_front(SystemFunction{a_b, logical_and});
@@ -346,6 +436,44 @@ namespace Interpreter {
             context.get_function(":-").push_front(SystemFunction{ab, remove});
             context.get_function(":*").push_front(SystemFunction{ab, mutiply});
             context.get_function(":/").push_front(SystemFunction{ab, divide});
+            context.get_function("forall").push_front(SystemFunction{for_args, forall});
+            context.get_function("exists").push_front(SystemFunction{for_args, exists});
+
+            context.get_function("cos").push_front(SystemFunction{a, function1<std::cos>});
+            context.get_function("sin").push_front(SystemFunction{a, function1<std::sin>});
+            context.get_function("tan").push_front(SystemFunction{a, function1<std::tan>});
+            context.get_function("acos").push_front(SystemFunction{a, function1<std::acos>});
+            context.get_function("asin").push_front(SystemFunction{a, function1<std::asin>});
+            context.get_function("atan").push_front(SystemFunction{a, function1<std::atan>});
+            context.get_function("atan2").push_front(SystemFunction{ab, function2<std::atan2>});
+            context.get_function("cosh").push_front(SystemFunction{a, function1<std::cosh>});
+            context.get_function("sinh").push_front(SystemFunction{a, function1<std::sinh>});
+            context.get_function("tanh").push_front(SystemFunction{a, function1<std::tanh>});
+            context.get_function("acosh").push_front(SystemFunction{a, function1<std::acosh>});
+            context.get_function("asinh").push_front(SystemFunction{a, function1<std::asinh>});
+            context.get_function("atanh").push_front(SystemFunction{a, function1<std::atanh>});
+            context.get_function("exp").push_front(SystemFunction{a, function1<std::exp>});
+            context.get_function("log").push_front(SystemFunction{a, function1<std::log>});
+            context.get_function("log10").push_front(SystemFunction{a, function1<std::log10>});
+            context.get_function("pow").push_front(SystemFunction{ab, function2<std::pow>});
+            context.add_symbol("**", context["pow"]);
+            context.get_function("**").push_front(SystemFunction{ab, function2<std::pow>});
+            context.get_function("sqrt").push_front(SystemFunction{a, function1<std::sqrt>});
+            context.get_function("cbrt").push_front(SystemFunction{a, function1<std::cbrt>});
+            context.get_function("hypot").push_front(SystemFunction{ab, function2<std::hypot>});
+            context.get_function("ceil").push_front(SystemFunction{a, function1<std::ceil>});
+            context.get_function("floor").push_front(SystemFunction{a, function1<std::floor>});
+            context.get_function("trunc").push_front(SystemFunction{a, function1<std::trunc>});
+            context.get_function("round").push_front(SystemFunction{a, function1<std::round>});
+            context.get_function("abs").push_front(SystemFunction{a, function1<std::abs>});
+            context.get_function("isfinite").push_front(SystemFunction{a, function_bool<std::isfinite>});
+            context.get_function("isinf").push_front(SystemFunction{a, function_bool<std::isinf>});
+            context.get_function("isnan").push_front(SystemFunction{a, function_bool<std::isnan>});
+            context.get_function("isnormal").push_front(SystemFunction{a, function_bool<std::isnormal>});
+
+            context.add_symbol("epsilon", Data(std::numeric_limits<double>::epsilon()));
+            context.add_symbol("infinity", Data(std::numeric_limits<double>::infinity()));
+            context.add_symbol("NaN", Data(std::numeric_limits<double>::quiet_NaN()));
         }
 
     }

@@ -32,8 +32,7 @@ namespace Interpreter {
         virtual GlobalContext & get_global() = 0;
         virtual unsigned int get_recurion_level() = 0;
 
-        Object* new_object();
-        Object* new_object(Object && object);
+        Object* new_object(Object const& object = {});
 
         Data & new_reference(Data const& data = {});
 
@@ -56,7 +55,7 @@ namespace Interpreter {
     public:
 
         std::map<std::string, std::shared_ptr<Parser::Expression>> sources;
-        unsigned int recursion_limit = 100;
+        unsigned int recursion_limit = 50;
 
         GlobalContext(std::shared_ptr<Parser::Expression> expression);
 
@@ -78,8 +77,7 @@ namespace Interpreter {
 
         ~GlobalContext();
 
-        friend Object* Context::new_object();
-        friend Object* Context::new_object(Object && object);
+        friend Object* Context::new_object(Object const& object);
         friend Data & Context::new_reference(Data const& data);
 
     };

@@ -46,6 +46,9 @@ namespace Interpreter {
 
         Reference divide(FunctionContext & context);
 
+        Reference forall(FunctionContext & context);
+        Reference exists(FunctionContext & context);
+
         void init(GlobalContext & context);
 
     }

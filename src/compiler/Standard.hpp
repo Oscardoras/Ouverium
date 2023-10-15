@@ -194,6 +194,8 @@ namespace Analyzer::Standard {
 
     public:
 
+        M<Reference> result;
+
         virtual GlobalContext & get_global() = 0;
 
         Object* new_object(ObjectKey const& key);
@@ -201,11 +203,8 @@ namespace Analyzer::Standard {
         bool has_symbol(std::string const& symbol);
         void add_symbol(std::string const& symbol, M<Reference> const& reference);
         M<IndirectReference> operator[](std::string const& symbol);
-        auto begin() { return symbols.begin(); }
-        auto end() { return symbols.end(); }
-
-        virtual void store_objects_version() = 0;
-        virtual bool compare_objects_version() const = 0;
+        auto begin() const { return symbols.begin(); }
+        auto end() const { return symbols.end(); }
 
         friend SymbolReference::operator M<Data> &() const;
 
@@ -221,9 +220,6 @@ namespace Analyzer::Standard {
         virtual GlobalContext& get_global() override {
             return *this;
         }
-
-        virtual void store_objects_version() override;
-        virtual bool compare_objects_version() const override;
 
         void destruct();
 
@@ -257,8 +253,9 @@ namespace Analyzer::Standard {
             return global;
         }
 
-        virtual void store_objects_version() override;
-        virtual bool compare_objects_version() const override;
+        void store_objects_version();
+        bool compare_objects_version() const;
+
     };
 
     // Analyzer
@@ -276,6 +273,29 @@ namespace Analyzer::Standard {
             arg(expression), key(expression) {}
 
         M<Reference> compute(Context & context) const;
+
+        template<unsigned int size>
+        std::array<M<Reference>, size> get_tuple(Context & context) const {
+            std::array<M<Reference>, size> array;
+
+            for (auto const& r : compute(context)) {
+                if (auto tuple = std::get_if<TupleReference>(&r)) {
+                    if (tuple->size() == size) {
+                        for (size_t i = 0; i < size; ++i) {
+                            array[size].add((*tuple)[size]);
+                        }
+                    }
+                } else {
+                    for (auto data : r.to_data(context, key)) {
+                        try {
+                            array[size].add(data.get<Object*>()->array);
+                        } catch (Data::BadAccess & e) {}
+                    }
+                }
+            }
+
+            return array;
+        }
     };
 
     M<Reference> call_function(Context & context, M<std::list<Function>> const& functions, Arguments arguments);

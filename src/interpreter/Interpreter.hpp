@@ -27,7 +27,7 @@ namespace Interpreter {
     Reference execute(Context & context, std::shared_ptr<Parser::Expression> expression);
 
     Reference set(Context & context, Reference const& var, Reference const& data);
-    std::string to_string(Context & context, Reference const& data);
+    std::string string_from(Context & context, Reference const& data);
 
 }
 

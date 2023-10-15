@@ -21,10 +21,7 @@ namespace Interpreter {
         std::map<std::string, Data> properties;
         std::list<Function> functions;
         std::vector<Data> array;
-        class Stream: public std::variant<std::shared_ptr<std::ios>, std::reference_wrapper<std::ios>> {
-
-        public:
-
+        struct Stream: public std::variant<std::shared_ptr<std::ios>, std::reference_wrapper<std::ios>> {
             using std::variant<std::shared_ptr<std::ios>, std::reference_wrapper<std::ios>>::variant;
 
             operator std::ios*() const {

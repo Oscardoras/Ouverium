@@ -27,6 +27,8 @@ namespace Interpreter {
         Reference input_file(FunctionContext & context);
         Reference output_file(FunctionContext & context);
 
+        Reference wd(FunctionContext & context);
+
         void init(GlobalContext & context);
 
     }

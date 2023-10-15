@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <iostream>
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 
@@ -7,6 +8,8 @@
 
 #include "parser/Standard.hpp"
 
+
+std::vector<std::string> include_path;
 
 #ifdef __unix__
 #include <unistd.h>
@@ -19,17 +22,18 @@ bool is_interactive() {
 }
 #endif
 
-
 int interactive_mode(std::string const& path) {
     Interpreter::GlobalContext context(nullptr);
     auto symbols = context.get_symbols();
 
     std::cout << "> ";
 
+    unsigned long line_number = 0;
     std::string code;
     std::string line;
     while (std::getline(std::cin, line)) {
         if (line.length() > 0) {
+            ++line_number;
             code += line + '\n';
 
             try {
@@ -42,7 +46,7 @@ int interactive_mode(std::string const& path) {
                 try {
                     auto r = Interpreter::execute(context, expression);
 
-                    auto str = Interpreter::to_string(context, r);
+                    auto str = Interpreter::string_from(context, r);
                     if (!str.empty())
                         std::cout << str << std::endl;
                 } catch (Interpreter::Exception const& ex) {
@@ -56,14 +60,15 @@ int interactive_mode(std::string const& path) {
                 }
 
                 std::cout << "> ";
-
                 code = "";
+                for (unsigned long i = 0; i < line_number; ++i) code += '\n';
             } catch (Parser::Standard::IncompleteCode const& e) {
                 std::cout << '\t';
             } catch (Parser::Standard::Exception const& e) {
                 std::cerr << e.what();
                 std::cout << "> ";
                 code = "";
+                for (unsigned long i = 0; i < line_number; ++i) code += '\n';
             }
         } else {
             std::cout << "> ";
@@ -114,6 +119,12 @@ int file_mode(std::string const& path, std::istream & is) {
 }
 
 int main(int argc, char ** argv) {
+    auto p = std::filesystem::path(argv[0]).parent_path() / "libraries";
+    include_path.push_back(p);
+
+    auto p2 = std::filesystem::path(argv[0]).parent_path().parent_path() / "libraries";
+    include_path.push_back(p2);
+
     if (argc == 1)
         if (is_interactive())
             return interactive_mode("stdin");

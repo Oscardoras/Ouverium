@@ -184,7 +184,7 @@ namespace Analyzer::Standard {
 
     struct Different {};
 
-    bool FunctionContext::compare_objects_version() {
+    bool FunctionContext::compare_objects_version() const {
         std::set<Object*> done;
 
         std::function<void(M<Data> const&)> iterate = [this, &iterate, &done](M<Data> const& m) {
@@ -347,7 +347,7 @@ namespace Analyzer::Standard {
         } else throw FunctionArgumentsError();
     }
 
-    using It = std::map<std::string, M<IndirectReference>>::iterator;
+    using It = std::map<std::string, M<IndirectReference>>::const_iterator;
 
     void call_argument(M<Reference> & result, CustomFunction const& function, FunctionContext function_context, It const it, It const end) {
         if (it != end) {
@@ -373,7 +373,24 @@ namespace Analyzer::Standard {
                 }
             }
 
-            result.add(execute(function_context, function->body));
+            bool equals = true;
+            for (auto [symbol, references] : function_context) {
+                auto const& fr = function.context[symbol];
+                for (auto ref : references) {
+                    auto it = std::find(fr.begin(), fr.end(), ref);
+                    if (it == fr.end()) {
+                        equals = false;
+                        break;
+                    }
+                }
+            }
+            if (equals)
+                equals = function.context.compare_objects_version();
+
+            if (!equals)
+                function.context.result.add(execute(function.context, function->body));
+
+            result.add(function.context.result);
         }
     }
 

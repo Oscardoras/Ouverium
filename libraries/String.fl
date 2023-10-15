@@ -21,6 +21,24 @@ Char.is_alphanum : c \ (c ~ Char) |-> {
     Char.is_alpha(c) | Char.is_digit(c)
 };
 
+String;
+
+is : (str, String) |-> {
+    is str Array & {
+        chars := true;
+        l := Array.lenght(str);
+        i := 0;
+        while (chars & i < l) {
+            if (Array.get(str, i) ~ Char) {
+                ++i
+            } else {
+                chars := false
+            }
+        };
+        chars
+    }
+};
+
 String : this |-> {
     ArrayList(this);
     this :~ String;

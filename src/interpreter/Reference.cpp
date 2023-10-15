@@ -33,26 +33,26 @@ namespace Interpreter {
             *this = *array_reference;
     }
 
-    Data Reference::to_data(Context & context) const {
-        auto get_data = [this, &context]() -> Data {
-            if (auto data = std::get_if<Data>(this))
-                return *data;
-            else if (auto symbol_reference = std::get_if<SymbolReference>(this))
-                return *symbol_reference;
-            else if (auto property_reference = std::get_if<PropertyReference>(this))
-                return *property_reference;
-            else if (auto array_reference = std::get_if<ArrayReference>(this))
-                return *array_reference;
-            else if (auto tuple_reference = std::get_if<TupleReference>(this)) {
-                auto object = context.new_object();
-                object->array.reserve(tuple_reference->size());
-                for (auto d : *tuple_reference)
-                    object->array.push_back(d.to_data(context));
-                return object;
-            } else return Data{};
-        };
+    Data Reference::get_data(Context & context) const {
+        if (auto data = std::get_if<Data>(this))
+            return *data;
+        else if (auto symbol_reference = std::get_if<SymbolReference>(this))
+            return *symbol_reference;
+        else if (auto property_reference = std::get_if<PropertyReference>(this))
+            return *property_reference;
+        else if (auto array_reference = std::get_if<ArrayReference>(this))
+            return *array_reference;
+        else if (auto tuple_reference = std::get_if<TupleReference>(this)) {
+            auto object = context.new_object();
+            object->array.reserve(tuple_reference->size());
+            for (auto d : *tuple_reference)
+                object->array.push_back(d.to_data(context));
+            return object;
+        } else return Data{};
+    }
 
-        return compute(context, *this, get_data());
+    Data Reference::to_data(Context & context) const {
+        return compute(context, *this, get_data(context));
     }
 
     IndirectReference Reference::to_indirect_reference(Context & context) const {

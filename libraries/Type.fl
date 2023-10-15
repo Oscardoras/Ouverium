@@ -3,19 +3,12 @@
     object
 };
 
-is : (object, type) \ (type !== Char & type !== Int & type !== Float & type !== Bool & type !== Array) |-> {
-    found := false;
-    l := Array.lenght(object._types);
-    i := 0;
-    while (!found & i < l) {
-        if (Array.get(object._types, i) === type) {
-            found := true
-        } else {
-            ++i
-        }
-    };
-    found
-};
+(~) := ((object, type) |-> {
+    defined object._types &
+    exists(object._types, x |-> {
+        x === type
+    })
+} : (~));
 
 
 extends;
@@ -29,29 +22,37 @@ class : (type, extends, parents) |-> {
     type
 };
 
-_methods_getter;
+(::) : (() |-> {
 
-getter : x \ {
-    try {
-        r := _methods_getter(x);
-        true
-    } catch (e |-> false)
-} |-> {
-    r
-};
+    methods_getter;
 
-(::) : (type, method_getter) |-> {
-    filters : (a |-> false) : ((this. .) \ (this ~ type) |-> true);
-
-    mg := x \ {
-        filters(x) &
+    getter : x \ {
         try {
-            r := method_getter(x);
-            true
+            if (defined methods_getter) {
+                r := methods_getter(x);
+                true
+            } else {
+                false
+            }
         } catch (e |-> false)
     } |-> {
         r
     };
-    _methods_getter : mg;
-    mg
-};
+
+    (type, method_getter) |-> {
+        filters := (a |-> false) : (this \ (defined this & this ~ type) |-> true) : ((this. .) \ (this ~ type) |-> true);
+
+        mg := x \ {
+            filters(x) &
+            try {
+                r := method_getter(x);
+                true
+            } catch (e |-> false)
+        } |-> {
+            r
+        };
+        methods_getter : mg;
+        mg
+    }
+
+})();

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 
@@ -13,7 +14,7 @@ namespace Interpreter {
         Reference print(FunctionContext & context) {
             auto data = context["data"];
 
-            auto str = Interpreter::to_string(context, data);
+            auto str = Interpreter::string_from(context, data);
             if (!str.empty())
                 std::cout << str << std::endl;
 
@@ -71,7 +72,7 @@ namespace Interpreter {
                 auto stream = dynamic_cast<std::ostream*>(static_cast<std::ios*>(object->stream));
                 auto data = context["data"].to_data(context);
 
-                *stream << Interpreter::to_string(context, data);
+                *stream << Interpreter::string_from(context, data);
 
                 return Reference(Data(context.new_object()));
             } catch (Data::BadAccess & e) {
@@ -137,11 +138,18 @@ namespace Interpreter {
             }
         }
 
+        Reference wd(FunctionContext & context) {
+            std::filesystem::path p(".");
+            return Data(context.new_object(std::filesystem::canonical(p).string()));
+        }
+
         void init(GlobalContext & context) {
             context.get_function("print").push_front(SystemFunction{print_args, print});
             context.get_function("scan").push_front(SystemFunction{scan_args, scan});
             context.get_function("InputFile").push_front(SystemFunction{input_file_args, input_file});
             context.get_function("OutputFile").push_front(SystemFunction{output_file_args, output_file});
+
+            context.get_function("wd").push_front(SystemFunction{std::make_shared<Parser::Tuple>(), wd});
 
 
             auto console = context["Console"].to_data(context).get<Object*>();
