@@ -1,0 +1,122 @@
+import "../Type.fl";
+
+
+ArrayList := Array
+
+
+ArrayList::(this |-> (
+    index \ (index ~ Int & 0 <= index & index < this.lenght) |-> {
+        Array.get(this, index)
+    }
+));
+
+ArrayList::(this.length |-> (
+    Array.length(this)
+));
+
+ArrayList::(this.empty |-> (
+    this.length == 0
+));
+
+ArrayList::(this.foreach |-> (
+    function |-> {
+        l := this.length;
+        list := ArrayList();
+        list.reserve(l);
+        for i from 0 to l {
+            list.add_last(function(this[i]))
+        };
+        list
+    }
+));
+
+ArrayList::(this.capacity |-> (
+    Array.get_capacity(this)
+));
+
+ArrayList::(this.reserve |-> (
+    capacity \ (capacity ~ Int & this.capacity <= capacity) |-> {
+        Array.set_capacity(this, capacity)
+    }
+));
+
+ArrayList::(this.front |-> (
+    this[0]
+));
+
+ArrayList::(this.back |-> (
+    this[this.length - 1]
+));
+
+ArrayList::(this.add_front |-> (
+    element |-> {
+        l := this.length;
+        if (l > 0) {
+            Array.add(this, this[l-1]);
+            for i from (l-1) to 1 step (-1) {
+                this[i] := this[i-1]
+            };
+            this[0] := element
+        } else {
+            Array.add(this, element)
+        }
+    }
+));
+
+ArrayList::(this.add_back |-> (
+    element |-> {
+        Array.add(this, element)
+    }
+));
+
+ArrayList::(this.remove_front |-> (
+    () \ (!this.empty) |-> {
+        l := this.length;
+        for i from 0 to (l-1) {
+            this[i] := this[i+1]
+        };
+        Array.remove(this)
+    }
+));
+
+ArrayList::(this.remove_back |-> (
+    () \ (!this.empty) |-> {
+        Array.remove(this)
+    }
+));
+
+ArrayList::(this.insert |-> (
+    (index, element) \ (index ~ Int & 0 <= index & index < this.lenght) |-> {
+        l := this.lenght;
+        Array.add(this, this[l-1]);
+        for i from (l-1) to index step (-1) {
+            this[i] := this[i-1]
+        };
+        Array.get(this, index) := element
+    }
+));
+
+ArrayList::(this.remove |-> (
+    index \ (index ~ Int & 0 <= index & index < this.lenght) |-> {
+        l := this.lenght;
+        tmp := this[index];
+        for i from index to (l-1) {
+            this[i] := this[i+1]
+        };
+        Array.remove(this);
+        tmp
+    }
+));
+
+
+(@) : (element, list) \ (list ~ ArrayList) |-> {
+    exists(list, x |-> {
+        x == element
+    })
+};
+
+(@==) : (element, list) \ (list ~ ArrayList) |-> {
+    exists(list, x |-> {
+        x === element
+    })
+};
