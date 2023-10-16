@@ -31,6 +31,7 @@ namespace Interpreter {
     Exception::Exception(Context & context, Reference const& reference, std::shared_ptr<Parser::Expression> expression):
         reference(reference) {
         if (expression->position != nullptr) {
+            positions.push_back(expression->position);
             Context* old_c = nullptr;
             Context* c = &context;
             while (c != old_c) {

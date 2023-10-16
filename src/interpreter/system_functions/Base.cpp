@@ -155,13 +155,13 @@ namespace Interpreter {
         }));
         Reference for_statement(FunctionContext & context) {
             try {
-                auto variable = context["variable"].to_data(context);
+                auto variable = context["variable"];
                 auto begin = context["begin"].to_data(context).get<long>();
                 auto end = context["end"].to_data(context).get<long>();
                 auto block = context["block"].to_data(context).get<Object*>();
 
                 for (long i = begin; i < end; i++) {
-                    Interpreter::set(context, variable, i);
+                    Interpreter::set(context, variable, Data(i));
                     Interpreter::call_function(context.get_parent(), context.expression, block->functions, std::make_shared<Parser::Tuple>());
                 }
                 return Reference();

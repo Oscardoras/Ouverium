@@ -1,22 +1,22 @@
-import "../Type.fl";
+import "Type.fl";
 
 
-ArrayList := Array
+ArrayList := Array;
 
 
 ArrayList::(this |-> (
-    index \ (index ~ Int & 0 <= index & index < this.lenght) |-> {
+    index \ (index ~ Int & 0 <= index & index < this.length) |-> {
         Array.get(this, index)
     }
 ));
 
-ArrayList::(this.length |-> (
+ArrayList::(this.length |-> {
     Array.length(this)
-));
+});
 
-ArrayList::(this.empty |-> (
+ArrayList::(this.empty |-> {
     this.length == 0
-));
+});
 
 ArrayList::(this.foreach |-> (
     function |-> {
@@ -30,9 +30,9 @@ ArrayList::(this.foreach |-> (
     }
 ));
 
-ArrayList::(this.capacity |-> (
+ArrayList::(this.capacity |-> {
     Array.get_capacity(this)
-));
+});
 
 ArrayList::(this.reserve |-> (
     capacity \ (capacity ~ Int & this.capacity <= capacity) |-> {
@@ -40,20 +40,20 @@ ArrayList::(this.reserve |-> (
     }
 ));
 
-ArrayList::(this.front |-> (
+ArrayList::(this.front |-> {
     this[0]
-));
+});
 
-ArrayList::(this.back |-> (
+ArrayList::(this.back |-> {
     this[this.length - 1]
-));
+});
 
 ArrayList::(this.add_front |-> (
     element |-> {
         l := this.length;
         if (l > 0) {
             Array.add(this, this[l-1]);
-            for i from (l-1) to 1 step (-1) {
+            for i from (l-1) to 0 step (-1) {
                 this[i] := this[i-1]
             };
             this[0] := element
@@ -72,10 +72,12 @@ ArrayList::(this.add_back |-> (
 ArrayList::(this.remove_front |-> (
     () \ (!this.empty) |-> {
         l := this.length;
+        value := this[0];
         for i from 0 to (l-1) {
             this[i] := this[i+1]
         };
-        Array.remove(this)
+        Array.remove(this);
+        value
     }
 ));
 
@@ -86,19 +88,19 @@ ArrayList::(this.remove_back |-> (
 ));
 
 ArrayList::(this.insert |-> (
-    (index, element) \ (index ~ Int & 0 <= index & index < this.lenght) |-> {
-        l := this.lenght;
+    (index, element) \ (index ~ Int & 0 <= index & index < this.length) |-> {
+        l := this.length;
         Array.add(this, this[l-1]);
         for i from (l-1) to index step (-1) {
             this[i] := this[i-1]
         };
-        Array.get(this, index) := element
+        this[index] := element
     }
 ));
 
 ArrayList::(this.remove |-> (
-    index \ (index ~ Int & 0 <= index & index < this.lenght) |-> {
-        l := this.lenght;
+    index \ (index ~ Int & 0 <= index & index < this.length) |-> {
+        l := this.length;
         tmp := this[index];
         for i from index to (l-1) {
             this[i] := this[i+1]
@@ -109,14 +111,14 @@ ArrayList::(this.remove |-> (
 ));
 
 
-(@) : (element, list) \ (list ~ ArrayList) |-> {
+(@) : (element, list) \ (list ~ ArrayList) |-> (
     exists(list, x |-> {
         x == element
     })
-};
+);
 
-(@==) : (element, list) \ (list ~ ArrayList) |-> {
+(@==) : (element, list) \ (list ~ ArrayList) |-> (
     exists(list, x |-> {
         x === element
     })
-};
+);

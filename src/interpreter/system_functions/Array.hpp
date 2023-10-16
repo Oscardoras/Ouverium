@@ -8,7 +8,7 @@ namespace Interpreter {
 
     namespace Array {
 
-        Reference lenght(FunctionContext & context);
+        Reference length(FunctionContext & context);
 
         Reference get_capacity(FunctionContext & context);
 

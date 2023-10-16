@@ -1,29 +1,27 @@
 import "Type.fl";
-import "data_structure/ArrayList.fl";
+import "containers/ArrayList.fl";
 
 
-Char : this \ (this ~ Char) |-> {
-    this
-};
-Char : this \ (Array.lenght(this) == 1 & is (Array.get(this, 0)) Char) |-> {
-    Array.get(this, 0)
+Char : this \ (Array.lenght(this) == 1 & this[0] ~ Char) |-> {
+    this[0]
 };
 
-Char.is_digit : c \ (c ~ Char) |-> {
+Char::(this.digit |-> {
     Char "0" <= c & c <= Char "9"
-};
+});
 
-Char.is_alpha : c \ (c ~ Char) |-> {
+Char::(this.alpha |-> {
     Char "A" <= c & c <= Char "Z" | Char "a" <= c & c <= Char "z"
-};
+});
 
-Char.is_alphanum : c \ (c ~ Char) |-> {
+Char::(this.alphanum |-> {
     Char.is_alpha(c) | Char.is_digit(c)
-};
+});
 
-String;
 
-is : (str, String) |-> {
+String := ();
+
+(~) : (str, String) |-> {
     is str Array & {
         chars := true;
         l := Array.lenght(str);
@@ -38,6 +36,24 @@ is : (str, String) |-> {
         chars
     }
 };
+
+String : c \ (c ~ Char) |-> {
+    [c,]
+};
+
+
+String::(this.substring |-> (
+    (begin, len) \ (begin ~ Int & len ~ Int & len >= 0 & begin+len < this.length) |-> {
+        str := String();
+        str.reserve(len);
+
+        for i from 0 to len {
+            str.add_back(this[begin+i])
+        };
+
+        str
+    }
+));
 
 String : this |-> {
     ArrayList(this);
@@ -74,26 +90,11 @@ String : this |-> {
         index
     };
 
-    this.substring : (begin, len) \ (begin ~ Int & len ~ Int & len >= 0 & begin+len < this.lenght()) |-> {
-        str := String();
-        str.set_capacity(len);
-
-        for i from 0 to len {
-            str.add_last(this[begin+i])
-        };
-
-        str
-    };
-
     this
 };
-String : c \ (is c Char) |-> {
-    Array.add(this, c);
-    String(this)
-};
 
 
-(~) : (substring, string) \ (is substring String & is string String) |-> {
+(@) : (substring, string) \ (substring ~ String & string ~ String) |-> {
     string.index_of(substring) >= 0
 };
 

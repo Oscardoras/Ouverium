@@ -9,8 +9,8 @@ namespace Interpreter {
 
     namespace Array {
 
-        auto lenght_args = std::make_shared<Parser::Symbol>("array");
-        Reference lenght(FunctionContext & context) {
+        auto length_args = std::make_shared<Parser::Symbol>("array");
+        Reference length(FunctionContext & context) {
             try {
                 auto array = context["array"].to_data(context).get<Object*>();
 
@@ -121,7 +121,7 @@ namespace Interpreter {
 
         void init(GlobalContext & context) {
             auto array = context["Array"].to_data(context).get<Object*>();
-            (*array)["lenght"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{lenght_args, lenght});
+            (*array)["length"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{length_args, length});
             (*array)["get_capacity"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{get_capacity_args, get_capacity});
             (*array)["set_capacity"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{set_capacity_args, set_capacity});
             (*array)["get"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{get_args, get});
