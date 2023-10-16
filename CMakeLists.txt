@@ -18,7 +18,7 @@ FILE(GLOB_RECURSE capi_sources
 )
 add_library(capi SHARED ${capi_sources})
 target_include_directories(capi PUBLIC resources/library/include)
-set_property(TARGET capi PROPERTY C_STANDARD 90)
+set_property(TARGET capi PROPERTY C_STANDARD 99)
 
 link_libraries(interpreter PUBLIC capi)
 
