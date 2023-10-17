@@ -20,8 +20,7 @@
 				{ "include": "#string-symbol" },
 				{ "include": "#function-definition" },
 				{ "include": "#function-definition-filter" },
-				{ "include": "#tuple" },
-				{ "include": "#property" },
+				{ "include": "#controll-functions" },
 				{ "include": "#base-functions" }
 			]
 		},
@@ -52,11 +51,11 @@
 		},
 		"operator-symbol": {
 			"name": "keyword.operator",
-			"match": "(?!\\|->|->|\\?|,)[!\\$%&\\*\\+-/:;<=>\\?@\\^\\|~]+"
+			"match": "(?!\\|->|\\.|\\\\|,)[!\\$%&\\*\\+-/:;<=>\\?@\\^\\|~]+"
 		},
 		"regular-symbol": {
 			"name": "variable.other",
-			"match": "\\b(?!true|false|if|else|while|for|from|to|step|import|abstract)([_a-zA-Z]+[_a-zA-Z0-9]*|[_a-zA-Z0-9]*[_a-zA-Z]+)\\b"
+			"match": "\\b(?!if|else|while|for|from|to|step|try|throw|catch|import|getter|setter)([_a-zA-Z]+[_a-zA-Z0-9]*|[_a-zA-Z0-9]*[_a-zA-Z]+)\\b"
 		},
 		"number-symbol": {
 			"name": "constant.numeric",
@@ -101,14 +100,6 @@
 				}
 			]
 		},
-		"tuple": {
-			"name": "keyword.control",
-			"match": ","
-		},
-		"property": {
-			"name": "keyword.control",
-			"match": "->"
-		},
 		"function-definition": {
 			"name": "keyword.control",
 			"match": "\\|->"
@@ -117,9 +108,13 @@
 			"name": "keyword.control",
 			"match": "\\\\"
 		},
+		"controll-functions": {
+			"name": "keyword.control",
+			"match": "\\b(if|else|while|for|from|to|step|try|throw|catch|import)\\b"
+		},
 		"base-functions": {
 			"name": "support.function",
-			"match": "\\b(if|else|while|for|from|to|step|try|throw|catch|import|abstract)\\b"
+			"match": "\\b(getter|setter)\\b"
 		}
 	},
 	"scopeName": "source.fl"

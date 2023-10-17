@@ -1,27 +1,29 @@
-Vector.constructor : (array, shape) |-> {
-    this :~ Vector;
+import "../Type.fl"
+import "../containers/ArrayList.fl"
 
-    this : index \ (index ~ Int & 0 <= index & index < this.lenght()) |-> {
-        Array.get(this, index)
-    };
 
-    this.length : () |-> {
-        Array.get(shape, 0)
-    };
+class Matrix;
 
-    this.shape : () |-> {
-        shape
-    };
 
-    this.transpose : () {
+Matrix.of : shape \ (shape ~ Int & shape > 0 | shape ~ Array & shape.length > 0 & forall(shape, x |-> {
+    x ~ Int & x > 0
+})) |-> {
+    this :~ Matrix;
 
-    };
-    this.tr := this.transpose;
+    this._shape := if (shape ~ Int) [shape,] else shape;
 
     this
 };
 
-Vector : object \ (object ~ Array) |-> {
+Matrix::(this.shape |-> {
+    $this._shape
+});
+
+Matrix::(this.length |-> {
+    $this._shape[0]
+});
+
+Matrix : (Array array) |-> {
     array;
     shape := [];
 

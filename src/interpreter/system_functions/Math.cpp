@@ -457,6 +457,7 @@ namespace Interpreter {
             context.get_function("log10").push_front(SystemFunction{a, function1<std::log10>});
             context.get_function("pow").push_front(SystemFunction{ab, function2<std::pow>});
             context.add_symbol("**", context["pow"]);
+            context.add_symbol("^", context["pow"]);
             context.get_function("**").push_front(SystemFunction{ab, function2<std::pow>});
             context.get_function("sqrt").push_front(SystemFunction{a, function1<std::sqrt>});
             context.get_function("cbrt").push_front(SystemFunction{a, function1<std::cbrt>});

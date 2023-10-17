@@ -6,21 +6,38 @@
 (~) := ((object, type) |-> {
     defined object._types &
     exists(object._types, x |-> {
-        x === type
+        x === type | {
+            if (defined type._parents) {
+                exists(type._parents, x |-> {
+                    x === type
+                })
+            } else {
+                false
+            }
+        }
     })
 } : (~));
 
 
 extends;
 
-class : type |-> {
-    type
-};
 class : (type, extends, parents) |-> {
-    type._parents := parents;
+    if (Array.length(parents) > 0) {
+        type._parents := parents
+    };
+
+    type : this \ (this ~ type) |-> { this };
+    type : () |-> {
+        this :~ type;
+        this
+    };
 
     type
 };
+class : type |-> {
+    class type extends ()
+};
+
 
 (::) : (() |-> {
 

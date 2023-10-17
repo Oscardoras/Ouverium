@@ -324,8 +324,7 @@ namespace Interpreter {
             auto data = context["data"].to_data(context);
 
             try {
-                data.get<Object*>();
-                throw Interpreter::FunctionArgumentsError();
+                return context.new_object(*data.get<Object*>());
             } catch (Data::BadAccess const& e) {
                 return Reference(data);
             }

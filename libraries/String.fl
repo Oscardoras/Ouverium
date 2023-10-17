@@ -19,7 +19,7 @@ Char::(this.alphanum |-> {
 });
 
 
-String := ();
+class String extends ArrayList;
 
 (~) : (str, String) |-> {
     is str Array & {
@@ -43,7 +43,17 @@ String : c \ (c ~ Char) |-> {
 
 
 String::(this.substring |-> (
-    (begin, len) \ (begin ~ Int & len ~ Int & len >= 0 & begin+len < this.length) |-> {
+    begin \ (begin ~ Int & begin >= 0 & begin < this.length) |-> {
+        str := String();
+        str.reserve(this.length - begin);
+
+        for i from begin to (this.length) {
+            str.add_back(this[i])
+        };
+
+        str
+    } :
+    (begin, len) \ (begin ~ Int & len ~ Int & begin >= 0 & len >= 0 & begin+len < this.length) |-> {
         str := String();
         str.reserve(len);
 
@@ -55,32 +65,17 @@ String::(this.substring |-> (
     }
 ));
 
-String : this |-> {
-    ArrayList(this);
-    this :~ String;
-
-    this.lower : () |-> {
-        this.foreach(c |-> {
-
-        })
-    };
-
-    this.upper : () |-> {
-        this.foreach(c |-> {
-
-        })
-    };
-
-    this.index_of : substring \ (substring ~ String) |-> {
+String::(this.index_of |-> (
+    (String substring) |-> {
         index := -1;
 
         i := 0;
-        while (index < 0 & i < this.lenght()) {
+        while (index < 0 & i < this.length) {
             j := 0;
-            while (j < substring.lenght() & this[i+j] == substring[j]) {
+            while (j < substring.length & this[i+j] == substring[j]) {
                 ++j
             };
-            if (j == substring.lenght()) {
+            if (j == substring.length) {
                 index := i
             } else {
                 ++i
@@ -88,14 +83,12 @@ String : this |-> {
         };
 
         index
-    };
-
-    this
-};
+    }
+));
 
 
-(@) : (substring, string) \ (substring ~ String & string ~ String) |-> {
-    string.index_of(substring) >= 0
+(@) : (String substr, String str) |-> {
+    str.index_of(substr) >= 0
 };
 
 (+) : (str1, str2) \ (is str1 Array & is str2 Array) |-> {

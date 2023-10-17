@@ -2,6 +2,7 @@ import "Type.fl";
 
 
 ArrayList := Array;
+class ArrayList;
 
 
 ArrayList::(this |-> (
@@ -24,7 +25,7 @@ ArrayList::(this.foreach |-> (
         list := ArrayList();
         list.reserve(l);
         for i from 0 to l {
-            list.add_last(function(this[i]))
+            list.add_back(function(this[i]))
         };
         list
     }
@@ -36,7 +37,8 @@ ArrayList::(this.capacity |-> {
 
 ArrayList::(this.reserve |-> (
     capacity \ (capacity ~ Int & this.capacity <= capacity) |-> {
-        Array.set_capacity(this, capacity)
+        c := capacity * 3 / 2;
+        Array.set_capacity(this, if (capacity > c) capacity else c)
     }
 ));
 
