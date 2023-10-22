@@ -93,30 +93,37 @@ namespace Analyzer::Standard {
         return symbols.find(symbol) != symbols.end();
     }
 
-    void Context::add_symbol(std::string const& symbol, M<Reference> const& reference) {
+    bool Context::add_symbol(std::string const& symbol, M<Reference> const& reference) {
         auto create_symbol_reference = [this, &symbol](M<Data> const& data) -> SymbolReference {
             auto r = SymbolReference{ *this, symbol };
             static_cast<M<Data>&>(r).add(data);
             return r;
         };
 
+        bool modified = false;
         for (auto const& ref : reference) {
-            if (auto data = std::get_if<M<Data>>(&ref))
-                symbols[symbol].add(IndirectReference(create_symbol_reference(*data)));
-            else if (auto symbol_reference = std::get_if<SymbolReference>(&ref))
-                symbols[symbol].add(IndirectReference(*symbol_reference));
-            else if (auto property_reference = std::get_if<PropertyReference>(&ref))
-                symbols[symbol].add(IndirectReference(*property_reference));
-            else if (auto array_reference = std::get_if<ArrayReference>(&ref))
-                symbols[symbol].add(IndirectReference(*array_reference));
-            else if (auto tuple_reference = std::get_if<TupleReference>(&ref)) {
+            if (auto data = std::get_if<M<Data>>(&ref)) {
+                if (symbols[symbol].add(IndirectReference(create_symbol_reference(*data))))
+                    modified  =true;
+            } else if (auto symbol_reference = std::get_if<SymbolReference>(&ref)) {
+                if (symbols[symbol].add(IndirectReference(*symbol_reference)))
+                    modified  =true;
+            } else if (auto property_reference = std::get_if<PropertyReference>(&ref)) {
+                if (symbols[symbol].add(IndirectReference(*property_reference)))
+                    modified  =true;
+            } else if (auto array_reference = std::get_if<ArrayReference>(&ref)) {
+                if (symbols[symbol].add(IndirectReference(*array_reference)))
+                    modified  =true;
+            } else if (auto tuple_reference = std::get_if<TupleReference>(&ref)) {
                 auto key = SymbolReference{ *this, symbol };
                 auto object = new_object(key);
                 for (auto d : *tuple_reference)
                     object->array.add(d.to_data(*this, key));
-                return symbols[symbol].add(IndirectReference(create_symbol_reference(Data(object))));
+                if (symbols[symbol].add(IndirectReference(create_symbol_reference(Data(object)))))
+                    modified = true;
             }
         }
+        return modified;
     }
 
     M<IndirectReference> Context::operator[](std::string const& symbol) {
@@ -246,25 +253,25 @@ namespace Analyzer::Standard {
 
     using ParserExpression = std::shared_ptr<Parser::Expression>;
 
-    void set_arguments(Context & context, FunctionContext & function_context, std::shared_ptr<Parser::Expression> parameters, Arguments const& arguments) {
+    void set_arguments(Context & context, Symbols & symbols, std::shared_ptr<Parser::Expression> parameters, Arguments const& arguments) {
         if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(parameters)) {
             auto reference = arguments.compute(context);
 
-            if (function_context.has_symbol(symbol->name)) {
-                if (reference.to_data(context, symbol) != function_context[symbol->name].to_data(context, arguments.key))
+            if (symbols.find(symbol->name) != symbols.end()) {
+                if (reference.to_data(context, symbol) != symbols[symbol->name].to_data(context, arguments.key))
                     throw FunctionArgumentsError();
             } else {
-                function_context.add_symbol(symbol->name, reference);
+                symbols[symbol->name].add(reference);
             }
         } else if (auto p_tuple = std::dynamic_pointer_cast<Parser::Tuple>(parameters)) {
             if (auto expression = std::get_if<ParserExpression>(&arguments.arg)) {
                 if (auto a_tuple = std::dynamic_pointer_cast<Parser::Tuple>(*expression)) {
                     if (p_tuple->objects.size() == a_tuple->objects.size()) {
                         for (size_t i = 0; i < p_tuple->objects.size(); i++)
-                            set_arguments(context, function_context, p_tuple->objects[i], a_tuple->objects[i]);
+                            set_arguments(context, symbols, p_tuple->objects[i], a_tuple->objects[i]);
                     } else throw FunctionArgumentsError();
                 } else {
-                    set_arguments(context, function_context, parameters, Arguments(arguments.compute(context), arguments.key));
+                    set_arguments(context, symbols, parameters, Arguments(arguments.compute(context), arguments.key));
                 }
             } else if (auto reference = std::get_if<M<Reference>>(&arguments.arg)) {
                 bool success = false;
@@ -273,15 +280,15 @@ namespace Analyzer::Standard {
                         if (auto tuple_reference = std::get_if<TupleReference>(&ref)) {
                             if (tuple_reference->size() == p_tuple->objects.size()) {
                                 for (size_t i = 0; i < p_tuple->objects.size(); i++)
-                                    set_arguments(context, function_context, p_tuple->objects[i], Arguments((*tuple_reference)[i], arguments.key));
+                                    set_arguments(context, symbols, p_tuple->objects[i], Arguments((*tuple_reference)[i], arguments.key));
                             } else throw FunctionArgumentsError();
                         } else {
                             try {
-                                for (auto d : ref.to_data(function_context, arguments.key)) {
+                                for (auto d : ref.to_data(context, arguments.key)) {
                                     auto object = d.get<Object*>();
                                     if (object->array.size() == p_tuple->objects.size()) {
                                         for (size_t i = 0; i < p_tuple->objects.size(); i++)
-                                            set_arguments(context, function_context, p_tuple->objects[i], Arguments(Reference(ArrayReference{object}), arguments.key));
+                                            set_arguments(context, symbols, p_tuple->objects[i], Arguments(Reference(ArrayReference{object}), arguments.key));
                                     } else throw FunctionArgumentsError();
                                 }
                             } catch (Data::BadAccess const& e) {
@@ -296,9 +303,11 @@ namespace Analyzer::Standard {
             }
         } else if (auto p_function = std::dynamic_pointer_cast<Parser::FunctionCall>(parameters)) {
             if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(p_function->function)) {
-                if (!function_context.has_symbol(symbol->name)) {
+                if (symbols.find(symbol->name) == symbols.end()) {
                     Object* object = context.new_object(symbol);
+
                     auto function_definition = context.get_global().lambdas[p_function].function_definition;
+                    auto & function_context = context.get_global().contexts[function_definition];
                     function_definition->parameters = p_function->arguments;
 
                     if (auto expression = std::get_if<std::shared_ptr<Parser::Expression>>(&arguments.arg)) {
@@ -314,7 +323,7 @@ namespace Analyzer::Standard {
                     }
                     object->functions.push_front(CustomFunction{function_definition, function_context});
 
-                    function_context.add_symbol(symbol->name, Reference(Data(object)));
+                    symbols[symbol->name].add(Reference(Data(object)));
                     return;
                 }
             }
@@ -328,14 +337,14 @@ namespace Analyzer::Standard {
 
             M<Reference> reference = call_function(context, all_functions, arguments);
             // TODO : catch exception
-            set_arguments(context, function_context, p_function->arguments, Arguments(reference, arguments.key));
+            set_arguments(context, symbols, p_function->arguments, Arguments(reference, arguments.key));
         } else if (auto p_property = std::dynamic_pointer_cast<Parser::Property>(parameters)) {
             bool success = false;
             for (auto reference : arguments.compute(context)) {
                 try {
                     if (auto property_reference = std::get_if<PropertyReference>(&reference)) {
                         if (p_property->name == property_reference->name || p_property->name == ".") {
-                            set_arguments(context, function_context, p_property->object, Arguments(Reference(Data(property_reference->parent)), arguments.key));
+                            set_arguments(context, symbols, p_property->object, Arguments(Reference(Data(property_reference->parent)), arguments.key));
                         } else throw FunctionArgumentsError();
                     } else throw FunctionArgumentsError();
                     success = true;
@@ -347,50 +356,48 @@ namespace Analyzer::Standard {
         } else throw FunctionArgumentsError();
     }
 
-    using It = std::map<std::string, M<IndirectReference>>::const_iterator;
-
-    void call_argument(M<Reference> & result, CustomFunction const& function, FunctionContext function_context, It const it, It const end) {
+    void call_argument(CustomFunction const& function, Symbols symbols, Symbols::const_iterator const it, Symbols::const_iterator const end) {
         if (it != end) {
             bool success = false;
             for (auto const& m1 : it->second) {
-                function_context.add_symbol(it->first, Reference(m1));
-                It copy = it;
+                symbols[it->first] = Reference(m1);
+                auto copy = it;
                 try {
-                    call_argument(result, function, function_context, copy++, end);
+                    call_argument(function, symbols, copy++, end);
                     success = true;
                 } catch (FunctionArgumentsError & e) {}
             }
             if (!success)
                 throw FunctionArgumentsError();
         } else {
-            if (function->filter != nullptr) {
-                for (auto data : execute(function_context, function->filter).to_data(function_context, function->filter)) {
-                    try {
-                        data.get<bool>();
-                    } catch (Data::BadAccess const& e) {
-                        // TODO : exception
-                    }
-                }
-            }
-
             bool equals = true;
-            for (auto [symbol, references] : function_context) {
+            for (auto [symbol, references] : symbols) {
                 auto const& fr = function.context[symbol];
                 for (auto ref : references) {
                     auto it = std::find(fr.begin(), fr.end(), ref);
                     if (it == fr.end()) {
                         equals = false;
-                        break;
                     }
                 }
+                function.context.add_symbol(symbol, references);
             }
             if (equals)
                 equals = function.context.compare_objects_version();
 
-            if (!equals)
-                function.context.result.add(execute(function.context, function->body));
+            if (equals) {
+                if (function->filter != nullptr) {
+                    for (auto data : execute(function.context, function->filter).to_data(function.context, function->filter)) {
+                        try {
+                            data.get<bool>();
+                        } catch (Data::BadAccess const& e) {
+                            // TODO : exception
+                        }
+                    }
+                }
 
-            result.add(function.context.result);
+                function.context.result.add(execute(function.context, function->body));
+                function.context.store_objects_version();
+            }
         }
     }
 
@@ -401,13 +408,12 @@ namespace Analyzer::Standard {
             for (auto const& function : functions) {
                 try {
                     if (auto custom = std::get_if<CustomFunction>(&function)) {
-                        auto function_context = custom->context;
+                        Symbols symbols;
 
-                        set_arguments(context, function_context, (*custom)->parameters, arguments);
+                        set_arguments(context, symbols, (*custom)->parameters, arguments);
 
-                        M<Reference> result;
-                        call_argument(result, *custom, function_context, function_context.begin(), function_context.end());
-                        return result;
+                        call_argument(*custom, symbols, symbols.begin(), symbols.end());
+                        return custom->context.result;
                     } else if (auto system = std::get_if<SystemFunction>(&function)) {
                         return (*system)(arguments);
                     }
@@ -493,7 +499,10 @@ namespace Analyzer::Standard {
     MetaData analyze(std::shared_ptr<Parser::Expression> expression) {
         GlobalContext context;
 
-        auto r = execute(context, expression);
+        do {
+            auto r = execute(context, expression);
+            context.destruct();
+        } while (context.);
 
         {
             std::map<std::set<std::string>, std::shared_ptr<Structure>> structures;

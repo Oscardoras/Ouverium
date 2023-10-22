@@ -39,14 +39,20 @@ namespace Analyzer::Standard {
         using std::list<T>::begin;
         using std::list<T>::end;
 
-        void add(T const& t) {
-            if (find(begin(), end(), t) == end())
+        bool add(T const& t) {
+            if (find(begin(), end(), t) == end()) {
                 std::list<T>::push_back(t);
+                return true;
+            }
+            return false;
         }
 
-        void add(M<T> const& m) {
+        bool add(M<T> const& m) {
+            bool modified = false;
             for (auto const& t : m)
-                add(t);
+                if (add(t))
+                    modified = true;
+            return modified;
         }
 
         friend bool operator==(M<T> const& a, M<T> const& b) {
@@ -194,14 +200,12 @@ namespace Analyzer::Standard {
 
     public:
 
-        M<Reference> result;
-
         virtual GlobalContext & get_global() = 0;
 
         Object* new_object(ObjectKey const& key);
 
         bool has_symbol(std::string const& symbol);
-        void add_symbol(std::string const& symbol, M<Reference> const& reference);
+        bool add_symbol(std::string const& symbol, M<Reference> const& reference);
         M<IndirectReference> operator[](std::string const& symbol);
         auto begin() const { return symbols.begin(); }
         auto end() const { return symbols.end(); }
@@ -245,6 +249,7 @@ namespace Analyzer::Standard {
     public:
 
         ObjectsVersion objects_version;
+        M<Reference> result;
 
         FunctionContext(GlobalContext & global):
             global(global) {}
@@ -297,6 +302,8 @@ namespace Analyzer::Standard {
             return array;
         }
     };
+
+    using Symbols = std::map<std::string, M<Reference>>;
 
     M<Reference> call_function(Context & context, M<std::list<Function>> const& functions, Arguments arguments);
     M<Reference> execute(Context & context, std::shared_ptr<Parser::Expression> expression);

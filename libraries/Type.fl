@@ -21,6 +21,9 @@
 
 extends;
 
+class : type |-> {
+    class type extends ()
+};
 class : (type, extends, parents) |-> {
     if (Array.length(parents) > 0) {
         type._parents := parents
@@ -33,9 +36,6 @@ class : (type, extends, parents) |-> {
     };
 
     type
-};
-class : type |-> {
-    class type extends ()
 };
 
 

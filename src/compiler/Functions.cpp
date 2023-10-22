@@ -408,8 +408,10 @@ namespace Analyzer::Standard {
             for (auto var_ref : var)
                 for (auto var_data : var_ref.get()) if (auto var_object = std::get_if<Object*>(&var_data))
                     for (auto function_data : function) if (auto function_object = std::get_if<Object*>(&function_data))
-                        for (auto it = (*function_object)->functions.rbegin(); it != (*function_object)->functions.rend(); it++)
+                        for (auto it = (*function_object)->functions.rbegin(); it != (*function_object)->functions.rend(); it++) {
                             (*var_object)->functions.push_front(*it);
+                            (*var_object)->
+                        }
 
             return var;
         }
