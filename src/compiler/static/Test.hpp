@@ -1,100 +1,9 @@
 #pragma once
 
-#include <map>
-#include <optional>
-#include <set>
-#include <string>
-#include <variant>
-
-#include "../../parser/Parser.hpp"
-
-#include "../../Utils.hpp"
+#include "Reference.hpp"
 
 
 namespace Test {
-
-    struct Function;
-    struct Data {
-        std::optional<bool> Bool;
-        std::optional<char> Char;
-        std::optional<long> Int;
-        std::optional<double> Float;
-
-        std::optional<Function> function;
-    };
-
-    struct LambdaFunction {
-        std::shared_ptr<Reference> value;
-    };
-    struct CustomFunction {
-        std::shared_ptr<Parser::FunctionDefinition> function;
-        std::vector<Reference> captures;
-    };
-    struct SystemFunction {};
-    struct Function : public std::variant<LambdaFunction, CustomFunction, SystemFunction> {
-        using std::variant<LambdaFunction, CustomFunction, SystemFunction>::variant;
-    };
-
-    struct Reference {
-    protected:
-        std::set<std::weak_ptr<ForwardedReference>> children;
-    public:
-
-        virtual Data& get_data() = 0;
-
-        virtual std::vector<Function> const& get_functions() {
-            std::vector<Function> functions;
-
-            Data data = get_data();
-            if (data.function)
-                functions.push_back(*data.function);
-
-            for (auto const& child : children)
-                for (auto const& f : child.lock()->get_functions())
-                    functions.push_back(f);
-
-            return functions;
-        }
-    };
-    struct ForwardedReference : public Reference {
-    protected:
-        std::set<std::weak_ptr<ForwardedReference>> parents;
-    public:
-        std::vector<Function> const& get_functions() override {
-            return
-        }
-    };
-    struct DirectReference : public Reference, public Data {
-        using Data::Data;
-        Data& get_data() override {
-            return *this;
-        }
-    };
-    struct SymbolReference : public Reference {
-        std::shared_ptr<Data> data;
-        Data& get_data() override {
-            return *data;
-        }
-    };
-    struct PropertyReference : public Reference {
-        std::shared_ptr<Reference> parent;
-        std::string name;
-        Data& get_data() override {
-            // TODO
-        }
-    };
-    struct ArrayReference : public Reference {
-        std::shared_ptr<Reference> array;
-        Data& get_data() override {
-            // TODO
-        }
-    };
-    struct TupleReference : public Reference, public std::vector<std::shared_ptr<Reference>> {
-        using std::vector<std::shared_ptr<Reference>>::vector;
-        Data& get_data() override {
-            // TODO
-        }
-    };
 
     struct Call {
         std::shared_ptr<Reference> function;
@@ -191,7 +100,9 @@ namespace Test {
 
     void link(Analysis const& analysis) {
         for (auto const& [function, call] : analysis.calls) {
-            call.
+            for (auto f : call.function->get_functions()) {
+                f
+            }
         }
     }
 
