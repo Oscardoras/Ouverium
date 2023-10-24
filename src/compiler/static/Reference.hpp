@@ -30,7 +30,6 @@ namespace Test {
     };
     struct CustomFunction {
         std::shared_ptr<Parser::FunctionDefinition> function;
-        std::vector<Reference> captures;
     };
     struct SystemFunction {};
     struct Function : public std::variant<LambdaFunction, CustomFunction, SystemFunction> {
@@ -118,6 +117,8 @@ namespace Test {
     struct PropertyReference : public Reference {
         std::shared_ptr<Reference> parent;
         std::string name;
+        PropertyReference(std::shared_ptr<Reference> parent, std::string name):
+            parent{ parent }, name{ name } {}
         Data& get_data() override {
             // TODO
         }
