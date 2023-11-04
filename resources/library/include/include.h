@@ -340,7 +340,7 @@ extern "C" {
      * @param reference the reference.
      * @return a shared reference.
     */
-#define __Reference_share(reference) ((__Reference_Shared) reference)
+#define __Reference_share(reference) ((__Reference_Shared) (reference))
 
     /**
      * Frees a reference when it has been used.
@@ -390,11 +390,11 @@ extern "C" {
 
     /**
      * Evaluates a Function.
-     * @param function the function to evaluate.
+     * @param function a pointer to the function to evaluate.
      * @param args the arguments to give to the function.
      * @return the return reference.
     */
-    __Reference_Owned __Function_eval(__Function function, __Expression args);
+    __Reference_Owned __Function_eval(__Function* function, __Expression args);
 
 
     extern __VirtualTable __VirtualTable_UnknownData;

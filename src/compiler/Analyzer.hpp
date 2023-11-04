@@ -1,5 +1,4 @@
-#ifndef __COMPILER_ANALYZER_HPP__
-#define __COMPILER_ANALYZER_HPP__
+#pragma once
 
 #include <map>
 #include <memory>
@@ -28,13 +27,15 @@ namespace Analyzer {
     };
 
 
+    using CustomFunction = std::shared_ptr<Parser::FunctionDefinition>;
+    using SystemFunction = std::string;
+    using Function = std::variant<CustomFunction, SystemFunction>;
+
+
     struct MetaData {
         std::set<std::shared_ptr<Structure>> structures;
-        //std::map<std::shared_ptr<Parser::Expression>, std::set<std::shared_ptr<Type>>> types;
-        //std::set<std::shared_ptr<Parser::Expression>> lambdas;
+        std::map<std::shared_ptr<Parser::Expression>, std::set<std::shared_ptr<Type>>> types;
+        std::map<std::shared_ptr<Parser::FunctionCall>, std::set<Function>> calls;
     };
 
 }
-
-
-#endif

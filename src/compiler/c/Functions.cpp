@@ -4,16 +4,16 @@
 
 #include "Translator.hpp"
 
-#include "../Functions.hpp"
 
+namespace Translator::CStandard {
 
-namespace Translator::CTranslator {
-
-    std::shared_ptr<Structures::Expression> eval_system_function(Analyzer::SystemFunction function, std::shared_ptr<Parser::Expression> arguments, Analyzer::MetaData & meta, Instructions & instructions, References & references) {
-        if (function.pointer == Analyzer::Functions::separator) {
+    std::shared_ptr<Reference> Translator::eval_system_function(Analyzer::SystemFunction const& function, std::shared_ptr<Parser::Expression> arguments, Instructions & instructions, Instructions::iterator it) {
+        if (function == "separator") {
             if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(arguments)) {
+                std::shared_ptr<Reference> last = nullptr;
                 for (auto const& o : tuple->objects)
-                    get_instructions(o, meta, instructions, references);
+                    last = get_expression(o, instructions, it);
+                return last;
             } else {
                 get_instructions(arguments, meta, instructions, references);
             }

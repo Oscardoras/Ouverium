@@ -3,7 +3,7 @@
 #include "Reference.hpp"
 
 
-namespace Test {
+namespace Static {
 
     struct Call {
         std::shared_ptr<Reference> function;
@@ -20,6 +20,8 @@ namespace Test {
 
         std::map<std::shared_ptr<Parser::FunctionCall>, Call> calls;
         std::map<std::shared_ptr<Parser::FunctionDefinition>, Context> contexts;
+
+        std::set<std::pair<std::shared_ptr<Parser::FunctionCall>, Function>> couples;
 
     };
 
@@ -56,7 +58,10 @@ namespace Test {
             } else if (auto d = std::get_if<double>(&data)) {
                 return std::make_shared<DirectReference>(*d);
             } else if (auto str = std::get_if<std::string>(&data)) {
-                // TODO
+                std::vector<std::shared_ptr<Reference>> string;
+                for (auto c : *str)
+                    string.push_back(std::make_shared<DirectReference>(Data{ .Char = c }));
+                return std::make_shared<TupleReference>(string);
             } else {
                 return context.symbols[symbol->name];
             }
@@ -68,16 +73,32 @@ namespace Test {
         } else return nullptr;
     }
 
-    void get_parameters(std::set<std::string> & symbols, std::shared_ptr<Parser::Expression> parameters) {
+    void get_parameters(Analysis & analysis, Context & context, std::set<std::string> & symbols, std::shared_ptr<Parser::Expression> parameters) {
         if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(parameters)) {
             symbols.insert(symbol->name);
-        } else if (auto p_tuple = std::dynamic_pointer_cast<Parser::Tuple>(parameters)) {
-            for (auto const& e : p_tuple->objects)
-                get_parameters(symbols, e);
-        } else if (auto p_function = std::dynamic_pointer_cast<Parser::FunctionCall>(parameters)) {
+        } else if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(parameters)) {
+            for (auto const& e : tuple->objects)
+                get_parameters(analysis, context, symbols, e);
+        } else if (auto function_call = std::dynamic_pointer_cast<Parser::FunctionCall>(parameters)) {
+            if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(function_call->function)) {
+                if (context.symbols.find(symbol->name) == context.symbols.end()) {
+                    symbols.insert(symbol->name);
+                    return;
+                }
+            }
+
+            Call call;
+
+            call.function = execute(analysis, context, function_call->function);
+            call.in = std::make_shared<ForwardedReference>();
+            call.out = std::make_shared<ForwardedReference>();
             // TODO
-        } else if (auto p_property = std::dynamic_pointer_cast<Parser::Property>(parameters)) {
-            get_parameters(symbols, p_property->object);
+
+            analysis.calls[function_call] = call;
+
+            get_parameters(analysis, context, symbols, function_call->arguments);
+        } else if (auto property = std::dynamic_pointer_cast<Parser::Property>(parameters)) {
+            get_parameters(analysis, context, symbols, property->object);
         }
     }
 
@@ -90,9 +111,11 @@ namespace Test {
             auto it = context.symbols.find(symbol);
             if (it != context.symbols.end())
                 function_context.symbols[symbol] = it->second;
+            else
+                function_context.symbols[symbol] = std::make_shared<SymbolReference>();
         }
 
-        get_parameters(symbols, function_definition->parameters);
+        get_parameters(analysis, function_context, symbols, function_definition->parameters);
         for (auto const& symbol : symbols)
             function_context.symbols[symbol] = std::make_shared<ForwardedReference>();
 
@@ -104,7 +127,7 @@ namespace Test {
 
     class FunctionArgumentsError {};
 
-    void set_arguments(Analysis & analysis, Context & context, Context & function_context, std::shared_ptr<Parser::Expression> parameters, std::shared_ptr<Reference> argument) {
+    void set_arguments(Analysis & analysis, Context & function_context, std::shared_ptr<Parser::Expression> parameters, std::shared_ptr<Reference> argument) {
         if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(parameters)) {
             if (function_context.symbols.find(symbol->name) == function_context.symbols.end()) {
                 std::static_pointer_cast<ForwardedReference>(function_context.symbols[symbol->name])->link(argument);
@@ -113,10 +136,11 @@ namespace Test {
             if (auto tuple_reference = std::dynamic_pointer_cast<TupleReference>(argument)) {
                 if (tuple_reference->size() == p_tuple->objects.size()) {
                     for (size_t i = 0; i < p_tuple->objects.size(); i++)
-                        set_arguments(analysis, context, function_context, p_tuple->objects[i], (*tuple_reference)[i]);
+                        set_arguments(analysis, function_context, p_tuple->objects[i], (*tuple_reference)[i]);
                 } else throw FunctionArgumentsError();
             } else {
-                // TODO
+                for (size_t i = 0; i < p_tuple->objects.size(); i++)
+                    set_arguments(analysis, function_context, p_tuple->objects[i], std::make_shared<ArrayReference>(argument, 0));
             }
         } else if (auto p_function = std::dynamic_pointer_cast<Parser::FunctionCall>(parameters)) {
             if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(p_function->function)) {
@@ -127,48 +151,43 @@ namespace Test {
                 }
             }
 
-            auto r = execute(context, p_function->function).to_data(context);
-            std::list<Function> functions;
-            try {
-                functions = r.get<Object*>()->functions;
-            } catch (Data::BadAccess const& e) {}
-
-            Arguments args;
-            if (auto expression = std::get_if<ParserExpression>(&arguments)) {
-                auto it = computed.find(*expression);
-                args = it != computed.end() ? it->second : arguments;
-            } else {
-                args = arguments;
-            }
-
-            Reference reference;
-            try {
-                reference = call_function(context, p_function, functions, args);
-            } catch (Exception const& e) {
-                throw Interpreter::FunctionArgumentsError();
-            }
-            set_arguments(context, function_context, computed, p_function->arguments, reference);
+            // TODO
         } else if (auto p_property = std::dynamic_pointer_cast<Parser::Property>(parameters)) {
-            auto reference = computed.compute(context, arguments);
-
-            if (auto property_reference = std::get_if<PropertyReference>(&reference)) {
+            if (auto property_reference = std::dynamic_pointer_cast<PropertyReference>(argument)) {
                 if (p_property->name == property_reference->name || p_property->name == ".") {
-                    set_arguments(context, function_context, computed, p_property->object, Reference(Data(&property_reference->parent.get())));
-                } else throw Interpreter::FunctionArgumentsError();
-            } else throw Interpreter::FunctionArgumentsError();
-        } else throw Interpreter::FunctionArgumentsError();
+                    set_arguments(analysis, function_context, p_property->object, property_reference->parent);
+                } else throw FunctionArgumentsError();
+            } else throw FunctionArgumentsError();
+        } else throw FunctionArgumentsError();
     }
 
-    void call_function(Analysis & analysis, std::shared_ptr<Parser::FunctionCall> call, Function & function) {
+    void call_function(Analysis & analysis, std::shared_ptr<Parser::FunctionCall> function_call, Function const& function) {
+        auto & call = analysis.calls[function_call];
 
-    }
+        if (auto custom = std::get_if<CustomFunction>(&function))  {
+            auto & context = analysis.contexts[custom->function];
 
-    void link(Analysis const& analysis) {
-        for (auto const& [function, call] : analysis.calls) {
-            for (auto f : call.function->get_functions()) {
-                f
-            }
+            set_arguments(analysis, context, custom->function->parameters, call.in);
+            call.out->link(context.out);
+        } else if (auto system = std::get_if<SystemFunction>(&function)) {
+            auto r = (*system)(call.in);
+            if (r)
+                call.out->link(r);
         }
+    }
+
+    void link(Analysis & analysis) {
+        size_t size = 0;
+        do {
+            size = analysis.couples.size();
+
+            for (auto const& [function, call] : analysis.calls) {
+                for (auto const& f : call.function->get_functions()) {
+                    call_function(analysis, function, f);
+                    analysis.couples.insert({function, f});
+                }
+            }
+        } while (size < analysis.couples.size());
     }
 
 }

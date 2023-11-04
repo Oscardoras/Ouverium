@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <map>
 #include <optional>
 #include <set>
@@ -11,18 +12,33 @@
 #include "../../Utils.hpp"
 
 
-namespace Test {
+namespace Static {
 
     struct Function;
+    struct Reference;
     struct Data {
-        /*
         std::optional<bool> Bool;
         std::optional<char> Char;
         std::optional<long> Int;
         std::optional<double> Float;
-        */
 
         std::optional<Function> function;
+        std::unique_ptr<Data> array;
+        std::map<std::string, Data> properties;
+
+        std::set<std::weak_ptr<Reference>> assignators;
+        std::set<Data*> get_linked() {
+            std::set<Data*> linked = { this };
+
+            for (auto const& r : assignators) {
+                if (auto reference = r.lock()) {
+                    auto l = reference->get_data().get_linked();
+                    linked.insert(l.begin(), l.end());
+                }
+            }
+
+            return linked;
+        }
     };
 
     struct LambdaFunction {
@@ -31,7 +47,7 @@ namespace Test {
     struct CustomFunction {
         std::shared_ptr<Parser::FunctionDefinition> function;
     };
-    struct SystemFunction {};
+    struct SystemFunction : public std::function<std::shared_ptr<Reference>(std::shared_ptr<Reference>)> {};
     struct Function : public std::variant<LambdaFunction, CustomFunction, SystemFunction> {
         using std::variant<LambdaFunction, CustomFunction, SystemFunction>::variant;
     };
@@ -46,10 +62,6 @@ namespace Test {
             return linked;
         }
 
-    public:
-
-        std::set<std::weak_ptr<ForwardedReference>> children;
-
         virtual void iterate(std::set<std::shared_ptr<Reference>> & linked) {
             if (linked.find(shared_from_this()) == linked.end()) {
                 linked.insert(shared_from_this());
@@ -60,14 +72,25 @@ namespace Test {
             }
         }
 
+        friend class ArrayReference;
+        friend class PropertyReference;
+        friend class ForwardedReference;
+        friend class TupleReference;
+        friend class Data;
+
+    public:
+
+        std::set<std::weak_ptr<ForwardedReference>> children;
+
         virtual Data& get_data() = 0;
 
-        std::vector<Function> const& get_functions() {
+        std::vector<Function> get_functions() {
             std::vector<Function> functions;
 
             for (auto const& l : get_linked())
-                if (auto & f = l->get_data().function)
-                    functions.push_back(*f);
+                for (auto d : l->get_data().get_linked())
+                    if (auto & f = d->function)
+                        functions.push_back(*f);
 
             return functions;
         }
@@ -78,9 +101,7 @@ namespace Test {
 
     protected:
 
-        std::set<std::weak_ptr<Reference>> parents;
-
-    public:
+        std::set<std::shared_ptr<Reference>> parents;
 
         void iterate(std::set<std::shared_ptr<Reference>> & linked) override {
             if (linked.find(shared_from_this()) == linked.end()) {
@@ -91,10 +112,13 @@ namespace Test {
                         c->iterate(linked);
 
                 for (auto const& parent : parents)
-                    if (auto p = parent.lock())
-                        p->iterate(linked);
+                    parent->iterate(linked);
             }
         }
+
+        friend class Reference;
+
+    public:
 
         void link(std::shared_ptr<Reference> parent) {
             parents.insert(parent);
@@ -110,6 +134,8 @@ namespace Test {
     };
     struct SymbolReference : public Reference {
         std::shared_ptr<Data> data;
+        SymbolReference():
+            data{ std::make_shared<Data>() } {}
         Data& get_data() override {
             return *data;
         }
@@ -121,18 +147,29 @@ namespace Test {
             parent{ parent }, name{ name } {}
         Data& get_data() override {
             // TODO
+            return parent->get_data().properties[name];
         }
     };
     struct ArrayReference : public Reference {
         std::shared_ptr<Reference> array;
+        ArrayReference(std::shared_ptr<Reference> const& array, size_t):
+            array{ array } {}
         Data& get_data() override {
-            // TODO
+            if (array->get_data().array == nullptr)
+                array->get_data().array = std::make_unique<Data>();
+
+            return *array->get_data().array;
         }
     };
     struct TupleReference : public Reference, public std::vector<std::shared_ptr<Reference>> {
-        using std::vector<std::shared_ptr<Reference>>::vector;
+        Data data;
+        TupleReference(std::vector<std::shared_ptr<Reference>> const& vector):
+            std::vector<std::shared_ptr<Reference>>{ vector } {
+            for (auto const& r : vector)
+                data.assignators.insert(r);
+        }
         Data& get_data() override {
-            // TODO
+            return data;
         }
     };
 

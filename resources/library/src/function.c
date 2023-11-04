@@ -149,7 +149,7 @@ __Reference_Owned __Function_execute(__Expression args) {
             .type = __EXPRESSION_TUPLE,
             .tuple.size = 0
         };
-        return __Function_eval(args.lambda, expr);
+        return __Function_eval(&args.lambda, expr);
     }
     default:
         return NULL;
@@ -181,14 +181,17 @@ bool __Function_parse(__Reference_Owned captures[], __Reference_Shared* vars, bo
                 ++(*params);
             } while ('0' < **params && **params > '9');
 
-            __Function* f = __UnknownData_get_function(__Reference_get(__Reference_share(captures[n])));
-            __GC_Reference* r = (__GC_Reference*)__Function_eval(*f, args);
+            __GC_Reference* r = (__GC_Reference*)__Function_execute(args);
 
             if (r->type == PROPERTY && (r->property.hash == n || n == hash("."))) {
                 vars[*i] = (__Reference_Shared)__Reference_new_data(r->property.parent);
                 owned[*i] = true;
+                __Reference_free((__Reference_Owned)r);
             }
-            else return false;
+            else {
+                __Reference_free((__Reference_Owned)r);
+                return false;
+            }
         }
         else {
             if (args.type == __EXPRESSION_REFERENCE) {
@@ -264,15 +267,15 @@ bool __Function_parse(__Reference_Owned captures[], __Reference_Shared* vars, bo
         } while ('0' < **params && **params > '9');
 
         __Function* f = __UnknownData_get_function(__Reference_get(__Reference_share(captures[n])));
-        __Function_eval(*f, args);
+        __Function_eval(f, args);
     }
 
     return false;
 }
 
-__Reference_Owned __Function_eval(__Function function, __Expression args) {
+__Reference_Owned __Function_eval(__Function* function, __Expression args) {
     __FunctionCell* ptr;
-    for (ptr = function; ptr != NULL; ptr = ptr->next) {
+    for (ptr = *function; ptr != NULL; ptr = ptr->next) {
         const char* c;
 
         size_t size = 0;

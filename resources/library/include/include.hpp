@@ -451,7 +451,7 @@ struct LambdaParameter<std::function<Reference()>> {
                     .tab = nullptr
                 }
             };
-            return __Function_eval(*__UnknownData_get_function(__Reference_get(arg)), expr);
+            return __Function_eval(__UnknownData_get_function(__Reference_get(arg)), expr);
             };
     }
 };

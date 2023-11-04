@@ -123,7 +123,7 @@ __Reference_Owned __system_function_assign_body(__Reference_Owned capture[], __R
 
 __FunctionCell __system_function_assign = {
     .next = NULL,
-    .parameters = "r",
+    .parameters = "rr",
     .filter = NULL,
     .body = __system_function_assign_body,
     .captures = {
