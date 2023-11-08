@@ -38,14 +38,19 @@ namespace Translator::CStandard {
 
         std::shared_ptr<Expression> get_unknown_data(std::shared_ptr<Expression> expression);
 
+        C c;
+
     public:
 
         std::set<std::shared_ptr<Class>> create_structures(std::set<std::shared_ptr<Analyzer::Structure>> const& structures);
         std::shared_ptr<FunctionDefinition> get_function(std::shared_ptr<Parser::FunctionDefinition> function);
 
-
         std::shared_ptr<Reference> eval_system_function(Analyzer::SystemFunction const& function, std::shared_ptr<Parser::Expression> arguments, Instructions & instructions, Instructions::iterator it);
         std::shared_ptr<Reference> get_expression(std::shared_ptr<Parser::Expression> expression, Instructions & instructions, Instructions::iterator it);
+
+        void write_structures(std::string & interface, std::string & implementation);
+        void write_functions(std::string & interface, std::string & implementation);
+        void write_main(std::string & implementation);
 
     };
 

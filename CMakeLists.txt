@@ -31,3 +31,5 @@ FILE(GLOB_RECURSE compiler_sources
     src/compiler/*
 )
 add_executable(compiler ${compiler_sources})
+
+link_libraries(interpreter PUBLIC capi)

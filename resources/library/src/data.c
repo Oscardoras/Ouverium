@@ -54,7 +54,7 @@ void __VirtualTable_UnknownData_gc_iterator(void* ptr) {
         data.virtual_table != &__VirtualTable_Char &&
         data.virtual_table != &__VirtualTable_Bool
         )
-        data.virtual_table->gc_iterator(data.data.ptr);
+        __GC_iterate(data.virtual_table->gc_iterator, data.data.ptr);
 }
 __VirtualTable __VirtualTable_UnknownData = {
     .size = sizeof(__UnknownData),

@@ -54,7 +54,7 @@ void __VirtualTable_Array_gc_iterator(void* ptr) {
     __ArrayInfo array = __UnknownData_get_array(*((__UnknownData*)ptr));
     size_t i;
     for (i = 0; i < array.array->size; i++)
-        __VirtualTable_UnknownData.gc_iterator(__Array_get(array, i));
+       __GC_iterate(__VirtualTable_UnknownData.gc_iterator, __Array_get(array, i));
 }
 void __VirtualTable_Array_gc_destructor(void* ptr) {
     __ArrayInfo array = __UnknownData_get_array(*((__UnknownData*)ptr));

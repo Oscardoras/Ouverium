@@ -42,7 +42,7 @@ extern "C" {
                     void (*ptr)();
                 };
                 struct __VirtualTable_Element* next;
-            }*tab[];
+            } tab[];
         } table;
     } __VirtualTable;
 

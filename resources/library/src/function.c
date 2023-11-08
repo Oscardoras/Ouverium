@@ -320,7 +320,7 @@ void __VirtualTable_Function_gc_iterator(void* ptr) {
         for (i = 0; i < f->captures.size; ++i) {
             __Reference_Owned ref = __GC_capture_to_reference(f->captures.tab[i]);
             __UnknownData data = __Reference_get(__Reference_share(ref));
-            __VirtualTable_UnknownData.gc_iterator(&data);
+            __GC_iterate(__VirtualTable_UnknownData.gc_iterator, &data);
             __Reference_free(ref);
         }
     }

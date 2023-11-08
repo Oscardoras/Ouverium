@@ -132,6 +132,13 @@ namespace Translator::CStandard {
         std::shared_ptr<Reference> return_value;
     };
 
+
+    struct C {
+        std::set<std::shared_ptr<Class>> structures;
+        std::set<std::shared_ptr<FunctionDefinition>> functions;
+        std::shared_ptr<Expression> main;
+    };
+
 }
 
 
