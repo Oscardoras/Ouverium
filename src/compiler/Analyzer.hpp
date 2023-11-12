@@ -11,6 +11,7 @@
 namespace Analyzer {
 
     struct Type {
+        std::string name;
         virtual ~Type() = default;
     };
     using Types = std::vector<std::weak_ptr<Type>>;

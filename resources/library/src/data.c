@@ -29,9 +29,9 @@ __UnknownData __UnknownData_from_ptr(__VirtualTable* vtable, void* ptr) {
 }
 
 void* __UnknownData_get_property(__UnknownData data, unsigned int hash) {
-    struct __VirtualTable_Element* list = data.virtual_table->table.tab[hash % data.virtual_table->table.size];
+    struct __VirtualTable_Element* list = &data.virtual_table->table.tab[hash % data.virtual_table->table.size];
     for (; list->hash != hash; list = list->next);
-    return ((char*)data.data.ptr) + list->offset;
+    return ((BYTE*)data.data.ptr) + list->offset;
 }
 
 __ArrayInfo __UnknownData_get_array(__UnknownData data) {

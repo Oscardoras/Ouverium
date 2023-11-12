@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <fstream>
 #include <hash_string.h>
 #include <map>
 #include <set>
@@ -10,35 +11,56 @@
 
 namespace Translator::CStandard {
 
-    std::set<std::shared_ptr<Class>> Translator::create_structures(std::set<std::shared_ptr<Analyzer::Structure>> const& structures) {
-        std::set<std::shared_ptr<Class>> classes;
+    void Translator::translate(std::filesystem::path const& out) {
+        create_structures();
 
-        for (auto s : structures) {
-            auto cl = std::make_shared<Class>();
-            classes.insert(cl);
+        Instructions main_instructions;
+        get_expression(expression, main_instructions, main_instructions.begin());
+
+        std::string structures_header;
+        std::string structures_code;
+        std::string functions_header;
+        std::string main_code;
+        write_structures(structures_header, structures_code);
+        write_functions(functions_header, main_code);
+        write_main(main_code);
+        std::fstream((out / "structures.h").c_str()) << structures_header;
+        std::fstream((out / "structures.cpp").c_str()) << structures_code;
+        std::fstream((out / "functions.h").c_str()) << functions_header;
+        std::fstream((out / "main.cpp").c_str()) << main_code;
+    }
+
+    void Translator::create_structures() {
+        for (auto s : meta_data.structures) {
+            auto cl = std::make_shared<Structure>();
+            code.structures.insert(cl);
             type_table[s] = cl;
         }
 
-        for (auto s : structures) {
-            auto cl = std::static_pointer_cast<Class>(type_table[s]);
-            for (auto const& p : s->properties) {
-                if (p.second.size() == 1) {
-                    cl->properties[p.first] = type_table[p.second.begin()->lock()];
-                } else {
-                    cl->properties[p.first] = Unknown;
-                }
-            }
-        }
+        for (auto s : meta_data.structures) {
+            auto cl = std::static_pointer_cast<Structure>(type_table[s]);
 
-        return classes;
+            cl->name = s->name;
+            for (auto const& p : s->properties) {
+                if (p.second.size() == 1)
+                    cl->properties[p.first] = type_table[p.second.begin()->lock()];
+                else
+                    cl->properties[p.first] = Unknown;
+            }
+            cl->function = s->function;
+            if (s->array.size() == 1)
+                cl->array = type_table[s->array.begin()->lock()];
+            else
+                cl->array = Unknown;
+        }
     }
 
-    std::shared_ptr<FunctionDefinition> Translator::get_function(std::shared_ptr<Parser::FunctionDefinition> function_definition) {
+    void Translator::create_function(std::shared_ptr<Parser::FunctionDefinition> function_definition) {
         auto function = std::make_shared<FunctionDefinition>();
 
         function->return_value = get_expression(function_definition->body, function->body, function->body.begin());
 
-        return function;
+        code.functions.insert(function);
     }
 
     auto UnknownData_from_data(std::shared_ptr<Type> type, std::shared_ptr<Expression> value) {

@@ -20,26 +20,40 @@ namespace Translator::CStandard {
 
     };
     using Declarations = std::map<std::string, std::weak_ptr<Type>>;
-    struct Class: public Type {
+    struct Structure: public Type {
         Declarations properties;
+        std::weak_ptr<Type> array;
+        bool function = false;
     };
-    inline std::shared_ptr<Type> Unknown = nullptr;
+    inline std::shared_ptr<Type> Unknown = std::make_shared<Type>();
     inline std::shared_ptr<Type> Bool = std::make_shared<Type>();
     inline std::shared_ptr<Type> Char = std::make_shared<Type>();
     inline std::shared_ptr<Type> Int = std::make_shared<Type>();
     inline std::shared_ptr<Type> Float = std::make_shared<Type>();
 
 
-    struct Expression {};
+    struct Expression {
+        virtual std::string get_expression_code() const = 0;
+    };
     struct LValue: public Expression {};
-    struct Instruction {};
+    struct Instruction {
+        virtual std::string get_instruction_code() const = 0;
+    };
     using Instructions = std::list<std::shared_ptr<Instruction>>;
 
-    struct Reference: public LValue {
+    struct Reference: public LValue, public Instruction {
+        unsigned number;
         bool owned;
         //std::weak_ptr<Type> type;
         Reference(bool owned) :
-            owned{ owned } {}
+            owned{ owned } {
+            number = count++;
+        }
+
+        std::string get_expression_code() const override;
+        std::string get_instruction_code() const override;
+    private:
+        inline static unsigned count = 0;
     };
 
     struct If: public Instruction {
@@ -48,6 +62,8 @@ namespace Translator::CStandard {
         Instructions alternative;
         If(std::shared_ptr<Expression> condition, Instructions const& body, Instructions const& alternative) :
             condition{ condition }, body{ body }, alternative{ alternative } {}
+
+        std::string get_instruction_code() const override;
     };
 
     struct While: public Instruction {
@@ -55,6 +71,8 @@ namespace Translator::CStandard {
         Instructions body;
         While(std::shared_ptr<Expression> condition, Instructions const& body) :
             condition{ condition }, body{ body } {}
+
+        std::string get_instruction_code() const override;
     };
 
     struct Affectation: public Expression, public Instruction {
@@ -62,18 +80,35 @@ namespace Translator::CStandard {
         std::shared_ptr<Expression> value;
         Affectation(std::shared_ptr<LValue> lvalue, std::shared_ptr<Expression> value) :
             lvalue{ lvalue }, value{ value } {}
+
+        std::string get_expression_code() const override;
+        std::string get_instruction_code() const override;
     };
 
     struct Symbol: public LValue {
         std::string name;
         Symbol(std::string const& name) :
             name{ name } {}
+
+        std::string get_expression_code() const override;
     };
 
     struct Value: public Expression {
         std::variant<char, bool, long, double, std::string> value;
         Value(std::variant<char, bool, long, double, std::string> const& value) :
             value{ value } {}
+
+        std::string get_expression_code() const override;
+
+    private:
+        struct Visitor {
+            std::string operator()(auto v) {
+                return std::to_string(v);
+            }
+            std::string operator()(std::string const& s) {
+                return "\"" + s + "\"";
+            }
+        };
     };
 
     struct FunctionCall: public Expression, public Instruction {
@@ -81,6 +116,9 @@ namespace Translator::CStandard {
         std::vector<std::shared_ptr<Expression>> parameters;
         FunctionCall(std::shared_ptr<Expression> function, std::vector<std::shared_ptr<Expression>> const& parameters) :
             function{ function }, parameters{ parameters } {}
+
+        std::string get_expression_code() const override;
+        std::string get_instruction_code() const override;
     };
 
     struct Property: public LValue {
@@ -89,54 +127,42 @@ namespace Translator::CStandard {
         bool pointer;
         Property(std::shared_ptr<Expression> object, std::string const& name, bool pointer) :
             object{ object }, name{ name }, pointer{ pointer } {}
+
+        std::string get_expression_code() const override;
     };
 
     struct List: public Expression {
         std::vector<std::shared_ptr<Expression>> objects;
         List(std::vector<std::shared_ptr<Expression>> const& objects) :
             objects{ objects } {}
+
+        std::string get_expression_code() const override;
     };
 
-/*
-    struct Array: public Instruction {
-        std::weak_ptr<Type> type;
-        std::string name;
-        std::shared_ptr<List> list;
-        Array(std::weak_ptr<Type> type, std::string const&name, std::shared_ptr<List> list) :
-            type{ type }, name{ name }, list{ list } {}
-    };
+    struct FunctionExpression: public Expression, public Instruction, std::variant<std::vector<std::shared_ptr<FunctionExpression>>, std::shared_ptr<Reference>> {
+        unsigned number;
+        FunctionExpression(std::variant<std::vector<std::shared_ptr<FunctionExpression>>, std::shared_ptr<Reference>> const& variant) :
+            std::variant<std::vector<std::shared_ptr<FunctionExpression>>, std::shared_ptr<Reference>>{ variant } {
+            number = count++;
+        }
 
-    struct Object: public Instruction {
-        std::string type;
-        std::string name;
-        std::shared_ptr<List> list;
-        Object(std::string type, std::string const&name, std::shared_ptr<List> list) :
-            type{ type }, name{ name }, list{ list } {}
-    };
-*/
-
-    struct FunctionExpression: public Expression, std::variant<std::shared_ptr<FunctionExpression>, std::shared_ptr<Reference>> {
-        using std::variant<std::shared_ptr<FunctionExpression>, std::shared_ptr<Reference>>::variant;
+        std::string get_expression_code() const override;
+        std::string get_instruction_code() const override;
+    private:
+        inline static unsigned count = 0;
     };
 
 
     struct FunctionDefinition: public Expression {
         using Parameter = std::string;
         using Parameters = std::vector<Parameter>;
-        //std::weak_ptr<Type> type;
         std::string name;
         Parameters parameters;
         std::string format;
+        std::vector<std::string> captures;
         Declarations local_variables;
         Instructions body;
         std::shared_ptr<Reference> return_value;
-    };
-
-
-    struct C {
-        std::set<std::shared_ptr<Class>> structures;
-        std::set<std::shared_ptr<FunctionDefinition>> functions;
-        std::shared_ptr<Expression> main;
     };
 
 }

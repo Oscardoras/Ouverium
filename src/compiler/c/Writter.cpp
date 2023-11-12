@@ -30,13 +30,17 @@ namespace Translator::CStandard {
         interface += "#include <include.h>";
 
         implementation += "#include <stddef.h>\n";
-        implementation += "#include \"structures.hpp\"\n";
+        implementation += "#include \"structures.h\"\n";
         implementation += "\n\n";
 
-        for (auto const& structure : c.structures) {
+        for (auto const& structure : code.structures) {
             interface += "extern __VirtualTable __VirtualTable_" + structure->name + ";\n";
 
             implementation += "struct " + structure->name + " {\n";
+            if (structure->function)
+                implementation += "\t__Function __function;\n";
+            if (structure->array.lock())
+                implementation += "\t__Array __array;\n";
             for (auto const& [p, _] : structure->properties)
                 implementation += "\t__UnknownData " + p + ";\n";
             implementation += "};\n";
@@ -52,9 +56,17 @@ namespace Translator::CStandard {
             implementation += "\t.size = sizeof(struct " + structure->name + "),\n";
             implementation += "\t.gc_iterator = __VirtualTable_" + structure->name + "_gc_iterator,\n";
             implementation += "\t.gc_destructor = NULL,\n";
-            implementation += "\t.array.vtable = NULL,\n";
-            implementation += "\t.array.offset = NULL,\n";
-            implementation += "\t.function.offset = NULL,\n";
+            if (auto array_type = structure->array.lock()) {
+                implementation += "\t.array.vtable = &__VirtualTable_" + array_type->name + ",\n";
+                implementation += "\t.array.offset = offsetof(struct " + structure->name + ", __array),\n";
+            } else {
+                implementation += "\t.array.vtable = NULL,\n";
+                implementation += "\t.array.offset = NULL,\n";
+            }
+            if (structure->function)
+                implementation += "\t.function.offset = offsetof(struct " + structure->name + ", __function),\n";
+            else
+                implementation += "\t.function.offset = NULL,\n";
             std::set<std::string> properties;
             for (auto const& [p, _] : structure->properties)
                 properties.insert(p);
@@ -73,21 +85,110 @@ namespace Translator::CStandard {
 
     void Translator::write_functions(std::string& interface, std::string& implementation) {
         interface += "#include <include.h>";
+        interface += "#include \"structures.h\"\n";
 
-        implementation += "#include \"functions.hpp\"\n";
+        implementation += "#include \"functions.h\"\n";
         implementation += "\n\n";
 
-        for (auto const& function : c.functions) {
-            interface += "extern __VirtualTable __VirtualTable_" + structure->name + "();\n";
+        for (auto const& function : code.functions) {
+            interface += "extern __FunctionCell " + function->name + ";\n";
 
-            implementation += "struct " + structure->name + " {\n";
-
+            implementation += "__Reference_Owned " + function->name + "_body(__Reference_Owned capture[], __Reference_Shared args[]) {\n";
+            for (size_t i = 0; i < function->captures.size(); ++i) {
+                implementation += "__Reference_Owned " + function->captures[i] + " = captures[" + std::to_string(i) + "];\n";
+            }
+            for (size_t i = 0; i < function->parameters.size(); ++i) {
+                implementation += "__Reference_Shared " + function->parameters[i] + " = args[" + std::to_string(i) + "];\n";
+            }
+            for (auto const& [var, _] : function->local_variables) {
+                implementation += "__UnknownData " + var + "_data = { .vtable = NULL, .data.ptr = NULL };\n";
+                implementation += "__Reference_Owned " + var + " = __Reference_new_symbol(" + var + "_data);\n";
+            }
+            for (auto const& instruction : function->body) {
+                implementation += "\t" + instruction->get_instruction_code() + "\n";
+            }
+            implementation += "\treturn " + function->return_value->get_expression_code() + ";\n";
             implementation += "}\n";
         }
     }
 
     void Translator::write_main(std::string& implementation) {
 
+    }
+
+    std::string Reference::get_expression_code() const {
+        return "reference" + std::to_string(number);
+    }
+    std::string Reference::get_instruction_code() const {
+        return std::string() + "__Reference_" + (owned ? "Owned" : "Shared") + " reference" + std::to_string(number) + ";";
+    }
+
+    std::string Affectation::get_expression_code() const {
+        return lvalue->get_expression_code() + " = " + value->get_expression_code();
+    }
+    std::string Affectation::get_instruction_code() const {
+        return get_expression_code() + ";";
+    }
+
+    std::string Symbol::get_expression_code() const {
+        return name;
+    }
+
+    std::string Value::get_expression_code() const {
+        return std::visit(Visitor{}, value);
+    }
+
+    std::string FunctionCall::get_expression_code() const {
+        std::string code;
+
+        code += "(" + function->get_expression_code() + ")(";
+        size_t i = 0;
+        for (auto const& p : parameters) {
+            code += p->get_expression_code();
+            ++i;
+            if (i < parameters.size())
+                code += ", ";
+        }
+        code += ")";
+
+        return code;
+    }
+    std::string FunctionCall::get_instruction_code() const {
+        return get_expression_code() + ";";
+    }
+
+    std::string Property::get_expression_code() const {
+        return object->get_expression_code() + (pointer ? "->": ".") + name;
+    }
+
+    std::string List::get_expression_code() const {
+        std::string code;
+
+        code += "{\n";
+        for (auto const& e : objects)
+            code += e->get_expression_code() + ",\n";
+        code += "}";
+
+        return code;
+    }
+
+    std::string FunctionExpression::get_expression_code() const {
+        return "expression" + std::to_string(number);
+    }
+    std::string FunctionExpression::get_instruction_code() const {
+        std::string code;
+
+        if (auto tuple = std::get_if<std::vector<std::shared_ptr<FunctionExpression>>>(this)) {
+            code += "__Expression expression" + std::to_string(number) + "_array = { ";
+            for (auto const& e : *tuple)
+                code += e->get_expression_code() + ", ";
+            code += "};\n";
+            code += "__Expression expression" + std::to_string(number) + " = { .type = __EXPRESSION_TUPLE, .tuple.size = " + std::to_string(tuple->size()) + ", .tuple.tab = expression" + std::to_string(number) + "_array }";
+        } else if (auto ref = std::get_if<std::shared_ptr<Reference>>(this)) {
+            code += "__Expression expression" + std::to_string(number) + " = { .type = __EXPRESSION_REFERENCE, .reference = __Reference_share(" + (*ref)->get_expression_code() + ") }";
+        }
+
+        return code;
     }
 
 }
