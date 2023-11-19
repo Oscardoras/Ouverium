@@ -116,7 +116,7 @@ extern "C" {
 
     typedef struct __FunctionCell {
         struct __FunctionCell* next;
-        const char* parameters;
+        const char* parameters; // r for reference, number for referencing capture, perenthesis for function calls, point then hash for member call
         __FunctionFilter filter;
         __FunctionBody body;
         struct {

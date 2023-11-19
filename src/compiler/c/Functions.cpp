@@ -7,6 +7,7 @@
 
 namespace Translator::CStandard {
 
+/*
     std::shared_ptr<Reference> Translator::eval_system_function(Analyzer::SystemFunction const& function, std::shared_ptr<Parser::Expression> arguments, Instructions & instructions, Instructions::iterator it) {
         if (function == "separator") {
             if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(arguments)) {
@@ -109,5 +110,6 @@ namespace Translator::CStandard {
             }
         }
     }
+    */
 
 }

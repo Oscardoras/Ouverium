@@ -255,9 +255,8 @@ namespace Interpreter {
             object->functions.push_front(CustomFunction{function_definition});
             auto & f = object->functions.back();
 
-            for (auto symbol : function_definition->symbols)
-                if (context.has_symbol(symbol))
-                    f.extern_symbols.emplace(symbol, context[symbol]);
+            for (auto symbol : function_definition->captures)
+                f.extern_symbols.emplace(symbol, context[symbol]);
 
             return Data(object);
         } else if (auto property = std::dynamic_pointer_cast<Parser::Property>(expression)) {

@@ -4,6 +4,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <variant>
 
 #include "../parser/Parser.hpp"
 
@@ -38,5 +39,9 @@ namespace Analyzer {
         std::map<std::shared_ptr<Parser::Expression>, std::set<std::shared_ptr<Type>>> types;
         std::map<std::shared_ptr<Parser::FunctionCall>, std::set<Function>> calls;
     };
+
+    inline bool operator<(std::weak_ptr<Type> a, std::weak_ptr<Type> b) {
+        return a.lock() < b.lock();
+    }
 
 }

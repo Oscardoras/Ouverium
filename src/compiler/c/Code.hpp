@@ -16,6 +16,9 @@ namespace Translator::CStandard {
 
         std::string name;
 
+        Type(std::string const& name):
+            name{ name } {}
+
         virtual ~Type() = default;
 
     };
@@ -24,12 +27,14 @@ namespace Translator::CStandard {
         Declarations properties;
         std::weak_ptr<Type> array;
         bool function = false;
+
+        using Type::Type;
     };
-    inline std::shared_ptr<Type> Unknown = std::make_shared<Type>();
-    inline std::shared_ptr<Type> Bool = std::make_shared<Type>();
-    inline std::shared_ptr<Type> Char = std::make_shared<Type>();
-    inline std::shared_ptr<Type> Int = std::make_shared<Type>();
-    inline std::shared_ptr<Type> Float = std::make_shared<Type>();
+    inline std::shared_ptr<Type> Unknown = std::make_shared<Type>("UnknownData");
+    inline std::shared_ptr<Type> Bool = std::make_shared<Type>("Bool");
+    inline std::shared_ptr<Type> Char = std::make_shared<Type>("Char");
+    inline std::shared_ptr<Type> Int = std::make_shared<Type>("Int");
+    inline std::shared_ptr<Type> Float = std::make_shared<Type>("Float");
 
 
     struct Expression {
@@ -121,6 +126,14 @@ namespace Translator::CStandard {
         std::string get_instruction_code() const override;
     };
 
+    struct Referencing: public Expression {
+        std::shared_ptr<Expression> expression;
+        Referencing(std::shared_ptr<Expression> expression) :
+            expression{ expression } {}
+
+        std::string get_expression_code() const override;
+    };
+
     struct Property: public LValue {
         std::shared_ptr<Expression> object;
         std::string name;
@@ -133,7 +146,7 @@ namespace Translator::CStandard {
 
     struct List: public Expression {
         std::vector<std::shared_ptr<Expression>> objects;
-        List(std::vector<std::shared_ptr<Expression>> const& objects) :
+        List(std::vector<std::shared_ptr<Expression>> const& objects = {}) :
             objects{ objects } {}
 
         std::string get_expression_code() const override;
@@ -154,15 +167,24 @@ namespace Translator::CStandard {
 
 
     struct FunctionDefinition: public Expression {
-        using Parameter = std::string;
+        using Parameter = Symbol;
         using Parameters = std::vector<Parameter>;
         std::string name;
+        std::vector<Symbol> captures;
         Parameters parameters;
         std::string format;
-        std::vector<std::string> captures;
-        Declarations local_variables;
-        Instructions body;
-        std::shared_ptr<Reference> return_value;
+        struct {
+            Declarations local_variables;
+            Instructions body;
+            std::shared_ptr<Reference> return_value;
+        } body;
+        struct {
+            Declarations local_variables;
+            Instructions body;
+            std::shared_ptr<Reference> return_value;
+        } filter;
+
+        std::string get_expression_code() const override;
     };
 
 }

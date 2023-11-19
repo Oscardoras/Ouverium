@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <fstream>
+#include <iostream>
 #include <hash_string.h>
 #include <map>
 #include <set>
@@ -14,8 +15,7 @@ namespace Translator::CStandard {
     void Translator::translate(std::filesystem::path const& out) {
         create_structures();
 
-        Instructions main_instructions;
-        get_expression(expression, main_instructions, main_instructions.begin());
+        get_expression(expression, code.main_instructions, code.main_instructions.begin());
 
         std::string structures_header;
         std::string structures_code;
@@ -24,15 +24,17 @@ namespace Translator::CStandard {
         write_structures(structures_header, structures_code);
         write_functions(functions_header, main_code);
         write_main(main_code);
-        std::fstream((out / "structures.h").c_str()) << structures_header;
-        std::fstream((out / "structures.cpp").c_str()) << structures_code;
-        std::fstream((out / "functions.h").c_str()) << functions_header;
-        std::fstream((out / "main.cpp").c_str()) << main_code;
+
+        std::filesystem::create_directory(out);
+        (std::ofstream((out / "structures.h").c_str()) << structures_header).close();
+        (std::ofstream((out / "structures.c").c_str()) << structures_code).close();
+        (std::ofstream((out / "functions.h").c_str()) << functions_header).close();
+        (std::ofstream((out / "main.c").c_str()) << main_code).close();
     }
 
     void Translator::create_structures() {
         for (auto s : meta_data.structures) {
-            auto cl = std::make_shared<Structure>();
+            auto cl = std::make_shared<Structure>(s->name);
             code.structures.insert(cl);
             type_table[s] = cl;
         }
@@ -40,7 +42,6 @@ namespace Translator::CStandard {
         for (auto s : meta_data.structures) {
             auto cl = std::static_pointer_cast<Structure>(type_table[s]);
 
-            cl->name = s->name;
             for (auto const& p : s->properties) {
                 if (p.second.size() == 1)
                     cl->properties[p.first] = type_table[p.second.begin()->lock()];
@@ -55,19 +56,40 @@ namespace Translator::CStandard {
         }
     }
 
-    void Translator::create_function(std::shared_ptr<Parser::FunctionDefinition> function_definition) {
+    void parse_parameters(std::shared_ptr<Parser::Expression> parameters, std::shared_ptr<FunctionDefinition> function) {
+        if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(parameters)) {
+            function->parameters.push_back(symbol->name);
+            function->format += 'r';
+        } else if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(parameters)) {
+            for (auto e : tuple->objects)
+                parse_parameters(e, function);
+        } else {
+            // TODO
+        }
+    }
+
+    std::shared_ptr<FunctionDefinition> Translator::create_function(std::shared_ptr<Parser::FunctionDefinition> function_definition) {
         auto function = std::make_shared<FunctionDefinition>();
 
-        function->return_value = get_expression(function_definition->body, function->body, function->body.begin());
+        for (auto symbol : function_definition->captures)
+            function->captures.push_back(symbol);
+
+        parse_parameters(function_definition->parameters, function);
+
+        if (function_definition->filter != nullptr)
+            function->filter.return_value = get_expression(function_definition->filter, function->filter.body, function->filter.body.begin());
+
+        function->body.return_value = get_expression(function_definition->body, function->body.body, function->body.body.begin());
 
         code.functions.insert(function);
+        return function;
     }
 
     auto UnknownData_from_data(std::shared_ptr<Type> type, std::shared_ptr<Expression> value) {
         return std::make_shared<FunctionCall>(FunctionCall {
             std::make_shared<Symbol>("__UnknownData_from_data"),
             {
-                std::make_shared<Symbol>("&__VirtualTable_" + type->name),
+                std::make_shared<Referencing>(std::make_shared<Symbol>("__VirtualTable_" + type->name)),
                 value
             }
         });
@@ -88,7 +110,9 @@ namespace Translator::CStandard {
             auto r = std::make_shared<Reference>(true);
 
             auto f = get_expression(function_call->function, instructions, it);
-            auto args =  get_expression(function_call->arguments, instructions, it);
+            auto args = std::make_shared<FunctionExpression>(get_expression(function_call->arguments, instructions, it));
+
+            instructions.insert(it, args);
 
             instructions.insert(it, std::make_shared<Affectation>(
                 r,
@@ -111,9 +135,7 @@ namespace Translator::CStandard {
                                 })
                             }
                         }),
-                        std::make_shared<FunctionExpression>(
-                            args
-                        )
+                        args
                     }
                 })
             ));
@@ -122,10 +144,44 @@ namespace Translator::CStandard {
         } else if (auto function_definition = std::dynamic_pointer_cast<Parser::FunctionDefinition>(expression)) {
             auto r = std::make_shared<Reference>(true);
 
+            auto function = create_function(function_definition);
+
             instructions.insert(it, std::make_shared<Affectation>(
                 r,
-                get_function(function_definition)
+                std::make_shared<FunctionCall>(FunctionCall {
+                    std::make_shared<Symbol>("__GC_alloc_object"),
+                    {
+                        std::make_shared<Symbol>("__VirtualTable_Function")
+                    }
+                })
             ));
+
+            std::vector<std::shared_ptr<Expression>> captures;
+            for (auto symbol : function_definition->symbols) {
+                auto symbols = function_definition->parent.lock()->symbols;
+                if (symbols.find(symbol) != symbols.end())
+                    captures.push_back(std::make_shared<Symbol>(symbol));
+            }
+
+            instructions.insert(it,
+                std::make_shared<FunctionCall>(FunctionCall {
+                    std::make_shared<Symbol>("__Function_push"),
+                    {
+                        std::make_shared<FunctionCall>(FunctionCall {
+                            std::make_shared<Symbol>("__UnknownData_get_function"),
+                            {
+                                std::make_shared<FunctionCall>(FunctionCall {
+                                    std::make_shared<Symbol>("__Reference_get"),
+                                    {
+                                        r
+                                    }
+                                })
+                            }
+                        }),
+                        function
+                    }
+                })
+            );
 
             return r;
         } else if (auto property = std::dynamic_pointer_cast<Parser::Property>(expression)) {
@@ -181,10 +237,7 @@ namespace Translator::CStandard {
 
                 std::shared_ptr<Value> value = nullptr;
                 std::shared_ptr<Type> type = nullptr;
-                if (auto c = std::get_if<char>(&v)) {
-                    value = std::make_shared<Value>(*c);
-                    type = Char;
-                } else if (auto b = std::get_if<bool>(&v)) {
+                if (auto b = std::get_if<bool>(&v)) {
                     value = std::make_shared<Value>(*b);
                     type = Bool;
                 } else if (auto l = std::get_if<long>(&v)) {

@@ -66,6 +66,8 @@ namespace Parser {
 
     struct FunctionDefinition: public Expression {
 
+        std::set<std::string> captures;
+
         std::shared_ptr<Expression> parameters;
         std::shared_ptr<Expression> filter;
         std::shared_ptr<Expression> body;

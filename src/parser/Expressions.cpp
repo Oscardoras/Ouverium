@@ -40,6 +40,9 @@ namespace Parser {
         for (auto const& s : symbols)
             if (available_symbols.find(s) != available_symbols.end())
                 used_symbols.insert(s);
+
+        captures = used_symbols;
+
         return used_symbols;
     }
 
