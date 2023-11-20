@@ -2,8 +2,8 @@
 #include "include.h"
 
 
-__Reference_Owned __system_function_separator_body(__Reference_Owned capture[], __Reference_Shared args[]) {
-    (void)(capture);
+__Reference_Owned __system_function_separator_body(__Reference_Owned captures[], __Reference_Shared args[]) {
+    (void)(captures);
     return __Reference_get_element(args[0], __Reference_get_size(args[0]) - 1);
 }
 
@@ -17,8 +17,8 @@ __FunctionCell __system_function_separator = {
     }
 };
 
-bool __system_function_copy_filter(__Reference_Owned capture[], __Reference_Shared args[]) {
-    (void)(capture);
+bool __system_function_copy_filter(__Reference_Owned captures[], __Reference_Shared args[]) {
+    (void)(captures);
     __VirtualTable* vtable = __Reference_get(args[0]).virtual_table;
 
     return
@@ -27,8 +27,8 @@ bool __system_function_copy_filter(__Reference_Owned capture[], __Reference_Shar
         vtable == &__VirtualTable_Char ||
         vtable == &__VirtualTable_Bool;
 }
-__Reference_Owned __system_function_copy_body(__Reference_Owned capture[], __Reference_Shared args[]) {
-    (void)(capture);
+__Reference_Owned __system_function_copy_body(__Reference_Owned captures[], __Reference_Shared args[]) {
+    (void)(captures);
     __UnknownData data = __Reference_get(args[0]);
 
     return __Reference_new_data(data);
@@ -44,8 +44,8 @@ __FunctionCell __system_function_copy = {
     }
 };
 
-__Reference_Owned __system_function_copy_pointer_body(__Reference_Owned capture[], __Reference_Shared args[]) {
-    (void)(capture);
+__Reference_Owned __system_function_copy_pointer_body(__Reference_Owned captures[], __Reference_Shared args[]) {
+    (void)(captures);
     __UnknownData data = __Reference_get(args[0]);
 
     return __Reference_new_data(data);
@@ -111,8 +111,9 @@ static void assign(__GC_Reference* variable, __UnknownData value) {
         break;
     }
 }
-__Reference_Owned __system_function_assign_body(__Reference_Owned capture[], __Reference_Shared args[]) {
-    (void)(capture);
+
+__Reference_Owned __system_function_assign_body(__Reference_Owned captures[], __Reference_Shared args[]) {
+    (void)(captures);
     __Reference_Shared var = args[0];
     __Reference_Shared data = args[1];
 
@@ -130,3 +131,27 @@ __FunctionCell __system_function_assign = {
         .size = 0,
     }
 };
+
+__Reference_Owned __system_function_function_definition_body(__Reference_Owned captures[], __Reference_Shared args[]) {
+    (void)(captures);
+    __Function function = *__UnknownData_get_function(__Reference_get(args[1]));
+
+    __Reference_Owned references[function->captures.size];
+    size_t i;
+    for (i = 0; i < function->captures.size; ++i)
+        references[i] = __GC_capture_to_reference(function->captures.tab[i]);
+    __Function_push(__UnknownData_get_function(__Reference_get(args[0])), function->parameters, function->body, function->filter, references, function->captures.size);
+
+    return __Reference_copy(args[0]);
+}
+
+__Reference_Owned __system_function_print_body(__Reference_Owned captures[], __Reference_Shared args[]) {
+    (void)(captures);
+    __Reference_Shared ref = args[0];
+
+    __UnknownData data = __Reference_get(ref);
+    if (data.virtual_table == &__VirtualTable_Int)
+        printf("%li", data.data.i);
+
+    return __Reference_new_tuple(NULL, 0);
+}

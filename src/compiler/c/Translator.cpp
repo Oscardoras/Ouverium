@@ -16,10 +16,12 @@ namespace Translator::CStandard {
         create_structures();
 
         {
-            add_system_function("_x3B", "");
+            add_system_function("_x3B", "__system_function_separator", code.main_instructions);
+            add_system_function("_x3A", "__system_function_function_definition", code.main_instructions);
+            add_system_function("print", "__system_function_print", code.main_instructions);
         }
 
-        get_expression(expression, code.main_instructions, code.main_instructions.begin());
+        get_expression(expression, code.main_instructions, code.main_instructions.end());
 
         std::string structures_header;
         std::string structures_code;
@@ -72,10 +74,10 @@ namespace Translator::CStandard {
         }
     }
 
-    void Translator::add_system_function(std::string symbol, std::string function, Instructions & instructions, Instructions::iterator it) {
+    void Translator::add_system_function(std::string const& symbol, std::string const& function, Instructions & instructions) {
         auto r = std::make_shared<Reference>(true);
 
-        instructions.insert(it, std::make_shared<Affectation>(
+        instructions.push_back(std::make_shared<Affectation>(
             r,
             std::make_shared<FunctionCall>(FunctionCall {
                 std::make_shared<Symbol>("__GC_alloc_object"),
@@ -85,7 +87,7 @@ namespace Translator::CStandard {
             })
         ));
 
-        instructions.insert(it,
+        instructions.push_back(
             std::make_shared<FunctionCall>(FunctionCall {
                 std::make_shared<Symbol>("__Function_push"),
                 {
@@ -100,13 +102,18 @@ namespace Translator::CStandard {
                             })
                         }
                     }),
-                    std::make_shared<Symbol>(function = "_body"),
-                    std::make_shared<Symbol>(function = "_filter"),
+                    std::make_shared<Symbol>(function + "_body"),
+                    std::make_shared<Symbol>(function + "_filter"),
                     std::make_shared<List>(),
                     std::make_shared<Value>(0)
                 }
             })
         );
+
+        instructions.push_back(std::make_shared<Affectation>(
+            std::make_shared<Symbol>(symbol),
+            r
+        ));
     }
 
     std::shared_ptr<FunctionDefinition> Translator::create_function(std::shared_ptr<Parser::FunctionDefinition> function_definition) {
