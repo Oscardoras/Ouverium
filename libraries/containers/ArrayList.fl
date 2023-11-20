@@ -112,6 +112,23 @@ ArrayList::(this.remove |-> (
     }
 ));
 
+ArrayList::(this.resize |-> (
+    (size, value) \ (size ~ Int & 0 <= size) |-> {
+        if (size < this.length) {
+            for i from 0 to (this.length - size) {
+                Array.remove(this);
+            };
+        } else if (size > this.length) {
+            Array.reserve(size);
+            for i from 0 to (size - this.length) {
+                Array.add(this, value);
+            };
+        };
+    } : size \ (size ~ Int & 0 <= size) |-> {
+        this.resize(size, ());
+    }
+));
+
 
 (@) : (element, list) \ (list ~ ArrayList) |-> (
     exists(list, x |-> {

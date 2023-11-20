@@ -5,131 +5,129 @@ import "../containers/ArrayList.fl"
 class Matrix;
 
 
-Matrix.of : shape \ (shape ~ Int & shape > 0 | shape ~ Array & shape.length > 0 & forall(shape, x |-> {
+Matrix.of : shape \ (shape ~ Int & shape > 0 | shape ~ Array & forall(shape, x |-> {
     x ~ Int & x > 0
 })) |-> {
     this :~ Matrix;
 
     this._shape := if (shape ~ Int) [shape,] else shape;
 
+    array_size = if (this._shape.length > 0) 1 else 0;
+    foreach(this._shape, x |-> {
+        array_size *= size;
+    });
+    this._array.resize(array_size, 0.);
+
     this
 };
 
 Matrix::(this.shape |-> {
-    $this._shape
+    $(this._shape)
+});
+
+Matrix::(this.dimension |-> {
+    this._shape.length
 });
 
 Matrix::(this.length |-> {
-    $this._shape[0]
+    $(this._shape[0])
 });
 
-Matrix : (Array array) |-> {
-    array;
-    shape := [];
-
-    iterate : (tab, level, i) |-> {
-        size := Array.length(tab);
-
-        if (Array.length(shape) < level) {
-            Array.add(shape, size);
+Matrix::(this |-> (
+    ($==indexes) |-> {
+        if (indexes ~ Int) {
+            indexes := [indexes,];
         };
 
-        if (Array.get(shape, level) == size) {
-            for j from 0 to size {
-                element := Array.get(tab, j);
+        sizes := [];
+        product := 1;
+        foreach(this._shape, s |-> {
+            sizes.add_back(product);
+            product :* s;
+        });
 
-                if (element ~ Array) {
-                    iterate(element, level+1, i);
-                } else {
-                    Array.add(shape, i);
-                    ++i;
-                };
-            };
-        } else {
-            throw (() :~ Vector.BadFormat);
+        index := 0;
+        for i from 0 to (indexes.length) {
+            index :+ indexes[i] * sizes[i];
         };
-    };
-    array_index := 0;
-    iterate(object, 1, array_index);
 
-    Vector.constructor(array, shape)
-};
-
-Vector.BadFormat;
-
-Vector.new : (shape, value) \ (shape ~ Int || shape ~ Array) |-> {
-    if (Array.length(shape) > 0) {
-        size := 1;
-        for i from 0 to (Array.length(shape)) {
-            size :* Array.get(shape, i);
-        };
-    } else {
-        size := 0;
+        this._array[index];
     }
+));
 
-    Array.set_capacity(array, size);
-    for i from 0 to size {
-        Array.add(value);
-    };
-
-    Vector.constructor(array, shape)
-};
-
-Vector.zeros : shape |-> {
-    Vector.new(shape, 0.);
-};
-
-Vector.ones : shape |-> {
-    Vector.new(shape, 1.);
-};
-
-Vector.identity : n \ (n ~ Int) |-> {
-    matrix := Vector.new((n, n), 0.);
+Matrix.identity : (Int n) |-> {
+    matrix := Matrix.of(n, n);
 
     for i from 0 to n {
-        matrix[i] := 1.;
+        matrix[i,i] := 1.;
     };
 
     matrix;
 };
 
-Vector.arange : (start, stop, step) {
+Matrix.arange : (start, stop, s) {
+    matrix := Matrix.of(Int((stop - start) / s));
 
+    i := 0;
+    val := start;
+    while (val < stop) {
+        matrix[i] := val;
+        ++i;
+        val :+ s;
+    };
+
+    matrix
 };
 
-Vector.linspace : (start, stop, num) {
+Matrix.linspace : (start, stop, Int num) {
+    matrix := Matrix.of(num);
 
+    for i from 0 to num {
+        matrix[i] := start + (stop - start) * i / num;
+    };
+
+    matrix
 };
 
-Vector.vectorize : function |-> {
-    vector \ (vector ~ Vector) |-> {
-        Array.set_capacity(array, vector.length());
+Matrix.vectorize : function |-> {
+    (Matrix matrix) |-> {
+        new_matrix := Matrix.of(matrix.shape);
 
-        for i from 0 to (vector.length()) {
-            Array.add(function(Array.get(vector, i)));
-        }
+        for i from 0 to (matrix._array.length) {
+            new_matrix._array[i] := function(matrix._array[i]);
+        };
 
-        array
+        new_matrix
     }
 };
 
-Vector.dot : (a, b) \ (a ~ Vector && b ~ Vector && a.length() == b.length()) |-> {
-    size = a.length();
-    array;
-    Array.add(shape, size);
+class Vector;
 
+(~) : (vector, Vector) |-> {
+    vector ~ Matrix && vector.dimension == 1
+}
 
-    for i from 0 to size {
-        Array.add(array, a[i] * b[i]);
-    }
+Vector.dot : (Vector a, Vector b) \ (a.length == b.length) |-> {
+    product := if (a.length > 0) { a[0] * b[0] } else 0.;
 
-    Vector.constructor(array, shape)
+    for i from 1 to (a.length) {
+        product :+ a[i] * b[i];
+    };
+
+    product
 };
 
-($) : vector \ (vector ~ Vector) |-> {
-    new_vector = Vector[];
-    Array.set_capacity(new_vector, Array.get_capacity(vector))
-    for i from 0 to (vector.lenght) {
-        Array.add(new_vector, if (vector[i] ~ Vector) ($(vector[i])) else (vector[i]));
-    }
+($) : (Matrix matrix) |-> {
+    new_matrix = Matrix.of(matrix.shape);
+
+    for i from 0 to (matrix._array.length) {
+        new_matrix._array[i] = matrix._array[i];
+    };
+
+    new_matrix
+};
+
+
+Matrix.Slice : (matrix, indexes) |-> {
+    
 };

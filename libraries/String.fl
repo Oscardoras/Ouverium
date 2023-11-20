@@ -37,13 +37,13 @@ class String extends ArrayList;
     }
 };
 
-String : c \ (c ~ Char) |-> {
+String : (Char c) |-> {
     [c,]
 };
 
 
 String::(this.substring |-> (
-    begin \ (begin ~ Int & begin >= 0 & begin < this.length) |-> {
+    (Int begin) \ (begin >= 0 & begin < this.length) |-> {
         str := String();
         str.reserve(this.length - begin);
 
@@ -53,7 +53,7 @@ String::(this.substring |-> (
 
         str
     } :
-    (begin, len) \ (begin ~ Int & len ~ Int & begin >= 0 & len >= 0 & begin+len < this.length) |-> {
+    (Int begin, Int len) \ (begin >= 0 & len >= 0 & begin+len < this.length) |-> {
         str := String();
         str.reserve(len);
 
@@ -91,7 +91,7 @@ String::(this.index_of |-> (
     str.index_of(substr) >= 0
 };
 
-(+) : (str1, str2) \ (is str1 Array & is str2 Array) |-> {
+(+) : (String str1, String str2) |-> {
     str := String();
 
     (l1,l2) := (Array.lenght(str1), Array.lenght(str2));
@@ -108,7 +108,7 @@ String::(this.index_of |-> (
 
     str
 };
-(+) : (str1, str2) \ (str1 ~ String & str2 ~ String) |-> {
+(+) : (String str1, String str2) |-> {
     str := String();
 
     (l1,l2) := (str1.lenght(), str2.lenght());
@@ -125,23 +125,8 @@ String::(this.index_of |-> (
 
     str
 };
-(+) : (str1, c2) \ (str1 ~ String & c2 ~ Char) |-> {
-    str2 := String();
-    str2.add_last(c2);
-    str1 + str2
-};
-(+) : (c1, str2) \ (c1 ~ Char & str2 ~ String) |-> {
-    str1 := String();
-    str1.add_last(c1);
-    str1 + str2
-};
-(+) : (c1, c2) \ (c1 ~ Char & c2 ~ Char) |-> {
-    str1 := String();
-    str1.add_last(c1);
-    str1 + c2
-};
 
-(:+) : (str1, str2) \ (str1 ~ String & str2 ~ String) |-> {
+(:+) : (String str1, String str2) |-> {
     (l1,l2) := (str1.lenght(), str2.lenght());
     l := l1+l2;
 
@@ -157,8 +142,3 @@ String::(this.index_of |-> (
 
     str1
 };
-(:+) : (str1, c2) \ (str1 ~ String & c2 ~ Char) |-> {
-    str2 := String();
-    str2.add_last(c2);
-    str1 :+ str2
-}
