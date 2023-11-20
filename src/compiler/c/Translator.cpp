@@ -15,6 +15,10 @@ namespace Translator::CStandard {
     void Translator::translate(std::filesystem::path const& out) {
         create_structures();
 
+        {
+            add_system_function("_x3B", "");
+        }
+
         get_expression(expression, code.main_instructions, code.main_instructions.begin());
 
         std::string structures_header;
@@ -66,6 +70,43 @@ namespace Translator::CStandard {
         } else {
             // TODO
         }
+    }
+
+    void Translator::add_system_function(std::string symbol, std::string function, Instructions & instructions, Instructions::iterator it) {
+        auto r = std::make_shared<Reference>(true);
+
+        instructions.insert(it, std::make_shared<Affectation>(
+            r,
+            std::make_shared<FunctionCall>(FunctionCall {
+                std::make_shared<Symbol>("__GC_alloc_object"),
+                {
+                    std::make_shared<Referencing>(std::make_shared<Symbol>("__VirtualTable_Function"))
+                }
+            })
+        ));
+
+        instructions.insert(it,
+            std::make_shared<FunctionCall>(FunctionCall {
+                std::make_shared<Symbol>("__Function_push"),
+                {
+                    std::make_shared<FunctionCall>(FunctionCall {
+                        std::make_shared<Symbol>("__UnknownData_get_function"),
+                        {
+                            std::make_shared<FunctionCall>(FunctionCall {
+                                std::make_shared<Symbol>("__Reference_get"),
+                                {
+                                    r
+                                }
+                            })
+                        }
+                    }),
+                    std::make_shared<Symbol>(function = "_body"),
+                    std::make_shared<Symbol>(function = "_filter"),
+                    std::make_shared<List>(),
+                    std::make_shared<Value>(0)
+                }
+            })
+        );
     }
 
     std::shared_ptr<FunctionDefinition> Translator::create_function(std::shared_ptr<Parser::FunctionDefinition> function_definition) {
@@ -151,7 +192,7 @@ namespace Translator::CStandard {
                 std::make_shared<FunctionCall>(FunctionCall {
                     std::make_shared<Symbol>("__GC_alloc_object"),
                     {
-                        std::make_shared<Symbol>("__VirtualTable_Function")
+                        std::make_shared<Referencing>(std::make_shared<Symbol>("__VirtualTable_Function"))
                     }
                 })
             ));
