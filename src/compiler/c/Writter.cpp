@@ -92,9 +92,9 @@ namespace Translator::CStandard {
 
         for (auto const& function : code.functions) {
             if (function->filter.return_value != nullptr) {
-                interface += "bool " + function->name + "_filter(__Reference_Owned capture[], __Reference_Shared args[]);\n";
+                interface += "bool " + function->name + "_filter(__Reference_Owned captures[], __Reference_Shared args[]);\n";
 
-                implementation += "bool " + function->name + "_filter(__Reference_Owned capture[], __Reference_Shared args[]) {\n";
+                implementation += "bool " + function->name + "_filter(__Reference_Owned captures[], __Reference_Shared args[]) {\n";
                 for (size_t i = 0; i < function->captures.size(); ++i) {
                     implementation += "\t__Reference_Owned " + function->captures[i].get_expression_code() + " = captures[" + std::to_string(i) + "];\n";
                 }
@@ -113,9 +113,9 @@ namespace Translator::CStandard {
             }
 
             {
-                interface += "__Reference_Owned " + function->name + "_body(__Reference_Owned capture[], __Reference_Shared args[]);\n";
+                interface += "__Reference_Owned " + function->name + "_body(__Reference_Owned captures[], __Reference_Shared args[]);\n";
 
-                implementation += "__Reference_Owned " + function->name + "_body(__Reference_Owned capture[], __Reference_Shared args[]) {\n";
+                implementation += "__Reference_Owned " + function->name + "_body(__Reference_Owned captures[], __Reference_Shared args[]) {\n";
                 for (size_t i = 0; i < function->captures.size(); ++i) {
                     implementation += "\t__Reference_Owned " + function->captures[i].get_expression_code() + " = captures[" + std::to_string(i) + "];\n";
                 }

@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "gc.h"
 #include "include.h"
 
@@ -6,16 +8,6 @@ __Reference_Owned __system_function_separator_body(__Reference_Owned captures[],
     (void)(captures);
     return __Reference_get_element(args[0], __Reference_get_size(args[0]) - 1);
 }
-
-__FunctionCell __system_function_separator = {
-    .next = NULL,
-    .parameters = "r",
-    .filter = NULL,
-    .body = __system_function_separator_body,
-    .captures = {
-        .size = 0,
-    }
-};
 
 bool __system_function_copy_filter(__Reference_Owned captures[], __Reference_Shared args[]) {
     (void)(captures);
@@ -34,32 +26,12 @@ __Reference_Owned __system_function_copy_body(__Reference_Owned captures[], __Re
     return __Reference_new_data(data);
 }
 
-__FunctionCell __system_function_copy = {
-    .next = NULL,
-    .parameters = "r",
-    .filter = __system_function_copy_filter,
-    .body = __system_function_copy_body,
-    .captures = {
-        .size = 0,
-    }
-};
-
 __Reference_Owned __system_function_copy_pointer_body(__Reference_Owned captures[], __Reference_Shared args[]) {
     (void)(captures);
     __UnknownData data = __Reference_get(args[0]);
 
     return __Reference_new_data(data);
 }
-
-__FunctionCell __system_function_copy_pointer = {
-    .next = NULL,
-    .parameters = "r",
-    .filter = NULL,
-    .body = __system_function_copy_pointer_body,
-    .captures = {
-        .size = 0,
-    }
-};
 
 static void assign(__GC_Reference* variable, __UnknownData value) {
     switch (variable->type) {
@@ -121,16 +93,6 @@ __Reference_Owned __system_function_assign_body(__Reference_Owned captures[], __
 
     return __Reference_copy(var);
 }
-
-__FunctionCell __system_function_assign = {
-    .next = NULL,
-    .parameters = "rr",
-    .filter = NULL,
-    .body = __system_function_assign_body,
-    .captures = {
-        .size = 0,
-    }
-};
 
 __Reference_Owned __system_function_function_definition_body(__Reference_Owned captures[], __Reference_Shared args[]) {
     (void)(captures);

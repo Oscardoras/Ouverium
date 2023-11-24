@@ -405,6 +405,24 @@ extern "C" {
     extern __VirtualTable __VirtualTable_Char;
     extern __VirtualTable __VirtualTable_Bool;
 
+    #define __system_function_separator_filter NULL
+    extern __Reference_Owned __system_function_separator_body(__Reference_Owned captures[], __Reference_Shared args[]);
+
+    extern bool __system_function_copy_filter(__Reference_Owned captures[], __Reference_Shared args[]);
+    extern __Reference_Owned __system_function_copy_body(__Reference_Owned captures[], __Reference_Shared args[]);
+
+    #define __system_function_copy_pointer_filter NULL
+    extern __Reference_Owned __system_function_copy_pointer_body(__Reference_Owned captures[], __Reference_Shared args[]);
+
+    #define __system_function_assign_filter NULL
+    extern __Reference_Owned __system_function_assign_body(__Reference_Owned captures[], __Reference_Shared args[]);
+
+    #define __system_function_function_definition_filter NULL
+    extern __Reference_Owned __system_function_function_definition_body(__Reference_Owned captures[], __Reference_Shared args[]);
+
+    #define __system_function_print_filter NULL
+    extern __Reference_Owned __system_function_print_body(__Reference_Owned captures[], __Reference_Shared args[]);
+
 #ifdef __cplusplus
 }
 #endif
