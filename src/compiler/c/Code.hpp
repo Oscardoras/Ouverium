@@ -144,12 +144,13 @@ namespace Translator::CStandard {
         std::string get_expression_code() const override;
     };
 
-    struct List: public Expression {
+    struct List: public Expression, public Instruction {
         std::vector<std::shared_ptr<Expression>> objects;
         List(std::vector<std::shared_ptr<Expression>> const& objects = {}) :
             objects{ objects } {}
 
         std::string get_expression_code() const override;
+        std::string get_instruction_code() const override;
     };
 
     struct FunctionExpression: public Expression, public Instruction, std::variant<std::vector<std::shared_ptr<FunctionExpression>>, std::shared_ptr<Reference>> {
