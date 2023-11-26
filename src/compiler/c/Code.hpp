@@ -46,6 +46,15 @@ namespace Translator::CStandard {
     };
     using Instructions = std::list<std::shared_ptr<Instruction>>;
 
+    struct Declaration: public Instruction {
+        std::string type;
+        std::shared_ptr<Symbol> symbol;
+        Declaration(std::string const& type, std::shared_ptr<LValue> lvalue):
+            type{ type }, symbol{ symbol } {}
+
+        virtual std::string get_instruction_code() const;
+    };
+
     struct Reference: public LValue, public Instruction {
         unsigned number;
         bool owned;
@@ -145,16 +154,20 @@ namespace Translator::CStandard {
     };
 
     struct List: public Expression, public Instruction {
-        std::vector<std::shared_ptr<Expression>> objects;
-        List(std::vector<std::shared_ptr<Expression>> const& objects = {}) :
-            objects{ objects } {}
+        std::vector<std::shared_ptr<Reference>> objects;
+        List(std::vector<std::shared_ptr<Reference>> const& objects = {}) :
+            objects{ objects } {
+            number = count++;
+        }
 
         std::string get_expression_code() const override;
         std::string get_instruction_code() const override;
+    private:
+        inline static unsigned count = 0;
+        unsigned number;
     };
 
     struct FunctionExpression: public Expression, public Instruction, std::variant<std::vector<std::shared_ptr<FunctionExpression>>, std::shared_ptr<Reference>> {
-        unsigned number;
         FunctionExpression(std::variant<std::vector<std::shared_ptr<FunctionExpression>>, std::shared_ptr<Reference>> const& variant) :
             std::variant<std::vector<std::shared_ptr<FunctionExpression>>, std::shared_ptr<Reference>>{ variant } {
             number = count++;
@@ -164,6 +177,7 @@ namespace Translator::CStandard {
         std::string get_instruction_code() const override;
     private:
         inline static unsigned count = 0;
+        unsigned number;
     };
 
 

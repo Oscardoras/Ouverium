@@ -50,7 +50,7 @@ namespace Translator::CStandard {
         void create_structures();
         std::shared_ptr<FunctionDefinition> create_function(std::shared_ptr<Parser::FunctionDefinition> function);
 
-        void add_system_function(std::string const& symbol, std::string const& function, Instructions & instructions);
+        void add_system_function(std::string const& symbol, std::string const& function, std::string const& parameters, Instructions & instructions);
         std::shared_ptr<Reference> eval_system_function(Analyzer::SystemFunction const& function, std::shared_ptr<Parser::Expression> arguments, Instructions & instructions, Instructions::iterator it);
         std::shared_ptr<Reference> get_expression(std::shared_ptr<Parser::Expression> expression, Instructions & instructions, Instructions::iterator it);
 

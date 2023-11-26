@@ -16,9 +16,9 @@ namespace Translator::CStandard {
         create_structures();
 
         {
-            add_system_function("_x3B", "__system_function_separator", code.main_instructions);
-            add_system_function("_x3A", "__system_function_function_definition", code.main_instructions);
-            add_system_function("print", "__system_function_print", code.main_instructions);
+            add_system_function("_x3B", "__system_function_separator", "r", code.main_instructions);
+            add_system_function("_x3A", "__system_function_function_definition", "rr", code.main_instructions);
+            add_system_function("print", "__system_function_print", "r", code.main_instructions);
         }
 
         get_expression(expression, code.main_instructions, code.main_instructions.end());
@@ -74,7 +74,7 @@ namespace Translator::CStandard {
         }
     }
 
-    void Translator::add_system_function(std::string const& symbol, std::string const& function, Instructions & instructions) {
+    void Translator::add_system_function(std::string const& symbol, std::string const& function, std::string const& parameters, Instructions & instructions) {
         auto r = std::make_shared<Reference>(true);
 
         instructions.push_back(std::make_shared<Affectation>(
@@ -102,6 +102,7 @@ namespace Translator::CStandard {
                             })
                         }
                     }),
+                    std::make_shared<Value>(parameters),
                     std::make_shared<Symbol>(function + "_body"),
                     std::make_shared<Symbol>(function + "_filter"),
                     std::make_shared<List>(),
@@ -131,16 +132,6 @@ namespace Translator::CStandard {
 
         code.functions.insert(function);
         return function;
-    }
-
-    auto UnknownData_from_data(std::shared_ptr<Type> type, std::shared_ptr<Expression> value) {
-        return std::make_shared<FunctionCall>(FunctionCall {
-            std::make_shared<Symbol>("__UnknownData_from_data"),
-            {
-                std::make_shared<Referencing>(std::make_shared<Symbol>("__VirtualTable_" + type->name)),
-                value
-            }
-        });
     }
 
     std::shared_ptr<Reference> Translator::get_expression(std::shared_ptr<Parser::Expression> expression, Instructions & instructions, Instructions::iterator it) {
@@ -301,10 +292,13 @@ namespace Translator::CStandard {
                     std::make_shared<FunctionCall>(FunctionCall {
                         std::make_shared<Symbol>("__Reference_new_data"),
                         {
-                            UnknownData_from_data(
-                                type,
-                                value
-                            )
+                            std::make_shared<FunctionCall>(FunctionCall {
+                                std::make_shared<Symbol>("__UnknownData_from_data"),
+                                {
+                                    std::make_shared<Referencing>(std::make_shared<Symbol>("__VirtualTable_" + type->name)),
+                                    value
+                                }
+                            })
                         }
                     })
                 ));
@@ -322,6 +316,8 @@ namespace Translator::CStandard {
                     tmp.push_back(ref);
                 list->objects.push_back(ref);
             }
+
+            instructions.insert(it, list);
 
             instructions.insert(it, std::make_shared<Affectation>(
                 r,

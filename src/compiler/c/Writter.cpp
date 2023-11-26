@@ -145,6 +145,10 @@ namespace Translator::CStandard {
         implementation += "}\n";
     }
 
+    std::string Declaration::get_instruction_code() const {
+        return type + " " + symbol->get_expression_code() + ";";
+    }
+
     std::string Reference::get_expression_code() const {
         return "reference" + std::to_string(number);
     }
@@ -160,7 +164,7 @@ namespace Translator::CStandard {
                 code += "__Reference_Owned ";
             else
                 code += "__Reference_Shared ";
-        }
+        } else code += "__Reference_Owned ";
         code += lvalue->get_expression_code() + " = " + value->get_expression_code();
 
         return code;
@@ -272,12 +276,19 @@ namespace Translator::CStandard {
     }
 
     std::string List::get_expression_code() const {
+        if (objects.empty())
+            return "NULL";
+        else
+            return "array" + std::to_string(number);
+    }
+
+    std::string List::get_instruction_code() const {
         std::string code;
 
-        code += "{ ";
+        code += "__Reference_Shared array" + std::to_string(number) + "[] = { ";
         for (auto const& e : objects)
             code += e->get_expression_code() + ", ";
-        code += "}";
+        code += "};";
 
         return code;
     }
@@ -289,7 +300,7 @@ namespace Translator::CStandard {
         std::string code;
 
         if (auto tuple = std::get_if<std::vector<std::shared_ptr<FunctionExpression>>>(this)) {
-            code += "__Expression expression" + std::to_string(number) + "_array = { ";
+            code += "__Expression expression" + std::to_string(number) + "_array[] = { ";
             for (auto const& e : *tuple)
                 code += e->get_expression_code() + ", ";
             code += "};\n";
