@@ -46,15 +46,6 @@ namespace Translator::CStandard {
     };
     using Instructions = std::list<std::shared_ptr<Instruction>>;
 
-    struct Declaration: public Instruction {
-        std::string type;
-        std::shared_ptr<Symbol> symbol;
-        Declaration(std::string const& type, std::shared_ptr<LValue> lvalue):
-            type{ type }, symbol{ symbol } {}
-
-        virtual std::string get_instruction_code() const;
-    };
-
     struct Reference: public LValue, public Instruction {
         unsigned number;
         bool owned;
@@ -105,6 +96,15 @@ namespace Translator::CStandard {
             name{ name } {}
 
         std::string get_expression_code() const override;
+    };
+
+    struct Declaration: public Instruction {
+        std::string type;
+        std::shared_ptr<Symbol> symbol;
+        Declaration(std::string const& type, std::shared_ptr<Symbol> symbol):
+            type{ type }, symbol{ symbol } {}
+
+        virtual std::string get_instruction_code() const;
     };
 
     struct Value: public Expression {

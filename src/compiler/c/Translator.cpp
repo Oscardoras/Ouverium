@@ -97,7 +97,12 @@ namespace Translator::CStandard {
                             std::make_shared<FunctionCall>(FunctionCall {
                                 std::make_shared<Symbol>("__Reference_get"),
                                 {
-                                    r
+                                    std::make_shared<FunctionCall>(FunctionCall {
+                                        std::make_shared<Symbol>("__Reference_share"),
+                                        {
+                                            r
+                                        }
+                                    })
                                 }
                             })
                         }
@@ -179,6 +184,15 @@ namespace Translator::CStandard {
                 })
             ));
 
+            if (f->owned) {
+                instructions.insert(it, std::make_shared<FunctionCall>(FunctionCall {
+                    std::make_shared<Symbol>("__Reference_free"),
+                    {
+                        f
+                    }
+                }));
+            }
+
             return r;
         } else if (auto function_definition = std::dynamic_pointer_cast<Parser::FunctionDefinition>(expression)) {
             auto r = std::make_shared<Reference>(true);
@@ -212,7 +226,12 @@ namespace Translator::CStandard {
                                 std::make_shared<FunctionCall>(FunctionCall {
                                     std::make_shared<Symbol>("__Reference_get"),
                                     {
-                                        r
+                                        std::make_shared<FunctionCall>(FunctionCall {
+                                            std::make_shared<Symbol>("__Reference_share"),
+                                            {
+                                                r
+                                            }
+                                        })
                                     }
                                 })
                             }
@@ -267,7 +286,12 @@ namespace Translator::CStandard {
 
                 instructions.insert(it, std::make_shared<Affectation>(
                     r,
-                    std::make_shared<Symbol>(symbol->name)
+                    std::make_shared<FunctionCall>(FunctionCall {
+                        std::make_shared<Symbol>("__Reference_share"),
+                        {
+                            std::make_shared<Symbol>(symbol->name)
+                        }
+                    })
                 ));
 
                 return r;

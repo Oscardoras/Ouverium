@@ -287,7 +287,7 @@ namespace Translator::CStandard {
 
         code += "__Reference_Shared array" + std::to_string(number) + "[] = { ";
         for (auto const& e : objects)
-            code += e->get_expression_code() + ", ";
+            code += "__Reference_share(" + e->get_expression_code() + "), ";
         code += "};";
 
         return code;
