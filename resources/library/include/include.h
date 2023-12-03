@@ -306,6 +306,13 @@ extern "C" {
     __Reference_Owned __Reference_new_tuple(__Reference_Shared references[], size_t references_size);
 
     /**
+     * Creates a new tuple reference from a string.
+     * @param string a string.
+     * @return an owned reference.
+    */
+    __Reference_Owned __Reference_new_string(const char *string);
+
+    /**
      * Gets the UnknownData referenced by a reference, no matter what type of reference.
      * @param reference the shared reference.
      * @return the UnknownData stored in reference.

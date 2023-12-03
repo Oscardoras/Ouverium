@@ -123,7 +123,7 @@ namespace Translator::CStandard {
                 return std::to_string(v);
             }
             std::string operator()(std::string const& s) {
-                return "\"" + s + "\"";
+                return s;
             }
         };
     };

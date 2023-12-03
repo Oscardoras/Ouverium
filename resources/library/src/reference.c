@@ -55,6 +55,23 @@ __Reference_Owned __Reference_new_tuple(__Reference_Shared references[], size_t 
     return (__Reference_Owned)reference;
 }
 
+__Reference_Owned __Reference_new_string(const char *string) {
+    size_t size = strlen(string);
+
+    __GC_Reference* reference = __GC_alloc_references(1);
+    reference->type = TUPLE;
+    reference->tuple.references = __GC_alloc_references(size);
+    reference->tuple.size = size;
+
+    size_t i;
+    for (i = 0; i < size; i++) {
+        __Data data = { .c = string[i] };
+        reference->tuple.references[i] = *((__GC_Reference*) __Reference_new_data(__UnknownData_from_data(&__VirtualTable_Char, data)));
+    }
+
+    return (__Reference_Owned)reference;
+}
+
 __UnknownData __Reference_get(__Reference_Shared r) {
     __GC_Reference* reference = (__GC_Reference*)r;
 
@@ -75,6 +92,7 @@ __UnknownData __Reference_get(__Reference_Shared r) {
             .array = __GC_alloc_object(&__VirtualTable_Array)
         };
         *array.array = __Array_new(&__VirtualTable_UnknownData, reference->tuple.size);
+        array.array->size = reference->tuple.size;
 
         size_t i;
         for (i = 0; i < reference->tuple.size; ++i)

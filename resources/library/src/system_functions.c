@@ -107,13 +107,30 @@ __Reference_Owned __system_function_function_definition_body(__Reference_Owned c
     return __Reference_copy(args[0]);
 }
 
+void write(FILE* file, __UnknownData data) {
+    if (data.virtual_table->array.vtable) {
+        __ArrayInfo array = __UnknownData_get_array(data);
+        size_t i;
+        for (i = 0; i < array.array->size; ++i)
+            write(file, __UnknownData_from_ptr(array.vtable, __Array_get(array, i)));
+    }
+    else if (data.virtual_table == &__VirtualTable_Int)
+        fprintf(file, "%li", data.data.i);
+    else if (data.virtual_table == &__VirtualTable_Float)
+        fprintf(file, "%F", data.data.f);
+    else if (data.virtual_table == &__VirtualTable_Char)
+        fprintf(file, "%c", data.data.c);
+    else if (data.virtual_table == &__VirtualTable_Bool)
+        fprintf(file, data.data.c ? "true" : "false");
+}
+
 __Reference_Owned __system_function_print_body(__Reference_Owned captures[], __Reference_Shared args[]) {
     (void)(captures);
     __Reference_Shared ref = args[0];
 
     __UnknownData data = __Reference_get(ref);
-    if (data.virtual_table == &__VirtualTable_Int)
-        printf("%li", data.data.i);
+    write(stdout, data);
+    printf("\n");
 
     return __Reference_new_tuple(NULL, 0);
 }

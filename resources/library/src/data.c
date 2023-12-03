@@ -14,7 +14,9 @@ __UnknownData __UnknownData_from_ptr(__VirtualTable* vtable, void* ptr) {
     __UnknownData data;
     data.virtual_table = vtable;
 
-    if (vtable == &__VirtualTable_Int)
+    if (vtable == &__VirtualTable_UnknownData)
+        data = *((__UnknownData*)ptr);
+    else if (vtable == &__VirtualTable_Int)
         data.data.i = *((long*)ptr);
     else if (vtable == &__VirtualTable_Float)
         data.data.f = *((double*)ptr);

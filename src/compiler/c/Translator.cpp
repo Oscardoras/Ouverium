@@ -21,8 +21,8 @@ namespace Translator::CStandard {
                     code.main.global_variables[symbol] = Unknown;
 
             {
-                add_system_function("_x3B", "__system_function_separator", "r", code.main.body);
-                add_system_function("_x3A", "__system_function_function_definition", "(rr)", code.main.body);
+                add_system_function(";", "__system_function_separator", "r", code.main.body);
+                add_system_function(":", "__system_function_function_definition", "(rr)", code.main.body);
                 add_system_function("print", "__system_function_print", "r", code.main.body);
             }
 
@@ -70,7 +70,9 @@ namespace Translator::CStandard {
         }
     }
 
-    void Translator::add_system_function(std::string const& symbol, std::string const& function, std::string const& parameters, Instructions & instructions) {
+    void Translator::add_system_function(Name const& symbol, std::string const& function, std::string const& parameters, Instructions & instructions) {
+        code.main.global_variables[symbol] = Unknown;
+
         instructions.push_back(
             std::make_shared<FunctionCall>(FunctionCall {
                 std::make_shared<Symbol>("__Function_push"),
@@ -91,7 +93,7 @@ namespace Translator::CStandard {
                             })
                         }
                     }),
-                    std::make_shared<Value>(parameters),
+                    std::make_shared<Value>("\"" + parameters + "\""),
                     std::make_shared<Symbol>(function + "_body"),
                     std::make_shared<Symbol>(function + "_filter"),
                     std::make_shared<List>(),
@@ -327,10 +329,24 @@ namespace Translator::CStandard {
                 ));
 
                 return r;
+            } else if (std::holds_alternative<std::string>(v)) {
+                auto r = std::make_shared<Reference>(true);
+
+                instructions.insert(it, std::make_shared<Affectation>(
+                    r,
+                    std::make_shared<FunctionCall>(FunctionCall {
+                        std::make_shared<Symbol>("__Reference_new_string"),
+                        {
+                            std::make_shared<Value>(symbol->name)
+                        }
+                    })
+                ));
+
+                return r;
             } else {
                 auto r = std::make_shared<Reference>(true);
 
-                std::shared_ptr<Value> value = nullptr;
+                std::shared_ptr<Expression> value = nullptr;
                 std::shared_ptr<Type> type = nullptr;
                 if (auto b = std::get_if<bool>(&v)) {
                     value = std::make_shared<Value>(*b);
