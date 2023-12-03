@@ -77,7 +77,7 @@ __Function __Function_copy(__Function function) {
 
     __FunctionCell* cell;
     for (cell = function; cell != NULL; cell = cell->next) {
-        __FunctionCell* f = malloc(sizeof(__Function) + cell->captures.size * sizeof(__Reference_Owned));
+        __FunctionCell* f = malloc(sizeof(__FunctionCell) + cell->captures.size * sizeof(struct __FunctionCapture));
 
         f->next = cpy;
         f->parameters = cell->parameters;
@@ -96,7 +96,7 @@ __Function __Function_copy(__Function function) {
 }
 
 void __Function_push(__Function* function, const char* parameters, __FunctionBody body, __FunctionFilter filter, __Reference_Owned captures[], size_t captures_size) {
-    __FunctionCell* f = malloc(sizeof(__Function) + captures_size * sizeof(__Reference_Owned));
+    __FunctionCell* f = malloc(sizeof(__FunctionCell) + captures_size * sizeof(struct __FunctionCapture));
 
     f->next = *function;
     f->parameters = parameters;
@@ -208,6 +208,8 @@ bool __Function_parse(__Reference_Owned captures[], __Reference_Shared* vars, bo
         return true;
     }
     else if (**params == '(') {
+        ++(*params);
+
         size_t j = 0;
         size_t size;
 
@@ -215,7 +217,6 @@ bool __Function_parse(__Reference_Owned captures[], __Reference_Shared* vars, bo
         case __EXPRESSION_TUPLE: {
             size = args.tuple.size;
             while (**params != ')' && j < args.tuple.size) {
-                ++(*params);
                 __Function_parse(captures, vars, owned, i, params, args.tuple.tab[j]);
                 ++j;
             }
@@ -224,7 +225,6 @@ bool __Function_parse(__Reference_Owned captures[], __Reference_Shared* vars, bo
         case __EXPRESSION_REFERENCE: {
             size = __Reference_get_size(args.reference);
             while (**params != ')' && j < size) {
-                ++(*params);
                 __Expression expr = {
                     .type = __EXPRESSION_REFERENCE,
                     .reference = __Reference_share(__Reference_get_element(args.reference, j))
@@ -238,7 +238,6 @@ bool __Function_parse(__Reference_Owned captures[], __Reference_Shared* vars, bo
             __Reference_Owned ref = __Function_execute(args);
             size = __Reference_get_size(__Reference_share(ref));
             while (**params != ')' && j < size) {
-                ++(*params);
                 __Expression expr = {
                     .type = __EXPRESSION_REFERENCE,
                     .reference = __Reference_share(__Reference_get_element(__Reference_share(ref), j))
@@ -279,7 +278,7 @@ __Reference_Owned __Function_eval(__Function* function, __Expression args) {
         const char* c;
 
         size_t size = 0;
-        for (c = ptr->parameters; *c != '\0'; c++)
+        for (c = ptr->parameters; *c != '\0'; ++c)
             if (*c == 'r')
                 ++size;
         __Reference_Shared vars[size];

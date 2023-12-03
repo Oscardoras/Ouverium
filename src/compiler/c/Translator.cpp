@@ -13,29 +13,37 @@
 namespace Translator::CStandard {
 
     void Translator::translate(std::filesystem::path const& out) {
-        create_structures();
-
         {
-            add_system_function("_x3B", "__system_function_separator", "r", code.main_instructions);
-            add_system_function("_x3A", "__system_function_function_definition", "rr", code.main_instructions);
-            add_system_function("print", "__system_function_print", "r", code.main_instructions);
+            create_structures();
+
+            for (auto const& symbol : expression->symbols)
+                if (std::holds_alternative<nullptr_t>(get_symbol(symbol)))
+                    code.main.global_variables[symbol] = Unknown;
+
+            {
+                add_system_function("_x3B", "__system_function_separator", "r", code.main.body);
+                add_system_function("_x3A", "__system_function_function_definition", "(rr)", code.main.body);
+                add_system_function("print", "__system_function_print", "r", code.main.body);
+            }
+
+            code.main.return_value = get_expression(expression, code.main.body, code.main.body.end());
         }
 
-        get_expression(expression, code.main_instructions, code.main_instructions.end());
+        {
+            std::string structures_header;
+            std::string structures_code;
+            std::string functions_header;
+            std::string main_code;
+            write_structures(structures_header, structures_code);
+            write_functions(functions_header, main_code);
+            write_main(main_code);
 
-        std::string structures_header;
-        std::string structures_code;
-        std::string functions_header;
-        std::string main_code;
-        write_structures(structures_header, structures_code);
-        write_functions(functions_header, main_code);
-        write_main(main_code);
-
-        std::filesystem::create_directory(out);
-        (std::ofstream((out / "structures.h").c_str()) << structures_header).close();
-        (std::ofstream((out / "structures.c").c_str()) << structures_code).close();
-        (std::ofstream((out / "functions.h").c_str()) << functions_header).close();
-        (std::ofstream((out / "main.c").c_str()) << main_code).close();
+            std::filesystem::create_directory(out);
+            (std::ofstream((out / "structures.h").c_str()) << structures_header).close();
+            (std::ofstream((out / "structures.c").c_str()) << structures_code).close();
+            (std::ofstream((out / "functions.h").c_str()) << functions_header).close();
+            (std::ofstream((out / "main.c").c_str()) << main_code).close();
+        }
     }
 
     void Translator::create_structures() {
@@ -62,31 +70,7 @@ namespace Translator::CStandard {
         }
     }
 
-    void parse_parameters(std::shared_ptr<Parser::Expression> parameters, std::shared_ptr<FunctionDefinition> function) {
-        if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(parameters)) {
-            function->parameters.push_back(symbol->name);
-            function->format += 'r';
-        } else if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(parameters)) {
-            for (auto e : tuple->objects)
-                parse_parameters(e, function);
-        } else {
-            // TODO
-        }
-    }
-
     void Translator::add_system_function(std::string const& symbol, std::string const& function, std::string const& parameters, Instructions & instructions) {
-        auto r = std::make_shared<Reference>(true);
-
-        instructions.push_back(std::make_shared<Affectation>(
-            r,
-            std::make_shared<FunctionCall>(FunctionCall {
-                std::make_shared<Symbol>("__GC_alloc_object"),
-                {
-                    std::make_shared<Referencing>(std::make_shared<Symbol>("__VirtualTable_Function"))
-                }
-            })
-        ));
-
         instructions.push_back(
             std::make_shared<FunctionCall>(FunctionCall {
                 std::make_shared<Symbol>("__Function_push"),
@@ -100,7 +84,7 @@ namespace Translator::CStandard {
                                     std::make_shared<FunctionCall>(FunctionCall {
                                         std::make_shared<Symbol>("__Reference_share"),
                                         {
-                                            r
+                                            std::make_shared<Symbol>(symbol)
                                         }
                                     })
                                 }
@@ -115,22 +99,46 @@ namespace Translator::CStandard {
                 }
             })
         );
+    }
 
-        instructions.push_back(std::make_shared<Affectation>(
-            std::make_shared<Symbol>(symbol),
-            r
-        ));
+    void parse_parameters(std::shared_ptr<Parser::Expression> parameters, std::shared_ptr<FunctionDefinition> function) {
+        if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(parameters)) {
+            function->parameters.push_back({symbol->name, Unknown});
+            function->format += 'r';
+        } else if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(parameters)) {
+            function->format += '(';
+            for (auto e : tuple->objects)
+                parse_parameters(e, function);
+            function->format += ')';
+        } else {
+            // TODO
+        }
     }
 
     std::shared_ptr<FunctionDefinition> Translator::create_function(std::shared_ptr<Parser::FunctionDefinition> function_definition) {
         auto function = std::make_shared<FunctionDefinition>();
 
-        for (auto symbol : function_definition->captures)
-            function->captures.push_back(symbol);
+        // captures
+        for (auto const& symbol : function_definition->captures)
+            function->captures.push_back({symbol, Unknown});
 
+        // arguments
         parse_parameters(function_definition->parameters, function);
 
-        if (function_definition->filter != nullptr)
+        // local variables
+        {
+            std::set<std::string> symbols;
+            for (auto const& [symbol, _] : function->captures)
+                symbols.insert(symbol.symbol);
+            for (auto const& [symbol, _] : function->parameters)
+                symbols.insert(symbol.symbol);
+
+            for (auto symbol : function_definition->symbols)
+                if (!symbols.contains(symbol))
+                    function->body.local_variables[symbol] = Unknown;
+        }
+
+        if (function_definition->filter)
             function->filter.return_value = get_expression(function_definition->filter, function->filter.body, function->filter.body.begin());
 
         function->body.return_value = get_expression(function_definition->body, function->body.body, function->body.body.begin());
@@ -199,8 +207,14 @@ namespace Translator::CStandard {
 
             auto function = create_function(function_definition);
 
+            std::string data_name = function->name.get() + "_data";
+            instructions.insert(it, std::make_shared<Declaration>("__Data", std::make_shared<Symbol>(data_name)));
             instructions.insert(it, std::make_shared<Affectation>(
-                r,
+                std::make_shared<Property>(
+                    std::make_shared<Symbol>(data_name),
+                    "ptr",
+                    false
+                ),
                 std::make_shared<FunctionCall>(FunctionCall {
                     std::make_shared<Symbol>("__GC_alloc_object"),
                     {
@@ -209,12 +223,26 @@ namespace Translator::CStandard {
                 })
             ));
 
-            std::vector<std::shared_ptr<Expression>> captures;
-            for (auto symbol : function_definition->symbols) {
-                auto symbols = function_definition->parent.lock()->symbols;
-                if (symbols.find(symbol) != symbols.end())
-                    captures.push_back(std::make_shared<Symbol>(symbol));
-            }
+            instructions.insert(it, std::make_shared<Affectation>(
+                r,
+                std::make_shared<FunctionCall>(FunctionCall {
+                    std::make_shared<Symbol>("__Reference_new_data"),
+                    {
+                        std::make_shared<FunctionCall>(FunctionCall {
+                            std::make_shared<Symbol>("__UnknownData_from_data"),
+                            {
+                                std::make_shared<Referencing>(std::make_shared<Symbol>("__VirtualTable_Function")),
+                                std::make_shared<Symbol>(data_name)
+                            }
+                        })
+                    }
+                })
+            ));
+
+            auto captures = std::make_shared<List>();
+            for (auto const& [capture, _] : function->captures)
+                captures->objects.push_back(std::make_shared<Symbol>(capture));
+            instructions.insert(it, captures);
 
             instructions.insert(it,
                 std::make_shared<FunctionCall>(FunctionCall {
@@ -236,7 +264,11 @@ namespace Translator::CStandard {
                                 })
                             }
                         }),
-                        function
+                        std::make_shared<Value>(function->format),
+                        std::make_shared<Symbol>(function->name.get() + "_body"),
+                        function->filter.return_value ? std::make_shared<Symbol>(function->name.get() + "_filter") : std::make_shared<Symbol>("NULL"),
+                        captures,
+                        std::make_shared<Value>((long) captures->objects.size())
                     }
                 })
             );
@@ -311,6 +343,17 @@ namespace Translator::CStandard {
                     type = Float;
                 }
 
+                std::string data_name = "data_" + value->get_expression_code();
+                instructions.insert(it, std::make_shared<Declaration>("__Data", std::make_shared<Symbol>(data_name)));
+                instructions.insert(it, std::make_shared<Affectation>(
+                    std::make_shared<Property>(
+                        std::make_shared<Symbol>(data_name),
+                        type == Bool ? "b" : type == Int ? "i" : type == Float ? "f" : "ptr",
+                        false
+                    ),
+                    value
+                ));
+
                 instructions.insert(it, std::make_shared<Affectation>(
                     r,
                     std::make_shared<FunctionCall>(FunctionCall {
@@ -319,8 +362,8 @@ namespace Translator::CStandard {
                             std::make_shared<FunctionCall>(FunctionCall {
                                 std::make_shared<Symbol>("__UnknownData_from_data"),
                                 {
-                                    std::make_shared<Referencing>(std::make_shared<Symbol>("__VirtualTable_" + type->name)),
-                                    value
+                                    std::make_shared<Referencing>(std::make_shared<Symbol>("__VirtualTable_" + type->name.get())),
+                                    std::make_shared<Symbol>(data_name)
                                 }
                             })
                         }

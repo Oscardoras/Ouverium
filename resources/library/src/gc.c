@@ -16,7 +16,7 @@ __GC_Roots* __GC_init_roots(size_t c) {
 
     roots->next = NULL;
     roots->capacity = c;
-    roots->free_list = NULL;
+    roots->free_list = (__GC_Reference*)roots + 1;
 
     __GC_Reference* tab = (__GC_Reference*)roots + 1;
     tab[0].type = NONE;
@@ -30,7 +30,7 @@ __GC_Reference* __GC_alloc_references(size_t n) {
     __GC_Roots* roots = __GC_roots;
     __GC_Reference** reference_ptr = &roots->free_list;
 
-    while (!(*reference_ptr)->type == NONE && (*reference_ptr)->none.size >= n) {
+    while (!((*reference_ptr)->type == NONE && (*reference_ptr)->none.size >= n)) {
         if ((*reference_ptr)->none.next != NULL) {
             reference_ptr = &(*reference_ptr)->none.next;
         }
@@ -43,16 +43,18 @@ __GC_Reference* __GC_alloc_references(size_t n) {
         }
     }
 
+    __GC_Reference* ref = *reference_ptr;
+
     if ((*reference_ptr)->none.size > n) {
         (*reference_ptr + n)->none.size = (*reference_ptr)->none.size - n;
         (*reference_ptr + n)->none.next = (*reference_ptr)->none.next;
 
-        *reference_ptr = (*reference_ptr + n)->none.next;
+        *reference_ptr = *reference_ptr + n;
     }
     else {
         *reference_ptr = (*reference_ptr)->none.next;
     }
-    return *reference_ptr;
+    return ref;
 }
 
 void __GC_free_reference(__GC_Reference* reference) {

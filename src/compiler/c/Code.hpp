@@ -12,17 +12,35 @@
 
 namespace Translator::CStandard {
 
+    struct Name {
+        std::string symbol;
+
+        Name(std::string const& symbol) :
+            symbol{ symbol } {}
+        Name(const char *symbol) :
+            symbol{ symbol } {}
+
+        std::string get() const;
+        operator std::string() const {
+            return get();
+        }
+
+        friend auto operator<=>(Name const& a, Name const& b) {
+            return a.symbol <=> b.symbol;
+        }
+    };
+
     struct Type {
 
-        std::string name;
+        Name name;
 
-        Type(std::string const& name):
+        Type(Name const& name):
             name{ name } {}
 
         virtual ~Type() = default;
 
     };
-    using Declarations = std::map<std::string, std::weak_ptr<Type>>;
+    using Declarations = std::map<Name, std::weak_ptr<Type>>;
     struct Structure: public Type {
         Declarations properties;
         std::weak_ptr<Type> array;
@@ -46,21 +64,6 @@ namespace Translator::CStandard {
     };
     using Instructions = std::list<std::shared_ptr<Instruction>>;
 
-    struct Reference: public LValue, public Instruction {
-        unsigned number;
-        bool owned;
-        //std::weak_ptr<Type> type;
-        Reference(bool owned) :
-            owned{ owned } {
-            number = count++;
-        }
-
-        std::string get_expression_code() const override;
-        std::string get_instruction_code() const override;
-    private:
-        inline static unsigned count = 0;
-    };
-
     struct If: public Instruction {
         std::shared_ptr<Expression> condition;
         Instructions body;
@@ -80,19 +83,9 @@ namespace Translator::CStandard {
         std::string get_instruction_code() const override;
     };
 
-    struct Affectation: public Expression, public Instruction {
-        std::shared_ptr<LValue> lvalue;
-        std::shared_ptr<Expression> value;
-        Affectation(std::shared_ptr<LValue> lvalue, std::shared_ptr<Expression> value) :
-            lvalue{ lvalue }, value{ value } {}
-
-        std::string get_expression_code() const override;
-        std::string get_instruction_code() const override;
-    };
-
     struct Symbol: public LValue {
-        std::string name;
-        Symbol(std::string const& name) :
+        Name name;
+        Symbol(Name const& name) :
             name{ name } {}
 
         std::string get_expression_code() const override;
@@ -105,6 +98,16 @@ namespace Translator::CStandard {
             type{ type }, symbol{ symbol } {}
 
         virtual std::string get_instruction_code() const;
+    };
+
+    struct Affectation: public Expression, public Instruction {
+        std::shared_ptr<LValue> lvalue;
+        std::shared_ptr<Expression> value;
+        Affectation(std::shared_ptr<LValue> lvalue, std::shared_ptr<Expression> value) :
+            lvalue{ lvalue }, value{ value } {}
+
+        std::string get_expression_code() const override;
+        std::string get_instruction_code() const override;
     };
 
     struct Value: public Expression {
@@ -145,48 +148,55 @@ namespace Translator::CStandard {
 
     struct Property: public LValue {
         std::shared_ptr<Expression> object;
-        std::string name;
+        Name name;
         bool pointer;
-        Property(std::shared_ptr<Expression> object, std::string const& name, bool pointer) :
+        Property(std::shared_ptr<Expression> object, Name const& name, bool pointer) :
             object{ object }, name{ name }, pointer{ pointer } {}
 
         std::string get_expression_code() const override;
     };
 
-    struct List: public Expression, public Instruction {
-        std::vector<std::shared_ptr<Reference>> objects;
-        List(std::vector<std::shared_ptr<Reference>> const& objects = {}) :
-            objects{ objects } {
-            number = count++;
+    class Id {
+        inline static unsigned count = 0;
+    protected:
+        unsigned id;
+        Id() {
+            id = count++;
         }
+    };
+
+    struct Reference: public LValue, public Instruction, public Id {
+        bool owned;
+        std::weak_ptr<Type> type;
+        Reference(bool owned) :
+            owned{ owned } {}
 
         std::string get_expression_code() const override;
         std::string get_instruction_code() const override;
-    private:
-        inline static unsigned count = 0;
-        unsigned number;
     };
 
-    struct FunctionExpression: public Expression, public Instruction, std::variant<std::vector<std::shared_ptr<FunctionExpression>>, std::shared_ptr<Reference>> {
+    struct List: public Expression, public Instruction, public Id {
+        std::vector<std::shared_ptr<Expression>> objects;
+        List(std::vector<std::shared_ptr<Expression>> const& objects = {}) :
+            objects{ objects } {}
+
+        std::string get_expression_code() const override;
+        std::string get_instruction_code() const override;
+    };
+
+    struct FunctionExpression: public Expression, public Instruction, std::variant<std::vector<std::shared_ptr<FunctionExpression>>, std::shared_ptr<Reference>>, public Id {
         FunctionExpression(std::variant<std::vector<std::shared_ptr<FunctionExpression>>, std::shared_ptr<Reference>> const& variant) :
-            std::variant<std::vector<std::shared_ptr<FunctionExpression>>, std::shared_ptr<Reference>>{ variant } {
-            number = count++;
-        }
+            std::variant<std::vector<std::shared_ptr<FunctionExpression>>, std::shared_ptr<Reference>>{ variant } {}
 
         std::string get_expression_code() const override;
         std::string get_instruction_code() const override;
-    private:
-        inline static unsigned count = 0;
-        unsigned number;
     };
 
 
-    struct FunctionDefinition: public Expression {
-        using Parameter = Symbol;
-        using Parameters = std::vector<Parameter>;
-        std::string name;
-        std::vector<Symbol> captures;
-        Parameters parameters;
+    struct FunctionDefinition : public Id {
+        Name name;
+        std::vector<std::pair<Name, std::weak_ptr<Type>>> captures;
+        std::vector<std::pair<Name, std::weak_ptr<Type>>> parameters;
         std::string format;
         struct {
             Declarations local_variables;
@@ -199,7 +209,19 @@ namespace Translator::CStandard {
             std::shared_ptr<Reference> return_value;
         } filter;
 
-        std::string get_expression_code() const override;
+        FunctionDefinition() :
+            name{ "function_" + std::to_string(id) } {}
+    };
+
+
+    struct Code {
+        std::set<std::shared_ptr<Structure>> structures;
+        std::set<std::shared_ptr<FunctionDefinition>> functions;
+        struct {
+            Declarations global_variables;
+            Instructions body;
+            std::shared_ptr<Reference> return_value;
+        } main;
     };
 
 }

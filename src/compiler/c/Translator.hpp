@@ -35,16 +35,18 @@ namespace Translator::CStandard {
 
         std::shared_ptr<Parser::Expression> expression;
         Analyzer::MetaData meta_data;
+        
         TypeTable type_table;
         FunctionTable function_table;
 
-        std::shared_ptr<Expression> get_unknown_data(std::shared_ptr<Expression> expression);
-
         struct {
-            Instructions main_instructions;
             std::set<std::shared_ptr<Structure>> structures;
+            struct {
+                Declarations global_variables;
+                Instructions body;
+                std::shared_ptr<Reference> return_value;
+            } main;
             std::set<std::shared_ptr<FunctionDefinition>> functions;
-            std::shared_ptr<Expression> main;
         } code;
 
         void create_structures();

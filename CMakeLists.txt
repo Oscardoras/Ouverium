@@ -33,3 +33,6 @@ FILE(GLOB_RECURSE compiler_sources
 )
 add_executable(compiler ${compiler_sources})
 target_link_libraries(compiler PUBLIC capi)
+
+add_executable(compiled build/out/main.c build/out/structures.c)
+target_link_libraries(compiled PUBLIC capi)
