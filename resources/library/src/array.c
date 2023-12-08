@@ -7,16 +7,6 @@ size_t max(size_t a, size_t b) {
     return a > b ? a : b;
 }
 
-__Array __Array_new(__VirtualTable* vtable, size_t capacity) {
-    __Array array = {
-        .tab = capacity > 0 ? calloc(capacity, vtable->size) : NULL,
-        .size = 0,
-        .capacity = capacity
-    };
-
-    return array;
-}
-
 void* __Array_get(__ArrayInfo array, size_t i) {
     return ((BYTE*) array.array->tab) + (array.vtable->size) * i;
 }
@@ -43,12 +33,8 @@ void __Array_set_capacity(__ArrayInfo array, size_t capacity) {
     }
     else
         array.array->tab = calloc(capacity, array.vtable->size);
-    
-    array.array->capacity = capacity;
-}
 
-void __Array_free(__ArrayInfo array) {
-    free(array.array->tab);
+    array.array->capacity = capacity;
 }
 
 void __VirtualTable_Array_gc_iterator(void* ptr) {
@@ -64,9 +50,9 @@ void __VirtualTable_Array_gc_destructor(void* ptr) {
 __VirtualTable __VirtualTable_Array = {
     .size = sizeof(__Array),
     .gc_iterator = __VirtualTable_Array_gc_iterator,
-    .gc_destructor = __VirtualTable_Array_gc_destructor,
     .array.vtable = &__VirtualTable_UnknownData,
     .array.offset = 0,
+    .function.exists = false,
     .function.offset = 0,
     .table.size = 0
 };

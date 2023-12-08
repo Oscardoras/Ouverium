@@ -83,7 +83,22 @@ void* __GC_alloc_object(__VirtualTable* vtable) {
     ptr->vtable = vtable;
     ptr->iterated = false;
     __GC_list = ptr;
-    return ptr + 1;
+
+    __UnknownData data = {
+        .virtual_table = vtable,
+        .data.ptr = ptr + 1
+    };
+    if (vtable->array.vtable) {
+        __ArrayInfo array = __UnknownData_get_array(data);
+        array.array->capacity = 0;
+        array.array->size = 0;
+        array.array->tab = NULL;
+    }
+    if (vtable->function.exists) {
+        *__UnknownData_get_function(data) = NULL;
+    }
+
+    return data.data.ptr;
 }
 
 void __GC_iterate(__GC_Iterator iterator, void* object) {
@@ -163,8 +178,6 @@ void __GC_collect(void) {
     for (ptr = &__GC_list; *ptr != NULL;) {
         if (!(*ptr)->iterated) {
             __GC_Element* next = (*ptr)->next;
-            if ((*ptr)->vtable->gc_destructor != NULL)
-                (*ptr)->vtable->gc_destructor(*ptr);
             free(*ptr);
             *ptr = next;
         }

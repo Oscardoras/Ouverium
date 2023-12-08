@@ -91,7 +91,6 @@ __UnknownData __Reference_get(__Reference_Shared r) {
             .vtable = &__VirtualTable_UnknownData,
             .array = __GC_alloc_object(&__VirtualTable_Array)
         };
-        *array.array = __Array_new(&__VirtualTable_UnknownData, reference->tuple.size);
         array.array->size = reference->tuple.size;
 
         size_t i;

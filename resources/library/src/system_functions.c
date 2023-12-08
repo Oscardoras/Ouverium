@@ -4,6 +4,15 @@
 #include "include.h"
 
 
+__Reference_Owned __system_function_getter(__Reference_Owned captures[], __Reference_Shared args[]) {
+    (void)(captures);
+    __UnknownData data = {
+        .virtual_table = &__VirtualTable_Object,
+        .data = __GC_alloc_object(&__VirtualTable_Object)
+    };
+    return args[0];
+}
+
 __Reference_Owned __system_function_separator_body(__Reference_Owned captures[], __Reference_Shared args[]) {
     (void)(captures);
     return __Reference_get_element(args[0], __Reference_get_size(args[0]) - 1);

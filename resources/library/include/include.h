@@ -17,20 +17,18 @@ extern "C" {
     */
     typedef void (*__GC_Iterator)(void*);
 
-    typedef void (*__GC_Destructor)(void*);
-
     /**
      * Contains information about a data type.
     */
     typedef struct __VirtualTable {
         size_t size;
         __GC_Iterator gc_iterator;
-        __GC_Destructor gc_destructor;
         struct {
             struct __VirtualTable* vtable;
             size_t offset;
         } array;
         struct {
+            bool exists;
             size_t offset;
         } function;
         struct {
@@ -185,14 +183,6 @@ extern "C" {
     */
 
     /**
-     * Creates a new array.
-     * @param vtable the vtable of array elements.
-     * @param capacity the initial capacity of the array.
-     * @return a created array.
-    */
-    __Array __Array_new(struct __VirtualTable* vtable, size_t capacity);
-
-    /**
      * Gets an element in an array.
      * @param array the array.
      * @param i the index of the element to get.
@@ -213,12 +203,6 @@ extern "C" {
      * @param capacity the new capacity.
     */
     void __Array_set_capacity(__ArrayInfo array, size_t capacity);
-
-    /**
-     * Frees an array.
-     * @param array the array to free.
-    */
-    void __Array_free(__ArrayInfo array);
 
     /**
      * UnknownData
@@ -405,6 +389,7 @@ extern "C" {
 
 
     extern __VirtualTable __VirtualTable_UnknownData;
+    extern __VirtualTable __VirtualTable_Object;
     extern __VirtualTable __VirtualTable_Array;
     extern __VirtualTable __VirtualTable_Function;
     extern __VirtualTable __VirtualTable_Int;
