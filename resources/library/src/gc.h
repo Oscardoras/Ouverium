@@ -10,13 +10,13 @@ extern "C" {
 
 #define ROOTS_CAPACITY 128
 
-    typedef struct __GC_Element {
-        struct __GC_Element* next;
-        __VirtualTable* vtable;
+    typedef struct Ov_GC_Element {
+        struct Ov_GC_Element* next;
+        Ov_VirtualTable* vtable;
         bool iterated;
-    } __GC_Element;
+    } Ov_GC_Element;
 
-    typedef struct __GC_Reference {
+    typedef struct Ov_GC_Reference {
         enum {
             NONE = 0,
             DATA,
@@ -28,39 +28,40 @@ extern "C" {
         union {
             struct {
                 size_t size;
-                struct __GC_Reference* next;
+                struct Ov_GC_Reference* next;
             } none;
 
-            __UnknownData data;
-            __UnknownData* symbol;
+            Ov_UnknownData data;
+            Ov_UnknownData* symbol;
             struct {
-                __UnknownData parent;
-                __VirtualTable* virtual_table;
+                Ov_UnknownData parent;
+                Ov_VirtualTable* vtable;
                 unsigned int hash;
             } property;
             struct {
-                __UnknownData array;
+                Ov_UnknownData array;
                 size_t i;
             } array;
             struct {
-                struct __GC_Reference* references;
+                Ov_VirtualTable* vtable;
+                struct Ov_GC_Reference* references;
                 size_t size;
             } tuple;
         };
-    } __GC_Reference;
+    } Ov_GC_Reference;
 
-    typedef struct __GC_Roots {
-        struct __GC_Roots* next;
+    typedef struct Ov_GC_Roots {
+        struct Ov_GC_Roots* next;
         size_t capacity;
-        __GC_Reference* free_list;
-    } __GC_Roots;
+        Ov_GC_Reference* free_list;
+    } Ov_GC_Roots;
 
-    __GC_Roots* __GC_init_roots(size_t c);
-    __GC_Reference* __GC_alloc_references(size_t n);
-    void __GC_free_reference(__GC_Reference* reference);
-    
-    struct __FunctionCapture __GC_reference_to_capture(__GC_Reference* reference);
-    __Reference_Owned __GC_capture_to_reference(struct __FunctionCapture capture);
+    Ov_GC_Roots* Ov_GC_init_roots(size_t c);
+    Ov_GC_Reference* Ov_GC_alloc_references(size_t n);
+    void Ov_GC_free_reference(Ov_GC_Reference* reference);
+
+    struct Ov_FunctionCapture Ov_GC_reference_to_capture(Ov_GC_Reference* reference);
+    Ov_Reference_Owned Ov_GC_capture_to_reference(struct Ov_FunctionCapture capture);
 
 #ifdef __cplusplus
 }

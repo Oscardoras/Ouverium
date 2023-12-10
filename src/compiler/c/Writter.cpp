@@ -79,18 +79,18 @@ namespace Translator::CStandard {
 
         std::set<uint32_t> hash_set;
         for (auto p : properties)
-            hash_set.insert(hash(p.c_str()) % size);
+            hash_set.insert(hash_string(p.c_str()) % size);
 
         while (hash_set.size() < properties.size()) {
             ++size;
             hash_set = {};
             for (auto p : properties)
-                hash_set.insert(hash(p.c_str()) % size);
+                hash_set.insert(hash_string(p.c_str()) % size);
         }
 
         std::vector<std::string> vector;
         for (auto p : properties)
-            vector[hash(p.c_str()) % size] = p;
+            vector[hash_string(p.c_str()) % size] = p;
         return vector;
     }
 
@@ -102,37 +102,37 @@ namespace Translator::CStandard {
         implementation += "\n\n";
 
         for (auto const& structure : code.structures) {
-            interface += "extern __VirtualTable __VirtualTable_" + structure->name.get() + ";\n";
+            interface += "extern Ov_VirtualTable Ov_VirtualTable_" + structure->name.get() + ";\n";
 
             implementation += "struct " + structure->name.get() + " {\n";
             if (structure->function)
-                implementation += "\t__Function __function;\n";
+                implementation += "\tOv_Function Ov_function;\n";
             if (structure->array.lock())
-                implementation += "\t__Array __array;\n";
+                implementation += "\tOv_Array Ov_array;\n";
             for (auto const& [p, _] : structure->properties)
-                implementation += "\t__UnknownData " + p.get() + ";\n";
+                implementation += "\tOv_UnknownData " + p.get() + ";\n";
             implementation += "};\n";
 
-            implementation += "void __VirtualTable_" + structure->name.get() + "_gc_iterator(void* ptr) {\n";
+            implementation += "void Ov_VirtualTable_" + structure->name.get() + "_gc_iterator(void* ptr) {\n";
             implementation += "\tstruct " + structure->name.get() + "* obj = (struct " + structure->name.get() + "*) ptr;\n";
             implementation += "\n";
             for (auto const& [p, _] : structure->properties)
-                implementation += "\t__GC_iterate(__VirtualTable_UnknownData.gc_iterator, obj->" + p.get() + ")\n";
+                implementation += "\tOv_GC_iterate(Ov_VirtualTable_UnknownData.gc_iterator, obj->" + p.get() + ")\n";
             implementation += "}\n";
 
-            implementation += "__VirtualTable __VirtualTable_" + structure->name.get() + " = {\n";
+            implementation += "Ov_VirtualTable Ov_VirtualTable_" + structure->name.get() + " = {\n";
             implementation += "\t.size = sizeof(struct " + structure->name.get() + "),\n";
-            implementation += "\t.gc_iterator = __VirtualTable_" + structure->name.get() + "_gc_iterator,\n";
+            implementation += "\t.gc_iterator = Ov_VirtualTable_" + structure->name.get() + "_gc_iterator,\n";
             implementation += "\t.gc_destructor = NULL,\n";
             if (auto array_type = structure->array.lock()) {
-                implementation += "\t.array.vtable = &__VirtualTable_" + array_type->name.get() + ",\n";
-                implementation += "\t.array.offset = offsetof(struct " + structure->name.get() + ", __array),\n";
+                implementation += "\t.array.vtable = &Ov_VirtualTable_" + array_type->name.get() + ",\n";
+                implementation += "\t.array.offset = offsetof(struct " + structure->name.get() + ", Ov_array),\n";
             } else {
                 implementation += "\t.array.vtable = NULL,\n";
                 implementation += "\t.array.offset = NULL,\n";
             }
             if (structure->function)
-                implementation += "\t.function.offset = offsetof(struct " + structure->name.get() + ", __function),\n";
+                implementation += "\t.function.offset = offsetof(struct " + structure->name.get() + ", Ov_function),\n";
             else
                 implementation += "\t.function.offset = NULL,\n";
             std::set<std::string> properties;
@@ -143,7 +143,7 @@ namespace Translator::CStandard {
             implementation += "\t.table.tab = {\n";
             for (auto p : vector)
                 if (p != "")
-                    implementation += "\t\t{ .hash = " + std::to_string(hash(p.c_str())) + ", .offset = offsetof(struct " + structure->name.get() + ", " + p + ") },\n";
+                    implementation += "\t\t{ .hash = " + std::to_string(hash_string(p.c_str())) + ", .offset = offsetof(struct " + structure->name.get() + ", " + p + ") },\n";
                 else
                     implementation += "\t\t{ .hash = 0, .offset = 0 },\n";
             implementation += "\t}\n";
@@ -160,18 +160,18 @@ namespace Translator::CStandard {
 
         for (auto const& function : code.functions) {
             if (function->filter.return_value != nullptr) {
-                interface += "bool " + function->name.get() + "_filter(__Reference_Owned captures[], __Reference_Shared args[]);\n";
+                interface += "bool " + function->name.get() + "_filter(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]);\n";
 
-                implementation += "bool " + function->name.get() + "_filter(__Reference_Owned captures[], __Reference_Shared args[]) {\n";
+                implementation += "bool " + function->name.get() + "_filter(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]) {\n";
                 for (size_t i = 0; i < function->captures.size(); ++i) {
-                    implementation += "\t__Reference_Owned " + function->captures[i].first.get() + " = captures[" + std::to_string(i) + "];\n";
+                    implementation += "\tOv_Reference_Owned " + function->captures[i].first.get() + " = captures[" + std::to_string(i) + "];\n";
                 }
                 for (size_t i = 0; i < function->parameters.size(); ++i) {
-                    implementation += "\t__Reference_Shared " + function->parameters[i].first.get() + " = args[" + std::to_string(i) + "];\n";
+                    implementation += "\tOv_Reference_Shared " + function->parameters[i].first.get() + " = args[" + std::to_string(i) + "];\n";
                 }
                 for (auto const& [var, _] : function->filter.local_variables) {
-                    implementation += "\t__UnknownData " + var.get() + "_data = { .virtual_table = &__VirtualTable_Object, .data.ptr = __GC_alloc_object(&__VirtualTable_Object) };\n";
-                    implementation += "\t__Reference_Owned " + var.get() + " = __Reference_new_symbol(" + var.get() + "_data);\n";
+                    implementation += "\tOv_UnknownData " + var.get() + "_data = { .vtable = &Ov_VirtualTable_Object, .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object) };\n";
+                    implementation += "\tOv_Reference_Owned " + var.get() + " = Ov_Reference_new_symbol(" + var.get() + "_data);\n";
                 }
 
                 for (auto const& instruction : function->filter.body)
@@ -182,18 +182,18 @@ namespace Translator::CStandard {
             }
 
             {
-                interface += "__Reference_Owned " + function->name.get() + "_body(__Reference_Owned captures[], __Reference_Shared args[]);\n";
+                interface += "Ov_Reference_Owned " + function->name.get() + "_body(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]);\n";
 
-                implementation += "__Reference_Owned " + function->name.get() + "_body(__Reference_Owned captures[], __Reference_Shared args[]) {\n";
+                implementation += "Ov_Reference_Owned " + function->name.get() + "_body(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]) {\n";
                 for (size_t i = 0; i < function->captures.size(); ++i) {
-                    implementation += "\t__Reference_Owned " + function->captures[i].first.get() + " = captures[" + std::to_string(i) + "];\n";
+                    implementation += "\tOv_Reference_Owned " + function->captures[i].first.get() + " = captures[" + std::to_string(i) + "];\n";
                 }
                 for (size_t i = 0; i < function->parameters.size(); ++i) {
-                    implementation += "\t__Reference_Shared " + function->parameters[i].first.get() + " = args[" + std::to_string(i) + "];\n";
+                    implementation += "\tOv_Reference_Shared " + function->parameters[i].first.get() + " = args[" + std::to_string(i) + "];\n";
                 }
                 for (auto const& [var, _] : function->body.local_variables) {
-                    implementation += "\t__UnknownData " + var.get() + "_data = { .virtual_table = &__VirtualTable_Object, .data.ptr = __GC_alloc_object(&__VirtualTable_Object) };\n";
-                    implementation += "\t__Reference_Owned " + var.get() + " = __Reference_new_symbol(" + var.get() + "_data);\n";
+                    implementation += "\tOv_UnknownData " + var.get() + "_data = { .vtable = &Ov_VirtualTable_Object, .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object) };\n";
+                    implementation += "\tOv_Reference_Owned " + var.get() + " = Ov_Reference_new_symbol(" + var.get() + "_data);\n";
                 }
 
                 for (auto const& instruction : function->body.body)
@@ -207,15 +207,15 @@ namespace Translator::CStandard {
 
     void Translator::write_main(std::string& implementation) {
         implementation += "int main(int, char**) {\n";
-        implementation += "\t__GC_init();\n";
+        implementation += "\tOv_GC_init();\n";
         for (auto const& [var, _] : code.main.global_variables) {
-            implementation += "\t__UnknownData " + var.get() + "_data = { .virtual_table = &__VirtualTable_Object, .data.ptr = __GC_alloc_object(&__VirtualTable_Object) };\n";
-            implementation += "\t__Reference_Owned " + var.get() + " = __Reference_new_symbol(" + var.get() + "_data);\n";
+            implementation += "\tOv_UnknownData " + var.get() + "_data = { .vtable = &Ov_VirtualTable_Object, .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object) };\n";
+            implementation += "\tOv_Reference_Owned " + var.get() + " = Ov_Reference_new_symbol(" + var.get() + "_data);\n";
         }
         for (auto const& instruction : code.main.body)
             implementation += "\t" + instruction->get_instruction_code() + "\n";
-        implementation += "\t__GC_end();\n";
-        implementation += "return __Reference_get(__Reference_share(" + code.main.return_value->get_expression_code() + ")).data.i;";
+        implementation += "\tOv_GC_end();\n";
+        implementation += "return Ov_Reference_get(Ov_Reference_share(" + code.main.return_value->get_expression_code() + ")).data.i;";
         implementation += "}\n";
     }
 
@@ -227,7 +227,7 @@ namespace Translator::CStandard {
         return "reference" + std::to_string(id);
     }
     std::string Reference::get_instruction_code() const {
-        return std::string() + "__Reference_" + (owned ? "Owned" : "Shared") + " reference" + std::to_string(id) + ";";
+        return std::string() + "Ov_Reference_" + (owned ? "Owned" : "Shared") + " reference" + std::to_string(id) + ";";
     }
 
     std::string Affectation::get_expression_code() const {
@@ -235,9 +235,9 @@ namespace Translator::CStandard {
 
         if (auto ref = std::dynamic_pointer_cast<Reference>(lvalue)) {
             if (ref->owned)
-                code += "__Reference_Owned ";
+                code += "Ov_Reference_Owned ";
             else
-                code += "__Reference_Shared ";
+                code += "Ov_Reference_Shared ";
         }
         code += lvalue->get_expression_code() + " = " + value->get_expression_code();
 
@@ -295,9 +295,9 @@ namespace Translator::CStandard {
     std::string List::get_instruction_code() const {
         std::string code;
 
-        code += "__Reference_Shared array" + std::to_string(id) + "[] = { ";
+        code += "Ov_Reference_Shared array" + std::to_string(id) + "[] = { ";
         for (auto const& e : objects)
-            code += "__Reference_share(" + e->get_expression_code() + "), ";
+            code += "Ov_Reference_share(" + e->get_expression_code() + "), ";
         code += "};";
 
         return code;
@@ -310,13 +310,13 @@ namespace Translator::CStandard {
         std::string code;
 
         if (auto tuple = std::get_if<std::vector<std::shared_ptr<FunctionExpression>>>(this)) {
-            code += "__Expression expression" + std::to_string(id) + "_array[] = { ";
+            code += "Ov_Expression expression" + std::to_string(id) + "_array[] = { ";
             for (auto const& e : *tuple)
                 code += e->get_expression_code() + ", ";
             code += "};\n";
-            code += "__Expression expression" + std::to_string(id) + " = { .type = __EXPRESSION_TUPLE, .tuple.size = " + std::to_string(tuple->size()) + ", .tuple.tab = expression" + std::to_string(id) + "_array };";
+            code += "Ov_Expression expression" + std::to_string(id) + " = { .type = Ov_EXPRESSION_TUPLE, .tuple.size = " + std::to_string(tuple->size()) + ", .tuple.tab = expression" + std::to_string(id) + "_array };";
         } else if (auto ref = std::get_if<std::shared_ptr<Reference>>(this)) {
-            code += "__Expression expression" + std::to_string(id) + " = { .type = __EXPRESSION_REFERENCE, .reference = __Reference_share(" + (*ref)->get_expression_code() + ") };";
+            code += "Ov_Expression expression" + std::to_string(id) + " = { .type = Ov_EXPRESSION_REFERENCE, .reference = Ov_Reference_share(" + (*ref)->get_expression_code() + ") };";
         }
 
         return code;

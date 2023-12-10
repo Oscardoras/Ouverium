@@ -1,70 +1,92 @@
 #include "include.h"
 
 
-__UnknownData __UnknownData_from_data(__VirtualTable* vtable, union __Data d) {
-    if (vtable == &__VirtualTable_UnknownData) {
-        __UnknownData data = *((__UnknownData*)d.ptr);
-        return __UnknownData_from_data(data.virtual_table, data.data);
+Ov_UnknownData Ov_UnknownData_from_data(Ov_VirtualTable* vtable, union Ov_Data d) {
+    if (vtable == &Ov_VirtualTable_UnknownData) {
+        return *((Ov_UnknownData*)d.ptr);
     } else {
-        __UnknownData data = {
-            .virtual_table = vtable,
+        Ov_UnknownData data = {
+            .vtable = vtable,
             .data = d
         };
         return data;
     }
 }
 
-__UnknownData __UnknownData_from_ptr(__VirtualTable* vtable, void* ptr) {
-    __UnknownData data;
-    data.virtual_table = vtable;
+Ov_UnknownData Ov_UnknownData_from_ptr(Ov_VirtualTable* vtable, void* ptr) {
+    if (vtable == &Ov_VirtualTable_UnknownData)
+        return *((Ov_UnknownData*)ptr);
+    else {
+        Ov_UnknownData data;
+        data.vtable = vtable;
 
-    if (vtable == &__VirtualTable_UnknownData)
-        data = *((__UnknownData*)ptr);
-    else if (vtable == &__VirtualTable_Int)
-        data.data.i = *((long*)ptr);
-    else if (vtable == &__VirtualTable_Float)
-        data.data.f = *((double*)ptr);
-    else if (vtable == &__VirtualTable_Char)
-        data.data.c = *((char*)ptr);
-    else if (vtable == &__VirtualTable_Bool)
-        data.data.b = *((bool*)ptr);
+        if (vtable == &Ov_VirtualTable_Int)
+            data.data.i = *((long*)ptr);
+        else if (vtable == &Ov_VirtualTable_Float)
+            data.data.f = *((double*)ptr);
+        else if (vtable == &Ov_VirtualTable_Char)
+            data.data.c = *((char*)ptr);
+        else if (vtable == &Ov_VirtualTable_Bool)
+            data.data.b = *((bool*)ptr);
+        else
+            data.data.ptr = *((void**)ptr);
+
+        return data;
+    }
+}
+
+void Ov_UnknownData_set(Ov_VirtualTable* vtable, void* ptr, Ov_UnknownData data) {
+    if (vtable == &Ov_VirtualTable_UnknownData)
+        *(Ov_UnknownData*)ptr = data;
+    else if (vtable == &Ov_VirtualTable_Bool)
+        *(bool*)ptr = data.data.b;
+    else if (vtable == &Ov_VirtualTable_Char)
+        *(char*)ptr = data.data.c;
+    else if (vtable == &Ov_VirtualTable_Float)
+        *(double*)ptr = data.data.f;
+    else if (vtable == &Ov_VirtualTable_Int)
+        *(long*)ptr = data.data.i;
     else
-        data.data.ptr = *((void**)ptr);
-
-    return data;
+        *(void**)ptr = data.data.ptr;
 }
 
-void* __UnknownData_get_property(__UnknownData data, unsigned int hash) {
-    struct __VirtualTable_Element* list = &data.virtual_table->table.tab[hash % data.virtual_table->table.size];
-    for (; list->hash != hash; list = list->next);
-    return ((BYTE*)data.data.ptr) + list->offset;
+void* Ov_UnknownData_get_property(Ov_UnknownData data, unsigned int hash) {
+    struct Ov_VirtualTable_Element* list = &data.vtable->table.tab[hash % data.vtable->table.size];
+    while (true) {
+        if (list->hash == hash)
+            return ((BYTE*)data.data.ptr) + list->offset;
+        else if (list->next == NULL)
+            return NULL;
+        else
+            list = list->next;
+    }
 }
 
-__ArrayInfo __UnknownData_get_array(__UnknownData data) {
-    __ArrayInfo array = {
-        .vtable = data.virtual_table->array.vtable,
-        .array = (__Array*) ((BYTE*) data.data.ptr) + data.virtual_table->array.offset
+Ov_ArrayInfo Ov_UnknownData_get_array(Ov_UnknownData data) {
+    Ov_ArrayInfo array = {
+        .vtable = data.vtable->array.vtable,
+        .array = (Ov_Array*) ((BYTE*) data.data.ptr) + data.vtable->array.offset
     };
     return array;
 }
 
-__Function* __UnknownData_get_function(__UnknownData data) {
-    return (__Function*) ((BYTE*) data.data.ptr) + data.virtual_table->function.offset;
+Ov_Function* Ov_UnknownData_get_function(Ov_UnknownData data) {
+    return (Ov_Function*) ((BYTE*) data.data.ptr) + data.vtable->function.offset;
 }
 
-void __VirtualTable_UnknownData_gc_iterator(void* ptr) {
-    __UnknownData data = *((__UnknownData*)ptr);
+void Ov_VirtualTable_UnknownData_gc_iterator(void* ptr) {
+    Ov_UnknownData data = *((Ov_UnknownData*)ptr);
     if (
-        data.virtual_table != &__VirtualTable_Int &&
-        data.virtual_table != &__VirtualTable_Float &&
-        data.virtual_table != &__VirtualTable_Char &&
-        data.virtual_table != &__VirtualTable_Bool
+        data.vtable != &Ov_VirtualTable_Int &&
+        data.vtable != &Ov_VirtualTable_Float &&
+        data.vtable != &Ov_VirtualTable_Char &&
+        data.vtable != &Ov_VirtualTable_Bool
         )
-        __GC_iterate(data.virtual_table->gc_iterator, data.data.ptr);
+        Ov_GC_iterate(data.vtable->gc_iterator, data.data.ptr);
 }
-__VirtualTable __VirtualTable_UnknownData = {
-    .size = sizeof(__UnknownData),
-    .gc_iterator = __VirtualTable_UnknownData_gc_iterator,
+Ov_VirtualTable Ov_VirtualTable_UnknownData = {
+    .size = sizeof(Ov_UnknownData),
+    .gc_iterator = Ov_VirtualTable_UnknownData_gc_iterator,
     .array.vtable = NULL,
     .array.offset = 0,
     .function.exists = false,
@@ -72,7 +94,7 @@ __VirtualTable __VirtualTable_UnknownData = {
     .table.size = 0
 };
 
-__VirtualTable __VirtualTable_Int = {
+Ov_VirtualTable Ov_VirtualTable_Int = {
     .size = sizeof(long),
     .gc_iterator = NULL,
     .array.vtable = NULL,
@@ -82,7 +104,7 @@ __VirtualTable __VirtualTable_Int = {
     .table.size = 0
 };
 
-__VirtualTable __VirtualTable_Float = {
+Ov_VirtualTable Ov_VirtualTable_Float = {
     .size = sizeof(double),
     .gc_iterator = NULL,
     .array.vtable = NULL,
@@ -92,7 +114,7 @@ __VirtualTable __VirtualTable_Float = {
     .table.size = 0
 };
 
-__VirtualTable __VirtualTable_Char = {
+Ov_VirtualTable Ov_VirtualTable_Char = {
     .size = sizeof(char),
     .gc_iterator = NULL,
     .array.vtable = NULL,
@@ -102,7 +124,7 @@ __VirtualTable __VirtualTable_Char = {
     .table.size = 0
 };
 
-__VirtualTable __VirtualTable_Bool = {
+Ov_VirtualTable Ov_VirtualTable_Bool = {
     .size = sizeof(bool),
     .gc_iterator = NULL,
     .array.vtable = NULL,

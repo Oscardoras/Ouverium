@@ -16,23 +16,12 @@ add_library(capi SHARED ${capi_sources})
 target_include_directories(capi PUBLIC resources/library/include)
 set_property(TARGET capi PROPERTY C_STANDARD 99)
 
-FILE(GLOB_RECURSE interpreter_sources
+FILE(GLOB_RECURSE ouverium_sources
     src/main.cpp
     src/Utils.cpp src/Utils.hpp
     src/parser/*
     src/interpreter/*
-)
-add_executable(interpreter ${interpreter_sources})
-target_link_libraries(interpreter PUBLIC capi)
-
-
-FILE(GLOB_RECURSE compiler_sources
-    src/Utils.cpp src/Utils.hpp
-    src/parser/*
     src/compiler/*
 )
-add_executable(compiler ${compiler_sources})
-target_link_libraries(compiler PUBLIC capi)
-
-add_executable(compiled build/out/main.c build/out/structures.c)
-target_link_libraries(compiled PUBLIC capi)
+add_executable(ouverium ${ouverium_sources})
+target_link_libraries(ouverium PUBLIC capi)

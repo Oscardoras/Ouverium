@@ -16,19 +16,19 @@ class Reference;
 class Function;
 
 
-template<typename T, __VirtualTable* vtable = &T::vtable>
-class Array : protected __Array {
+template<typename T, Ov_VirtualTable* vtable = &T::vtable>
+class Array : protected Ov_Array {
 
 public:
 
     Array(size_t capacity = 0, size_t size = 0) {
-        __Array::capacity = capacity;
-        __Array::size = size;
+        Ov_Array::capacity = capacity;
+        Ov_Array::size = size;
         tab = calloc(capacity, vtable->size);
     }
 
-    operator __ArrayInfo() const {
-        return __ArrayInfo{
+    operator Ov_ArrayInfo() const {
+        return Ov_ArrayInfo{
             .vtable = vtable,
             .array = this
         };
@@ -39,7 +39,7 @@ public:
     }
 
     void set_size(size_t const size) {
-        return __Array_set_size(*this, size);
+        return Ov_Array_set_size(*this, size);
     }
 
     size_t capacity() const {
@@ -47,7 +47,7 @@ public:
     }
 
     void set_capacity(size_t const size) {
-        return __Array_set_capacity(*this, size);
+        return Ov_Array_set_capacity(*this, size);
     }
 
     bool empty() const {
@@ -55,7 +55,7 @@ public:
     }
 
     T& operator[](size_t const i) const {
-        return *__Array_get(*this, i);
+        return *Ov_Array_get(*this, i);
     }
 
     class iterator {
@@ -112,14 +112,14 @@ class ArrayInfo {
 
 protected:
 
-    __ArrayInfo array;
+    Ov_ArrayInfo array;
 
 public:
 
-    ArrayInfo(__ArrayInfo array) :
+    ArrayInfo(Ov_ArrayInfo array) :
         array{ array } {}
 
-    operator __ArrayInfo () const {
+    operator Ov_ArrayInfo () const {
         return array;
     }
 
@@ -128,7 +128,7 @@ public:
     }
 
     void set_size(size_t const size) {
-        return __Array_set_size(array, size);
+        return Ov_Array_set_size(array, size);
     }
 
     size_t capacity() const {
@@ -136,7 +136,7 @@ public:
     }
 
     void set_capacity(size_t const size) {
-        return __Array_set_capacity(array, size);
+        return Ov_Array_set_capacity(array, size);
     }
 
     bool empty() const {
@@ -145,7 +145,7 @@ public:
 
     template<typename T>
     T& operator[](size_t const i) const {
-        return *__Array_get(*this, i);
+        return *Ov_Array_get(*this, i);
     }
 
     class iterator {
@@ -203,42 +203,42 @@ class UnknownData {
 
 protected:
 
-    __UnknownData data;
+    Ov_UnknownData data;
 
 public:
 
-    UnknownData(__UnknownData const& data) :
+    UnknownData(Ov_UnknownData const& data) :
         data{ data } {}
 
-    UnknownData(__VirtualTable* vtable, union __Data d) :
-        data{ __UnknownData_from_data(vtable, d) } {}
+    UnknownData(Ov_VirtualTable* vtable, union Ov_Data d) :
+        data{ Ov_UnknownData_from_data(vtable, d) } {}
 
-    UnknownData(__VirtualTable* vtable, void* ptr) :
-        data{ __UnknownData_from_ptr(vtable, ptr) } {}
+    UnknownData(Ov_VirtualTable* vtable, void* ptr) :
+        data{ Ov_UnknownData_from_ptr(vtable, ptr) } {}
 
     UnknownData(long i) {
-        data.virtual_table = &__VirtualTable_Int;
+        data.vtable = &Ov_VirtualTable_Int;
         data.data.i = i;
     }
     UnknownData(double f) {
-        data.virtual_table = &__VirtualTable_Float;
+        data.vtable = &Ov_VirtualTable_Float;
         data.data.f = f;
     }
     UnknownData(char c) {
-        data.virtual_table = &__VirtualTable_Char;
+        data.vtable = &Ov_VirtualTable_Char;
         data.data.c = c;
     }
     UnknownData(bool b) {
-        data.virtual_table = &__VirtualTable_Bool;
+        data.vtable = &Ov_VirtualTable_Bool;
         data.data.b = b;
     }
     template<class T>
     UnknownData(T* ptr) {
-        data.virtual_table = &T::vtable;
+        data.vtable = &T::vtable;
         data.data.b = ptr;
     }
 
-    operator __UnknownData() const {
+    operator Ov_UnknownData() const {
         return data;
     }
 
@@ -261,17 +261,17 @@ public:
     template<typename T>
     T& get_property(const char* name) {
         constexpr auto h = hash(name);
-        return *static_cast<T*>(__UnknownData_get_property(data, h));
+        return *static_cast<T*>(Ov_UnknownData_get_property(data, h));
     }
 
     ArrayInfo get_array() {
-        return __UnknownData_get_array(data);
+        return Ov_UnknownData_get_array(data);
     }
 
     Function get_function();
 
-    __VirtualTable* virtual_table() const {
-        return data.virtual_table;
+    Ov_VirtualTable* vtable() const {
+        return data.vtable;
     }
 
 };
@@ -284,25 +284,27 @@ protected:
 
 public:
 
+    Reference() :
+        reference{ Ov_Reference_new_uninitialized() } {}
     Reference(UnknownData const& data) :
-        reference{ __Reference_new_data(data) } {}
+        reference{ Ov_Reference_new_data(data) } {}
     static Reference new_symbol(UnknownData const& data) {
-        return __Reference_new_symbol(data);
+        return Ov_Reference_new_symbol(data);
     }
-    Reference(UnknownData const& parent, __VirtualTable* const virtual_table, unsigned int const hash) :
-        reference{ __Reference_new_property(parent, virtual_table, hash) } {}
+    Reference(UnknownData const& parent, Ov_VirtualTable* const vtable, unsigned int const hash) :
+        reference{ Ov_Reference_new_property(parent, vtable, hash) } {}
     Reference(UnknownData const& array, size_t const i) :
-        reference{ __Reference_new_array(array, i) } {}
-    Reference(std::initializer_list<Reference> const& list) :
-        reference{ __Reference_new_tuple((__Reference_Shared*)std::data(list), list.size()) } {}
+        reference{ Ov_Reference_new_array(array, i) } {}
+    Reference(std::initializer_list<Reference> const& list, Ov_VirtualTable* const vtable) :
+        reference{ Ov_Reference_new_tuple((Ov_Reference_Shared*)std::data(list), list.size(), vtable) } {}
 
-    Reference(__Reference_Owned const reference) :
+    Reference(Ov_Reference_Owned const reference) :
         reference{ reference } {}
-    Reference(__Reference_Shared const reference) :
-        reference{ __Reference_copy(reference) } {}
+    Reference(Ov_Reference_Shared const reference) :
+        reference{ Ov_Reference_copy(reference) } {}
 
     Reference(Reference const& reference) :
-        reference{ __Reference_copy(reference) } {}
+        reference{ Ov_Reference_copy(reference) } {}
     Reference(Reference&& reference) :
         reference{ reference.reference } {
         reference.reference = nullptr;
@@ -310,13 +312,13 @@ public:
 
     ~Reference() {
         if (reference != nullptr)
-            __Reference_free((__Reference_Owned)reference);
+            Ov_Reference_free((Ov_Reference_Owned)reference);
     }
 
     Reference& operator=(Reference const& reference) {
         if (Reference::reference != reference.reference) {
-            __Reference_free((__Reference_Owned)Reference::reference);
-            Reference::reference = __Reference_copy((__Reference_Shared)reference.reference);
+            Ov_Reference_free((Ov_Reference_Owned)Reference::reference);
+            Reference::reference = Ov_Reference_copy((Ov_Reference_Shared)reference.reference);
         }
 
         return *this;
@@ -330,24 +332,24 @@ public:
         return *this;
     }
 
-    operator __Reference_Owned() {
-        auto tmp = (__Reference_Owned)reference;
+    operator Ov_Reference_Owned() {
+        auto tmp = (Ov_Reference_Owned)reference;
         reference = nullptr;
         return tmp;
     }
-    operator __Reference_Shared() const {
-        return (__Reference_Shared)reference;
+    operator Ov_Reference_Shared() const {
+        return (Ov_Reference_Shared)reference;
     }
 
     operator UnknownData() const {
         return get();
     }
     UnknownData get() const {
-        return __Reference_get((__Reference_Shared)reference);
+        return Ov_Reference_get((Ov_Reference_Shared)reference);
     }
 
     size_t size() const {
-        return __Reference_get_size((__Reference_Shared)reference);
+        return Ov_Reference_get_size((Ov_Reference_Shared)reference);
     }
 
     bool empty() const {
@@ -355,7 +357,7 @@ public:
     }
 
     Reference operator[](size_t i) const {
-        return __Reference_get_element((__Reference_Shared)reference, i);
+        return Ov_Reference_get_element((Ov_Reference_Shared)reference, i);
     }
 
     class iterator {
@@ -417,14 +419,14 @@ struct LambdaParameter {
 template<typename Parameter0, typename Parameter1, typename... Parameters>
 struct LambdaParameter<Parameter0, Parameter1, Parameters...> {
     static inline const std::string params = LambdaParameter<Parameter0>::params + "," + LambdaParameter<Parameter1, Parameters...>::params;
-    static inline const std::string parameters = "(" + params + ")";
+    static inline const std::string parameters = "[" + params + "]";
 };
 
 template<>
 struct LambdaParameter<Reference> {
     static inline const std::string params = "r";
     static inline const std::string parameters = params;
-    static Reference get_arg(__Reference_Shared arg) {
+    static Reference get_arg(Ov_Reference_Shared arg) {
         return arg;
     }
 };
@@ -433,8 +435,8 @@ template<>
 struct LambdaParameter<UnknownData> {
     static inline const std::string params = "r";
     static inline const std::string parameters = params;
-    static UnknownData get_arg(__Reference_Shared arg) {
-        return __Reference_get(arg);
+    static UnknownData get_arg(Ov_Reference_Shared arg) {
+        return Ov_Reference_get(arg);
     }
 };
 
@@ -442,16 +444,14 @@ template<>
 struct LambdaParameter<std::function<Reference()>> {
     static inline const std::string params = "r()";
     static inline const std::string parameters = params;
-    static std::function<Reference()> get_arg(__Reference_Shared arg) {
+    static std::function<Reference()> get_arg(Ov_Reference_Shared arg) {
         return [arg]() -> Reference {
-            __Expression expr = {
-                .type = __Expression::__EXPRESSION_TUPLE,
-                .tuple = {
-                    .size = 0,
-                    .tab = nullptr
-                }
+            Reference ref;
+            Ov_Expression expr = {
+                .type = Ov_Expression::Ov_EXPRESSION_REFERENCE,
+                .reference = ref
             };
-            return __Function_eval(__UnknownData_get_function(__Reference_get(arg)), expr);
+            return Ov_Function_eval(Ov_UnknownData_get_function(Ov_Reference_get(arg)), expr);
             };
     }
 };
@@ -484,28 +484,28 @@ public:
         };
 
         template<typename P>
-        static typename P::Type get_arg(__Reference_Shared args[]) {
+        static typename P::Type get_arg(Ov_Reference_Shared args[]) {
             return get_arg<P::Type>(args[P::I]);
         }
 
         template<typename U, size_t... I>
-        static U eval(std::function<U(Parameters...)>& f, [[maybe_unused]] __Reference_Shared args[], std::index_sequence<I...>) {
+        static U eval(std::function<U(Parameters...)>& f, [[maybe_unused]] Ov_Reference_Shared args[], std::index_sequence<I...>) {
             return f(get_arg<Pair<I>>(args)...);
         }
 
     public:
 
-        static bool _filter(__Reference_Owned capture[], __Reference_Shared args[]) {
-            if (auto& f = static_cast<Lambda<R(Parameters...)>*>(__Reference_get(__Reference_share(capture[0])).data.ptr)->filter)
+        static bool _filter(Ov_Reference_Owned capture[], Ov_Reference_Shared args[]) {
+            if (auto& f = static_cast<Lambda<R(Parameters...)>*>(Ov_Reference_get(Ov_Reference_share(capture[0])).data.ptr)->filter)
                 return eval(f, args, std::make_index_sequence<sizeof...(Parameters)>{});
         }
 
-        static __Reference_Owned _body(__Reference_Owned capture[], __Reference_Shared args[]) {
-            if (auto& f = *static_cast<Lambda<R(Parameters...)>*>(__Reference_get(__Reference_share(capture[0])).data.ptr))
+        static Ov_Reference_Owned _body(Ov_Reference_Owned capture[], Ov_Reference_Shared args[]) {
+            if (auto& f = *static_cast<Lambda<R(Parameters...)>*>(Ov_Reference_get(Ov_Reference_share(capture[0])).data.ptr))
                 return eval(f, args, std::make_index_sequence<sizeof...(Parameters)>{});
         }
 
-        static __VirtualTable vtable;
+        static Ov_VirtualTable vtable;
         static inline const std::string parameters = LambdaParameter<Parameters...>::parameters;
 
         std::function<bool(Parameters...)> filter;
@@ -518,38 +518,38 @@ public:
 
 protected:
 
-    __Function& function;
+    Ov_Function& function;
 
 public:
 
-    Function(__Function& function) :
+    Function(Ov_Function& function) :
         function{ function } {}
 
-    operator __Function& () const {
+    operator Ov_Function& () const {
         return function;
     }
 
-    void push(const char* parameters, __FunctionBody body, __FunctionFilter filter = nullptr, std::initializer_list<Reference> references = {}) {
-        __Function_push(&function, parameters, body, filter, (__Reference_Owned*)std::data(references), references.size());
+    void push(const char* parameters, Ov_FunctionBody body, Ov_FunctionFilter filter = nullptr, std::initializer_list<Reference> references = {}) {
+        Ov_Function_push(&function, parameters, body, filter, (Ov_Reference_Owned*)std::data(references), references.size());
     }
 
-    void push(const char* parameters, __FunctionBody body, __FunctionFilter filter = nullptr, std::vector<Reference>&& references = {}) {
-        __Function_push(&function, parameters, body, filter, (__Reference_Owned*)std::data(references), references.size());
+    void push(const char* parameters, Ov_FunctionBody body, Ov_FunctionFilter filter = nullptr, std::vector<Reference>&& references = {}) {
+        Ov_Function_push(&function, parameters, body, filter, (Ov_Reference_Owned*)std::data(references), references.size());
     }
 
     template<typename R, typename... Args>
     void push(Lambda<R(Args...)> const& lambda) {
-        Reference r(UnknownData(&Lambda<R(Args...)>::vtable, __Data{ .ptr = new (__GC_alloc_object(&Lambda<R(Args...)>::vtable)) Lambda<R(Args...)>(lambda) }));
+        Reference r(UnknownData(&Lambda<R(Args...)>::vtable, Ov_Data{ .ptr = new (Ov_GC_alloc_object(&Lambda<R(Args...)>::vtable)) Lambda<R(Args...)>(lambda) }));
 
-        return __Function_push(&function, Lambda<R(Args...)>::parameters.c_str(), &Lambda<R(Args...)>::_body, &Lambda<R(Args...)>::_filter, (__Reference_Owned*)&r, 1);
+        return Ov_Function_push(&function, Lambda<R(Args...)>::parameters.c_str(), &Lambda<R(Args...)>::_body, &Lambda<R(Args...)>::_filter, (Ov_Reference_Owned*)&r, 1);
     }
 
     void pop() {
-        __Function_pop(&function);
+        Ov_Function_pop(&function);
     }
 
     void clear() {
-        __Function_free(&function);
+        Ov_Function_free(&function);
     }
 
 protected:
@@ -557,19 +557,19 @@ protected:
     template<typename... T>
     struct Tuple : public std::tuple<T...> {
         using std::tuple<T...>::tuple;
-        std::array<__Expression, sizeof...(T)> array;
+        std::array<Ov_Expression, sizeof...(T)> array;
     };
 
-    __Expression get_expression(Reference const& args) const {
-        return __Expression{
-            .type = __Expression::__EXPRESSION_REFERENCE,
+    Ov_Expression get_expression(Reference const& args) const {
+        return Ov_Expression{
+            .type = Ov_Expression::Ov_EXPRESSION_REFERENCE,
             .reference = args
         };
     }
 
-    __Expression get_expression(Lambda<Reference()>& lambda) const {
-        auto expr = __Expression{
-            .type = __Expression::__EXPRESSION_LAMBDA,
+    Ov_Expression get_expression(Lambda<Reference()>& lambda) const {
+        auto expr = Ov_Expression{
+            .type = Ov_Expression::Ov_EXPRESSION_LAMBDA,
             .lambda = NULL
         };
         Function(expr.lambda).push(lambda);
@@ -577,16 +577,17 @@ protected:
     }
 
     template<typename... T, size_t... I>
-    std::array<__Expression, sizeof...(I)> get_expression(Tuple<T...>& tuple, std::index_sequence<sizeof...(I)>) const {
+    std::array<Ov_Expression, sizeof...(I)> get_expression(Tuple<T...>& tuple, std::index_sequence<sizeof...(I)>) const {
         return { get_expression(std::get<I>(tuple))... };
     }
 
     template<typename... T>
-    __Expression get_expression(Tuple<T...> const& tuple) const {
+    Ov_Expression get_expression(Tuple<T...> const& tuple) const {
         tuple.array = get_expression(tuple, std::make_index_sequence<sizeof...(T)>{});
-        return __Expression{
-            .type = __Expression::__EXPRESSION_TUPLE,
+        return Ov_Expression{
+            .type = Ov_Expression::Ov_EXPRESSION_TUPLE,
             .tuple = {
+                .vtable = &Ov_VirtualTable_Object,
                 .size = sizeof...(T),
                 .tab = tuple.array.data()
             }
@@ -597,18 +598,18 @@ public:
 
     template<typename... Args>
     Reference operator()(Args&&... args) const {
-        return Reference(__Function_eval(function, get_expression(Tuple<Args...>{args...})));
+        return Reference(Ov_Function_eval(function, get_expression(Tuple<Args...>{args...})));
     }
 
     template<typename Arg>
     Reference operator()(Arg&& arg) const {
-        return Reference(__Function_eval(function, get_expression(arg)));
+        return Reference(Ov_Function_eval(function, get_expression(arg)));
     }
 
 };
 
 template<typename R, typename... Parameters>
-__VirtualTable Function::Lambda<R(Parameters...)>::vtable = {
+Ov_VirtualTable Function::Lambda<R(Parameters...)>::vtable = {
     .size = sizeof(Function::Lambda<R(Parameters...)>),
     .gc_iterator = Function::Lambda<R(Parameters...)>::iterator,
     .gc_destructor = Function::Lambda<R(Parameters...)>::destructor,
@@ -626,7 +627,7 @@ __VirtualTable Function::Lambda<R(Parameters...)>::vtable = {
 };
 
 Function UnknownData::get_function() {
-    return *__UnknownData_get_function(data);
+    return *Ov_UnknownData_get_function(data);
 }
 
 

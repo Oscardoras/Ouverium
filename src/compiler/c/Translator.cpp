@@ -21,9 +21,9 @@ namespace Translator::CStandard {
                     code.main.global_variables[symbol] = Unknown;
 
             {
-                add_system_function(";", "__system_function_separator", "r", code.main.body);
-                add_system_function(":", "__system_function_function_definition", "(rr)", code.main.body);
-                add_system_function("print", "__system_function_print", "r", code.main.body);
+                add_system_function(";", "Ov_system_function_separator", "r", code.main.body);
+                add_system_function(":", "Ov_system_function_function_definition", "(rr)", code.main.body);
+                add_system_function("print", "Ov_system_function_print", "r", code.main.body);
             }
 
             code.main.return_value = get_expression(expression, code.main.body, code.main.body.end());
@@ -75,16 +75,16 @@ namespace Translator::CStandard {
 
         instructions.push_back(
             std::make_shared<FunctionCall>(FunctionCall {
-                std::make_shared<Symbol>("__Function_push"),
+                std::make_shared<Symbol>("Ov_Function_push"),
                 {
                     std::make_shared<FunctionCall>(FunctionCall {
-                        std::make_shared<Symbol>("__UnknownData_get_function"),
+                        std::make_shared<Symbol>("Ov_UnknownData_get_function"),
                         {
                             std::make_shared<FunctionCall>(FunctionCall {
-                                std::make_shared<Symbol>("__Reference_get"),
+                                std::make_shared<Symbol>("Ov_Reference_get"),
                                 {
                                     std::make_shared<FunctionCall>(FunctionCall {
-                                        std::make_shared<Symbol>("__Reference_share"),
+                                        std::make_shared<Symbol>("Ov_Reference_share"),
                                         {
                                             std::make_shared<Symbol>(symbol)
                                         }
@@ -171,16 +171,16 @@ namespace Translator::CStandard {
             instructions.insert(it, std::make_shared<Affectation>(
                 r,
                 std::make_shared<FunctionCall>(FunctionCall {
-                    std::make_shared<Symbol>("__Function_eval"),
+                    std::make_shared<Symbol>("Ov_Function_eval"),
                     {
                         std::make_shared<FunctionCall>(FunctionCall {
-                            std::make_shared<Symbol>("__UnknownData_get_function"),
+                            std::make_shared<Symbol>("Ov_UnknownData_get_function"),
                             {
                                 std::make_shared<FunctionCall>(FunctionCall {
-                                    std::make_shared<Symbol>("__Reference_get"),
+                                    std::make_shared<Symbol>("Ov_Reference_get"),
                                     {
                                         std::make_shared<FunctionCall>(FunctionCall {
-                                            std::make_shared<Symbol>("__Reference_share"),
+                                            std::make_shared<Symbol>("Ov_Reference_share"),
                                             {
                                                 f
                                             }
@@ -196,7 +196,7 @@ namespace Translator::CStandard {
 
             if (f->owned) {
                 instructions.insert(it, std::make_shared<FunctionCall>(FunctionCall {
-                    std::make_shared<Symbol>("__Reference_free"),
+                    std::make_shared<Symbol>("Ov_Reference_free"),
                     {
                         f
                     }
@@ -210,7 +210,7 @@ namespace Translator::CStandard {
             auto function = create_function(function_definition);
 
             std::string data_name = function->name.get() + "_data";
-            instructions.insert(it, std::make_shared<Declaration>("__Data", std::make_shared<Symbol>(data_name)));
+            instructions.insert(it, std::make_shared<Declaration>("Ov_Data", std::make_shared<Symbol>(data_name)));
             instructions.insert(it, std::make_shared<Affectation>(
                 std::make_shared<Property>(
                     std::make_shared<Symbol>(data_name),
@@ -218,9 +218,9 @@ namespace Translator::CStandard {
                     false
                 ),
                 std::make_shared<FunctionCall>(FunctionCall {
-                    std::make_shared<Symbol>("__GC_alloc_object"),
+                    std::make_shared<Symbol>("Ov_GC_alloc_object"),
                     {
-                        std::make_shared<Referencing>(std::make_shared<Symbol>("__VirtualTable_Function"))
+                        std::make_shared<Referencing>(std::make_shared<Symbol>("Ov_VirtualTable_Function"))
                     }
                 })
             ));
@@ -228,12 +228,12 @@ namespace Translator::CStandard {
             instructions.insert(it, std::make_shared<Affectation>(
                 r,
                 std::make_shared<FunctionCall>(FunctionCall {
-                    std::make_shared<Symbol>("__Reference_new_data"),
+                    std::make_shared<Symbol>("Ov_Reference_new_data"),
                     {
                         std::make_shared<FunctionCall>(FunctionCall {
-                            std::make_shared<Symbol>("__UnknownData_from_data"),
+                            std::make_shared<Symbol>("Ov_UnknownData_from_data"),
                             {
-                                std::make_shared<Referencing>(std::make_shared<Symbol>("__VirtualTable_Function")),
+                                std::make_shared<Referencing>(std::make_shared<Symbol>("Ov_VirtualTable_Function")),
                                 std::make_shared<Symbol>(data_name)
                             }
                         })
@@ -248,16 +248,16 @@ namespace Translator::CStandard {
 
             instructions.insert(it,
                 std::make_shared<FunctionCall>(FunctionCall {
-                    std::make_shared<Symbol>("__Function_push"),
+                    std::make_shared<Symbol>("Ov_Function_push"),
                     {
                         std::make_shared<FunctionCall>(FunctionCall {
-                            std::make_shared<Symbol>("__UnknownData_get_function"),
+                            std::make_shared<Symbol>("Ov_UnknownData_get_function"),
                             {
                                 std::make_shared<FunctionCall>(FunctionCall {
-                                    std::make_shared<Symbol>("__Reference_get"),
+                                    std::make_shared<Symbol>("Ov_Reference_get"),
                                     {
                                         std::make_shared<FunctionCall>(FunctionCall {
-                                            std::make_shared<Symbol>("__Reference_share"),
+                                            std::make_shared<Symbol>("Ov_Reference_share"),
                                             {
                                                 r
                                             }
@@ -284,27 +284,27 @@ namespace Translator::CStandard {
             instructions.insert(it, std::make_shared<Affectation>(
                 r,
                 std::make_shared<FunctionCall>(FunctionCall {
-                    std::make_shared<Symbol>("__UnknownData_get_property"),
+                    std::make_shared<Symbol>("Ov_UnknownData_get_property"),
                     {
                         std::make_shared<FunctionCall>(FunctionCall {
-                            std::make_shared<Symbol>("__Reference_get"),
+                            std::make_shared<Symbol>("Ov_Reference_get"),
                             {
                                 std::make_shared<FunctionCall>(FunctionCall {
-                                    std::make_shared<Symbol>("__Reference_share"),
+                                    std::make_shared<Symbol>("Ov_Reference_share"),
                                     {
                                         parent
                                     }
                                 })
                             }
                         }),
-                        std::make_shared<Value>(static_cast<long>(hash(property->name.c_str())))
+                        std::make_shared<Value>(static_cast<long>(hash_string(property->name.c_str())))
                     }
                 })
             ));
 
             if (parent->owned) {
                 instructions.insert(it, std::make_shared<FunctionCall>(FunctionCall {
-                    std::make_shared<Symbol>("__Reference_free"),
+                    std::make_shared<Symbol>("Ov_Reference_free"),
                     {
                         parent
                     }
@@ -321,7 +321,7 @@ namespace Translator::CStandard {
                 instructions.insert(it, std::make_shared<Affectation>(
                     r,
                     std::make_shared<FunctionCall>(FunctionCall {
-                        std::make_shared<Symbol>("__Reference_share"),
+                        std::make_shared<Symbol>("Ov_Reference_share"),
                         {
                             std::make_shared<Symbol>(symbol->name)
                         }
@@ -335,7 +335,7 @@ namespace Translator::CStandard {
                 instructions.insert(it, std::make_shared<Affectation>(
                     r,
                     std::make_shared<FunctionCall>(FunctionCall {
-                        std::make_shared<Symbol>("__Reference_new_string"),
+                        std::make_shared<Symbol>("Ov_Reference_new_string"),
                         {
                             std::make_shared<Value>(symbol->name)
                         }
@@ -360,7 +360,7 @@ namespace Translator::CStandard {
                 }
 
                 std::string data_name = "data_" + value->get_expression_code();
-                instructions.insert(it, std::make_shared<Declaration>("__Data", std::make_shared<Symbol>(data_name)));
+                instructions.insert(it, std::make_shared<Declaration>("Ov_Data", std::make_shared<Symbol>(data_name)));
                 instructions.insert(it, std::make_shared<Affectation>(
                     std::make_shared<Property>(
                         std::make_shared<Symbol>(data_name),
@@ -373,12 +373,12 @@ namespace Translator::CStandard {
                 instructions.insert(it, std::make_shared<Affectation>(
                     r,
                     std::make_shared<FunctionCall>(FunctionCall {
-                        std::make_shared<Symbol>("__Reference_new_data"),
+                        std::make_shared<Symbol>("Ov_Reference_new_data"),
                         {
                             std::make_shared<FunctionCall>(FunctionCall {
-                                std::make_shared<Symbol>("__UnknownData_from_data"),
+                                std::make_shared<Symbol>("Ov_UnknownData_from_data"),
                                 {
-                                    std::make_shared<Referencing>(std::make_shared<Symbol>("__VirtualTable_" + type->name.get())),
+                                    std::make_shared<Referencing>(std::make_shared<Symbol>("Ov_VirtualTable_" + type->name.get())),
                                     std::make_shared<Symbol>(data_name)
                                 }
                             })
@@ -405,7 +405,7 @@ namespace Translator::CStandard {
             instructions.insert(it, std::make_shared<Affectation>(
                 r,
                 std::make_shared<FunctionCall>(FunctionCall {
-                    std::make_shared<Symbol>("__Reference_new_tuple"),
+                    std::make_shared<Symbol>("Ov_Reference_new_tuple"),
                     {
                         list,
                         std::make_shared<Value>(static_cast<long>(list->objects.size()))
@@ -415,7 +415,7 @@ namespace Translator::CStandard {
 
             for (auto ref : tmp) {
                 instructions.insert(it, std::make_shared<FunctionCall>(FunctionCall {
-                    std::make_shared<Symbol>("__Reference_free"),
+                    std::make_shared<Symbol>("Ov_Reference_free"),
                     {
                         ref
                     }

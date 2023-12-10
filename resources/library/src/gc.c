@@ -3,22 +3,22 @@
 #include "gc.h"
 
 
-__GC_Element* __GC_list;
-__GC_Roots* __GC_roots;
+Ov_GC_Element* Ov_GC_list;
+Ov_GC_Roots* Ov_GC_roots;
 
-void __GC_init(void) {
-    __GC_list = NULL;
-    __GC_roots = __GC_init_roots(ROOTS_CAPACITY);
+void Ov_GC_init(void) {
+    Ov_GC_list = NULL;
+    Ov_GC_roots = Ov_GC_init_roots(ROOTS_CAPACITY);
 }
 
-__GC_Roots* __GC_init_roots(size_t c) {
-    __GC_Roots* roots = malloc(sizeof(__GC_Roots) + sizeof(__GC_Reference) * c);
+Ov_GC_Roots* Ov_GC_init_roots(size_t c) {
+    Ov_GC_Roots* roots = malloc(sizeof(Ov_GC_Roots) + sizeof(Ov_GC_Reference) * c);
 
     roots->next = NULL;
     roots->capacity = c;
-    roots->free_list = (__GC_Reference*)roots + 1;
+    roots->free_list = (Ov_GC_Reference*)roots + 1;
 
-    __GC_Reference* tab = (__GC_Reference*)roots + 1;
+    Ov_GC_Reference* tab = (Ov_GC_Reference*)roots + 1;
     tab[0].type = NONE;
     tab[0].none.size = c;
     tab[0].none.next = NULL;
@@ -26,9 +26,9 @@ __GC_Roots* __GC_init_roots(size_t c) {
     return roots;
 }
 
-__GC_Reference* __GC_alloc_references(size_t n) {
-    __GC_Roots* roots = __GC_roots;
-    __GC_Reference** reference_ptr = &roots->free_list;
+Ov_GC_Reference* Ov_GC_alloc_references(size_t n) {
+    Ov_GC_Roots* roots = Ov_GC_roots;
+    Ov_GC_Reference** reference_ptr = &roots->free_list;
 
     while (!((*reference_ptr)->type == NONE && (*reference_ptr)->none.size >= n)) {
         if ((*reference_ptr)->none.next != NULL) {
@@ -36,14 +36,14 @@ __GC_Reference* __GC_alloc_references(size_t n) {
         }
         else {
             if (roots->next == NULL)
-                roots->next = __GC_init_roots(roots->capacity * 2 > n ? roots->capacity * 2 : n);
+                roots->next = Ov_GC_init_roots(roots->capacity * 2 > n ? roots->capacity * 2 : n);
 
             roots = roots->next;
             reference_ptr = &roots->free_list;
         }
     }
 
-    __GC_Reference* ref = *reference_ptr;
+    Ov_GC_Reference* ref = *reference_ptr;
 
     if ((*reference_ptr)->none.size > n) {
         (*reference_ptr + n)->none.size = (*reference_ptr)->none.size - n;
@@ -57,9 +57,9 @@ __GC_Reference* __GC_alloc_references(size_t n) {
     return ref;
 }
 
-void __GC_free_reference(__GC_Reference* reference) {
-    struct __GC_Roots* roots = __GC_roots;
-    while (!((__GC_Reference*)roots < reference && reference < ((__GC_Reference*)roots + 1) + roots->capacity))
+void Ov_GC_free_reference(Ov_GC_Reference* reference) {
+    struct Ov_GC_Roots* roots = Ov_GC_roots;
+    while (!((Ov_GC_Reference*)roots < reference && reference < ((Ov_GC_Reference*)roots + 1) + roots->capacity))
         roots = roots->next;
 
     reference->type = NONE;
@@ -68,41 +68,41 @@ void __GC_free_reference(__GC_Reference* reference) {
     roots->free_list = reference;
 }
 
-void* __GC_alloc_object(__VirtualTable* vtable) {
-    __GC_Element* ptr = malloc(sizeof(__GC_Element) + vtable->size);
+void* Ov_GC_alloc_object(Ov_VirtualTable* vtable) {
+    Ov_GC_Element* ptr = malloc(sizeof(Ov_GC_Element) + vtable->size);
 
     if (ptr == NULL) {
-        __GC_collect();
+        Ov_GC_collect();
 
-        ptr = malloc(sizeof(__GC_Element) + vtable->size);
+        ptr = malloc(sizeof(Ov_GC_Element) + vtable->size);
         if (ptr == NULL)
             return NULL;
     }
 
-    ptr->next = __GC_list;
+    ptr->next = Ov_GC_list;
     ptr->vtable = vtable;
     ptr->iterated = false;
-    __GC_list = ptr;
+    Ov_GC_list = ptr;
 
-    __UnknownData data = {
-        .virtual_table = vtable,
+    Ov_UnknownData data = {
+        .vtable = vtable,
         .data.ptr = ptr + 1
     };
     if (vtable->array.vtable) {
-        __ArrayInfo array = __UnknownData_get_array(data);
+        Ov_ArrayInfo array = Ov_UnknownData_get_array(data);
         array.array->capacity = 0;
         array.array->size = 0;
         array.array->tab = NULL;
     }
     if (vtable->function.exists) {
-        *__UnknownData_get_function(data) = NULL;
+        *Ov_UnknownData_get_function(data) = NULL;
     }
 
     return data.data.ptr;
 }
 
-void __GC_iterate(__GC_Iterator iterator, void* object) {
-    __GC_Element* element = ((__GC_Element*)object) - 1;
+void Ov_GC_iterate(Ov_GC_Iterator iterator, void* object) {
+    Ov_GC_Element* element = ((Ov_GC_Element*)object) - 1;
 
     if (!element->iterated) {
         if (iterator != NULL)
@@ -111,24 +111,24 @@ void __GC_iterate(__GC_Iterator iterator, void* object) {
     }
 }
 
-void __GC_Reference_iterator(__GC_Reference* reference) {
+void Ov_GC_Reference_iterator(Ov_GC_Reference* reference) {
     switch (reference->type) {
     case DATA:
-        __GC_iterate(reference->data.virtual_table->gc_iterator, reference->data.data.ptr);
+        Ov_GC_iterate(reference->data.vtable->gc_iterator, reference->data.data.ptr);
         break;
     case SYMBOL:
-        __GC_iterate(reference->symbol->virtual_table->gc_iterator, reference->symbol->data.ptr);
+        Ov_GC_iterate(reference->symbol->vtable->gc_iterator, reference->symbol->data.ptr);
         break;
     case PROPERTY:
-        __GC_iterate(reference->property.parent.virtual_table->gc_iterator, reference->property.parent.data.ptr);
+        Ov_GC_iterate(reference->property.parent.vtable->gc_iterator, reference->property.parent.data.ptr);
         break;
     case ARRAY:
-        __GC_iterate(reference->array.array.virtual_table->gc_iterator, reference->array.array.data.ptr);
+        Ov_GC_iterate(reference->array.array.vtable->gc_iterator, reference->array.array.data.ptr);
         break;
     case TUPLE: {
         size_t i;
         for (i = 0; i < reference->tuple.size; ++i)
-            __GC_Reference_iterator(&reference->tuple.references[i]);
+            Ov_GC_Reference_iterator(&reference->tuple.references[i]);
         break;
     }
     default:
@@ -136,15 +136,15 @@ void __GC_Reference_iterator(__GC_Reference* reference) {
     }
 }
 
-void __GC_collect(void) {
-    __GC_Roots** roots_ptr;
-    for (roots_ptr = &__GC_roots; *roots_ptr != NULL;) {
-        __GC_Reference** reference_ptr = &(*roots_ptr)->free_list;
-        __GC_Reference* last_free = NULL;
+void Ov_GC_collect(void) {
+    Ov_GC_Roots** roots_ptr;
+    for (roots_ptr = &Ov_GC_roots; *roots_ptr != NULL;) {
+        Ov_GC_Reference** reference_ptr = &(*roots_ptr)->free_list;
+        Ov_GC_Reference* last_free = NULL;
 
         size_t i;
         for (i = 0; i < (*roots_ptr)->capacity;) {
-            __GC_Reference* reference = ((__GC_Reference*)(*roots_ptr) + 1) + i;
+            Ov_GC_Reference* reference = ((Ov_GC_Reference*)(*roots_ptr) + 1) + i;
             if (reference->type == NONE) {
                 if (last_free != NULL) {
                     last_free->none.size++;
@@ -158,14 +158,14 @@ void __GC_collect(void) {
                 }
             }
             else {
-                __GC_Reference_iterator(reference);
+                Ov_GC_Reference_iterator(reference);
                 last_free = NULL;
                 ++i;
             }
         }
 
         if ((*roots_ptr)->free_list == NULL) {
-            __GC_Roots* tmp = *roots_ptr;
+            Ov_GC_Roots* tmp = *roots_ptr;
             *roots_ptr = (*roots_ptr)->next;
             free(tmp);
         }
@@ -174,10 +174,10 @@ void __GC_collect(void) {
         }
     }
 
-    __GC_Element** ptr;
-    for (ptr = &__GC_list; *ptr != NULL;) {
+    Ov_GC_Element** ptr;
+    for (ptr = &Ov_GC_list; *ptr != NULL;) {
         if (!(*ptr)->iterated) {
-            __GC_Element* next = (*ptr)->next;
+            Ov_GC_Element* next = (*ptr)->next;
             free(*ptr);
             *ptr = next;
         }
@@ -188,17 +188,17 @@ void __GC_collect(void) {
     }
 }
 
-void __GC_end(void) {
-    __GC_Roots* roots;
-    for (roots = __GC_roots; roots != NULL;) {
-        __GC_Roots* next = roots->next;
+void Ov_GC_end(void) {
+    Ov_GC_Roots* roots;
+    for (roots = Ov_GC_roots; roots != NULL;) {
+        Ov_GC_Roots* next = roots->next;
         free(roots);
         roots = next;
     }
 
-    __GC_Element* ptr;
-    for (ptr = __GC_list; ptr != NULL;) {
-        __GC_Element* next = ptr->next;
+    Ov_GC_Element* ptr;
+    for (ptr = Ov_GC_list; ptr != NULL;) {
+        Ov_GC_Element* next = ptr->next;
         free(ptr);
         ptr = next;
     }

@@ -121,7 +121,6 @@ namespace Interpreter {
             try {
                 auto & parent = context.get_parent();
                 Reference result;
-                bool resulted = false;
 
                 auto condition = context["condition"].to_data(context).get<Object*>();
                 auto block = context["block"].to_data(context).get<Object*>();
@@ -129,14 +128,10 @@ namespace Interpreter {
                     auto c = Interpreter::call_function(parent, parent.expression, condition->functions, std::make_shared<Parser::Tuple>()).to_data(context).get<bool>();
                     if (c) {
                         result = Interpreter::call_function(parent, parent.expression, block->functions, std::make_shared<Parser::Tuple>());
-                        resulted = true;
                     } else break;
                 }
 
-                if (resulted)
-                    return result;
-                else
-                    return Reference(Data(context.new_object()));
+                return result;
             } catch (Data::BadAccess & e) {
                 throw FunctionArgumentsError();
             }

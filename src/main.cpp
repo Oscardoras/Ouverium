@@ -4,6 +4,9 @@
 #include <fstream>
 #include <sstream>
 
+#include "compiler/SimpleAnalyzer.hpp"
+#include "compiler/c/Translator.hpp"
+
 #include "interpreter/Interpreter.hpp"
 
 #include "parser/Standard.hpp"
@@ -118,6 +121,23 @@ int file_mode(std::string const& path, std::istream & is) {
     }
 }
 
+void compile_mode(std::string const& path, std::istream & is, std::string const& out) {
+    std::ostringstream oss;
+    oss << is.rdbuf();
+    std::string code = oss.str();
+
+    auto expression = Parser::Standard(code, path).get_tree();
+    std::set<std::string> symbols = {";", ":", "print"};
+    expression->compute_symbols(symbols);
+
+    auto meta_data = Analyzer::simple_analize(expression);
+    auto translator = Translator::CStandard::Translator(expression, meta_data);
+
+    translator.translate(out);
+    std::string cmd = "gcc " + out + "/*.c -o " + out + "/executable -I resources/library/include/ -Wl,-rpath,/home/oscar/Ouver/Ouverium libcapi.so";
+    system(cmd.c_str());
+}
+
 int main(int argc, char ** argv) {
     auto p = std::filesystem::path(argv[0]).parent_path() / "libraries";
     include_path.push_back(p);
@@ -130,7 +150,7 @@ int main(int argc, char ** argv) {
             return interactive_mode("stdin");
         else
             return file_mode("stdin", std::cin);
-    else {
+    else if (argc == 2) {
         std::ifstream src(argv[1]);
         if (src)
             return file_mode(argv[1], src);
@@ -138,5 +158,20 @@ int main(int argc, char ** argv) {
             std::cerr << "Error: unable to load the source file " << argv[1] << "." << std::endl;
             return EXIT_FAILURE;
         }
+    }
+    else if (argc == 3) {
+        std::ifstream src(argv[1]);
+        if (src) {
+            compile_mode(argv[1], src, argv[2]);
+            return EXIT_SUCCESS;
+        }
+        else {
+            std::cerr << "Error: unable to load the source file " << argv[1] << "." << std::endl;
+            return EXIT_FAILURE;
+        }
+    }
+    else {
+        std::cerr << "Usage: " << argv[0] << " [src] [out]" << std::endl;
+        return EXIT_FAILURE;
     }
 }
