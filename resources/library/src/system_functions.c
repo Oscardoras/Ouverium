@@ -397,3 +397,13 @@ Ov_Reference_Owned Ov_system_function_print_body(Ov_Reference_Owned captures[], 
     Ov_Reference_free(str);
     return Ov_Reference_new_uninitialized();
 }
+
+
+void Ov_init_functions() {
+    Ov_UnknownData getter_data = {
+        .vtable = &Ov_VirtualTable_Function,
+        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
+    };
+    Ov_Function_push(Ov_UnknownData_get_function(getter_data), Ov_system_function_separator_parameters, Ov_system_function_separator_body, NULL, NULL, 0);
+    getter = Ov_Reference_new_symbol(getter_data);
+}

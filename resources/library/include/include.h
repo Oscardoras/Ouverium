@@ -147,18 +147,18 @@ extern "C" {
 
 
     /**
+     * Initialize the environment.
+    */
+    void Ov_init(void);
+
+    /**
+     * Ends the environment.
+    */
+    void Ov_end(void);
+
+    /**
      * Garbage Collector
     */
-
-    /**
-     * Initialize the Garbage Collector.
-    */
-    void Ov_GC_init(void);
-
-    /**
-     * Ends the Garbage Collector.
-    */
-    void Ov_GC_end(void);
 
     /**
      * Allocates a new object in the memory.

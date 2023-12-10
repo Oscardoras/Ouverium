@@ -6,9 +6,11 @@
 Ov_GC_Element* Ov_GC_list;
 Ov_GC_Roots* Ov_GC_roots;
 
-void Ov_GC_init(void) {
+void Ov_init(void) {
     Ov_GC_list = NULL;
     Ov_GC_roots = Ov_GC_init_roots(ROOTS_CAPACITY);
+
+    Ov_init_functions();
 }
 
 Ov_GC_Roots* Ov_GC_init_roots(size_t c) {
@@ -188,7 +190,7 @@ void Ov_GC_collect(void) {
     }
 }
 
-void Ov_GC_end(void) {
+void Ov_end(void) {
     Ov_GC_Roots* roots;
     for (roots = Ov_GC_roots; roots != NULL;) {
         Ov_GC_Roots* next = roots->next;

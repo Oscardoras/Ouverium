@@ -63,6 +63,8 @@ extern "C" {
     struct Ov_FunctionCapture Ov_GC_reference_to_capture(Ov_GC_Reference* reference);
     Ov_Reference_Owned Ov_GC_capture_to_reference(struct Ov_FunctionCapture capture);
 
+    void Ov_init_functions();
+
 #ifdef __cplusplus
 }
 #endif
