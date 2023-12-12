@@ -48,6 +48,7 @@ Ov_GC_Reference* Ov_GC_alloc_references(size_t n) {
     Ov_GC_Reference* ref = *reference_ptr;
 
     if ((*reference_ptr)->none.size > n) {
+        (*reference_ptr + n)->type = NONE;
         (*reference_ptr + n)->none.size = (*reference_ptr)->none.size - n;
         (*reference_ptr + n)->none.next = (*reference_ptr)->none.next;
 
@@ -96,7 +97,7 @@ void* Ov_GC_alloc_object(Ov_VirtualTable* vtable) {
         array.array->size = 0;
         array.array->tab = NULL;
     }
-    if (vtable->function.exists) {
+    if (vtable->function.offset != -1) {
         *Ov_UnknownData_get_function(data) = NULL;
     }
 

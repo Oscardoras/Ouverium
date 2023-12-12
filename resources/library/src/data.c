@@ -65,13 +65,13 @@ void* Ov_UnknownData_get_property(Ov_UnknownData data, unsigned int hash) {
 Ov_ArrayInfo Ov_UnknownData_get_array(Ov_UnknownData data) {
     Ov_ArrayInfo array = {
         .vtable = data.vtable->array.vtable,
-        .array = (Ov_Array*) ((BYTE*) data.data.ptr) + data.vtable->array.offset
+        .array = (Ov_Array*) (((BYTE*) data.data.ptr) + data.vtable->array.offset)
     };
     return array;
 }
 
 Ov_Function* Ov_UnknownData_get_function(Ov_UnknownData data) {
-    return (Ov_Function*) ((BYTE*) data.data.ptr) + data.vtable->function.offset;
+    return (Ov_Function*) (((BYTE*) data.data.ptr) + data.vtable->function.offset);
 }
 
 void Ov_VirtualTable_UnknownData_gc_iterator(void* ptr) {
@@ -88,9 +88,8 @@ Ov_VirtualTable Ov_VirtualTable_UnknownData = {
     .size = sizeof(Ov_UnknownData),
     .gc_iterator = Ov_VirtualTable_UnknownData_gc_iterator,
     .array.vtable = NULL,
-    .array.offset = 0,
-    .function.exists = false,
-    .function.offset = 0,
+    .array.offset = -1,
+    .function.offset = -1,
     .table.size = 0
 };
 
@@ -98,9 +97,8 @@ Ov_VirtualTable Ov_VirtualTable_Int = {
     .size = sizeof(long),
     .gc_iterator = NULL,
     .array.vtable = NULL,
-    .array.offset = 0,
-    .function.exists = false,
-    .function.offset = 0,
+    .array.offset = -1,
+    .function.offset = -1,
     .table.size = 0
 };
 
@@ -108,9 +106,8 @@ Ov_VirtualTable Ov_VirtualTable_Float = {
     .size = sizeof(double),
     .gc_iterator = NULL,
     .array.vtable = NULL,
-    .array.offset = 0,
-    .function.exists = false,
-    .function.offset = 0,
+    .array.offset = -1,
+    .function.offset = -1,
     .table.size = 0
 };
 
@@ -118,9 +115,8 @@ Ov_VirtualTable Ov_VirtualTable_Char = {
     .size = sizeof(char),
     .gc_iterator = NULL,
     .array.vtable = NULL,
-    .array.offset = 0,
-    .function.exists = false,
-    .function.offset = 0,
+    .array.offset = -1,
+    .function.offset = -1,
     .table.size = 0
 };
 
@@ -128,8 +124,7 @@ Ov_VirtualTable Ov_VirtualTable_Bool = {
     .size = sizeof(bool),
     .gc_iterator = NULL,
     .array.vtable = NULL,
-    .array.offset = 0,
-    .function.exists = false,
-    .function.offset = 0,
+    .array.offset = -1,
+    .function.offset = -1,
     .table.size = 0
 };

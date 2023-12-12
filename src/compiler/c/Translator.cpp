@@ -20,12 +20,6 @@ namespace Translator::CStandard {
                 if (std::holds_alternative<nullptr_t>(get_symbol(symbol)))
                     code.main.global_variables[symbol] = Unknown;
 
-            {
-                add_system_function(";", "Ov_system_function_separator", "r", code.main.body);
-                add_system_function(":", "Ov_system_function_function_definition", "(rr)", code.main.body);
-                add_system_function("print", "Ov_system_function_print", "r", code.main.body);
-            }
-
             code.main.return_value = get_expression(expression, code.main.body, code.main.body.end());
         }
 
@@ -70,48 +64,15 @@ namespace Translator::CStandard {
         }
     }
 
-    void Translator::add_system_function(Name const& symbol, std::string const& function, std::string const& parameters, Instructions & instructions) {
-        code.main.global_variables[symbol] = Unknown;
-
-        instructions.push_back(
-            std::make_shared<FunctionCall>(FunctionCall {
-                std::make_shared<Symbol>("Ov_Function_push"),
-                {
-                    std::make_shared<FunctionCall>(FunctionCall {
-                        std::make_shared<Symbol>("Ov_UnknownData_get_function"),
-                        {
-                            std::make_shared<FunctionCall>(FunctionCall {
-                                std::make_shared<Symbol>("Ov_Reference_get"),
-                                {
-                                    std::make_shared<FunctionCall>(FunctionCall {
-                                        std::make_shared<Symbol>("Ov_Reference_share"),
-                                        {
-                                            std::make_shared<Symbol>(symbol)
-                                        }
-                                    })
-                                }
-                            })
-                        }
-                    }),
-                    std::make_shared<Value>("\"" + parameters + "\""),
-                    std::make_shared<Symbol>(function + "_body"),
-                    std::make_shared<Symbol>(function + "_filter"),
-                    std::make_shared<List>(),
-                    std::make_shared<Value>(0)
-                }
-            })
-        );
-    }
-
     void parse_parameters(std::shared_ptr<Parser::Expression> parameters, std::shared_ptr<FunctionDefinition> function) {
         if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(parameters)) {
             function->parameters.push_back({symbol->name, Unknown});
             function->format += 'r';
         } else if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(parameters)) {
-            function->format += '(';
+            function->format += '[';
             for (auto e : tuple->objects)
                 parse_parameters(e, function);
-            function->format += ')';
+            function->format += ']';
         } else {
             // TODO
         }
@@ -337,7 +298,8 @@ namespace Translator::CStandard {
                     std::make_shared<FunctionCall>(FunctionCall {
                         std::make_shared<Symbol>("Ov_Reference_new_string"),
                         {
-                            std::make_shared<Value>(symbol->name)
+                            std::make_shared<Value>(symbol->name),
+                            std::make_shared<Referencing>(std::make_shared<Symbol>("Ov_VirtualTable_Object"))
                         }
                     })
                 ));
@@ -408,7 +370,8 @@ namespace Translator::CStandard {
                     std::make_shared<Symbol>("Ov_Reference_new_tuple"),
                     {
                         list,
-                        std::make_shared<Value>(static_cast<long>(list->objects.size()))
+                        std::make_shared<Value>(static_cast<long>(list->objects.size())),
+                        std::make_shared<Referencing>(std::make_shared<Symbol>("Ov_VirtualTable_Object"))
                     }
                 })
             ));

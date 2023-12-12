@@ -3,12 +3,12 @@
 #include "include.h"
 
 
-size_t max(size_t a, size_t b) {
+static size_t max(size_t a, size_t b) {
     return a > b ? a : b;
 }
 
 void* Ov_Array_get(Ov_ArrayInfo array, size_t i) {
-    return ((BYTE*) array.array->tab) + (array.vtable->size) * i;
+    return ((BYTE*) array.array->tab) + array.vtable->size * i;
 }
 
 void Ov_Array_set_size(Ov_ArrayInfo array, size_t size) {
@@ -32,7 +32,7 @@ void Ov_Array_set_capacity(Ov_ArrayInfo array, size_t capacity) {
         }
     }
     else
-        array.array->tab = calloc(capacity, array.vtable->size);
+        array.array->tab = malloc(capacity * array.vtable->size);
 
     array.array->capacity = capacity;
 }

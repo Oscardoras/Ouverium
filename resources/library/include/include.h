@@ -28,7 +28,6 @@ extern "C" {
             size_t offset;
         } array;
         struct {
-            bool exists;
             size_t offset;
         } function;
         struct {
@@ -308,9 +307,10 @@ extern "C" {
     /**
      * Creates a new tuple reference from a string.
      * @param string a string.
+     * @param vtable the virtual table if need to create an object from this tuple.
      * @return an owned reference.
     */
-    Ov_Reference_Owned Ov_Reference_new_string(const char *string);
+    Ov_Reference_Owned Ov_Reference_new_string(const char *string, Ov_VirtualTable* vtable);
 
     /**
      * Gets the UnknownData referenced by a reference, no matter what type of reference.
@@ -413,8 +413,13 @@ extern "C" {
     extern Ov_VirtualTable Ov_VirtualTable_Bool;
 
     extern Ov_Reference_Owned getter;
+    extern Ov_Reference_Owned defined;
     extern Ov_Reference_Owned setter;
+    extern Ov_Reference_Owned _x3A_x3D;
+    extern Ov_Reference_Owned _x3B;
+    extern Ov_Reference_Owned while_statement;
     extern Ov_Reference_Owned string_from;
+    extern Ov_Reference_Owned print;
 
 /*
     #define Ov_system_function_separator_filter NULL

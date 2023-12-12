@@ -313,7 +313,7 @@ Ov_Reference_Owned Ov_system_function_not_check_pointers_body(Ov_Reference_Owned
     return Ov_Reference_new_data(data);
 }
 
-const char Ov_system_function_string_from_parameters[] = "[rr]";
+const char Ov_system_function_string_from_parameters[] = "r";
 extern Ov_VirtualTable* Ov_VirtualTable_string_from_tuple;
 Ov_Reference_Owned Ov_system_function_string_from_body(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]) {
     (void)(captures);
@@ -360,12 +360,13 @@ Ov_Reference_Owned Ov_system_function_string_from_body(Ov_Reference_Owned captur
             Ov_Reference_Owned str = Ov_Function_eval(Ov_UnknownData_get_function(Ov_Reference_get(Ov_Reference_share(string_from))), ex);
             Ov_ArrayInfo str_array = Ov_UnknownData_get_array(Ov_Reference_get(Ov_Reference_share(str)));
 
+            size_t begin = string_array.array->size;
             Ov_Array_set_size(string_array, string_array.array->size + str_array.array->size);
             size_t j;
             for (j = 0; j < str_array.array->size; ++j)
                 Ov_UnknownData_set(
                     string_array.vtable,
-                    Ov_Array_get(string_array, string_array.array->size + j),
+                    Ov_Array_get(string_array, begin + j),
                     Ov_UnknownData_from_ptr(str_array.vtable, Ov_Array_get(str_array, j))
                 );
 
@@ -399,11 +400,63 @@ Ov_Reference_Owned Ov_system_function_print_body(Ov_Reference_Owned captures[], 
 }
 
 
+Ov_Reference_Owned getter;
+Ov_Reference_Owned defined;
+Ov_Reference_Owned setter;
+Ov_Reference_Owned _x3A_x3D;
+Ov_Reference_Owned _x3B;
+Ov_Reference_Owned while_statement;
+Ov_Reference_Owned string_from;
+Ov_Reference_Owned print;
+
 void Ov_init_functions() {
     Ov_UnknownData getter_data = {
         .vtable = &Ov_VirtualTable_Function,
         .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
     };
-    Ov_Function_push(Ov_UnknownData_get_function(getter_data), Ov_system_function_separator_parameters, Ov_system_function_separator_body, NULL, NULL, 0);
+    Ov_Function_push(Ov_UnknownData_get_function(getter_data), Ov_system_function_getter_parameters, Ov_system_function_getter_body, NULL, NULL, 0);
     getter = Ov_Reference_new_symbol(getter_data);
+
+    Ov_UnknownData defined_data = {
+        .vtable = &Ov_VirtualTable_Function,
+        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
+    };
+    Ov_Function_push(Ov_UnknownData_get_function(defined_data), Ov_system_function_defined_parameters, Ov_system_function_defined_body, NULL, NULL, 0);
+    defined = Ov_Reference_new_symbol(defined_data);
+
+    Ov_UnknownData setter_data = {
+        .vtable = &Ov_VirtualTable_Function,
+        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
+    };
+    Ov_Function_push(Ov_UnknownData_get_function(setter_data), Ov_system_function_setter_parameters, Ov_system_function_setter_body, NULL, NULL, 0);
+    setter = Ov_Reference_new_symbol(setter_data);
+    _x3A_x3D = Ov_Reference_new_symbol(setter_data);
+
+    Ov_UnknownData separator_data = {
+        .vtable = &Ov_VirtualTable_Function,
+        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
+    };
+    Ov_Function_push(Ov_UnknownData_get_function(separator_data), Ov_system_function_separator_parameters, Ov_system_function_separator_body, NULL, NULL, 0);
+    _x3B = Ov_Reference_new_symbol(separator_data);
+
+    Ov_UnknownData while_statement_data = {
+        .vtable = &Ov_VirtualTable_Function,
+        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
+    };
+    Ov_Function_push(Ov_UnknownData_get_function(while_statement_data), Ov_system_function_while_statement_parameters, Ov_system_function_while_statement_body, NULL, NULL, 0);
+    while_statement = Ov_Reference_new_symbol(while_statement_data);
+
+    Ov_UnknownData string_from_data = {
+        .vtable = &Ov_VirtualTable_Function,
+        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
+    };
+    Ov_Function_push(Ov_UnknownData_get_function(string_from_data), Ov_system_function_string_from_parameters, Ov_system_function_string_from_body, NULL, NULL, 0);
+    string_from = Ov_Reference_new_symbol(string_from_data);
+
+    Ov_UnknownData print_data = {
+        .vtable = &Ov_VirtualTable_Function,
+        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
+    };
+    Ov_Function_push(Ov_UnknownData_get_function(print_data), Ov_system_function_print_parameters, Ov_system_function_print_body, NULL, NULL, 0);
+    print = Ov_Reference_new_symbol(print_data);
 }

@@ -95,7 +95,7 @@ namespace Translator::CStandard {
     }
 
     void Translator::write_structures(std::string& interface, std::string& implementation) {
-        interface += "#include \"include.h\"\n";
+        interface += "#include <include.h>\n";
 
         implementation += "#include <stddef.h>\n";
         implementation += "#include \"structures.h\"\n";
@@ -123,18 +123,17 @@ namespace Translator::CStandard {
             implementation += "Ov_VirtualTable Ov_VirtualTable_" + structure->name.get() + " = {\n";
             implementation += "\t.size = sizeof(struct " + structure->name.get() + "),\n";
             implementation += "\t.gc_iterator = Ov_VirtualTable_" + structure->name.get() + "_gc_iterator,\n";
-            implementation += "\t.gc_destructor = NULL,\n";
             if (auto array_type = structure->array.lock()) {
                 implementation += "\t.array.vtable = &Ov_VirtualTable_" + array_type->name.get() + ",\n";
                 implementation += "\t.array.offset = offsetof(struct " + structure->name.get() + ", Ov_array),\n";
             } else {
                 implementation += "\t.array.vtable = NULL,\n";
-                implementation += "\t.array.offset = NULL,\n";
+                implementation += "\t.array.offset = -1,\n";
             }
             if (structure->function)
                 implementation += "\t.function.offset = offsetof(struct " + structure->name.get() + ", Ov_function),\n";
             else
-                implementation += "\t.function.offset = NULL,\n";
+                implementation += "\t.function.offset = -1,\n";
             std::set<std::string> properties;
             for (auto const& [p, _] : structure->properties)
                 properties.insert(p);
@@ -149,10 +148,13 @@ namespace Translator::CStandard {
             implementation += "\t}\n";
             implementation += "};\n";
         }
+
+        implementation += "\n";
+        implementation += "Ov_VirtualTable* Ov_VirtualTable_string_from_tuple = &Ov_VirtualTable_Object;";
     }
 
     void Translator::write_functions(std::string& interface, std::string& implementation) {
-        interface += "#include \"include.h\"\n";
+        interface += "#include <include.h>\n";
         interface += "#include \"structures.h\"\n";
 
         implementation += "#include \"functions.h\"\n";
@@ -207,15 +209,21 @@ namespace Translator::CStandard {
 
     void Translator::write_main(std::string& implementation) {
         implementation += "int main(int, char**) {\n";
-        implementation += "\tOv_GC_init();\n";
+        implementation += "\tOv_init();\n";
+
         for (auto const& [var, _] : code.main.global_variables) {
-            implementation += "\tOv_UnknownData " + var.get() + "_data = { .vtable = &Ov_VirtualTable_Object, .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object) };\n";
-            implementation += "\tOv_Reference_Owned " + var.get() + " = Ov_Reference_new_symbol(" + var.get() + "_data);\n";
+            if (!symbols.contains(var)) {
+                implementation += "\tOv_UnknownData " + var.get() + "_data = { .vtable = &Ov_VirtualTable_Object, .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object) };\n";
+                implementation += "\tOv_Reference_Owned " + var.get() + " = Ov_Reference_new_symbol(" + var.get() + "_data);\n";
+            }
         }
+
         for (auto const& instruction : code.main.body)
             implementation += "\t" + instruction->get_instruction_code() + "\n";
-        implementation += "\tOv_GC_end();\n";
-        implementation += "return Ov_Reference_get(Ov_Reference_share(" + code.main.return_value->get_expression_code() + ")).data.i;";
+        
+        implementation += "\tint return_value = Ov_Reference_get(Ov_Reference_share(" + code.main.return_value->get_expression_code() + ")).data.i;\n";
+        implementation += "\tOv_end();\n";
+        implementation += "\treturn return_value;\n";
         implementation += "}\n";
     }
 

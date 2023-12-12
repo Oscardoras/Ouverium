@@ -127,14 +127,14 @@ void compile_mode(std::string const& path, std::istream & is, std::string const&
     std::string code = oss.str();
 
     auto expression = Parser::Standard(code, path).get_tree();
-    std::set<std::string> symbols = {";", ":", "print"};
+    std::set<std::string> symbols = Translator::CStandard::Translator::symbols;
     expression->compute_symbols(symbols);
 
     auto meta_data = Analyzer::simple_analize(expression);
     auto translator = Translator::CStandard::Translator(expression, meta_data);
 
     translator.translate(out);
-    std::string cmd = "gcc " + out + "/*.c -o " + out + "/executable -I resources/library/include/ -Wl,-rpath,/home/oscar/Ouver/Ouverium libcapi.so";
+    std::string cmd = "gcc -g -Wall -Wextra " + out + "/*.c -o " + out + "/executable -I resources/library/include/ -Wl,-rpath,/home/oscar/Ouver/Ouverium/build build/libcapi.so";
     system(cmd.c_str());
 }
 

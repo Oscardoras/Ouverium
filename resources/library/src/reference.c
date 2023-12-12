@@ -43,7 +43,7 @@ Ov_Reference_Owned Ov_Reference_new_property(Ov_UnknownData parent, Ov_VirtualTa
 
 Ov_Reference_Owned Ov_Reference_new_array(Ov_UnknownData array, size_t i) {
     Ov_GC_Reference* reference = Ov_GC_alloc_references(1);
-    reference->type = PROPERTY;
+    reference->type = ARRAY;
     reference->array.array = array;
     reference->array.i = i;
 
@@ -64,13 +64,14 @@ Ov_Reference_Owned Ov_Reference_new_tuple(Ov_Reference_Shared references[], size
     return (Ov_Reference_Owned)reference;
 }
 
-Ov_Reference_Owned Ov_Reference_new_string(const char *string) {
+Ov_Reference_Owned Ov_Reference_new_string(const char *string, Ov_VirtualTable* vtable) {
     size_t size = strlen(string);
 
     Ov_GC_Reference* reference = Ov_GC_alloc_references(1);
     reference->type = TUPLE;
     reference->tuple.references = Ov_GC_alloc_references(size);
     reference->tuple.size = size;
+    reference->tuple.vtable = vtable;
 
     size_t i;
     for (i = 0; i < size; i++) {
@@ -102,7 +103,7 @@ Ov_UnknownData Ov_Reference_get(Ov_Reference_Shared r) {
         };
 
         Ov_ArrayInfo array = Ov_UnknownData_get_array(data);
-        array.array->size = reference->tuple.size;
+        Ov_Array_set_size(array, reference->tuple.size);
         size_t i;
         for (i = 0; i < reference->tuple.size; ++i)
             Ov_UnknownData_set(array.vtable, Ov_Array_get(array, i), Ov_Reference_get((Ov_Reference_Shared)&reference->tuple.references[i]));
