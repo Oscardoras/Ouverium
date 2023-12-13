@@ -134,7 +134,7 @@ void compile_mode(std::string const& path, std::istream & is, std::string const&
     auto translator = Translator::CStandard::Translator(expression, meta_data);
 
     translator.translate(out);
-    std::string cmd = "gcc -g -Wall -Wextra " + out + "/*.c -o " + out + "/executable -I resources/library/include/ -Wl,-rpath,/home/oscar/Ouver/Ouverium/build build/libcapi.so";
+    std::string cmd = "gcc -g -Wall -Wextra " + out + "/*.c -o " + out + "/executable -I resources/library/include/ -Wl,-rpath,/home/oscar/Ouverium/build build/libcapi.so";
     system(cmd.c_str());
 }
 
@@ -144,6 +144,15 @@ int main(int argc, char ** argv) {
 
     auto p2 = std::filesystem::path(argv[0]).parent_path().parent_path() / "libraries";
     include_path.push_back(p2);
+
+    /*
+    char arg0[] = "";
+    char arg1[] = "../examples/test3.fl";
+    char arg2[] = "../build/out";
+    char* args[] = { arg0, arg1, arg2 };
+    argv = args;
+    argc = 3;
+    */
 
     if (argc == 1)
         if (is_interactive())

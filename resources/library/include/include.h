@@ -30,17 +30,15 @@ extern "C" {
         struct {
             size_t offset;
         } function;
-        struct {
-            size_t size;
-            struct Ov_VirtualTable_Element {
-                unsigned int hash;
-                union {
-                    size_t offset;
-                    void (*ptr)();
-                };
-                struct Ov_VirtualTable_Element* next;
-            } tab[];
-        } table;
+        size_t table_size;
+        struct Ov_VirtualTable_Element {
+            unsigned int hash;
+            union {
+                size_t offset;
+                void (*ptr)();
+            };
+            struct Ov_VirtualTable_Element* next;
+        } table_tab[];
     } Ov_VirtualTable;
 
     typedef union Ov_Data {

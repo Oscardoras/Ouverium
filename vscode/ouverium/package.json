@@ -1,7 +1,7 @@
 {
-    "name": "ouver",
-    "displayName": "Ouver",
-    "description": "VSCode support for Ouver.",
+    "name": "ouverium",
+    "displayName": "Ouverium",
+    "description": "VSCode support for Ouverium.",
     "version": "0.0.1",
     "engines": {
         "vscode": "^1.67.0"
@@ -11,15 +11,15 @@
     ],
     "contributes": {
         "languages": [{
-            "id": "ouver",
-            "aliases": ["Ouver", "ouver"],
+            "id": "ouverium",
+            "aliases": ["Ouverium", "ouverium"],
             "extensions": [".fl",".ov"],
             "configuration": "./language-configuration.json"
         }],
         "grammars": [{
-            "language": "ouver",
+            "language": "ouverium",
             "scopeName": "source.fl",
-            "path": "./syntaxes/ouver.tmLanguage.json"
+            "path": "./syntaxes/ouverium.tmLanguage.json"
         }]
     }
 }

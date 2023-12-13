@@ -51,7 +51,7 @@ void Ov_UnknownData_set(Ov_VirtualTable* vtable, void* ptr, Ov_UnknownData data)
 }
 
 void* Ov_UnknownData_get_property(Ov_UnknownData data, unsigned int hash) {
-    struct Ov_VirtualTable_Element* list = &data.vtable->table.tab[hash % data.vtable->table.size];
+    struct Ov_VirtualTable_Element* list = &data.vtable->table_tab[hash % data.vtable->table_size];
     while (true) {
         if (list->hash == hash)
             return ((BYTE*)data.data.ptr) + list->offset;
@@ -90,7 +90,7 @@ Ov_VirtualTable Ov_VirtualTable_UnknownData = {
     .array.vtable = NULL,
     .array.offset = -1,
     .function.offset = -1,
-    .table.size = 0
+    .table_size = 0
 };
 
 Ov_VirtualTable Ov_VirtualTable_Int = {
@@ -99,7 +99,7 @@ Ov_VirtualTable Ov_VirtualTable_Int = {
     .array.vtable = NULL,
     .array.offset = -1,
     .function.offset = -1,
-    .table.size = 0
+    .table_size = 0
 };
 
 Ov_VirtualTable Ov_VirtualTable_Float = {
@@ -108,7 +108,7 @@ Ov_VirtualTable Ov_VirtualTable_Float = {
     .array.vtable = NULL,
     .array.offset = -1,
     .function.offset = -1,
-    .table.size = 0
+    .table_size = 0
 };
 
 Ov_VirtualTable Ov_VirtualTable_Char = {
@@ -117,7 +117,7 @@ Ov_VirtualTable Ov_VirtualTable_Char = {
     .array.vtable = NULL,
     .array.offset = -1,
     .function.offset = -1,
-    .table.size = 0
+    .table_size = 0
 };
 
 Ov_VirtualTable Ov_VirtualTable_Bool = {
@@ -126,5 +126,5 @@ Ov_VirtualTable Ov_VirtualTable_Bool = {
     .array.vtable = NULL,
     .array.offset = -1,
     .function.offset = -1,
-    .table.size = 0
+    .table_size = 0
 };

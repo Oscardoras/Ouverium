@@ -334,5 +334,5 @@ Ov_VirtualTable Ov_VirtualTable_Function = {
     .array.vtable = NULL,
     .array.offset = 0,
     .function.offset = 0,
-    .table.size = 0
+    .table_size = 0
 };

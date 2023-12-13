@@ -88,7 +88,7 @@ namespace Translator::CStandard {
                 hash_set.insert(hash_string(p.c_str()) % size);
         }
 
-        std::vector<std::string> vector;
+        std::vector<std::string> vector(size);
         for (auto p : properties)
             vector[hash_string(p.c_str()) % size] = p;
         return vector;
@@ -117,7 +117,7 @@ namespace Translator::CStandard {
             implementation += "\tstruct " + structure->name.get() + "* obj = (struct " + structure->name.get() + "*) ptr;\n";
             implementation += "\n";
             for (auto const& [p, _] : structure->properties)
-                implementation += "\tOv_GC_iterate(Ov_VirtualTable_UnknownData.gc_iterator, obj->" + p.get() + ")\n";
+                implementation += "\tOv_GC_iterate(Ov_VirtualTable_UnknownData.gc_iterator, &obj->" + p.get() + ");\n";
             implementation += "}\n";
 
             implementation += "Ov_VirtualTable Ov_VirtualTable_" + structure->name.get() + " = {\n";
@@ -138,8 +138,8 @@ namespace Translator::CStandard {
             for (auto const& [p, _] : structure->properties)
                 properties.insert(p);
             auto vector = get_size(properties);
-            implementation += "\t.table.size = " + std::to_string(vector.size()) + ",\n";
-            implementation += "\t.table.tab = {\n";
+            implementation += "\t.table_size = " + std::to_string(vector.size()) + ",\n";
+            implementation += "\t.table_tab = {\n";
             for (auto p : vector)
                 if (p != "")
                     implementation += "\t\t{ .hash = " + std::to_string(hash_string(p.c_str())) + ", .offset = offsetof(struct " + structure->name.get() + ", " + p + ") },\n";
@@ -220,7 +220,7 @@ namespace Translator::CStandard {
 
         for (auto const& instruction : code.main.body)
             implementation += "\t" + instruction->get_instruction_code() + "\n";
-        
+
         implementation += "\tint return_value = Ov_Reference_get(Ov_Reference_share(" + code.main.return_value->get_expression_code() + ")).data.i;\n";
         implementation += "\tOv_end();\n";
         implementation += "\treturn return_value;\n";
