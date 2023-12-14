@@ -82,18 +82,18 @@ namespace Parser {
     std::vector<Standard::Word> Standard::get_words() const {
         std::vector<Word> words;
 
-        int size = code.size();
-        int b = 0;
+        size_t size = code.size();
+        size_t b = 0;
         auto last = '\n';
-        auto is_comment = false;
-        auto is_str = false;
-        auto escape = false;
+        bool is_comment = false;
+        bool is_str = false;
+        bool escape = false;
 
-        int line = 1;
-        int column = 1;
+        size_t line = 1;
+        size_t column = 1;
         TextPosition position(path, line, column);
 
-        int i;
+        size_t i;
         for (i = 0; i < size; i++) {
             char c = code[i];
 
@@ -164,17 +164,13 @@ namespace Parser {
     }
 
     int compare_operators(std::string const& a, std::string const& b) {
-        for (int i = 0; i < (int) a.size() && i < (int) b.size(); i++) {
+        for (size_t i = 0; i < a.size() && i < b.size(); i++) {
             if (get_char_priority(a[i]) < get_char_priority(b[i])) return 1;
             if (get_char_priority(a[i]) > get_char_priority(b[i])) return -1;
         }
         if (a.size() < b.size()) return 1;
         else if (a.size() > b.size()) return -1;
         else return 0;
-    }
-
-    bool comparator(std::vector<std::string> const& a, std::vector<std::string> const& b) {
-        return compare_operators(a[0], b[0]) >= 0;
     }
 
 
@@ -220,7 +216,11 @@ namespace Parser {
                     }
                 }
 
-                std::sort(operators.begin(), operators.end(), comparator);
+                std::sort(operators.begin(), operators.end(),
+                    [] (auto const& a, auto const& b) {
+                        return compare_operators(a[0], b[0]) >= 0;
+                    }
+                );
 
                 for (auto const& op : operators) {
                     for (auto it = expressions.begin(); it != expressions.end();) {
