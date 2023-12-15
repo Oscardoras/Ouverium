@@ -419,26 +419,6 @@ extern "C" {
     extern Ov_Reference_Owned string_from;
     extern Ov_Reference_Owned print;
 
-/*
-    #define Ov_system_function_separator_filter NULL
-    extern Ov_Reference_Owned Ov_system_function_separator_body(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]);
-
-    extern bool Ov_system_function_copy_filter(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]);
-    extern Ov_Reference_Owned Ov_system_function_copy_body(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]);
-
-    #define Ov_system_function_copy_pointer_filter NULL
-    extern Ov_Reference_Owned Ov_system_function_copy_pointer_body(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]);
-
-    #define Ov_system_function_assign_filter NULL
-    extern Ov_Reference_Owned Ov_system_function_assign_body(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]);
-
-    #define Ov_system_function_function_definition_filter NULL
-    extern Ov_Reference_Owned Ov_system_function_function_definition_body(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]);
-
-    #define Ov_system_function_print_filter NULL
-    extern Ov_Reference_Owned Ov_system_function_print_body(Ov_Reference_Owned captures[], __Reference_Shared args[]);
-*/
-
 
 #ifdef __cplusplus
 }

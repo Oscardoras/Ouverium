@@ -9,6 +9,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 
+
+find_package(Boost REQUIRED COMPONENTS filesystem)
+
+
 FILE(GLOB_RECURSE capi_sources
     resources/library/src/*
 )
@@ -24,4 +28,6 @@ FILE(GLOB_RECURSE ouverium_sources
     src/compiler/*
 )
 add_executable(ouverium ${ouverium_sources})
+target_include_directories(ouverium PRIVATE ${Boost_INCLUDE_DIRS})
+target_link_libraries(ouverium PRIVATE ${Boost_LIBRARIES})
 target_link_libraries(ouverium PUBLIC capi)

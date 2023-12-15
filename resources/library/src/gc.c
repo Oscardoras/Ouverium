@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdlib.h>
 
 #include "gc.h"
@@ -32,9 +33,11 @@ Ov_GC_Reference* Ov_GC_alloc_references(size_t n) {
     Ov_GC_Roots* roots = Ov_GC_roots;
     Ov_GC_Reference** reference_ptr = &roots->free_list;
 
-    while (!((*reference_ptr)->type == NONE && (*reference_ptr)->none.size >= n)) {
+    assert((*reference_ptr)->type == NONE);
+    while (!(*reference_ptr)->none.size >= n) {
         if ((*reference_ptr)->none.next != NULL) {
             reference_ptr = &(*reference_ptr)->none.next;
+            assert((*reference_ptr)->type == NONE);
         }
         else {
             if (roots->next == NULL)
@@ -46,7 +49,6 @@ Ov_GC_Reference* Ov_GC_alloc_references(size_t n) {
     }
 
     Ov_GC_Reference* ref = *reference_ptr;
-
     if ((*reference_ptr)->none.size > n) {
         (*reference_ptr + n)->type = NONE;
         (*reference_ptr + n)->none.size = (*reference_ptr)->none.size - n;
@@ -61,6 +63,8 @@ Ov_GC_Reference* Ov_GC_alloc_references(size_t n) {
 }
 
 void Ov_GC_free_reference(Ov_GC_Reference* reference) {
+    assert(reference->type != NONE);
+
     struct Ov_GC_Roots* roots = Ov_GC_roots;
     while (!((Ov_GC_Reference*)roots < reference && reference < ((Ov_GC_Reference*)roots + 1) + roots->capacity))
         roots = roots->next;

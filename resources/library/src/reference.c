@@ -4,6 +4,19 @@
 #include "gc.h"
 
 
+static Ov_GC_Reference Ov_Reference_copy_to(Ov_GC_Reference ref) {
+    Ov_GC_Reference new_ref = ref;
+
+    if (new_ref.type == TUPLE) {
+        new_ref.tuple.references = Ov_GC_alloc_references(new_ref.tuple.size);
+        size_t i;
+        for (i = 0; i < new_ref.tuple.size; ++i)
+            new_ref.tuple.references[i] = Ov_Reference_copy_to(ref.tuple.references[i]);
+    }
+
+    return new_ref;
+}
+
 Ov_Reference_Owned Ov_Reference_new_uninitialized() {
     Ov_GC_Reference* reference = Ov_GC_alloc_references(1);
     reference->type = DATA;
@@ -58,13 +71,13 @@ Ov_Reference_Owned Ov_Reference_new_tuple(Ov_Reference_Shared references[], size
     reference->tuple.vtable = vtable;
 
     size_t i;
-    for (i = 0; i < references_size; i++)
-        reference->tuple.references[i] = *((Ov_GC_Reference*)references[i]);
+    for (i = 0; i < references_size; ++i)
+        reference->tuple.references[i] = Ov_Reference_copy_to(*((Ov_GC_Reference*)references[i]));
 
     return (Ov_Reference_Owned)reference;
 }
 
-Ov_Reference_Owned Ov_Reference_new_string(const char *string, Ov_VirtualTable* vtable) {
+Ov_Reference_Owned Ov_Reference_new_string(const char* string, Ov_VirtualTable* vtable) {
     size_t size = strlen(string);
 
     Ov_GC_Reference* reference = Ov_GC_alloc_references(1);
@@ -76,7 +89,7 @@ Ov_Reference_Owned Ov_Reference_new_string(const char *string, Ov_VirtualTable* 
     size_t i;
     for (i = 0; i < size; i++) {
         Ov_Data data = { .c = string[i] };
-        reference->tuple.references[i] = *((Ov_GC_Reference*) Ov_Reference_new_data(Ov_UnknownData_from_data(&Ov_VirtualTable_Char, data)));
+        reference->tuple.references[i] = *((Ov_GC_Reference*)Ov_Reference_new_data(Ov_UnknownData_from_data(&Ov_VirtualTable_Char, data)));
     }
 
     return (Ov_Reference_Owned)reference;
@@ -149,12 +162,7 @@ Ov_Reference_Owned Ov_Reference_copy(Ov_Reference_Shared r) {
     Ov_GC_Reference* reference = (Ov_GC_Reference*)r;
 
     Ov_GC_Reference* new_reference = Ov_GC_alloc_references(1);
-    *new_reference = *reference;
-
-    if (new_reference->type == TUPLE) {
-        new_reference->tuple.references = Ov_GC_alloc_references(new_reference->tuple.size);
-        memcpy(new_reference->tuple.references, reference->tuple.references, sizeof(Ov_GC_Reference) * new_reference->tuple.size);
-    }
+    *new_reference = Ov_Reference_copy_to(*reference);
 
     return (Ov_Reference_Owned)new_reference;
 }
@@ -164,8 +172,8 @@ void Ov_Reference_free(Ov_Reference_Owned r) {
 
     if (reference->type == TUPLE) {
         size_t i;
-        for (i = 0; i < reference->tuple.size; i++)
-            Ov_Reference_free((Ov_Reference_Owned)reference->tuple.references + i);
+        for (i = 0; i < reference->tuple.size; ++i)
+            Ov_Reference_free((Ov_Reference_Owned)(reference->tuple.references + i));
     }
 
     Ov_GC_free_reference(reference);

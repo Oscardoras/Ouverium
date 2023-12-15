@@ -66,14 +66,16 @@ namespace Translator::CStandard {
 
     void parse_parameters(std::shared_ptr<Parser::Expression> parameters, std::shared_ptr<FunctionDefinition> function) {
         if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(parameters)) {
-            function->parameters.push_back({symbol->name, Unknown});
+            function->parameters.push_back({ symbol->name, Unknown });
             function->format += 'r';
-        } else if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(parameters)) {
+        }
+        else if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(parameters)) {
             function->format += '[';
             for (auto e : tuple->objects)
                 parse_parameters(e, function);
             function->format += ']';
-        } else {
+        }
+        else {
             // TODO
         }
     }
@@ -83,7 +85,7 @@ namespace Translator::CStandard {
 
         // captures
         for (auto const& symbol : function_definition->captures)
-            function->captures.push_back({symbol, Unknown});
+            function->captures.push_back({ symbol, Unknown });
 
         // arguments
         parse_parameters(function_definition->parameters, function);
@@ -110,7 +112,7 @@ namespace Translator::CStandard {
         return function;
     }
 
-    std::shared_ptr<Reference> Translator::get_expression(std::shared_ptr<Parser::Expression> expression, Instructions & instructions, Instructions::iterator it) {
+    std::shared_ptr<Reference> Translator::get_expression(std::shared_ptr<Parser::Expression> expression, Instructions& instructions, Instructions::iterator it) {
         if (auto function_call = std::dynamic_pointer_cast<Parser::FunctionCall>(expression)) {
             /*
             if (meta_data.calls[function_call].size() == 1) {
@@ -131,7 +133,7 @@ namespace Translator::CStandard {
 
             instructions.insert(it, std::make_shared<Affectation>(
                 r,
-                std::make_shared<FunctionCall>(FunctionCall {
+                std::make_shared<FunctionCall>(FunctionCall{
                     std::make_shared<Symbol>("Ov_Function_eval"),
                     {
                         std::make_shared<FunctionCall>(FunctionCall {
@@ -152,20 +154,21 @@ namespace Translator::CStandard {
                         }),
                         args
                     }
-                })
+                    })
             ));
 
             if (f->owned) {
-                instructions.insert(it, std::make_shared<FunctionCall>(FunctionCall {
+                instructions.insert(it, std::make_shared<FunctionCall>(FunctionCall{
                     std::make_shared<Symbol>("Ov_Reference_free"),
                     {
                         f
                     }
-                }));
+                    }));
             }
 
             return r;
-        } else if (auto function_definition = std::dynamic_pointer_cast<Parser::FunctionDefinition>(expression)) {
+        }
+        else if (auto function_definition = std::dynamic_pointer_cast<Parser::FunctionDefinition>(expression)) {
             auto r = std::make_shared<Reference>(true);
 
             auto function = create_function(function_definition);
@@ -178,17 +181,17 @@ namespace Translator::CStandard {
                     "ptr",
                     false
                 ),
-                std::make_shared<FunctionCall>(FunctionCall {
+                std::make_shared<FunctionCall>(FunctionCall{
                     std::make_shared<Symbol>("Ov_GC_alloc_object"),
                     {
                         std::make_shared<Referencing>(std::make_shared<Symbol>("Ov_VirtualTable_Function"))
                     }
-                })
+                    })
             ));
 
             instructions.insert(it, std::make_shared<Affectation>(
                 r,
-                std::make_shared<FunctionCall>(FunctionCall {
+                std::make_shared<FunctionCall>(FunctionCall{
                     std::make_shared<Symbol>("Ov_Reference_new_data"),
                     {
                         std::make_shared<FunctionCall>(FunctionCall {
@@ -199,7 +202,7 @@ namespace Translator::CStandard {
                             }
                         })
                     }
-                })
+                    })
             ));
 
             auto captures = std::make_shared<List>();
@@ -208,7 +211,7 @@ namespace Translator::CStandard {
             instructions.insert(it, captures);
 
             instructions.insert(it,
-                std::make_shared<FunctionCall>(FunctionCall {
+                std::make_shared<FunctionCall>(FunctionCall{
                     std::make_shared<Symbol>("Ov_Function_push"),
                     {
                         std::make_shared<FunctionCall>(FunctionCall {
@@ -231,21 +234,22 @@ namespace Translator::CStandard {
                         std::make_shared<Symbol>(function->name.get() + "_body"),
                         function->filter.return_value ? std::make_shared<Symbol>(function->name.get() + "_filter") : std::make_shared<Symbol>("NULL"),
                         captures,
-                        std::make_shared<Value>((long) captures->objects.size())
+                        std::make_shared<Value>((long)captures->objects.size())
                     }
-                })
+                    })
             );
 
             return r;
-        } else if (auto property = std::dynamic_pointer_cast<Parser::Property>(expression)) {
-            auto r = std::make_shared<Reference>(false);
+        }
+        else if (auto property = std::dynamic_pointer_cast<Parser::Property>(expression)) {
+            auto r = std::make_shared<Reference>(true);
 
             auto parent = get_expression(property->object, instructions, it);
 
             instructions.insert(it, std::make_shared<Affectation>(
                 r,
-                std::make_shared<FunctionCall>(FunctionCall {
-                    std::make_shared<Symbol>("Ov_UnknownData_get_property"),
+                std::make_shared<FunctionCall>(FunctionCall{
+                    std::make_shared<Symbol>("Ov_Reference_new_property"),
                     {
                         std::make_shared<FunctionCall>(FunctionCall {
                             std::make_shared<Symbol>("Ov_Reference_get"),
@@ -258,22 +262,24 @@ namespace Translator::CStandard {
                                 })
                             }
                         }),
+                        std::make_shared<Referencing>(std::make_shared<Symbol>("Ov_VirtualTable_UnknownData")),
                         std::make_shared<Value>(static_cast<long>(hash_string(property->name.c_str())))
                     }
-                })
+                    })
             ));
 
             if (parent->owned) {
-                instructions.insert(it, std::make_shared<FunctionCall>(FunctionCall {
+                instructions.insert(it, std::make_shared<FunctionCall>(FunctionCall{
                     std::make_shared<Symbol>("Ov_Reference_free"),
                     {
                         parent
                     }
-                }));
+                    }));
             }
 
             return r;
-        } else if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(expression)) {
+        }
+        else if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(expression)) {
             auto v = get_symbol(symbol->name);
 
             if (std::holds_alternative<nullptr_t>(v)) {
@@ -281,31 +287,33 @@ namespace Translator::CStandard {
 
                 instructions.insert(it, std::make_shared<Affectation>(
                     r,
-                    std::make_shared<FunctionCall>(FunctionCall {
+                    std::make_shared<FunctionCall>(FunctionCall{
                         std::make_shared<Symbol>("Ov_Reference_share"),
                         {
                             std::make_shared<Symbol>(symbol->name)
                         }
-                    })
+                        })
                 ));
 
                 return r;
-            } else if (std::holds_alternative<std::string>(v)) {
+            }
+            else if (std::holds_alternative<std::string>(v)) {
                 auto r = std::make_shared<Reference>(true);
 
                 instructions.insert(it, std::make_shared<Affectation>(
                     r,
-                    std::make_shared<FunctionCall>(FunctionCall {
+                    std::make_shared<FunctionCall>(FunctionCall{
                         std::make_shared<Symbol>("Ov_Reference_new_string"),
                         {
                             std::make_shared<Value>(symbol->name),
                             std::make_shared<Referencing>(std::make_shared<Symbol>("Ov_VirtualTable_Object"))
                         }
-                    })
+                        })
                 ));
 
                 return r;
-            } else {
+            }
+            else {
                 auto r = std::make_shared<Reference>(true);
 
                 std::shared_ptr<Expression> value = nullptr;
@@ -313,10 +321,12 @@ namespace Translator::CStandard {
                 if (auto b = std::get_if<bool>(&v)) {
                     value = std::make_shared<Value>(*b);
                     type = Bool;
-                } else if (auto l = std::get_if<long>(&v)) {
+                }
+                else if (auto l = std::get_if<long>(&v)) {
                     value = std::make_shared<Value>(*l);
                     type = Int;
-                } else if (auto d = std::get_if<double>(&v)) {
+                }
+                else if (auto d = std::get_if<double>(&v)) {
                     value = std::make_shared<Value>(*d);
                     type = Float;
                 }
@@ -334,7 +344,7 @@ namespace Translator::CStandard {
 
                 instructions.insert(it, std::make_shared<Affectation>(
                     r,
-                    std::make_shared<FunctionCall>(FunctionCall {
+                    std::make_shared<FunctionCall>(FunctionCall{
                         std::make_shared<Symbol>("Ov_Reference_new_data"),
                         {
                             std::make_shared<FunctionCall>(FunctionCall {
@@ -345,12 +355,13 @@ namespace Translator::CStandard {
                                 }
                             })
                         }
-                    })
+                        })
                 ));
 
                 return r;
             }
-        } else if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(expression)) {
+        }
+        else if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(expression)) {
             auto r = std::make_shared<Reference>(true);
 
             std::vector<std::shared_ptr<Reference>> tmp;
@@ -366,27 +377,28 @@ namespace Translator::CStandard {
 
             instructions.insert(it, std::make_shared<Affectation>(
                 r,
-                std::make_shared<FunctionCall>(FunctionCall {
+                std::make_shared<FunctionCall>(FunctionCall{
                     std::make_shared<Symbol>("Ov_Reference_new_tuple"),
                     {
                         list,
                         std::make_shared<Value>(static_cast<long>(list->objects.size())),
                         std::make_shared<Referencing>(std::make_shared<Symbol>("Ov_VirtualTable_Object"))
                     }
-                })
+                    })
             ));
 
             for (auto ref : tmp) {
-                instructions.insert(it, std::make_shared<FunctionCall>(FunctionCall {
+                instructions.insert(it, std::make_shared<FunctionCall>(FunctionCall{
                     std::make_shared<Symbol>("Ov_Reference_free"),
                     {
                         ref
                     }
-                }));
+                    }));
             }
 
             return r;
-        } else return nullptr;
+        }
+        else return nullptr;
     }
 
 }

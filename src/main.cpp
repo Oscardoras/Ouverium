@@ -4,6 +4,8 @@
 #include <fstream>
 #include <sstream>
 
+#include <boost/dll.hpp>
+
 #include "compiler/SimpleAnalyzer.hpp"
 #include "compiler/c/Translator.hpp"
 
@@ -134,15 +136,17 @@ void compile_mode(std::string const& path, std::istream & is, std::string const&
     auto translator = Translator::CStandard::Translator(expression, meta_data);
 
     translator.translate(out);
-    std::string cmd = "gcc -g -Wall -Wextra " + out + "/*.c -o " + out + "/executable -I resources/library/include/ -Wl,-rpath,/home/oscar/Ouverium/build build/libcapi.so";
+    std::string cmd = "gcc -g -Wall -Wextra " + out + "/*.c -o " + out + "/executable -I resources/library/include/ -Wl,-rpath,/home/oscar/Ouver/Ouverium/build build/libcapi.so";
     system(cmd.c_str());
 }
 
 int main(int argc, char ** argv) {
-    auto p = std::filesystem::path(argv[0]).parent_path() / "libraries";
+    std::string install_folder = boost::dll::program_location().parent_path().string();
+
+    auto p = std::filesystem::path(install_folder).parent_path() / "libraries";
     include_path.push_back(p);
 
-    auto p2 = std::filesystem::path(argv[0]).parent_path().parent_path() / "libraries";
+    auto p2 = std::filesystem::path(install_folder).parent_path().parent_path() / "libraries";
     include_path.push_back(p2);
 
     /*
