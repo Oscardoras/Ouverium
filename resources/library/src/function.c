@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdlib.h>
 
 #include "hash_string.h"
@@ -9,42 +10,42 @@ struct Ov_FunctionCapture Ov_GC_reference_to_capture(Ov_GC_Reference* reference)
     struct Ov_FunctionCapture capture;
 
     switch (reference->type) {
-    case DATA: {
-        Ov_UnknownData* d = Ov_GC_alloc_object(&Ov_VirtualTable_UnknownData);
-        *d = reference->data;
+        case DATA: {
+            Ov_UnknownData* d = Ov_GC_alloc_object(&Ov_VirtualTable_UnknownData);
+            *d = reference->data;
 
-        capture.type = Ov_FUNCTIONCAPTURE_SYMBOL;
-        capture.symbol = d;
-        break;
-    }
-    case SYMBOL: {
-        capture.type = Ov_FUNCTIONCAPTURE_SYMBOL;
-        capture.symbol = reference->symbol;
-        break;
-    }
-    case PROPERTY: {
-        capture.type = Ov_FUNCTIONCAPTURE_PROPERTY;
-        capture.property.parent = reference->property.parent;
-        capture.property.vtable = reference->property.vtable;
-        capture.property.hash = reference->property.hash;
-        break;
-    }
-    case ARRAY: {
-        capture.type = Ov_FUNCTIONCAPTURE_ARRAY;
-        capture.array.array = reference->array.array;
-        capture.array.i = reference->array.i;
-        break;
-    }
-    case TUPLE: {
-        Ov_UnknownData* d = Ov_GC_alloc_object(&Ov_VirtualTable_UnknownData);
-        *d = Ov_Reference_get((Ov_Reference_Shared)reference);
+            capture.type = Ov_FUNCTIONCAPTURE_SYMBOL;
+            capture.symbol = d;
+            break;
+        }
+        case SYMBOL: {
+            capture.type = Ov_FUNCTIONCAPTURE_SYMBOL;
+            capture.symbol = reference->symbol;
+            break;
+        }
+        case PROPERTY: {
+            capture.type = Ov_FUNCTIONCAPTURE_PROPERTY;
+            capture.property.parent = reference->property.parent;
+            capture.property.vtable = reference->property.vtable;
+            capture.property.hash = reference->property.hash;
+            break;
+        }
+        case ARRAY: {
+            capture.type = Ov_FUNCTIONCAPTURE_ARRAY;
+            capture.array.array = reference->array.array;
+            capture.array.i = reference->array.i;
+            break;
+        }
+        case TUPLE: {
+            Ov_UnknownData* d = Ov_GC_alloc_object(&Ov_VirtualTable_UnknownData);
+            *d = Ov_Reference_get((Ov_Reference_Shared) reference);
 
-        capture.type = Ov_FUNCTIONCAPTURE_SYMBOL;
-        capture.symbol = d;
-        break;
-    }
-    default:
-        break;
+            capture.type = Ov_FUNCTIONCAPTURE_SYMBOL;
+            capture.symbol = d;
+            break;
+        }
+        default:
+            break;
     }
 
     return capture;
@@ -52,19 +53,19 @@ struct Ov_FunctionCapture Ov_GC_reference_to_capture(Ov_GC_Reference* reference)
 
 Ov_Reference_Owned Ov_GC_capture_to_reference(struct Ov_FunctionCapture capture) {
     switch (capture.type) {
-    case Ov_FUNCTIONCAPTURE_SYMBOL: {
-        Ov_GC_Reference* reference = Ov_GC_alloc_references(1);
-        reference->type = SYMBOL;
-        reference->symbol = capture.symbol;
+        case Ov_FUNCTIONCAPTURE_SYMBOL: {
+            Ov_GC_Reference* reference = Ov_GC_alloc_references(1);
+            reference->type = SYMBOL;
+            reference->symbol = capture.symbol;
 
-        return (Ov_Reference_Owned)reference;
-    }
-    case Ov_FUNCTIONCAPTURE_PROPERTY:
-        return Ov_Reference_new_property(capture.property.parent, capture.property.vtable, capture.property.hash);
-    case Ov_FUNCTIONCAPTURE_ARRAY:
-        return Ov_Reference_new_array(capture.array.array, capture.array.i);
-    default:
-        return NULL;
+            return (Ov_Reference_Owned) reference;
+        }
+        case Ov_FUNCTIONCAPTURE_PROPERTY:
+            return Ov_Reference_new_property(capture.property.parent, capture.property.vtable, capture.property.hash);
+        case Ov_FUNCTIONCAPTURE_ARRAY:
+            return Ov_Reference_new_array(capture.array.array, capture.array.i);
+        default:
+            return NULL;
     }
 }
 
@@ -95,18 +96,19 @@ Ov_Function Ov_Function_copy(Ov_Function function) {
     return cpy;
 }
 
-void Ov_Function_push(Ov_Function* function, const char* parameters, Ov_FunctionBody body, Ov_FunctionFilter filter, Ov_Reference_Owned captures[], size_t captures_size) {
+void Ov_Function_push(Ov_Function* function, const char* parameters, Ov_FunctionBody body, Ov_FunctionFilter filter, size_t local_variables, Ov_Reference_Shared captures[], size_t captures_size) {
     Ov_FunctionCell* f = malloc(sizeof(Ov_FunctionCell) + captures_size * sizeof(struct Ov_FunctionCapture));
 
     f->next = *function;
     f->parameters = parameters;
     f->filter = filter;
     f->body = body;
+    f->local_variables = local_variables;
     f->captures.size = captures_size;
 
     size_t i;
     for (i = 0; i < captures_size; ++i)
-        f->captures.tab[i] = Ov_GC_reference_to_capture((Ov_GC_Reference*)captures[i]);
+        f->captures.tab[i] = Ov_GC_reference_to_capture((Ov_GC_Reference*) captures[i]);
 
     *function = f;
 }
@@ -127,55 +129,66 @@ void Ov_Function_free(Ov_Function* function) {
 
 Ov_Reference_Owned Ov_Function_execute(Ov_Expression args) {
     switch (args.type) {
-    case Ov_EXPRESSION_TUPLE: {
-        Ov_Reference_Owned ref[args.tuple.size];
+        case Ov_EXPRESSION_TUPLE: {
+            Ov_Reference_Owned ref[args.tuple.size];
 
-        size_t i;
-        for (i = 0; i < args.tuple.size; ++i)
-            ref[i] = Ov_Function_execute(args.tuple.tab[i]);
+            size_t i;
+            for (i = 0; i < args.tuple.size; ++i)
+                ref[i] = Ov_Function_execute(args.tuple.tab[i]);
 
-        Ov_Reference_Owned r = Ov_Reference_new_tuple((Ov_Reference_Shared*)ref, args.tuple.size, args.tuple.vtable);
+            Ov_Reference_Owned r = Ov_Reference_new_tuple((Ov_Reference_Shared*) ref, args.tuple.size, args.tuple.vtable);
 
-        for (i = 0; i < args.tuple.size; ++i)
-            Ov_Reference_free(ref[i]);
+            for (i = 0; i < args.tuple.size; ++i)
+                Ov_Reference_free(ref[i]);
 
-        return r;
-    }
-    case Ov_EXPRESSION_REFERENCE: {
-        return Ov_Reference_copy(args.reference);
-    }
-    case Ov_EXPRESSION_LAMBDA: {
-        Ov_Reference_Owned ref = Ov_Reference_new_uninitialized();
-        Ov_Expression expr = {
-            .type = Ov_EXPRESSION_REFERENCE,
-            .reference = Ov_Reference_share(ref)
-        };
-        Ov_Reference_Owned result = Ov_Function_eval(&args.lambda, expr);
-        Ov_Reference_free(ref);
-        return result;
-    }
-    default:
-        return NULL;
+            return r;
+        }
+        case Ov_EXPRESSION_REFERENCE: {
+            return Ov_Reference_copy(args.reference);
+        }
+        case Ov_EXPRESSION_LAMBDA: {
+            Ov_Reference_Owned ref = Ov_Reference_new_uninitialized();
+            Ov_Expression expr = {
+                .type = Ov_EXPRESSION_REFERENCE,
+                .reference = Ov_Reference_share(ref)
+            };
+            Ov_Reference_Owned result = Ov_Function_eval(&args.lambda, expr);
+            Ov_Reference_free(ref);
+            return result;
+        }
+        default:
+            return NULL;
     }
 }
 
-bool Ov_Function_parse(Ov_Reference_Owned captures[], Ov_Reference_Shared* vars, bool* owned, size_t* i, const char** params, Ov_Expression args) {
+static Ov_Reference_Owned simple_lambda(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
+    (void) (args);
+    (void) (local_variables);
+    return Ov_Reference_copy(Ov_Reference_share(captures[0]));
+}
+
+bool Ov_Function_parse(Ov_Reference_Shared captures[], Ov_Reference_Shared* vars, bool* owned, size_t* i, const char** params, Ov_Expression* args) {
     if (**params == 'r') {
         ++(*params);
 
         if (**params == '(') {
-            ++(*params);
+            (*params) += 2;
 
             Ov_UnknownData data = {
                 .vtable = &Ov_VirtualTable_Function,
                 .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
             };
-            vars[*i] = (Ov_Reference_Shared)Ov_Reference_new_data(data);
+            if (args->type == Ov_EXPRESSION_LAMBDA) {
+                *((Ov_Function*) data.data.ptr) = Ov_Function_copy(args->lambda);
+            } else {
+                Ov_Reference_Owned r = Ov_Function_execute(*args);
+                Ov_Reference_Shared captures[] = { Ov_Reference_share(r) };
+                Ov_Function_push(Ov_UnknownData_get_function(data), "", simple_lambda, NULL, 0, captures, 1);
+                Ov_Reference_free(r);
+            }
+            vars[*i] = (Ov_Reference_Shared) Ov_Reference_new_data(data);
             owned[*i] = true;
-
-            *((Ov_Function*)data.data.ptr) = Ov_Function_copy(args.lambda);
-        }
-        else if (**params == '.') {
+        } else if (**params == '.') {
             ++(*params);
 
             unsigned n = 0;
@@ -185,83 +198,77 @@ bool Ov_Function_parse(Ov_Reference_Owned captures[], Ov_Reference_Shared* vars,
                 ++(*params);
             } while ('0' < **params && **params > '9');
 
-            Ov_GC_Reference* r = (Ov_GC_Reference*)Ov_Function_execute(args);
+            Ov_GC_Reference* r = (Ov_GC_Reference*) Ov_Function_execute(*args);
 
             if (r->type == PROPERTY && (r->property.hash == n || n == hash_string("."))) {
-                vars[*i] = (Ov_Reference_Shared)Ov_Reference_new_data(r->property.parent);
+                vars[*i] = (Ov_Reference_Shared) Ov_Reference_new_data(r->property.parent);
                 owned[*i] = true;
-                Ov_Reference_free((Ov_Reference_Owned)r);
-            }
-            else {
-                Ov_Reference_free((Ov_Reference_Owned)r);
+                Ov_Reference_free((Ov_Reference_Owned) r);
+            } else {
+                Ov_Reference_free((Ov_Reference_Owned) r);
                 return false;
             }
-        }
-        else {
-            if (args.type == Ov_EXPRESSION_REFERENCE) {
-                vars[*i] = args.reference;
+        } else {
+            if (args->type == Ov_EXPRESSION_REFERENCE) {
+                vars[*i] = args->reference;
                 owned[*i] = false;
-            }
-            else {
-                vars[*i] = (Ov_Reference_Shared)Ov_Function_execute(args);
+            } else {
+                vars[*i] = (Ov_Reference_Shared) Ov_Function_execute(*args);
                 owned[*i] = true;
             }
         }
 
         ++(*i);
         return true;
-    }
-    else if (**params == '[') {
+    } else if (**params == '[') {
         ++(*params);
 
         size_t j = 0;
         size_t size;
 
-        switch (args.type) {
-        case Ov_EXPRESSION_TUPLE: {
-            size = args.tuple.size;
-            while (**params != ']' && j < args.tuple.size) {
-                Ov_Function_parse(captures, vars, owned, i, params, args.tuple.tab[j]);
-                ++j;
+        switch (args->type) {
+            case Ov_EXPRESSION_TUPLE: {
+                size = args->tuple.size;
+                while (**params != ']' && j < args->tuple.size) {
+                    Ov_Function_parse(captures, vars, owned, i, params, &(args->tuple.tab[j]));
+                    ++j;
+                }
+                break;
             }
-            break;
-        }
-        case Ov_EXPRESSION_REFERENCE: {
-            size = Ov_Reference_get_size(args.reference);
-            while (**params != ']' && j < size) {
-                Ov_Expression expr = {
-                    .type = Ov_EXPRESSION_REFERENCE,
-                    .reference = Ov_Reference_share(Ov_Reference_get_element(args.reference, j))
-                };
-                Ov_Function_parse(captures, vars, owned, i, params, expr);
-                ++j;
+            case Ov_EXPRESSION_REFERENCE: {
+                size = Ov_Reference_get_size(args->reference);
+                while (**params != ']' && j < size) {
+                    Ov_Expression expr = {
+                        .type = Ov_EXPRESSION_REFERENCE,
+                        .reference = Ov_Reference_share(Ov_Reference_get_element(args->reference, j))
+                    };
+                    Ov_Function_parse(captures, vars, owned, i, params, &expr);
+                    ++j;
+                }
+                break;
             }
-            break;
-        }
-        case Ov_EXPRESSION_LAMBDA: {
-            Ov_Reference_Owned ref = Ov_Function_execute(args);
-            size = Ov_Reference_get_size(Ov_Reference_share(ref));
-            while (**params != ']' && j < size) {
-                Ov_Expression expr = {
-                    .type = Ov_EXPRESSION_REFERENCE,
-                    .reference = Ov_Reference_share(Ov_Reference_get_element(Ov_Reference_share(ref), j))
-                };
-                Ov_Function_parse(captures, vars, owned, i, params, expr);
-                ++j;
+            case Ov_EXPRESSION_LAMBDA: {
+                Ov_Reference_Owned ref = Ov_Function_execute(*args);
+                size = Ov_Reference_get_size(Ov_Reference_share(ref));
+                while (**params != ']' && j < size) {
+                    Ov_Expression expr = {
+                        .type = Ov_EXPRESSION_REFERENCE,
+                        .reference = Ov_Reference_share(Ov_Reference_get_element(Ov_Reference_share(ref), j))
+                    };
+                    Ov_Function_parse(captures, vars, owned, i, params, &expr);
+                    ++j;
+                }
+                Ov_Reference_free(ref);
+                break;
             }
-            Ov_Reference_free(ref);
-            break;
-        }
         }
 
         if (**params == ']' && j == size) {
             ++(*params);
             return true;
-        }
-        else
+        } else
             return false;
-    }
-    else if ('0' < **params && **params > '9') {
+    } else if ('0' <= **params && **params <= '9') {
         size_t n = 0;
         do {
             n *= 10;
@@ -269,8 +276,11 @@ bool Ov_Function_parse(Ov_Reference_Owned captures[], Ov_Reference_Shared* vars,
             ++(*params);
         } while ('0' < **params && **params > '9');
 
-        Ov_Function* f = Ov_UnknownData_get_function(Ov_Reference_get(Ov_Reference_share(captures[n])));
-        Ov_Function_eval(f, args);
+        Ov_Function* f = Ov_UnknownData_get_function(Ov_Reference_get(captures[n]));
+        Ov_Function_eval(f, *args);
+    } else if (**params == 'e') {
+        vars[*i] = (Ov_Reference_Shared) args;
+        owned[*i] = false;
     }
 
     return true;
@@ -283,42 +293,49 @@ Ov_Reference_Owned Ov_Function_eval(Ov_Function* function, Ov_Expression args) {
 
         size_t size = 0;
         for (c = ptr->parameters; *c != '\0'; ++c)
-            if (*c == 'r')
+            if (*c == 'r' || *c == 'e')
                 ++size;
         Ov_Reference_Shared vars[size];
         bool owned[size];
 
-        Ov_Reference_Owned captures[ptr->captures.size];
+        Ov_Reference_Shared captures[ptr->captures.size];
         size_t j;
         for (j = 0; j < ptr->captures.size; ++j)
-            captures[j] = Ov_GC_capture_to_reference(ptr->captures.tab[j]);
+            captures[j] = (Ov_Reference_Shared) Ov_GC_capture_to_reference(ptr->captures.tab[j]);
 
         size_t i = 0;
         c = ptr->parameters;
-        bool parsed = Ov_Function_parse(captures, vars, owned, &i, &c, args);
+        bool parsed = Ov_Function_parse(captures, vars, owned, &i, &c, &args);
+
+        Ov_Reference_Shared local_variables[ptr->local_variables];
+        for (j = 0; j < ptr->local_variables; ++j)
+            local_variables[j] = (Ov_Reference_Shared) Ov_Reference_new_uninitialized();
 
         Ov_Reference_Owned ref = NULL;
-        if (parsed && (ptr->filter == NULL || ptr->filter(captures, vars)))
-            ref = ptr->body(captures, vars);
+        if (parsed && (ptr->filter == NULL || ptr->filter(captures, vars, local_variables)))
+            ref = ptr->body(captures, vars, local_variables);
+
+        for (j = 0; j < ptr->local_variables; ++j)
+            Ov_Reference_free((Ov_Reference_Owned) local_variables[j]);
 
         for (j = 0; j < ptr->captures.size; ++j)
-            Ov_Reference_free(captures[j]);
+            Ov_Reference_free((Ov_Reference_Owned) captures[j]);
 
         for (i = 0; i < size; ++i)
             if (owned[i])
-                Ov_Reference_free((Ov_Reference_Owned)vars[i]);
+                Ov_Reference_free((Ov_Reference_Owned) vars[i]);
 
         if (ref != NULL)
             return ref;
     }
 
+    assert(false); //throw exception
     return NULL;
-    //throw exception
 }
 
 void Ov_VirtualTable_Function_gc_iterator(void* ptr) {
     Ov_FunctionCell* f;
-    for (f = *((Ov_Function*)ptr); f != NULL; f = f->next) {
+    for (f = *((Ov_Function*) ptr); f != NULL; f = f->next) {
         size_t i;
         for (i = 0; i < f->captures.size; ++i) {
             Ov_Reference_Owned ref = Ov_GC_capture_to_reference(f->captures.tab[i]);

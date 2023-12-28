@@ -12,7 +12,7 @@
 
 namespace Translator::CStandard {
 
-    struct TypeTable: public std::map<std::shared_ptr<Analyzer::Type>, std::shared_ptr<Type>> {
+    struct TypeTable : public std::map<std::shared_ptr<Analyzer::Type>, std::shared_ptr<Type>> {
 
         TypeTable() {
             operator[](Analyzer::Bool) = Bool;
@@ -52,24 +52,29 @@ namespace Translator::CStandard {
         void create_structures();
         std::shared_ptr<FunctionDefinition> create_function(std::shared_ptr<Parser::FunctionDefinition> function);
 
-        std::shared_ptr<Reference> eval_system_function(Analyzer::SystemFunction const& function, std::shared_ptr<Parser::Expression> arguments, Instructions & instructions, Instructions::iterator it);
-        std::shared_ptr<Reference> get_expression(std::shared_ptr<Parser::Expression> expression, Instructions & instructions, Instructions::iterator it);
+        std::shared_ptr<Reference> eval_system_function(Analyzer::SystemFunction const& function, std::shared_ptr<Parser::Expression> arguments, Instructions& instructions, Instructions::iterator it);
+        std::shared_ptr<Reference> get_expression(std::shared_ptr<Parser::Expression> expression, Instructions& instructions, Instructions::iterator it);
 
-        void write_structures(std::string & interface, std::string & implementation);
-        void write_functions(std::string & interface, std::string & implementation);
-        void write_main(std::string & implementation);
+        void write_structures(std::string& interface, std::string& implementation);
+        void write_functions(std::string& interface, std::string& implementation);
+        void write_main(std::string& implementation);
 
     public:
 
-        Translator(std::shared_ptr<Parser::Expression> expression, Analyzer::MetaData const& meta_data):
+        Translator(std::shared_ptr<Parser::Expression> expression, Analyzer::MetaData const& meta_data) :
             expression{ expression }, meta_data{ meta_data } {}
 
         void translate(std::filesystem::path const& out);
 
         inline static const std::set<std::string> symbols = {
             "getter",
+            "defined",
+            "setter",
             "_x3A_x3D",
             "_x3B",
+            "if_statement",
+            "else_statement",
+            "while_statement",
             "string_from",
             "print"
         };

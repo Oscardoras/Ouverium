@@ -68,14 +68,12 @@ namespace Translator::CStandard {
         if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(parameters)) {
             function->parameters.push_back({ symbol->name, Unknown });
             function->format += 'r';
-        }
-        else if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(parameters)) {
+        } else if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(parameters)) {
             function->format += '[';
             for (auto e : tuple->objects)
                 parse_parameters(e, function);
             function->format += ']';
-        }
-        else {
+        } else {
             // TODO
         }
     }
@@ -100,7 +98,7 @@ namespace Translator::CStandard {
 
             for (auto symbol : function_definition->symbols)
                 if (!symbols.contains(symbol))
-                    function->body.local_variables[symbol] = Unknown;
+                    function->local_variables[symbol] = Unknown;
         }
 
         if (function_definition->filter)
@@ -127,7 +125,31 @@ namespace Translator::CStandard {
             auto r = std::make_shared<Reference>(true);
 
             auto f = get_expression(function_call->function, instructions, it);
-            auto args = std::make_shared<FunctionExpression>(get_expression(function_call->arguments, instructions, it));
+            std::shared_ptr<FunctionExpression> args;
+
+            if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(function_call->function); symbol && std::set<std::string>{"if", "while"}.contains(symbol->name)) {
+                if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(function_call->arguments)) {
+                    std::function<std::shared_ptr<FunctionExpression>(std::shared_ptr<Parser::Expression>)> iterate = [this, &iterate](std::shared_ptr<Parser::Expression> expression) -> std::shared_ptr<FunctionExpression> {
+                        if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(expression)) {
+                            std::vector<std::shared_ptr<FunctionExpression>> vector;
+
+                            for (auto const& e : tuple->objects)
+                                vector.push_back(iterate(e));
+
+                            return std::make_shared<FunctionExpression>(vector);
+                        } else {
+                            auto lambda = std::make_shared<Lambda>();
+                            for (auto const& symbol : expression->symbols)
+                                lambda->captures.push_back({ symbol, Unknown });
+                            lambda->body.return_value = get_expression(expression, lambda->body.body, lambda->body.body.begin());
+                        }
+                    };
+
+                    args = iterate(function_call->arguments);
+                }
+            } else {
+                args = std::make_shared<FunctionExpression>(get_expression(function_call->arguments, instructions, it));
+            }
 
             instructions.insert(it, args);
 
@@ -167,8 +189,7 @@ namespace Translator::CStandard {
             }
 
             return r;
-        }
-        else if (auto function_definition = std::dynamic_pointer_cast<Parser::FunctionDefinition>(expression)) {
+        } else if (auto function_definition = std::dynamic_pointer_cast<Parser::FunctionDefinition>(expression)) {
             auto r = std::make_shared<Reference>(true);
 
             auto function = create_function(function_definition);
@@ -234,14 +255,13 @@ namespace Translator::CStandard {
                         std::make_shared<Symbol>(function->name.get() + "_body"),
                         function->filter.return_value ? std::make_shared<Symbol>(function->name.get() + "_filter") : std::make_shared<Symbol>("NULL"),
                         captures,
-                        std::make_shared<Value>((long)captures->objects.size())
+                        std::make_shared<Value>((long) captures->objects.size())
                     }
                     })
             );
 
             return r;
-        }
-        else if (auto property = std::dynamic_pointer_cast<Parser::Property>(expression)) {
+        } else if (auto property = std::dynamic_pointer_cast<Parser::Property>(expression)) {
             auto r = std::make_shared<Reference>(true);
 
             auto parent = get_expression(property->object, instructions, it);
@@ -278,8 +298,7 @@ namespace Translator::CStandard {
             }
 
             return r;
-        }
-        else if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(expression)) {
+        } else if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(expression)) {
             auto v = get_symbol(symbol->name);
 
             if (std::holds_alternative<nullptr_t>(v)) {
@@ -296,8 +315,7 @@ namespace Translator::CStandard {
                 ));
 
                 return r;
-            }
-            else if (std::holds_alternative<std::string>(v)) {
+            } else if (std::holds_alternative<std::string>(v)) {
                 auto r = std::make_shared<Reference>(true);
 
                 instructions.insert(it, std::make_shared<Affectation>(
@@ -312,8 +330,7 @@ namespace Translator::CStandard {
                 ));
 
                 return r;
-            }
-            else {
+            } else {
                 auto r = std::make_shared<Reference>(true);
 
                 std::shared_ptr<Expression> value = nullptr;
@@ -321,12 +338,10 @@ namespace Translator::CStandard {
                 if (auto b = std::get_if<bool>(&v)) {
                     value = std::make_shared<Value>(*b);
                     type = Bool;
-                }
-                else if (auto l = std::get_if<long>(&v)) {
+                } else if (auto l = std::get_if<long>(&v)) {
                     value = std::make_shared<Value>(*l);
                     type = Int;
-                }
-                else if (auto d = std::get_if<double>(&v)) {
+                } else if (auto d = std::get_if<double>(&v)) {
                     value = std::make_shared<Value>(*d);
                     type = Float;
                 }
@@ -360,8 +375,7 @@ namespace Translator::CStandard {
 
                 return r;
             }
-        }
-        else if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(expression)) {
+        } else if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(expression)) {
             auto r = std::make_shared<Reference>(true);
 
             std::vector<std::shared_ptr<Reference>> tmp;
@@ -397,8 +411,7 @@ namespace Translator::CStandard {
             }
 
             return r;
-        }
-        else return nullptr;
+        } else return nullptr;
     }
 
 }

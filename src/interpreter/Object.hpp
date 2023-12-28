@@ -1,6 +1,7 @@
 #ifndef __INTERPRETER_OBJECT_HPP__
 #define __INTERPRETER_OBJECT_HPP__
 
+#include <any>
 #include <functional>
 #include <list>
 #include <map>
@@ -16,22 +17,30 @@ namespace Interpreter {
 
     struct Context;
 
+    class CObj : public std::any {
+    public:
+        using std::any::any;
+
+        template<typename T>
+        T& get() {
+            try {
+                return std::any_cast<T&>(*this);
+            } catch (std::bad_any_cast const&) {
+                try {
+                    return std::any_cast<std::reference_wrapper<T>>(*this).get();
+                } catch (std::bad_any_cast const&) {
+                    return *std::any_cast<std::shared_ptr<T>>(*this);
+                }
+            }
+        }
+    };
+
     struct Object {
 
         std::map<std::string, Data> properties;
         std::list<Function> functions;
         std::vector<Data> array;
-        struct Stream: public std::variant<std::shared_ptr<std::ios>, std::reference_wrapper<std::ios>> {
-            using std::variant<std::shared_ptr<std::ios>, std::reference_wrapper<std::ios>>::variant;
-
-            operator std::ios*() const {
-                if (auto ptr = std::get_if<std::shared_ptr<std::ios>>(this))
-                    return ptr->get();
-                else if (auto ref = std::get_if<std::reference_wrapper<std::ios>>(this))
-                    return &ref->get();
-                else return nullptr;
-            }
-        } stream = nullptr;
+        CObj c_obj;
 
         bool referenced = false;
 

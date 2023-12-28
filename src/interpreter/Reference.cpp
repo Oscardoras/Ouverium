@@ -3,22 +3,22 @@
 
 namespace Interpreter {
 
-    Data compute(Context & context, Reference const& reference, Data const& data) {
+    Data compute(Context& context, Reference const& reference, Data const& data) {
         if (data == Data{})
             return call_function(context, context.expression, context.get_global()["getter"].to_data(context).get<Object*>()->functions, reference).to_data(context);
         else
             return data;
     }
 
-    PropertyReference::operator Data &() const {
+    PropertyReference::operator Data& () const {
         return parent.get().properties[name];
     }
 
-    ArrayReference::operator Data &() const {
+    ArrayReference::operator Data& () const {
         return array.get().array[i];
     }
 
-    Data IndirectReference::to_data(Context & context) const {
+    Data IndirectReference::to_data(Context& context) const {
         return compute(context, *this, std::visit([](auto const& arg) -> Data& {
             return arg;
         }, *this));
@@ -33,7 +33,7 @@ namespace Interpreter {
             *this = *array_reference;
     }
 
-    Data Reference::get_data(Context & context) const {
+    Data Reference::get_data(Context& context) const {
         if (auto data = std::get_if<Data>(this))
             return *data;
         else if (auto symbol_reference = std::get_if<SymbolReference>(this))
@@ -51,11 +51,11 @@ namespace Interpreter {
         } else return Data{};
     }
 
-    Data Reference::to_data(Context & context) const {
+    Data Reference::to_data(Context& context) const {
         return compute(context, *this, get_data(context));
     }
 
-    IndirectReference Reference::to_indirect_reference(Context & context) const {
+    IndirectReference Reference::to_indirect_reference(Context& context) const {
         if (auto data = std::get_if<Data>(this))
             return context.new_reference(*data);
         else if (auto symbol_reference = std::get_if<SymbolReference>(this))

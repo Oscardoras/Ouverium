@@ -8,28 +8,28 @@ namespace Interpreter {
 
     namespace Streams {
 
-        Reference print(FunctionContext & context);
+        Reference print(FunctionContext& context);
 
-        Reference scan(FunctionContext & context);
+        Reference scan(FunctionContext& context);
 
-        Reference read(FunctionContext & context);
+        Reference read(FunctionContext& context);
 
-        Reference has(FunctionContext & context);
+        Reference has(FunctionContext& context);
 
-        void setInputStream(Context & context, Object & object);
+        void setInputStream(Context& context, Object& object);
 
-        Reference write(FunctionContext & context);
+        Reference write(FunctionContext& context);
 
-        Reference flush(FunctionContext & context);
+        Reference flush(FunctionContext& context);
 
-        void setOutputStream(Context & context, Object & object);
+        void setOutputStream(Context& context, Object& object);
 
-        Reference input_file(FunctionContext & context);
-        Reference output_file(FunctionContext & context);
+        Reference input_file(FunctionContext& context);
+        Reference output_file(FunctionContext& context);
 
-        Reference wd(FunctionContext & context);
+        Reference wd(FunctionContext& context);
 
-        void init(GlobalContext & context);
+        void init(GlobalContext& context);
 
     }
 

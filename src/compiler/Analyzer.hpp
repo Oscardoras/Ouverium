@@ -22,7 +22,7 @@ namespace Analyzer {
     inline std::shared_ptr<Type> Int = std::make_shared<Type>();
     inline std::shared_ptr<Type> Float = std::make_shared<Type>();
 
-    struct Structure: public Type {
+    struct Structure : public Type {
         std::map<std::string, std::set<std::weak_ptr<Type>>> properties;
         std::set<std::weak_ptr<Type>> array;
         bool function = false;

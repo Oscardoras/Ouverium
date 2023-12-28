@@ -296,7 +296,7 @@ public:
     Reference(UnknownData const& array, size_t const i) :
         reference{ Ov_Reference_new_array(array, i) } {}
     Reference(std::initializer_list<Reference> const& list, Ov_VirtualTable* const vtable) :
-        reference{ Ov_Reference_new_tuple((Ov_Reference_Shared*)std::data(list), list.size(), vtable) } {}
+        reference{ Ov_Reference_new_tuple((Ov_Reference_Shared*) std::data(list), list.size(), vtable) } {}
 
     Reference(Ov_Reference_Owned const reference) :
         reference{ reference } {}
@@ -312,13 +312,13 @@ public:
 
     ~Reference() {
         if (reference != nullptr)
-            Ov_Reference_free((Ov_Reference_Owned)reference);
+            Ov_Reference_free((Ov_Reference_Owned) reference);
     }
 
     Reference& operator=(Reference const& reference) {
         if (Reference::reference != reference.reference) {
-            Ov_Reference_free((Ov_Reference_Owned)Reference::reference);
-            Reference::reference = Ov_Reference_copy((Ov_Reference_Shared)reference.reference);
+            Ov_Reference_free((Ov_Reference_Owned) Reference::reference);
+            Reference::reference = Ov_Reference_copy((Ov_Reference_Shared) reference.reference);
         }
 
         return *this;
@@ -333,23 +333,23 @@ public:
     }
 
     operator Ov_Reference_Owned() {
-        auto tmp = (Ov_Reference_Owned)reference;
+        auto tmp = (Ov_Reference_Owned) reference;
         reference = nullptr;
         return tmp;
     }
     operator Ov_Reference_Shared() const {
-        return (Ov_Reference_Shared)reference;
+        return (Ov_Reference_Shared) reference;
     }
 
     operator UnknownData() const {
         return get();
     }
     UnknownData get() const {
-        return Ov_Reference_get((Ov_Reference_Shared)reference);
+        return Ov_Reference_get((Ov_Reference_Shared) reference);
     }
 
     size_t size() const {
-        return Ov_Reference_get_size((Ov_Reference_Shared)reference);
+        return Ov_Reference_get_size((Ov_Reference_Shared) reference);
     }
 
     bool empty() const {
@@ -357,7 +357,7 @@ public:
     }
 
     Reference operator[](size_t i) const {
-        return Ov_Reference_get_element((Ov_Reference_Shared)reference, i);
+        return Ov_Reference_get_element((Ov_Reference_Shared) reference, i);
     }
 
     class iterator {
@@ -452,7 +452,7 @@ struct LambdaParameter<std::function<Reference()>> {
                 .reference = ref
             };
             return Ov_Function_eval(Ov_UnknownData_get_function(Ov_Reference_get(arg)), expr);
-            };
+        };
     }
 };
 
@@ -529,19 +529,19 @@ public:
         return function;
     }
 
-    void push(const char* parameters, Ov_FunctionBody body, Ov_FunctionFilter filter = nullptr, std::initializer_list<Reference> references = {}) {
-        Ov_Function_push(&function, parameters, body, filter, (Ov_Reference_Owned*)std::data(references), references.size());
+    void push(const char* parameters, Ov_FunctionBody body, Ov_FunctionFilter filter = nullptr, size_t local_variables, std::initializer_list<Reference> references = {}) {
+        Ov_Function_push(&function, parameters, body, filter, local_variables, (Ov_Reference_Shared*) std::data(references), references.size());
     }
 
-    void push(const char* parameters, Ov_FunctionBody body, Ov_FunctionFilter filter = nullptr, std::vector<Reference>&& references = {}) {
-        Ov_Function_push(&function, parameters, body, filter, (Ov_Reference_Owned*)std::data(references), references.size());
+    void push(const char* parameters, Ov_FunctionBody body, Ov_FunctionFilter filter = nullptr, size_t local_variables, std::vector<Reference>&& references = {}) {
+        Ov_Function_push(&function, parameters, body, filter, local_variables, (Ov_Reference_Shared*) std::data(references), references.size());
     }
 
     template<typename R, typename... Args>
     void push(Lambda<R(Args...)> const& lambda) {
         Reference r(UnknownData(&Lambda<R(Args...)>::vtable, Ov_Data{ .ptr = new (Ov_GC_alloc_object(&Lambda<R(Args...)>::vtable)) Lambda<R(Args...)>(lambda) }));
 
-        return Ov_Function_push(&function, Lambda<R(Args...)>::parameters.c_str(), &Lambda<R(Args...)>::_body, &Lambda<R(Args...)>::_filter, (Ov_Reference_Owned*)&r, 1);
+        return Ov_Function_push(&function, Lambda<R(Args...)>::parameters.c_str(), &Lambda<R(Args...)>::_body, &Lambda<R(Args...)>::_filter, (Ov_Reference_Owned*) &r, 1);
     }
 
     void pop() {

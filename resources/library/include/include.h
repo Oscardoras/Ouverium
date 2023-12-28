@@ -25,16 +25,16 @@ extern "C" {
         Ov_GC_Iterator gc_iterator;
         struct {
             struct Ov_VirtualTable* vtable;
-            size_t offset;
+            short offset;
         } array;
         struct {
-            size_t offset;
+            short offset;
         } function;
         size_t table_size;
         struct Ov_VirtualTable_Element {
             unsigned int hash;
             union {
-                size_t offset;
+                short offset;
                 void (*ptr)();
             };
             struct Ov_VirtualTable_Element* next;
@@ -86,8 +86,8 @@ extern "C" {
         struct Ov_Array* array;
     } Ov_ArrayInfo;
 
-    typedef bool (*Ov_FunctionFilter)(Ov_Reference_Owned capture[], Ov_Reference_Shared args[]);
-    typedef Ov_Reference_Owned(*Ov_FunctionBody)(Ov_Reference_Owned capture[], Ov_Reference_Shared args[]);
+    typedef bool (*Ov_FunctionFilter)(Ov_Reference_Shared capture[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]);
+    typedef Ov_Reference_Owned(*Ov_FunctionBody)(Ov_Reference_Shared capture[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]);
 
     struct Ov_FunctionCapture {
         enum {
@@ -114,6 +114,7 @@ extern "C" {
         const char* parameters; // r for reference, number for referencing capture, perenthesis for function calls, point then hash for member call
         Ov_FunctionFilter filter;
         Ov_FunctionBody body;
+        unsigned short local_variables;
         struct {
             unsigned short size;
             struct Ov_FunctionCapture tab[];
@@ -256,7 +257,7 @@ extern "C" {
      * Reference
     */
 
-   /**
+    /**
      * Creates a new uninitialized data reference.
      * @return an owned reference.
     */
@@ -308,7 +309,7 @@ extern "C" {
      * @param vtable the virtual table if need to create an object from this tuple.
      * @return an owned reference.
     */
-    Ov_Reference_Owned Ov_Reference_new_string(const char *string, Ov_VirtualTable* vtable);
+    Ov_Reference_Owned Ov_Reference_new_string(const char* string, Ov_VirtualTable* vtable);
 
     /**
      * Gets the UnknownData referenced by a reference, no matter what type of reference.
@@ -376,10 +377,11 @@ extern "C" {
      * @param parameters the format of the parameters.
      * @param body the body of the function.
      * @param filter the filter of the function.
-     * @param references a array of the references used by the function.
-     * @param references_size the number of references.
+     * @param local_variables the number of local variables.
+     * @param captures a array of the captures used by the function.
+     * @param captures_size the number of captures.
     */
-    void Ov_Function_push(Ov_Function* function, const char* parameters, Ov_FunctionBody body, Ov_FunctionFilter filter, Ov_Reference_Owned references[], size_t references_size);
+    void Ov_Function_push(Ov_Function* function, const char* parameters, Ov_FunctionBody body, Ov_FunctionFilter filter, size_t local_variables, Ov_Reference_Shared captures[], size_t captures_size);
 
     /**
      * Pops the last implementation from a Function.
@@ -415,6 +417,8 @@ extern "C" {
     extern Ov_Reference_Owned setter;
     extern Ov_Reference_Owned _x3A_x3D;
     extern Ov_Reference_Owned _x3B;
+    extern Ov_Reference_Owned if_statement;
+    extern Ov_Reference_Owned else_statement;
     extern Ov_Reference_Owned while_statement;
     extern Ov_Reference_Owned string_from;
     extern Ov_Reference_Owned print;

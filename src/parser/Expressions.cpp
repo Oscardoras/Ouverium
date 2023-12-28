@@ -11,11 +11,20 @@ namespace Parser {
     }
 
     template<typename T>
-    void merge(T const& from, T & to) {
+    void merge(T const& from, T& to) {
         to.insert(from.begin(), from.end());
     }
 
-    std::set<std::string> FunctionCall::compute_symbols(std::set<std::string> & available_symbols) {
+    std::set<std::string> FunctionCall::get_symbols() const {
+        std::set<std::string> symbols;
+
+        merge(function->get_symbols(), symbols);
+        merge(arguments->get_symbols(), symbols);
+
+        return symbols;
+    }
+
+    std::set<std::string> FunctionCall::compute_symbols(std::set<std::string>& available_symbols) {
         function->parent = shared_from_this();
         arguments->parent = shared_from_this();
 
@@ -25,7 +34,17 @@ namespace Parser {
         return symbols;
     }
 
-    std::set<std::string> FunctionDefinition::compute_symbols(std::set<std::string> & available_symbols) {
+    std::set<std::string> FunctionDefinition::get_symbols() const {
+        std::set<std::string> symbols;
+
+        merge(parameters->get_symbols(), symbols);
+        if (filter) merge(filter->get_symbols(), symbols);
+        merge(body->get_symbols(), symbols);
+
+        return symbols;
+    }
+
+    std::set<std::string> FunctionDefinition::compute_symbols(std::set<std::string>& available_symbols) {
         parameters->parent = shared_from_this();
         if (filter) filter->parent = shared_from_this();
         body->parent = shared_from_this();
@@ -46,7 +65,11 @@ namespace Parser {
         return used_symbols;
     }
 
-    std::set<std::string> Property::compute_symbols(std::set<std::string> & available_symbols) {
+    std::set<std::string> Property::get_symbols() const {
+        return object->get_symbols();
+    }
+
+    std::set<std::string> Property::compute_symbols(std::set<std::string>& available_symbols) {
         object->parent = shared_from_this();
 
         merge(object->compute_symbols(available_symbols), symbols);
@@ -54,15 +77,28 @@ namespace Parser {
         return symbols;
     }
 
-    std::set<std::string> Symbol::compute_symbols(std::set<std::string> & available_symbols) {
+    std::set<std::string> Symbol::get_symbols() const {
+        return { name };
+    }
+
+    std::set<std::string> Symbol::compute_symbols(std::set<std::string>& available_symbols) {
         symbols.insert(name);
         available_symbols.insert(name);
 
         return symbols;
     }
 
-    std::set<std::string> Tuple::compute_symbols(std::set<std::string> & available_symbols) {
-        for (auto & ex : objects) {
+    std::set<std::string> Tuple::get_symbols() const {
+        std::set<std::string> symbols;
+
+        for (auto& ex : objects)
+            merge(ex->get_symbols(), symbols);
+
+        return symbols;
+    }
+
+    std::set<std::string> Tuple::compute_symbols(std::set<std::string>& available_symbols) {
+        for (auto& ex : objects) {
             ex->parent = shared_from_this();
             merge(ex->compute_symbols(available_symbols), symbols);
         }
@@ -72,7 +108,7 @@ namespace Parser {
 
     std::string tabu(int n) {
         std::string s;
-        for (int i = 0; i < n; i++) s+= "    ";
+        for (int i = 0; i < n; i++) s += "    ";
         return s;
     }
 

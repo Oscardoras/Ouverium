@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -5,69 +6,99 @@
 #include "include.h"
 
 
-const char Ov_system_function_getter_parameters[] = "r";
-Ov_Reference_Owned Ov_system_function_getter_body(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]) {
-    (void)(captures);
 
-    Ov_GC_Reference* reference = (Ov_GC_Reference*)args[0];
+
+static bool check_pointers(Ov_UnknownData a, Ov_UnknownData b) {
+    if (a.vtable == &Ov_VirtualTable_Char) {
+        if (b.vtable == a.vtable)
+            return a.data.b == b.data.b;
+        else
+            return false;
+    } else if (a.vtable == &Ov_VirtualTable_Float) {
+        if (b.vtable == a.vtable)
+            return a.data.f == b.data.f;
+        else
+            return false;
+    } else if (a.vtable == &Ov_VirtualTable_Int) {
+        if (b.vtable == a.vtable)
+            return a.data.i == b.data.i;
+        else
+            return false;
+    } else if (a.vtable == &Ov_VirtualTable_Bool) {
+        if (b.vtable == a.vtable)
+            return a.data.b == b.data.b;
+        else
+            return false;
+    } else {
+        return a.data.ptr == b.data.ptr;
+    }
+}
+
+const char getter_parameters[] = "r";
+Ov_Reference_Owned getter_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
+    (void) (captures);
+    (void) (local_variables);
+
+    Ov_GC_Reference* reference = (Ov_GC_Reference*) args[0];
     switch (reference->type) {
-    case SYMBOL: {
-        reference->symbol->vtable = &Ov_VirtualTable_Object;
-        reference->symbol->data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object);
-        break;
-    }
-    case PROPERTY: {
-        if (reference->property.vtable == &Ov_VirtualTable_UnknownData) {
-            Ov_UnknownData* data = Ov_UnknownData_get_property(reference->property.parent, reference->property.hash);
-            data->vtable = &Ov_VirtualTable_Object;
-            data->data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object);
+        case SYMBOL: {
+            reference->symbol->vtable = &Ov_VirtualTable_Object;
+            reference->symbol->data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object);
+            break;
         }
-        break;
-    }
-    case ARRAY: {
-        Ov_ArrayInfo array = Ov_UnknownData_get_array(reference->array.array);
-        if (array.vtable == &Ov_VirtualTable_UnknownData) {
-            Ov_UnknownData* data = Ov_Array_get(array, reference->array.i);
-            data->vtable = &Ov_VirtualTable_Object;
-            data->data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object);
+        case PROPERTY: {
+            if (reference->property.vtable == &Ov_VirtualTable_UnknownData) {
+                Ov_UnknownData* data = Ov_UnknownData_get_property(reference->property.parent, reference->property.hash);
+                data->vtable = &Ov_VirtualTable_Object;
+                data->data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object);
+            }
+            break;
         }
-        break;
-    }
-    default:
-        break;
+        case ARRAY: {
+            Ov_ArrayInfo array = Ov_UnknownData_get_array(reference->array.array);
+            if (array.vtable == &Ov_VirtualTable_UnknownData) {
+                Ov_UnknownData* data = Ov_Array_get(array, reference->array.i);
+                data->vtable = &Ov_VirtualTable_Object;
+                data->data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object);
+            }
+            break;
+        }
+        default:
+            break;
     }
 
     return Ov_Reference_copy(args[0]);
 }
 
-const char Ov_system_function_defined_parameters[] = "r";
-Ov_Reference_Owned Ov_system_function_defined_body(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]) {
-    (void)(captures);
+const char defined_parameters[] = "r";
+Ov_Reference_Owned defined_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
+    (void) (captures);
+    (void) (local_variables);
     bool defined = true;
 
-    Ov_GC_Reference* reference = (Ov_GC_Reference*)args[0];
+    Ov_GC_Reference* reference = (Ov_GC_Reference*) args[0];
     switch (reference->type) {
-    case SYMBOL: {
-        defined = reference->symbol->vtable != NULL;
-        break;
-    }
-    case PROPERTY: {
-        if (reference->property.vtable == &Ov_VirtualTable_UnknownData) {
-            Ov_UnknownData* data = Ov_UnknownData_get_property(reference->property.parent, reference->property.hash);
-            defined = data->vtable != NULL;
+        case SYMBOL: {
+            defined = reference->symbol->vtable != NULL;
+            break;
         }
-        break;
-    }
-    case ARRAY: {
-        Ov_ArrayInfo array = Ov_UnknownData_get_array(reference->array.array);
-        if (array.vtable == &Ov_VirtualTable_UnknownData) {
-            Ov_UnknownData* data = Ov_Array_get(array, reference->array.i);
-            defined = data->vtable != NULL;
+        case PROPERTY: {
+            if (reference->property.vtable == &Ov_VirtualTable_UnknownData) {
+                Ov_UnknownData* data = Ov_UnknownData_get_property(reference->property.parent, reference->property.hash);
+                defined = data->vtable != NULL;
+            }
+            break;
         }
-        break;
-    }
-    default:
-        break;
+        case ARRAY: {
+            Ov_ArrayInfo array = Ov_UnknownData_get_array(reference->array.array);
+            if (array.vtable == &Ov_VirtualTable_UnknownData) {
+                Ov_UnknownData* data = Ov_Array_get(array, reference->array.i);
+                defined = data->vtable != NULL;
+            }
+            break;
+        }
+        default:
+            break;
     }
 
     Ov_UnknownData data = {
@@ -77,41 +108,42 @@ Ov_Reference_Owned Ov_system_function_defined_body(Ov_Reference_Owned captures[]
     return Ov_Reference_new_data(data);
 }
 
-const char Ov_system_function_setter_parameters[] = "[rr]";
+const char setter_parameters[] = "[rr]";
 static Ov_Reference_Owned assignation_body(Ov_GC_Reference* var, Ov_UnknownData data) {
     switch (var->type) {
-    case DATA: {
-        return Ov_Reference_new_data(data);
-    }
-    case SYMBOL: {
-        *var->symbol = data;
-        break;
-    }
-    case PROPERTY: {
-        Ov_UnknownData_set(var->property.vtable, Ov_UnknownData_get_property(var->property.parent, var->property.hash), data);
-        break;
-    }
-    case ARRAY: {
-        Ov_ArrayInfo array = Ov_UnknownData_get_array(var->array.array);
-        Ov_UnknownData_set(array.vtable, Ov_Array_get(array, var->array.i), data);
-        break;
-    }
-    case TUPLE: {
-        Ov_ArrayInfo array = Ov_UnknownData_get_array(data);
-        size_t i;
-        for (i = 0; i < var->tuple.size; ++i)
-            assignation_body(&var->tuple.references[i], Ov_UnknownData_from_ptr(array.vtable, Ov_Array_get(array, i)));
-        break;
-    }
-    default:
-        break;
+        case DATA: {
+            return Ov_Reference_new_data(data);
+        }
+        case SYMBOL: {
+            *var->symbol = data;
+            break;
+        }
+        case PROPERTY: {
+            Ov_UnknownData_set(var->property.vtable, Ov_UnknownData_get_property(var->property.parent, var->property.hash), data);
+            break;
+        }
+        case ARRAY: {
+            Ov_ArrayInfo array = Ov_UnknownData_get_array(var->array.array);
+            Ov_UnknownData_set(array.vtable, Ov_Array_get(array, var->array.i), data);
+            break;
+        }
+        case TUPLE: {
+            Ov_ArrayInfo array = Ov_UnknownData_get_array(data);
+            size_t i;
+            for (i = 0; i < var->tuple.size; ++i)
+                assignation_body(&var->tuple.references[i], Ov_UnknownData_from_ptr(array.vtable, Ov_Array_get(array, i)));
+            break;
+        }
+        default:
+            break;
     }
 
-    return Ov_Reference_copy((Ov_Reference_Shared)var);
+    return Ov_Reference_copy((Ov_Reference_Shared) var);
 }
-Ov_Reference_Owned Ov_system_function_setter_body(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]) {
-    (void)(captures);
-    return assignation_body((Ov_GC_Reference*)args[0], Ov_Reference_get(args[1]));
+Ov_Reference_Owned setter_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
+    (void) (captures);
+    (void) (local_variables);
+    return assignation_body((Ov_GC_Reference*) args[0], Ov_Reference_get(args[1]));
 }
 static bool assignation_filter(Ov_GC_Reference* var, Ov_UnknownData data) {
     if (var->type == TUPLE) {
@@ -123,31 +155,73 @@ static bool assignation_filter(Ov_GC_Reference* var, Ov_UnknownData data) {
                     return false;
 
             return true;
-        }
-        else return false;
-    }
-    else return true;
+        } else return false;
+    } else return true;
 }
-bool Ov_system_function_setter_filter(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]) {
-    (void)(captures);
-    return assignation_filter((Ov_GC_Reference*)args[0], Ov_Reference_get(args[1]));
+bool setter_filter(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
+    (void) (captures);
+    (void) (local_variables);
+    return assignation_filter((Ov_GC_Reference*) args[0], Ov_Reference_get(args[1]));
 }
 
-const char Ov_system_function_separator_parameters[] = "r";
-Ov_Reference_Owned Ov_system_function_separator_body(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]) {
-    (void)(captures);
+const char separator_parameters[] = "r";
+Ov_Reference_Owned separator_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
+    (void) (captures);
+    (void) (local_variables);
     return Ov_Reference_get_element(args[0], Ov_Reference_get_size(args[0]) - 1);
 }
 
-Ov_Reference_Owned Ov_system_function_if_statement_body(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]) {
-    (void)(captures);
-    //TODO
-    return;
+const char if_statement_parameters[] = "e";
+Ov_Reference_Owned if_statement_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
+    (void) (local_variables);
+    Ov_Reference_Shared if_word = captures[0];
+    Ov_Reference_Shared else_word = captures[1];
+    Ov_Expression* expression = (Ov_Expression*) args[0];
+
+    assert(expression->type == Ov_EXPRESSION_TUPLE);
+    assert(expression->tuple.size >= 2);
+
+    Ov_Reference_Owned result = Ov_Function_execute(expression->tuple.tab[0]);
+    Ov_UnknownData data = Ov_Reference_get(Ov_Reference_share(result));
+    Ov_Reference_free(result);
+
+    assert(data.vtable == &Ov_VirtualTable_Bool);
+    if (data.data.b)
+        return Ov_Function_execute(expression->tuple.tab[1]);
+    else {
+        size_t i = 2;
+        while (i < expression->tuple.size) {
+            result = Ov_Function_execute(expression->tuple.tab[i]);
+            data = Ov_Reference_get(Ov_Reference_share(result));
+            Ov_Reference_free(result);
+
+            assert(check_pointers(data, Ov_Reference_get(Ov_Reference_share(else_word))));
+            result = Ov_Function_execute(expression->tuple.tab[i + 1]);
+            data = Ov_Reference_get(Ov_Reference_share(result));
+
+            if (check_pointers(data, Ov_Reference_get(Ov_Reference_share(if_word))) && i + 3 < expression->tuple.size) {
+                Ov_Reference_free(result);
+
+                result = Ov_Function_execute(expression->tuple.tab[i + 2]);
+                data = Ov_Reference_get(Ov_Reference_share(result));
+                Ov_Reference_free(result);
+
+                assert(data.vtable == &Ov_VirtualTable_Bool);
+                if (data.data.b)
+                    return Ov_Function_execute(expression->tuple.tab[i + 3]);
+                else i += 4;
+            } else return result;
+        }
+        return Ov_Reference_new_uninitialized();
+    }
 }
 
-const char Ov_system_function_while_statement_parameters[] = "[r()r()]";
-Ov_Reference_Owned Ov_system_function_while_statement_body(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]) {
-    (void)(captures);
+const char while_statement_parameters[] = "[r()r()]";
+Ov_Reference_Owned while_statement_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
+    (void) (captures);
+    (void) (local_variables);
+    Ov_Reference_Shared condition = args[0];
+    Ov_Reference_Shared body = args[1];
 
     Ov_Reference_Owned result = Ov_Reference_new_uninitialized();
 
@@ -157,18 +231,15 @@ Ov_Reference_Owned Ov_system_function_while_statement_body(Ov_Reference_Owned ca
         .reference = Ov_Reference_share(param)
     };
     while (true) {
-        Ov_Reference_Owned c = Ov_Function_eval(Ov_UnknownData_get_function(Ov_Reference_get(args[0])), ex);
+        Ov_Reference_Owned c = Ov_Function_eval(Ov_UnknownData_get_function(Ov_Reference_get(condition)), ex);
         Ov_UnknownData data = Ov_Reference_get(Ov_Reference_share(c));
 
-        if (data.vtable == &Ov_VirtualTable_Bool) {
-            if (data.data.b) {
-                Ov_Reference_Owned r = Ov_Function_eval(Ov_UnknownData_get_function(Ov_Reference_get(args[0])), ex);
-                Ov_Reference_free(result);
-                result = r;
-            } else break;
-        } else {
-            // TODO : throw exception
-        }
+        assert(data.vtable == &Ov_VirtualTable_Bool);
+        if (data.data.b) {
+            Ov_Reference_Owned r = Ov_Function_eval(Ov_UnknownData_get_function(Ov_Reference_get(body)), ex);
+            Ov_Reference_free(result);
+            result = r;
+        } else break;
 
         Ov_Reference_free(c);
     }
@@ -177,9 +248,10 @@ Ov_Reference_Owned Ov_system_function_while_statement_body(Ov_Reference_Owned ca
     return result;
 }
 
-const char Ov_system_function_copy_parameters[] = "r";
-bool Ov_system_function_copy_filter(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]) {
-    (void)(captures);
+const char copy_parameters[] = "r";
+bool copy_filter(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
+    (void) (captures);
+    (void) (local_variables);
     Ov_VirtualTable* vtable = Ov_Reference_get(args[0]).vtable;
 
     return
@@ -188,32 +260,37 @@ bool Ov_system_function_copy_filter(Ov_Reference_Owned captures[], Ov_Reference_
         vtable == &Ov_VirtualTable_Char ||
         vtable == &Ov_VirtualTable_Bool;
 }
-Ov_Reference_Owned Ov_system_function_copy_body(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]) {
-    (void)(captures);
+Ov_Reference_Owned copy_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
+    (void) (captures);
+    (void) (local_variables);
     Ov_UnknownData data = Ov_Reference_get(args[0]);
 
     return Ov_Reference_new_data(data);
 }
 
-const char Ov_system_function_copy_pointer_parameters[] = "r";
-Ov_Reference_Owned Ov_system_function_copy_pointer_body(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]) {
-    (void)(captures);
+const char copy_pointer_parameters[] = "r";
+Ov_Reference_Owned copy_pointer_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
+    (void) (captures);
+    (void) (local_variables);
     Ov_UnknownData data = Ov_Reference_get(args[0]);
 
     return Ov_Reference_new_data(data);
 }
 
-const char Ov_system_function_function_definition_parameters[] = "[rr]";
-Ov_Reference_Owned Ov_system_function_function_definition_body(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]) {
-    (void)(captures);
+const char function_definition_parameters[] = "[rr]";
+Ov_Reference_Owned function_definition_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
+    (void) (captures);
+    (void) (local_variables);
     Ov_Function function = *Ov_UnknownData_get_function(Ov_Reference_get(args[1]));
 
     Ov_Reference_Owned references[function->captures.size];
     size_t i;
     for (i = 0; i < function->captures.size; ++i)
         references[i] = Ov_GC_capture_to_reference(function->captures.tab[i]);
-    Ov_Function_push(Ov_UnknownData_get_function(Ov_Reference_get(args[0])), function->parameters, function->body, function->filter, references, function->captures.size);
+    Ov_Function_push(Ov_UnknownData_get_function(Ov_Reference_get(args[0])), function->parameters, function->body, function->filter, function->local_variables, (Ov_Reference_Shared*) references, function->captures.size);
 
+    for (i = 0; i < function->captures.size; ++i)
+        Ov_Reference_free(references[i]);
     return Ov_Reference_copy(args[0]);
 }
 
@@ -243,9 +320,10 @@ static bool equals(Ov_UnknownData a, Ov_UnknownData b) {
     }
 }
 
-const char Ov_system_function_equals_parameters[] = "[rr]";
-Ov_Reference_Owned Ov_system_function_equals_body(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]) {
-    (void)(captures);
+const char equals_parameters[] = "[rr]";
+Ov_Reference_Owned equals_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
+    (void) (captures);
+    (void) (local_variables);
 
     Ov_UnknownData data = {
         .vtable = &Ov_VirtualTable_Bool,
@@ -254,9 +332,10 @@ Ov_Reference_Owned Ov_system_function_equals_body(Ov_Reference_Owned captures[],
     return Ov_Reference_new_data(data);
 }
 
-const char Ov_system_function_not_equals_parameters[] = "[rr]";
-Ov_Reference_Owned Ov_system_function_not_equals_body(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]) {
-    (void)(captures);
+const char not_equals_parameters[] = "[rr]";
+Ov_Reference_Owned not_equals_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
+    (void) (captures);
+    (void) (local_variables);
 
     Ov_UnknownData data = {
         .vtable = &Ov_VirtualTable_Bool,
@@ -265,35 +344,10 @@ Ov_Reference_Owned Ov_system_function_not_equals_body(Ov_Reference_Owned capture
     return Ov_Reference_new_data(data);
 }
 
-static bool check_pointers(Ov_UnknownData a, Ov_UnknownData b) {
-    if (a.vtable == &Ov_VirtualTable_Char) {
-        if (b.vtable == a.vtable)
-            return a.data.b == b.data.b;
-        else
-            return false;
-    } else if (a.vtable == &Ov_VirtualTable_Float) {
-        if (b.vtable == a.vtable)
-            return a.data.f == b.data.f;
-        else
-            return false;
-    } else if (a.vtable == &Ov_VirtualTable_Int) {
-        if (b.vtable == a.vtable)
-            return a.data.i == b.data.i;
-        else
-            return false;
-    } else if (a.vtable == &Ov_VirtualTable_Bool) {
-        if (b.vtable == a.vtable)
-            return a.data.b == b.data.b;
-        else
-            return false;
-    } else {
-        return a.data.ptr == b.data.ptr;
-    }
-}
-
-const char Ov_system_function_check_pointers_parameters[] = "[rr]";
-Ov_Reference_Owned Ov_system_function_check_pointers_body(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]) {
-    (void)(captures);
+const char check_pointers_parameters[] = "[rr]";
+Ov_Reference_Owned check_pointers_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
+    (void) (captures);
+    (void) (local_variables);
 
     Ov_UnknownData data = {
         .vtable = &Ov_VirtualTable_Bool,
@@ -302,9 +356,10 @@ Ov_Reference_Owned Ov_system_function_check_pointers_body(Ov_Reference_Owned cap
     return Ov_Reference_new_data(data);
 }
 
-const char Ov_system_function_not_check_pointers_parameters[] = "[rr]";
-Ov_Reference_Owned Ov_system_function_not_check_pointers_body(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]) {
-    (void)(captures);
+const char not_check_pointers_parameters[] = "[rr]";
+Ov_Reference_Owned not_check_pointers_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
+    (void) (captures);
+    (void) (local_variables);
 
     Ov_UnknownData data = {
         .vtable = &Ov_VirtualTable_Bool,
@@ -313,10 +368,11 @@ Ov_Reference_Owned Ov_system_function_not_check_pointers_body(Ov_Reference_Owned
     return Ov_Reference_new_data(data);
 }
 
-const char Ov_system_function_string_from_parameters[] = "r";
+const char string_from_parameters[] = "r";
 extern Ov_VirtualTable* Ov_VirtualTable_string_from_tuple;
-Ov_Reference_Owned Ov_system_function_string_from_body(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]) {
-    (void)(captures);
+Ov_Reference_Owned string_from_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
+    (void) (captures);
+    (void) (local_variables);
     Ov_UnknownData string = {
         .vtable = Ov_VirtualTable_string_from_tuple,
         .data.ptr = Ov_GC_alloc_object(Ov_VirtualTable_string_from_tuple)
@@ -378,9 +434,10 @@ Ov_Reference_Owned Ov_system_function_string_from_body(Ov_Reference_Owned captur
     return Ov_Reference_new_data(string);
 }
 
-const char Ov_system_function_print_parameters[] = "r";
-Ov_Reference_Owned Ov_system_function_print_body(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]) {
-    (void)(captures);
+const char print_parameters[] = "r";
+Ov_Reference_Owned print_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
+    (void) (captures);
+    (void) (local_variables);
     Ov_Reference_Shared ref = args[0];
 
     Ov_Expression ex = {
@@ -399,12 +456,249 @@ Ov_Reference_Owned Ov_system_function_print_body(Ov_Reference_Owned captures[], 
     return Ov_Reference_new_uninitialized();
 }
 
+const char logical_not_parameters[] = "r";
+bool logical_not_filter(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
+    (void) (captures);
+    (void) (local_variables);
+    Ov_UnknownData data = Ov_Reference_get(args[0]);
+
+    return data.vtable == &Ov_VirtualTable_Bool;
+}
+Ov_Reference_Owned logical_not_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
+    (void) (captures);
+    (void) (local_variables);
+    Ov_UnknownData data = Ov_Reference_get(args[0]);
+
+    data.data.b = !data.data.b;
+    return Ov_Reference_new_data(data);
+}
+
+const char logical_and_parameters[] = "[rr()]";
+Ov_Reference_Owned logical_and_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
+    (void) (captures);
+    (void) (local_variables);
+    Ov_UnknownData a = Ov_Reference_get(args[0]);
+    Ov_UnknownData b_lambda = Ov_Reference_get(args[0]);
+
+    Ov_UnknownData r;
+    r.vtable = &Ov_VirtualTable_Bool;
+
+    if (a.data.b) {
+        Ov_Reference_Owned param = Ov_Reference_new_uninitialized();
+        Ov_Expression ex = {
+            .type = Ov_EXPRESSION_REFERENCE,
+            .reference = Ov_Reference_share(param)
+        };
+        Ov_Reference_Owned c = Ov_Function_eval(Ov_UnknownData_get_function(b_lambda), ex);
+
+        r.data.b = Ov_Reference_get(Ov_Reference_share(c)).data.b;
+
+        Ov_Reference_free(c);
+        Ov_Reference_free(param);
+    } else r.data.b = false;
+
+    return Ov_Reference_new_data(r);
+}
+
+const char logical_or_parameters[] = "[rr()]";
+Ov_Reference_Owned logical_or_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
+    (void) (captures);
+    (void) (local_variables);
+    Ov_UnknownData a = Ov_Reference_get(args[0]);
+    Ov_UnknownData b_lambda = Ov_Reference_get(args[0]);
+
+    Ov_UnknownData r;
+    r.vtable = &Ov_VirtualTable_Bool;
+
+    if (!a.data.b) {
+        Ov_Reference_Owned param = Ov_Reference_new_uninitialized();
+        Ov_Expression ex = {
+            .type = Ov_EXPRESSION_REFERENCE,
+            .reference = Ov_Reference_share(param)
+        };
+        Ov_Reference_Owned c = Ov_Function_eval(Ov_UnknownData_get_function(b_lambda), ex);
+
+        r.data.b = Ov_Reference_get(Ov_Reference_share(c)).data.b;
+
+        Ov_Reference_free(c);
+        Ov_Reference_free(param);
+    } else r.data.b = true;
+
+    return Ov_Reference_new_data(r);
+}
+
+const char addition_parameters[] = "[rr]";
+Ov_Reference_Owned addition_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
+    (void) (captures);
+    (void) (local_variables);
+    Ov_UnknownData a = Ov_Reference_get(args[0]);
+    Ov_UnknownData b = Ov_Reference_get(args[0]);
+
+    Ov_UnknownData r;
+    r.vtable = NULL;
+    if (a.vtable == &Ov_VirtualTable_Int) {
+        if (b.vtable == &Ov_VirtualTable_Int) {
+            r.vtable = &Ov_VirtualTable_Int;
+            r.data.i = a.data.i + b.data.i;
+        } else if (b.vtable == &Ov_VirtualTable_Float) {
+            r.vtable = &Ov_VirtualTable_Float;
+            r.data.f = a.data.i + b.data.f;
+        }
+    } else if (a.vtable == &Ov_VirtualTable_Float) {
+        if (b.vtable == &Ov_VirtualTable_Int) {
+            r.vtable = &Ov_VirtualTable_Float;
+            r.data.f = a.data.f + b.data.i;
+        } else if (b.vtable == &Ov_VirtualTable_Float) {
+            r.vtable = &Ov_VirtualTable_Float;
+            r.data.f = a.data.f + b.data.f;
+        }
+    }
+    assert(r.vtable != NULL);
+
+    return Ov_Reference_new_data(r);
+}
+
+const char opposite_parameters[] = "r";
+Ov_Reference_Owned opposite_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
+    (void) (captures);
+    (void) (local_variables);
+    Ov_UnknownData a = Ov_Reference_get(args[0]);
+
+    Ov_UnknownData r;
+    r.vtable = NULL;
+    if (a.vtable == &Ov_VirtualTable_Int) {
+        r.vtable = &Ov_VirtualTable_Int;
+        r.data.i = -a.data.i;
+    } else if (a.vtable == &Ov_VirtualTable_Float) {
+        r.vtable = &Ov_VirtualTable_Float;
+        r.data.i = -a.data.f;
+    }
+    assert(r.vtable != NULL);
+
+    return Ov_Reference_new_data(r);
+}
+
+const char substraction_parameters[] = "[rr]";
+Ov_Reference_Owned substraction_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
+    (void) (captures);
+    (void) (local_variables);
+    Ov_UnknownData a = Ov_Reference_get(args[0]);
+    Ov_UnknownData b = Ov_Reference_get(args[0]);
+
+    Ov_UnknownData r;
+    r.vtable = NULL;
+    if (a.vtable == &Ov_VirtualTable_Int) {
+        if (b.vtable == &Ov_VirtualTable_Int) {
+            r.vtable = &Ov_VirtualTable_Int;
+            r.data.i = a.data.i - b.data.i;
+        } else if (b.vtable == &Ov_VirtualTable_Float) {
+            r.vtable = &Ov_VirtualTable_Float;
+            r.data.f = a.data.i - b.data.f;
+        }
+    } else if (a.vtable == &Ov_VirtualTable_Float) {
+        if (b.vtable == &Ov_VirtualTable_Int) {
+            r.vtable = &Ov_VirtualTable_Float;
+            r.data.f = a.data.f - b.data.i;
+        } else if (b.vtable == &Ov_VirtualTable_Float) {
+            r.vtable = &Ov_VirtualTable_Float;
+            r.data.f = a.data.f - b.data.f;
+        }
+    }
+    assert(r.vtable != NULL);
+
+    return Ov_Reference_new_data(r);
+}
+
+const char multiplication_parameters[] = "[rr]";
+Ov_Reference_Owned multiplication_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
+    (void) (captures);
+    (void) (local_variables);
+    Ov_UnknownData a = Ov_Reference_get(args[0]);
+    Ov_UnknownData b = Ov_Reference_get(args[0]);
+
+    Ov_UnknownData r;
+    r.vtable = NULL;
+    if (a.vtable == &Ov_VirtualTable_Int) {
+        if (b.vtable == &Ov_VirtualTable_Int) {
+            r.vtable = &Ov_VirtualTable_Int;
+            r.data.i = a.data.i * b.data.i;
+        } else if (b.vtable == &Ov_VirtualTable_Float) {
+            r.vtable = &Ov_VirtualTable_Float;
+            r.data.f = a.data.i * b.data.f;
+        }
+    } else if (a.vtable == &Ov_VirtualTable_Float) {
+        if (b.vtable == &Ov_VirtualTable_Int) {
+            r.vtable = &Ov_VirtualTable_Float;
+            r.data.f = a.data.f * b.data.i;
+        } else if (b.vtable == &Ov_VirtualTable_Float) {
+            r.vtable = &Ov_VirtualTable_Float;
+            r.data.f = a.data.f * b.data.f;
+        }
+    }
+    assert(r.vtable != NULL);
+
+    return Ov_Reference_new_data(r);
+}
+
+const char division_parameters[] = "[rr]";
+Ov_Reference_Owned division_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
+    (void) (captures);
+    (void) (local_variables);
+    Ov_UnknownData a = Ov_Reference_get(args[0]);
+    Ov_UnknownData b = Ov_Reference_get(args[0]);
+
+    Ov_UnknownData r;
+    r.vtable = NULL;
+    if (a.vtable == &Ov_VirtualTable_Int) {
+        if (b.vtable == &Ov_VirtualTable_Int) {
+            r.vtable = &Ov_VirtualTable_Int;
+            r.data.i = a.data.i / b.data.i;
+        } else if (b.vtable == &Ov_VirtualTable_Float) {
+            r.vtable = &Ov_VirtualTable_Float;
+            r.data.f = a.data.i / b.data.f;
+        }
+    } else if (a.vtable == &Ov_VirtualTable_Float) {
+        if (b.vtable == &Ov_VirtualTable_Int) {
+            r.vtable = &Ov_VirtualTable_Float;
+            r.data.f = a.data.f / b.data.i;
+        } else if (b.vtable == &Ov_VirtualTable_Float) {
+            r.vtable = &Ov_VirtualTable_Float;
+            r.data.f = a.data.f / b.data.f;
+        }
+    }
+    assert(r.vtable != NULL);
+
+    return Ov_Reference_new_data(r);
+}
+
+const char modulo_parameters[] = "[rr]";
+Ov_Reference_Owned modulo_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
+    (void) (captures);
+    (void) (local_variables);
+    Ov_UnknownData a = Ov_Reference_get(args[0]);
+    Ov_UnknownData b = Ov_Reference_get(args[0]);
+
+    Ov_UnknownData r;
+    r.vtable = NULL;
+    if (a.vtable == &Ov_VirtualTable_Int) {
+        if (b.vtable == &Ov_VirtualTable_Int) {
+            r.vtable = &Ov_VirtualTable_Int;
+            r.data.i = a.data.i % b.data.i;
+        }
+    }
+    assert(r.vtable != NULL);
+
+    return Ov_Reference_new_data(r);
+}
+
 
 Ov_Reference_Owned getter;
 Ov_Reference_Owned defined;
 Ov_Reference_Owned setter;
 Ov_Reference_Owned _x3A_x3D;
 Ov_Reference_Owned _x3B;
+Ov_Reference_Owned if_statement;
+Ov_Reference_Owned else_statement;
 Ov_Reference_Owned while_statement;
 Ov_Reference_Owned string_from;
 Ov_Reference_Owned print;
@@ -414,21 +708,21 @@ void Ov_init_functions() {
         .vtable = &Ov_VirtualTable_Function,
         .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
     };
-    Ov_Function_push(Ov_UnknownData_get_function(getter_data), Ov_system_function_getter_parameters, Ov_system_function_getter_body, NULL, NULL, 0);
+    Ov_Function_push(Ov_UnknownData_get_function(getter_data), getter_parameters, getter_body, NULL, 0, NULL, 0);
     getter = Ov_Reference_new_symbol(getter_data);
 
     Ov_UnknownData defined_data = {
         .vtable = &Ov_VirtualTable_Function,
         .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
     };
-    Ov_Function_push(Ov_UnknownData_get_function(defined_data), Ov_system_function_defined_parameters, Ov_system_function_defined_body, NULL, NULL, 0);
+    Ov_Function_push(Ov_UnknownData_get_function(defined_data), defined_parameters, defined_body, NULL, 0, NULL, 0);
     defined = Ov_Reference_new_symbol(defined_data);
 
     Ov_UnknownData setter_data = {
         .vtable = &Ov_VirtualTable_Function,
         .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
     };
-    Ov_Function_push(Ov_UnknownData_get_function(setter_data), Ov_system_function_setter_parameters, Ov_system_function_setter_body, NULL, NULL, 0);
+    Ov_Function_push(Ov_UnknownData_get_function(setter_data), setter_parameters, setter_body, NULL, 0, NULL, 0);
     setter = Ov_Reference_new_symbol(setter_data);
     _x3A_x3D = Ov_Reference_new_symbol(setter_data);
 
@@ -436,27 +730,44 @@ void Ov_init_functions() {
         .vtable = &Ov_VirtualTable_Function,
         .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
     };
-    Ov_Function_push(Ov_UnknownData_get_function(separator_data), Ov_system_function_separator_parameters, Ov_system_function_separator_body, NULL, NULL, 0);
+    Ov_Function_push(Ov_UnknownData_get_function(separator_data), separator_parameters, separator_body, NULL, 0, NULL, 0);
     _x3B = Ov_Reference_new_symbol(separator_data);
+
+    Ov_UnknownData else_statement_data = {
+        .vtable = &Ov_VirtualTable_Function,
+        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
+    };
+    else_statement = Ov_Reference_new_symbol(else_statement_data);
+
+    Ov_UnknownData if_statement_data = {
+        .vtable = &Ov_VirtualTable_Function,
+        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
+    };
+    if_statement = Ov_Reference_new_symbol(if_statement_data);
+    Ov_Reference_Shared if_statement_captures[] = {
+        Ov_Reference_share(if_statement),
+        Ov_Reference_share(else_statement)
+    };
+    Ov_Function_push(Ov_UnknownData_get_function(if_statement_data), if_statement_parameters, if_statement_body, NULL, 0, if_statement_captures, sizeof(if_statement_captures) / sizeof(if_statement_captures[0]));
 
     Ov_UnknownData while_statement_data = {
         .vtable = &Ov_VirtualTable_Function,
         .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
     };
-    Ov_Function_push(Ov_UnknownData_get_function(while_statement_data), Ov_system_function_while_statement_parameters, Ov_system_function_while_statement_body, NULL, NULL, 0);
+    Ov_Function_push(Ov_UnknownData_get_function(while_statement_data), while_statement_parameters, while_statement_body, NULL, 0, NULL, 0);
     while_statement = Ov_Reference_new_symbol(while_statement_data);
 
     Ov_UnknownData string_from_data = {
         .vtable = &Ov_VirtualTable_Function,
         .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
     };
-    Ov_Function_push(Ov_UnknownData_get_function(string_from_data), Ov_system_function_string_from_parameters, Ov_system_function_string_from_body, NULL, NULL, 0);
+    Ov_Function_push(Ov_UnknownData_get_function(string_from_data), string_from_parameters, string_from_body, NULL, 0, NULL, 0);
     string_from = Ov_Reference_new_symbol(string_from_data);
 
     Ov_UnknownData print_data = {
         .vtable = &Ov_VirtualTable_Function,
         .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
     };
-    Ov_Function_push(Ov_UnknownData_get_function(print_data), Ov_system_function_print_parameters, Ov_system_function_print_body, NULL, NULL, 0);
+    Ov_Function_push(Ov_UnknownData_get_function(print_data), print_parameters, print_body, NULL, 0, NULL, 0);
     print = Ov_Reference_new_symbol(print_data);
 }

@@ -8,21 +8,21 @@ namespace Interpreter {
 
     namespace Array {
 
-        Reference length(FunctionContext & context);
+        Reference length(FunctionContext& context);
 
-        Reference get_capacity(FunctionContext & context);
+        Reference get_capacity(FunctionContext& context);
 
-        Reference set_capacity(FunctionContext & context);
+        Reference set_capacity(FunctionContext& context);
 
-        Reference get(FunctionContext & context);
+        Reference get(FunctionContext& context);
 
-        Reference add(FunctionContext & context);
+        Reference add(FunctionContext& context);
 
-        Reference remove(FunctionContext & context);
+        Reference remove(FunctionContext& context);
 
-        Reference foreach(FunctionContext & context);
+        Reference foreach(FunctionContext& context);
 
-        void init(GlobalContext & context);
+        void init(GlobalContext& context);
 
     }
 

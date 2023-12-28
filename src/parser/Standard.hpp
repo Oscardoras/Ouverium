@@ -15,7 +15,7 @@ namespace Parser {
 
         Standard(std::string const& code, std::string const& path);
 
-        struct TextPosition: public Position {
+        struct TextPosition : public Position {
             std::string path;
             unsigned int line;
             unsigned int column;
@@ -28,7 +28,7 @@ namespace Parser {
             virtual void notify_position() const override;
         };
 
-        struct Word: public std::string {
+        struct Word : public std::string {
             TextPosition position;
 
             Word(std::string const& word, TextPosition const& position);
@@ -40,7 +40,7 @@ namespace Parser {
             std::string message;
             TextPosition position;
 
-            ParsingError(std::string const& message, TextPosition const& position):
+            ParsingError(std::string const& message, TextPosition const& position) :
                 message(message), position(position) {}
         };
 
@@ -56,7 +56,7 @@ namespace Parser {
 
         };
 
-        class IncompleteCode: public Exception {};
+        class IncompleteCode : public Exception {};
 
         std::shared_ptr<Expression> get_tree() const;
 

@@ -7,7 +7,7 @@ namespace Analyzer {
 
     namespace {
 
-        inline void iterate(std::shared_ptr<Parser::Expression> expression, std::set<std::string> & properties) {
+        inline void iterate(std::shared_ptr<Parser::Expression> expression, std::set<std::string>& properties) {
             if (auto function_call = std::dynamic_pointer_cast<Parser::FunctionCall>(expression)) {
                 iterate(function_call->function, properties);
                 iterate(function_call->arguments, properties);
@@ -40,7 +40,7 @@ namespace Analyzer {
         std::set<std::string> properties;
         iterate(expression, properties);
         for (auto const& property : properties) {
-            auto & p = structure->properties[property];
+            auto& p = structure->properties[property];
             p.insert(structure);
             p.insert(Bool);
             p.insert(Char);

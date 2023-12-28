@@ -1,2 +1,8 @@
 a.test := 3;
-print(a.test)
+print(a.test);
+
+if (true) {
+    print("yes")
+} else {
+    print("no")
+}

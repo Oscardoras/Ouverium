@@ -3,7 +3,7 @@
 
 Ov_UnknownData Ov_UnknownData_from_data(Ov_VirtualTable* vtable, union Ov_Data d) {
     if (vtable == &Ov_VirtualTable_UnknownData) {
-        return *((Ov_UnknownData*)d.ptr);
+        return *((Ov_UnknownData*) d.ptr);
     } else {
         Ov_UnknownData data = {
             .vtable = vtable,
@@ -15,21 +15,21 @@ Ov_UnknownData Ov_UnknownData_from_data(Ov_VirtualTable* vtable, union Ov_Data d
 
 Ov_UnknownData Ov_UnknownData_from_ptr(Ov_VirtualTable* vtable, void* ptr) {
     if (vtable == &Ov_VirtualTable_UnknownData)
-        return *((Ov_UnknownData*)ptr);
+        return *((Ov_UnknownData*) ptr);
     else {
         Ov_UnknownData data;
         data.vtable = vtable;
 
         if (vtable == &Ov_VirtualTable_Int)
-            data.data.i = *((long*)ptr);
+            data.data.i = *((long*) ptr);
         else if (vtable == &Ov_VirtualTable_Float)
-            data.data.f = *((double*)ptr);
+            data.data.f = *((double*) ptr);
         else if (vtable == &Ov_VirtualTable_Char)
-            data.data.c = *((char*)ptr);
+            data.data.c = *((char*) ptr);
         else if (vtable == &Ov_VirtualTable_Bool)
-            data.data.b = *((bool*)ptr);
+            data.data.b = *((bool*) ptr);
         else
-            data.data.ptr = *((void**)ptr);
+            data.data.ptr = *((void**) ptr);
 
         return data;
     }
@@ -37,24 +37,24 @@ Ov_UnknownData Ov_UnknownData_from_ptr(Ov_VirtualTable* vtable, void* ptr) {
 
 void Ov_UnknownData_set(Ov_VirtualTable* vtable, void* ptr, Ov_UnknownData data) {
     if (vtable == &Ov_VirtualTable_UnknownData)
-        *(Ov_UnknownData*)ptr = data;
+        *(Ov_UnknownData*) ptr = data;
     else if (vtable == &Ov_VirtualTable_Bool)
-        *(bool*)ptr = data.data.b;
+        *(bool*) ptr = data.data.b;
     else if (vtable == &Ov_VirtualTable_Char)
-        *(char*)ptr = data.data.c;
+        *(char*) ptr = data.data.c;
     else if (vtable == &Ov_VirtualTable_Float)
-        *(double*)ptr = data.data.f;
+        *(double*) ptr = data.data.f;
     else if (vtable == &Ov_VirtualTable_Int)
-        *(long*)ptr = data.data.i;
+        *(long*) ptr = data.data.i;
     else
-        *(void**)ptr = data.data.ptr;
+        *(void**) ptr = data.data.ptr;
 }
 
 void* Ov_UnknownData_get_property(Ov_UnknownData data, unsigned int hash) {
     struct Ov_VirtualTable_Element* list = &data.vtable->table_tab[hash % data.vtable->table_size];
     while (true) {
         if (list->hash == hash)
-            return ((BYTE*)data.data.ptr) + list->offset;
+            return ((BYTE*) data.data.ptr) + list->offset;
         else if (list->next == NULL)
             return NULL;
         else
@@ -75,7 +75,7 @@ Ov_Function* Ov_UnknownData_get_function(Ov_UnknownData data) {
 }
 
 void Ov_VirtualTable_UnknownData_gc_iterator(void* ptr) {
-    Ov_UnknownData data = *((Ov_UnknownData*)ptr);
+    Ov_UnknownData data = *((Ov_UnknownData*) ptr);
     if (
         data.vtable != &Ov_VirtualTable_Int &&
         data.vtable != &Ov_VirtualTable_Float &&

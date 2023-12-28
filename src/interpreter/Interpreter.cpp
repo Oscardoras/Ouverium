@@ -7,6 +7,7 @@
 
 #include "system_functions/Array.hpp"
 #include "system_functions/Base.hpp"
+#include "system_functions/Dll.hpp"
 #include "system_functions/Math.hpp"
 #include "system_functions/Streams.hpp"
 #include "system_functions/Types.hpp"
@@ -18,17 +19,18 @@
 
 namespace Interpreter {
 
-    GlobalContext::GlobalContext(std::shared_ptr<Parser::Expression> expression):
+    GlobalContext::GlobalContext(std::shared_ptr<Parser::Expression> expression) :
         Context(expression) {
         Base::init(*this);
         Array::init(*this);
         Math::init(*this);
         Streams::init(*this);
         Types::init(*this);
+        Dll::init(*this);
     }
 
 
-    Exception::Exception(Context & context, Reference const& reference, std::shared_ptr<Parser::Expression> expression):
+    Exception::Exception(Context& context, Reference const& reference, std::shared_ptr<Parser::Expression> expression) :
         reference(reference) {
         if (expression->position != nullptr) {
             positions.push_back(expression->position);
@@ -43,14 +45,14 @@ namespace Interpreter {
         }
     }
 
-    Exception::Exception(Context & context, std::string const& message, Data const& type, std::shared_ptr<Parser::Expression> expression):
+    Exception::Exception(Context& context, std::string const& message, Data const& type, std::shared_ptr<Parser::Expression> expression) :
         Exception(context, [&context, &message, &type]() {
-            auto object = context.new_object(Object(message));
-            auto types = context.new_object();
-            types->array.push_back(type);
-            object->properties["_types"] = types;
-            return Data(object);
-        }(), expression) {}
+        auto object = context.new_object(Object(message));
+        auto types = context.new_object();
+        types->array.push_back(type);
+        object->properties["_types"] = types;
+        return Data(object);
+    }(), expression) {}
 
 
     using ParserExpression = std::shared_ptr<Parser::Expression>;
@@ -69,7 +71,7 @@ namespace Interpreter {
             return arguments;
         }
 
-        Reference compute(Context & context, Arguments const& arguments) {
+        Reference compute(Context& context, Arguments const& arguments) {
             if (auto expression = std::get_if<ParserExpression>(&arguments)) {
                 return operator[](*expression) = Interpreter::execute(context, *expression);
             } else if (auto reference = std::get_if<Reference>(&arguments)) {
@@ -79,7 +81,7 @@ namespace Interpreter {
 
     };
 
-    void set_arguments(Context & context, FunctionContext & function_context, Computed & computed, std::shared_ptr<Parser::Expression> parameters, Arguments const& argument) {
+    void set_arguments(Context& context, FunctionContext& function_context, Computed& computed, std::shared_ptr<Parser::Expression> parameters, Arguments const& argument) {
         auto arguments = computed.get(argument);
 
         if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(parameters)) {
@@ -121,7 +123,7 @@ namespace Interpreter {
                         auto object = reference->to_data(function_context).get<Object*>();
                         if (object->array.size() == p_tuple->objects.size()) {
                             for (size_t i = 0; i < p_tuple->objects.size(); i++)
-                                set_arguments(context, function_context, computed, p_tuple->objects[i], ArrayReference{*object, i});
+                                set_arguments(context, function_context, computed, p_tuple->objects[i], ArrayReference{ *object, i });
                         } else throw Interpreter::FunctionArgumentsError();
                     } catch (Data::BadAccess const& e) {
                         throw Interpreter::FunctionArgumentsError();
@@ -140,21 +142,21 @@ namespace Interpreter {
                         if (it == computed.end()) {
                             function_definition->body = *expression;
 
-                            object->functions.push_front(CustomFunction{function_definition});
-                            auto & f = object->functions.back();
+                            object->functions.push_front(CustomFunction{ function_definition });
+                            auto& f = object->functions.back();
                             for (auto symbol : function_definition->body->symbols)
                                 f.extern_symbols.emplace(symbol, context[symbol]);
                         } else {
                             function_definition->body = std::make_shared<Parser::Symbol>("#cached");
 
-                            object->functions.push_front(CustomFunction{function_definition});
+                            object->functions.push_front(CustomFunction{ function_definition });
                             object->functions.back().extern_symbols.emplace("#cached", it->second.to_indirect_reference(context));
                         }
 
                     } else if (auto reference = std::get_if<Reference>(&arguments)) {
                         function_definition->body = std::make_shared<Parser::Symbol>("#cached");
 
-                        object->functions.push_front(CustomFunction{function_definition});
+                        object->functions.push_front(CustomFunction{ function_definition });
                         object->functions.back().extern_symbols.emplace("#cached", reference->to_indirect_reference(context));
                     }
 
@@ -195,16 +197,16 @@ namespace Interpreter {
         } else throw Interpreter::FunctionArgumentsError();
     }
 
-    Reference call_function(Context & context, std::shared_ptr<Parser::Expression> expression, std::list<Function> const& functions, Arguments const& arguments) {
+    Reference call_function(Context& context, std::shared_ptr<Parser::Expression> expression, std::list<Function> const& functions, Arguments const& arguments) {
         if (context.get_recurion_level() >= context.get_global().recursion_limit)
-            throw Exception(context, "recursion limit exceeded" , context.get_global()["RecursionLimitExceeded"].to_data(context), expression);
+            throw Exception(context, "recursion limit exceeded", context.get_global()["RecursionLimitExceeded"].to_data(context), expression);
 
         Computed computed;
 
         for (auto const& function : functions) {
             try {
                 FunctionContext function_context(context, expression);
-                for (auto & symbol : function.extern_symbols)
+                for (auto& symbol : function.extern_symbols)
                     function_context.add_symbol(symbol.first, symbol.second);
 
                 if (auto custom_function = std::get_if<CustomFunction>(&function)) {
@@ -218,7 +220,7 @@ namespace Interpreter {
                         if (filter.get<bool>())
                             return Interpreter::execute(function_context, (*custom_function)->body);
                         else continue;
-                    } catch (Data::BadAccess & e) {
+                    } catch (Data::BadAccess& e) {
                         throw FunctionArgumentsError();
                     }
                 } else if (auto system_function = std::get_if<SystemFunction>(&function)) {
@@ -226,7 +228,7 @@ namespace Interpreter {
 
                     return system_function->pointer(function_context);
                 } else return Reference();
-            } catch (FunctionArgumentsError & e) {}
+            } catch (FunctionArgumentsError& e) {}
         }
 
         if (functions.empty())
@@ -235,7 +237,7 @@ namespace Interpreter {
             throw Exception(context, "incorrect function arguments", context.get_global()["IncorrectFunctionArguments"].to_data(context), expression);
     }
 
-    Reference execute(Context & context, std::shared_ptr<Parser::Expression> expression) {
+    Reference execute(Context& context, std::shared_ptr<Parser::Expression> expression) {
         if (auto function_call = std::dynamic_pointer_cast<Parser::FunctionCall>(expression)) {
             auto reference = execute(context, function_call->function);
 
@@ -252,8 +254,8 @@ namespace Interpreter {
             return call_function(context, function_call, functions, function_call->arguments);
         } else if (auto function_definition = std::dynamic_pointer_cast<Parser::FunctionDefinition>(expression)) {
             auto object = context.new_object();
-            object->functions.push_front(CustomFunction{function_definition});
-            auto & f = object->functions.back();
+            object->functions.push_front(CustomFunction{ function_definition });
+            auto& f = object->functions.back();
 
             for (auto symbol : function_definition->captures)
                 f.extern_symbols.emplace(symbol, context[symbol]);
@@ -289,11 +291,11 @@ namespace Interpreter {
     }
 
 
-    Reference set(Context & context, Reference const& var, Reference const& data) {
-        return call_function(context, context.expression, context.get_global().get_function("setter"), TupleReference{var, data});
+    Reference set(Context& context, Reference const& var, Reference const& data) {
+        return call_function(context, context.expression, context.get_global().get_function("setter"), TupleReference{ var, data });
     }
 
-    std::string string_from(Context & context, Reference const& data) {
+    std::string string_from(Context& context, Reference const& data) {
         std::ostringstream oss;
         oss << call_function(context, context.expression, context.get_global().get_function("string_from"), data).to_data(context);
         return oss.str();

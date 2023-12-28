@@ -14,8 +14,7 @@ void* Ov_Array_get(Ov_ArrayInfo array, size_t i) {
 void Ov_Array_set_size(Ov_ArrayInfo array, size_t size) {
     if (size > array.array->capacity) {
         Ov_Array_set_capacity(array, max(array.array->size * 2, size));
-    }
-    else if (array.array->capacity > 3 && size * 2 < array.array->capacity) {
+    } else if (array.array->capacity > 3 && size * 2 < array.array->capacity) {
         Ov_Array_set_capacity(array, array.array->capacity / 2);
     }
 
@@ -30,8 +29,7 @@ void Ov_Array_set_capacity(Ov_ArrayInfo array, size_t capacity) {
             free(array.array->tab);
             array.array->tab = NULL;
         }
-    }
-    else
+    } else
         array.array->tab = malloc(capacity * array.vtable->size);
 
     array.array->capacity = capacity;

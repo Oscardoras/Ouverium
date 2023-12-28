@@ -11,65 +11,68 @@ namespace Translator::CStandard {
 
         for (auto c : symbol) {
             switch (c) {
-            case '!':
-                code += "_x21";
-                break;
-            case '$':
-                code += "_x24";
-                break;
-            case '%':
-                code += "_x25";
-                break;
-            case '&':
-                code += "_x26";
-                break;
-            case '*':
-                code += "_x2A";
-                break;
-            case '+':
-                code += "_x2B";
-                break;
-            case '-':
-                code += "_x2D";
-                break;
-            case '/':
-                code += "_x2F";
-                break;
-            case ':':
-                code += "_x3A";
-                break;
-            case ';':
-                code += "_x3B";
-                break;
-            case '<':
-                code += "_x3C";
-                break;
-            case '=':
-                code += "_x3D";
-                break;
-            case '>':
-                code += "_x3E";
-                break;
-            case '?':
-                code += "_x3F";
-                break;
-            case '@':
-                code += "_x40";
-                break;
-            case '^':
-                code += "_x5E";
-                break;
-            case '|':
-                code += "_x7C";
-                break;
-            case '~':
-                code += "_x7E";
-                break;
-            default:
-                code += c;
-                break;
+                case '!':
+                    code += "_x21";
+                    break;
+                case '$':
+                    code += "_x24";
+                    break;
+                case '%':
+                    code += "_x25";
+                    break;
+                case '&':
+                    code += "_x26";
+                    break;
+                case '*':
+                    code += "_x2A";
+                    break;
+                case '+':
+                    code += "_x2B";
+                    break;
+                case '-':
+                    code += "_x2D";
+                    break;
+                case '/':
+                    code += "_x2F";
+                    break;
+                case ':':
+                    code += "_x3A";
+                    break;
+                case ';':
+                    code += "_x3B";
+                    break;
+                case '<':
+                    code += "_x3C";
+                    break;
+                case '=':
+                    code += "_x3D";
+                    break;
+                case '>':
+                    code += "_x3E";
+                    break;
+                case '?':
+                    code += "_x3F";
+                    break;
+                case '@':
+                    code += "_x40";
+                    break;
+                case '^':
+                    code += "_x5E";
+                    break;
+                case '|':
+                    code += "_x7C";
+                    break;
+                case '~':
+                    code += "_x7E";
+                    break;
+                default:
+                    code += c;
+                    break;
             }
         }
+
+        if (std::set<std::string>{"if", "else", "while"}.contains(code))
+            code += "_statement";
 
         return code;
     }
@@ -162,18 +165,19 @@ namespace Translator::CStandard {
 
         for (auto const& function : code.functions) {
             if (function->filter.return_value != nullptr) {
-                interface += "bool " + function->name.get() + "_filter(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]);\n";
+                interface += "bool " + function->name.get() + "_filter(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]);\n";
 
-                implementation += "bool " + function->name.get() + "_filter(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]) {\n";
+                implementation += "bool " + function->name.get() + "_filter(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {\n";
                 for (size_t i = 0; i < function->captures.size(); ++i) {
-                    implementation += "\tOv_Reference_Owned " + function->captures[i].first.get() + " = captures[" + std::to_string(i) + "];\n";
+                    implementation += "\tOv_Reference_Shared " + function->captures[i].first.get() + " = captures[" + std::to_string(i) + "];\n";
                 }
                 for (size_t i = 0; i < function->parameters.size(); ++i) {
                     implementation += "\tOv_Reference_Shared " + function->parameters[i].first.get() + " = args[" + std::to_string(i) + "];\n";
                 }
-                for (auto const& [var, _] : function->filter.local_variables) {
-                    implementation += "\tOv_UnknownData " + var.get() + "_data = { .vtable = &Ov_VirtualTable_Object, .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object) };\n";
-                    implementation += "\tOv_Reference_Owned " + var.get() + " = Ov_Reference_new_symbol(" + var.get() + "_data);\n";
+                size_t i = 0;
+                for (auto const& [var, _] : function->local_variables) {
+                    implementation += "\tOv_Reference_Shared " + var.get() + " = local_variables[" + std::to_string(i) + "];\n";
+                    ++i;
                 }
 
                 for (auto const& instruction : function->filter.body)
@@ -184,18 +188,19 @@ namespace Translator::CStandard {
             }
 
             {
-                interface += "Ov_Reference_Owned " + function->name.get() + "_body(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]);\n";
+                interface += "Ov_Reference_Owned " + function->name.get() + "_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]);\n";
 
-                implementation += "Ov_Reference_Owned " + function->name.get() + "_body(Ov_Reference_Owned captures[], Ov_Reference_Shared args[]) {\n";
+                implementation += "Ov_Reference_Owned " + function->name.get() + "_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {\n";
                 for (size_t i = 0; i < function->captures.size(); ++i) {
-                    implementation += "\tOv_Reference_Owned " + function->captures[i].first.get() + " = captures[" + std::to_string(i) + "];\n";
+                    implementation += "\tOv_Reference_Shared " + function->captures[i].first.get() + " = captures[" + std::to_string(i) + "];\n";
                 }
                 for (size_t i = 0; i < function->parameters.size(); ++i) {
                     implementation += "\tOv_Reference_Shared " + function->parameters[i].first.get() + " = args[" + std::to_string(i) + "];\n";
                 }
-                for (auto const& [var, _] : function->body.local_variables) {
-                    implementation += "\tOv_UnknownData " + var.get() + "_data = { .vtable = &Ov_VirtualTable_Object, .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object) };\n";
-                    implementation += "\tOv_Reference_Owned " + var.get() + " = Ov_Reference_new_symbol(" + var.get() + "_data);\n";
+                size_t i = 0;
+                for (auto const& [var, _] : function->local_variables) {
+                    implementation += "\tOv_Reference_Shared " + var.get() + " = local_variables[" + std::to_string(i) + "];\n";
+                    ++i;
                 }
 
                 for (auto const& instruction : function->body.body)
@@ -290,7 +295,7 @@ namespace Translator::CStandard {
     }
 
     std::string Property::get_expression_code() const {
-        return object->get_expression_code() + (pointer ? "->": ".") + name.get();
+        return object->get_expression_code() + (pointer ? "->" : ".") + name.get();
     }
 
     std::string List::get_expression_code() const {

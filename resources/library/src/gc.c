@@ -19,9 +19,9 @@ Ov_GC_Roots* Ov_GC_init_roots(size_t c) {
 
     roots->next = NULL;
     roots->capacity = c;
-    roots->free_list = (Ov_GC_Reference*)roots + 1;
+    roots->free_list = (Ov_GC_Reference*) roots + 1;
 
-    Ov_GC_Reference* tab = (Ov_GC_Reference*)roots + 1;
+    Ov_GC_Reference* tab = (Ov_GC_Reference*) roots + 1;
     tab[0].type = NONE;
     tab[0].none.size = c;
     tab[0].none.next = NULL;
@@ -34,12 +34,11 @@ Ov_GC_Reference* Ov_GC_alloc_references(size_t n) {
     Ov_GC_Reference** reference_ptr = &roots->free_list;
 
     assert((*reference_ptr)->type == NONE);
-    while (!(*reference_ptr)->none.size >= n) {
+    while (!((*reference_ptr)->none.size >= n)) {
         if ((*reference_ptr)->none.next != NULL) {
             reference_ptr = &(*reference_ptr)->none.next;
             assert((*reference_ptr)->type == NONE);
-        }
-        else {
+        } else {
             if (roots->next == NULL)
                 roots->next = Ov_GC_init_roots(roots->capacity * 2 > n ? roots->capacity * 2 : n);
 
@@ -55,8 +54,7 @@ Ov_GC_Reference* Ov_GC_alloc_references(size_t n) {
         (*reference_ptr + n)->none.next = (*reference_ptr)->none.next;
 
         *reference_ptr = *reference_ptr + n;
-    }
-    else {
+    } else {
         *reference_ptr = (*reference_ptr)->none.next;
     }
     return ref;
@@ -66,7 +64,7 @@ void Ov_GC_free_reference(Ov_GC_Reference* reference) {
     assert(reference->type != NONE);
 
     struct Ov_GC_Roots* roots = Ov_GC_roots;
-    while (!((Ov_GC_Reference*)roots < reference && reference < ((Ov_GC_Reference*)roots + 1) + roots->capacity))
+    while (!((Ov_GC_Reference*) roots < reference && reference < ((Ov_GC_Reference*) roots + 1) + roots->capacity))
         roots = roots->next;
 
     reference->type = NONE;
@@ -109,7 +107,7 @@ void* Ov_GC_alloc_object(Ov_VirtualTable* vtable) {
 }
 
 void Ov_GC_iterate(Ov_GC_Iterator iterator, void* object) {
-    Ov_GC_Element* element = ((Ov_GC_Element*)object) - 1;
+    Ov_GC_Element* element = ((Ov_GC_Element*) object) - 1;
 
     if (!element->iterated) {
         if (iterator != NULL)
@@ -120,26 +118,26 @@ void Ov_GC_iterate(Ov_GC_Iterator iterator, void* object) {
 
 void Ov_GC_Reference_iterator(Ov_GC_Reference* reference) {
     switch (reference->type) {
-    case DATA:
-        Ov_GC_iterate(reference->data.vtable->gc_iterator, reference->data.data.ptr);
-        break;
-    case SYMBOL:
-        Ov_GC_iterate(reference->symbol->vtable->gc_iterator, reference->symbol->data.ptr);
-        break;
-    case PROPERTY:
-        Ov_GC_iterate(reference->property.parent.vtable->gc_iterator, reference->property.parent.data.ptr);
-        break;
-    case ARRAY:
-        Ov_GC_iterate(reference->array.array.vtable->gc_iterator, reference->array.array.data.ptr);
-        break;
-    case TUPLE: {
-        size_t i;
-        for (i = 0; i < reference->tuple.size; ++i)
-            Ov_GC_Reference_iterator(&reference->tuple.references[i]);
-        break;
-    }
-    default:
-        break;
+        case DATA:
+            Ov_GC_iterate(reference->data.vtable->gc_iterator, reference->data.data.ptr);
+            break;
+        case SYMBOL:
+            Ov_GC_iterate(reference->symbol->vtable->gc_iterator, reference->symbol->data.ptr);
+            break;
+        case PROPERTY:
+            Ov_GC_iterate(reference->property.parent.vtable->gc_iterator, reference->property.parent.data.ptr);
+            break;
+        case ARRAY:
+            Ov_GC_iterate(reference->array.array.vtable->gc_iterator, reference->array.array.data.ptr);
+            break;
+        case TUPLE: {
+            size_t i;
+            for (i = 0; i < reference->tuple.size; ++i)
+                Ov_GC_Reference_iterator(&reference->tuple.references[i]);
+            break;
+        }
+        default:
+            break;
     }
 }
 
@@ -151,20 +149,18 @@ void Ov_GC_collect(void) {
 
         size_t i;
         for (i = 0; i < (*roots_ptr)->capacity;) {
-            Ov_GC_Reference* reference = ((Ov_GC_Reference*)(*roots_ptr) + 1) + i;
+            Ov_GC_Reference* reference = ((Ov_GC_Reference*) (*roots_ptr) + 1) + i;
             if (reference->type == NONE) {
                 if (last_free != NULL) {
                     last_free->none.size++;
                     ++i;
-                }
-                else {
+                } else {
                     *reference_ptr = reference;
                     reference_ptr = &(*reference_ptr)->none.next;
                     last_free = reference;
                     i += reference->none.size;
                 }
-            }
-            else {
+            } else {
                 Ov_GC_Reference_iterator(reference);
                 last_free = NULL;
                 ++i;
@@ -175,8 +171,7 @@ void Ov_GC_collect(void) {
             Ov_GC_Roots* tmp = *roots_ptr;
             *roots_ptr = (*roots_ptr)->next;
             free(tmp);
-        }
-        else {
+        } else {
             roots_ptr = &(*roots_ptr)->next;
         }
     }
@@ -187,8 +182,7 @@ void Ov_GC_collect(void) {
             Ov_GC_Element* next = (*ptr)->next;
             free(*ptr);
             *ptr = next;
-        }
-        else {
+        } else {
             (*ptr)->iterated = false;
             ptr = &(*ptr)->next;
         }

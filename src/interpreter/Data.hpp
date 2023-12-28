@@ -18,13 +18,13 @@ namespace Interpreter {
 
         using std::variant<Object*, char, double, long, bool>::variant;
 
-        class BadAccess: public std::exception {};
+        class BadAccess : public std::exception {};
 
         template<typename T>
-        T & get() {
+        T& get() {
             try {
                 return std::get<T>(*this);
-            } catch (std::bad_variant_access & e) {
+            } catch (std::bad_variant_access& e) {
                 throw BadAccess();
             }
         }
@@ -32,14 +32,14 @@ namespace Interpreter {
         T const& get() const {
             try {
                 return std::get<T>(*this);
-            } catch (std::bad_variant_access & e) {
+            } catch (std::bad_variant_access& e) {
                 throw BadAccess();
             }
         }
 
     };
 
-    std::ostream & operator<<(std::ostream & os, Data const& data);
+    std::ostream& operator<<(std::ostream& os, Data const& data);
 
 }
 

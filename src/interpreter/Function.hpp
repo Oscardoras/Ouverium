@@ -14,10 +14,10 @@ namespace Interpreter {
 
     struct SystemFunction {
         std::shared_ptr<Parser::Expression> parameters;
-        Reference (*pointer)(FunctionContext&);
+        Reference(*pointer)(FunctionContext&);
     };
 
-    struct Function: public std::variant<CustomFunction, SystemFunction> {
+    struct Function : public std::variant<CustomFunction, SystemFunction> {
         std::map<std::string, IndirectReference> extern_symbols;
 
         using std::variant<CustomFunction, SystemFunction>::variant;

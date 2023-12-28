@@ -62,7 +62,7 @@ namespace Static {
             return linked;
         }
 
-        virtual void iterate(std::set<std::shared_ptr<Reference>> & linked) {
+        virtual void iterate(std::set<std::shared_ptr<Reference>>& linked) {
             if (linked.find(shared_from_this()) == linked.end()) {
                 linked.insert(shared_from_this());
 
@@ -89,7 +89,7 @@ namespace Static {
 
             for (auto const& l : get_linked())
                 for (auto d : l->get_data().get_linked())
-                    if (auto & f = d->function)
+                    if (auto& f = d->function)
                         functions.push_back(*f);
 
             return functions;
@@ -103,7 +103,7 @@ namespace Static {
 
         std::set<std::shared_ptr<Reference>> parents;
 
-        void iterate(std::set<std::shared_ptr<Reference>> & linked) override {
+        void iterate(std::set<std::shared_ptr<Reference>>& linked) override {
             if (linked.find(shared_from_this()) == linked.end()) {
                 linked.insert(shared_from_this());
 
@@ -134,7 +134,7 @@ namespace Static {
     };
     struct SymbolReference : public Reference {
         std::shared_ptr<Data> data;
-        SymbolReference():
+        SymbolReference() :
             data{ std::make_shared<Data>() } {}
         Data& get_data() override {
             return *data;
@@ -143,7 +143,7 @@ namespace Static {
     struct PropertyReference : public Reference {
         std::shared_ptr<Reference> parent;
         std::string name;
-        PropertyReference(std::shared_ptr<Reference> parent, std::string name):
+        PropertyReference(std::shared_ptr<Reference> parent, std::string name) :
             parent{ parent }, name{ name } {}
         Data& get_data() override {
             // TODO
@@ -152,7 +152,7 @@ namespace Static {
     };
     struct ArrayReference : public Reference {
         std::shared_ptr<Reference> array;
-        ArrayReference(std::shared_ptr<Reference> const& array, size_t):
+        ArrayReference(std::shared_ptr<Reference> const& array, size_t) :
             array{ array } {}
         Data& get_data() override {
             if (array->get_data().array == nullptr)
@@ -163,7 +163,7 @@ namespace Static {
     };
     struct TupleReference : public Reference, public std::vector<std::shared_ptr<Reference>> {
         Data data;
-        TupleReference(std::vector<std::shared_ptr<Reference>> const& vector):
+        TupleReference(std::vector<std::shared_ptr<Reference>> const& vector) :
             std::vector<std::shared_ptr<Reference>>{ vector } {
             for (auto const& r : vector)
                 data.assignators.insert(r);

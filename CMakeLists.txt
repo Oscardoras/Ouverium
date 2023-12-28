@@ -31,3 +31,5 @@ add_executable(ouverium ${ouverium_sources})
 target_include_directories(ouverium PRIVATE ${Boost_INCLUDE_DIRS})
 target_link_libraries(ouverium PRIVATE ${Boost_LIBRARIES})
 target_link_libraries(ouverium PUBLIC capi)
+
+file(CREATE_LINK ../libraries libraries SYMBOLIC)

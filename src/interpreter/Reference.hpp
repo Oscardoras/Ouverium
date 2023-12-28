@@ -18,13 +18,13 @@ namespace Interpreter {
         std::reference_wrapper<Object> parent;
         std::string name;
 
-        operator Data &() const;
+        operator Data& () const;
     };
     struct ArrayReference {
         std::reference_wrapper<Object> array;
         size_t i;
 
-        operator Data &() const;
+        operator Data& () const;
     };
 
     class IndirectReference : public std::variant<SymbolReference, PropertyReference, ArrayReference> {
@@ -33,7 +33,7 @@ namespace Interpreter {
 
         using std::variant<SymbolReference, PropertyReference, ArrayReference>::variant;
 
-        Data to_data(Context & context) const;
+        Data to_data(Context& context) const;
 
     };
 
@@ -41,16 +41,16 @@ namespace Interpreter {
 
     protected:
 
-        Data get_data(Context & context) const;
-        friend Data compute(Context &, Reference const&, Data const&);
+        Data get_data(Context& context) const;
+        friend Data compute(Context&, Reference const&, Data const&);
 
     public:
 
         using std::variant<Data, TupleReference, SymbolReference, PropertyReference, ArrayReference>::variant;
         Reference(IndirectReference const& indirect_reference);
 
-        Data to_data(Context & context) const;
-        IndirectReference to_indirect_reference(Context & context) const;
+        Data to_data(Context& context) const;
+        IndirectReference to_indirect_reference(Context& context) const;
 
     };
 

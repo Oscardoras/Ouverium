@@ -14,6 +14,7 @@
 #include "parser/Standard.hpp"
 
 
+std::filesystem::path program_location = boost::filesystem::canonical(boost::dll::program_location()).string();
 std::vector<std::string> include_path;
 
 #ifdef __unix__
@@ -26,6 +27,7 @@ bool is_interactive() {
     return true;
 }
 #endif
+
 
 int interactive_mode(std::string const& path) {
     Interpreter::GlobalContext context(nullptr);
@@ -84,7 +86,7 @@ int interactive_mode(std::string const& path) {
     return EXIT_SUCCESS;
 }
 
-int file_mode(std::string const& path, std::istream & is) {
+int file_mode(std::string const& path, std::istream& is) {
     std::ostringstream oss;
     oss << is.rdbuf();
     std::string code = oss.str();
@@ -114,16 +116,16 @@ int file_mode(std::string const& path, std::istream & is) {
             }
             return EXIT_FAILURE;
         }
-    } catch (Parser::Standard::IncompleteCode & e) {
+    } catch (Parser::Standard::IncompleteCode& e) {
         std::cerr << "incomplete code, you must finish the last expression in file \"" << path << "\"" << std::endl;
         return EXIT_FAILURE;
-    } catch (Parser::Standard::Exception & e) {
+    } catch (Parser::Standard::Exception& e) {
         std::cerr << e.what();
         return EXIT_FAILURE;
     }
 }
 
-void compile_mode(std::string const& path, std::istream & is, std::string const& out) {
+void compile_mode(std::string const& path, std::istream& is, std::string const& out) {
     std::ostringstream oss;
     oss << is.rdbuf();
     std::string code = oss.str();
@@ -136,27 +138,12 @@ void compile_mode(std::string const& path, std::istream & is, std::string const&
     auto translator = Translator::CStandard::Translator(expression, meta_data);
 
     translator.translate(out);
-    std::string cmd = "gcc -g -Wall -Wextra " + out + "/*.c -o " + out + "/executable -I resources/library/include/ -Wl,-rpath,/home/oscar/Ouver/Ouverium/build build/libcapi.so";
+    std::string cmd = "gcc -g -Wall -Wextra " + out + "/*.c -o " + out + "/executable -I resources/library/include/ -Wl,-rpath," + program_location.parent_path().c_str() + " build/libcapi.so";
     system(cmd.c_str());
 }
 
-int main(int argc, char ** argv) {
-    std::string install_folder = boost::dll::program_location().parent_path().string();
-
-    auto p = std::filesystem::path(install_folder).parent_path() / "libraries";
-    include_path.push_back(p);
-
-    auto p2 = std::filesystem::path(install_folder).parent_path().parent_path() / "libraries";
-    include_path.push_back(p2);
-
-    /*
-    char arg0[] = "";
-    char arg1[] = "../examples/test3.fl";
-    char arg2[] = "../build/out";
-    char* args[] = { arg0, arg1, arg2 };
-    argv = args;
-    argc = 3;
-    */
+int main(int argc, char** argv) {
+    include_path.push_back(program_location.parent_path() / "libraries");
 
     if (argc == 1)
         if (is_interactive())
@@ -171,19 +158,16 @@ int main(int argc, char ** argv) {
             std::cerr << "Error: unable to load the source file " << argv[1] << "." << std::endl;
             return EXIT_FAILURE;
         }
-    }
-    else if (argc == 3) {
+    } else if (argc == 3) {
         std::ifstream src(argv[1]);
         if (src) {
             compile_mode(argv[1], src, argv[2]);
             return EXIT_SUCCESS;
-        }
-        else {
+        } else {
             std::cerr << "Error: unable to load the source file " << argv[1] << "." << std::endl;
             return EXIT_FAILURE;
         }
-    }
-    else {
+    } else {
         std::cerr << "Usage: " << argv[0] << " [src] [out]" << std::endl;
         return EXIT_FAILURE;
     }
