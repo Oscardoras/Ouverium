@@ -44,13 +44,15 @@ namespace Interpreter {
             return var;
         }
 
-        auto setter_args = std::make_shared<Parser::Tuple>(Parser::Tuple({
-            std::make_shared<Parser::FunctionCall>(
-                std::make_shared<Parser::Symbol>("var"),
-                std::make_shared<Parser::Tuple>()
-            ),
-            std::make_shared<Parser::Symbol>("data")
-            }));
+        auto setter_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+            {
+                std::make_shared<Parser::FunctionCall>(
+                    std::make_shared<Parser::Symbol>("var"),
+                    std::make_shared<Parser::Tuple>()
+                ),
+                std::make_shared<Parser::Symbol>("data")
+            }
+        ));
         Reference setter(FunctionContext& context) {
             auto var = Interpreter::call_function(context.get_parent(), context.expression, context["var"].to_data(context).get<Object*>()->functions, std::make_shared<Parser::Tuple>());
             auto data = context["data"].to_data(context);
@@ -59,10 +61,12 @@ namespace Interpreter {
         }
 
 
-        auto separator_args = std::make_shared<Parser::Tuple>(Parser::Tuple({
-            std::make_shared<Parser::Symbol>("a"),
-            std::make_shared<Parser::Symbol>("b")
-            }));
+        auto separator_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+            {
+                std::make_shared<Parser::Symbol>("a"),
+                std::make_shared<Parser::Symbol>("b")
+            }
+        ));
         Reference separator(FunctionContext& context) {
             return Reference(context["b"]);
         }
@@ -103,16 +107,18 @@ namespace Interpreter {
             }
         }
 
-        auto while_statement_args = std::make_shared<Parser::Tuple>(Parser::Tuple({
-            std::make_shared<Parser::FunctionCall>(
-                std::make_shared<Parser::Symbol>("condition"),
-                std::make_shared<Parser::Tuple>()
-            ),
-            std::make_shared<Parser::FunctionCall>(
-                std::make_shared<Parser::Symbol>("block"),
-                std::make_shared<Parser::Tuple>()
-            )
-            }));
+        auto while_statement_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+            {
+                std::make_shared<Parser::FunctionCall>(
+                    std::make_shared<Parser::Symbol>("condition"),
+                    std::make_shared<Parser::Tuple>()
+                ),
+                std::make_shared<Parser::FunctionCall>(
+                    std::make_shared<Parser::Symbol>("block"),
+                    std::make_shared<Parser::Tuple>()
+                )
+            }
+        ));
         Reference while_statement(FunctionContext& context) {
             try {
                 auto& parent = context.get_parent();
@@ -133,17 +139,19 @@ namespace Interpreter {
             }
         }
 
-        auto for_statement_args = std::make_shared<Parser::Tuple>(Parser::Tuple({
-            std::make_shared<Parser::Symbol>("variable"),
-            std::make_shared<Parser::Symbol>("from"),
-            std::make_shared<Parser::Symbol>("begin"),
-            std::make_shared<Parser::Symbol>("to"),
-            std::make_shared<Parser::Symbol>("end"),
-            std::make_shared<Parser::FunctionCall>(
-                std::make_shared<Parser::Symbol>("block"),
-                std::make_shared<Parser::Tuple>()
-            )
-            }));
+        auto for_statement_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+            {
+                std::make_shared<Parser::Symbol>("variable"),
+                std::make_shared<Parser::Symbol>("from"),
+                std::make_shared<Parser::Symbol>("begin"),
+                std::make_shared<Parser::Symbol>("to"),
+                std::make_shared<Parser::Symbol>("end"),
+                std::make_shared<Parser::FunctionCall>(
+                    std::make_shared<Parser::Symbol>("block"),
+                    std::make_shared<Parser::Tuple>()
+                )
+            }
+        ));
         Reference for_statement(FunctionContext& context) {
             try {
                 auto variable = context["variable"];
@@ -161,19 +169,21 @@ namespace Interpreter {
             }
         }
 
-        auto for_step_statement_args = std::make_shared<Parser::Tuple>(Parser::Tuple({
-            std::make_shared<Parser::Symbol>("variable"),
-            std::make_shared<Parser::Symbol>("from"),
-            std::make_shared<Parser::Symbol>("begin"),
-            std::make_shared<Parser::Symbol>("to"),
-            std::make_shared<Parser::Symbol>("end"),
-            std::make_shared<Parser::Symbol>("step"),
-            std::make_shared<Parser::Symbol>("s"),
-            std::make_shared<Parser::FunctionCall>(
-                std::make_shared<Parser::Symbol>("block"),
-                std::make_shared<Parser::Tuple>()
-            )
-            }));
+        auto for_step_statement_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+            {
+                std::make_shared<Parser::Symbol>("variable"),
+                std::make_shared<Parser::Symbol>("from"),
+                std::make_shared<Parser::Symbol>("begin"),
+                std::make_shared<Parser::Symbol>("to"),
+                std::make_shared<Parser::Symbol>("end"),
+                std::make_shared<Parser::Symbol>("step"),
+                std::make_shared<Parser::Symbol>("s"),
+                std::make_shared<Parser::FunctionCall>(
+                    std::make_shared<Parser::Symbol>("block"),
+                    std::make_shared<Parser::Tuple>()
+                )
+            }
+        ));
         Reference for_step_statement(FunctionContext& context) {
             try {
                 auto& parent = context.get_parent();
@@ -201,14 +211,16 @@ namespace Interpreter {
             }
         }
 
-        auto try_statement_args = std::make_shared<Parser::Tuple>(Parser::Tuple({
-            std::make_shared<Parser::FunctionCall>(
-                std::make_shared<Parser::Symbol>("try_block"),
-                std::make_shared<Parser::Tuple>()
-            ),
-            std::make_shared<Parser::Symbol>("catch"),
-            std::make_shared<Parser::Symbol>("catch_function")
-            }));
+        auto try_statement_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+            {
+                std::make_shared<Parser::FunctionCall>(
+                    std::make_shared<Parser::Symbol>("try_block"),
+                    std::make_shared<Parser::Tuple>()
+                ),
+                std::make_shared<Parser::Symbol>("catch"),
+                std::make_shared<Parser::Symbol>("catch_function")
+            }
+        ));
         Reference try_statement(FunctionContext& context) {
             auto try_block = context["try_block"].to_data(context).get<Object*>();
             auto catch_function = context["catch_function"].to_data(context).get<Object*>();
@@ -248,10 +260,12 @@ namespace Interpreter {
             return Reference(context["data"].to_data(context));
         }
 
-        auto function_definition_args = std::make_shared<Parser::Tuple>(Parser::Tuple({
-            std::make_shared<Parser::Symbol>("var"),
-            std::make_shared<Parser::Symbol>("data")
-            }));
+        auto function_definition_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+            {
+                std::make_shared<Parser::Symbol>("var"),
+                std::make_shared<Parser::Symbol>("data")
+            }
+        ));
         Reference function_definition(FunctionContext& context) {
             try {
                 auto var = context["var"].to_data(context).get<Object*>();
@@ -286,10 +300,12 @@ namespace Interpreter {
             } else throw FunctionArgumentsError();
         }
 
-        auto equals_args = std::make_shared<Parser::Tuple>(Parser::Tuple({
-            std::make_shared<Parser::Symbol>("a"),
-            std::make_shared<Parser::Symbol>("b")
-            }));
+        auto equals_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+            {
+                std::make_shared<Parser::Symbol>("a"),
+                std::make_shared<Parser::Symbol>("b")
+            }
+        ));
         Reference equals(FunctionContext& context) {
             auto a = context["a"].to_data(context);
             auto b = context["b"].to_data(context);

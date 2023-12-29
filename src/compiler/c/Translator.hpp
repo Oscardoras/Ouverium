@@ -47,6 +47,7 @@ namespace Translator::CStandard {
                 std::shared_ptr<Reference> return_value;
             } main;
             std::set<std::shared_ptr<FunctionDefinition>> functions;
+            std::set<std::shared_ptr<Lambda>> lambdas;
         } code;
 
         void create_structures();
@@ -75,8 +76,23 @@ namespace Translator::CStandard {
             "if_statement",
             "else_statement",
             "while_statement",
+            "_x24",
+            "_x24_x3D_x3D",
+            "_x3A",
+            "_x3D_x3D",
+            "_x21_x3D",
+            "_x3D_x3D_x3D",
+            "_x21_x3D_x3D",
             "string_from",
-            "print"
+            "print",
+            "_x21",
+            "_x26",
+            "_x7C",
+            "_x2B",
+            "_x2D",
+            "_x2A",
+            "_x2F",
+            "_x25",
         };
 
     };

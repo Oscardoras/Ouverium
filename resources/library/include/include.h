@@ -139,7 +139,7 @@ extern "C" {
                 struct Ov_Expression* tab;
             } tuple;
             Ov_Reference_Shared reference;
-            Ov_Function lambda;
+            Ov_Function lambda; // is moved to the Ov_Function_eval function.
         };
     } Ov_Expression;
 
@@ -420,9 +420,23 @@ extern "C" {
     extern Ov_Reference_Owned if_statement;
     extern Ov_Reference_Owned else_statement;
     extern Ov_Reference_Owned while_statement;
+    extern Ov_Reference_Owned _x24;
+    extern Ov_Reference_Owned _x24_x3D_x3D;
+    extern Ov_Reference_Owned _x3A;
+    extern Ov_Reference_Owned _x3D_x3D;
+    extern Ov_Reference_Owned _x21_x3D;
+    extern Ov_Reference_Owned _x3D_x3D_x3D;
+    extern Ov_Reference_Owned _x21_x3D_x3D;
     extern Ov_Reference_Owned string_from;
     extern Ov_Reference_Owned print;
-
+    extern Ov_Reference_Owned _x21;
+    extern Ov_Reference_Owned _x26;
+    extern Ov_Reference_Owned _x7C;
+    extern Ov_Reference_Owned _x2B;
+    extern Ov_Reference_Owned _x2D;
+    extern Ov_Reference_Owned _x2A;
+    extern Ov_Reference_Owned _x2F;
+    extern Ov_Reference_Owned _x25;
 
 #ifdef __cplusplus
 }

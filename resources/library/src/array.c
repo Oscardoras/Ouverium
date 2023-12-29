@@ -30,7 +30,8 @@ void Ov_Array_set_capacity(Ov_ArrayInfo array, size_t capacity) {
             array.array->tab = NULL;
         }
     } else
-        array.array->tab = malloc(capacity * array.vtable->size);
+        if (capacity > 0)
+            array.array->tab = malloc(capacity * array.vtable->size);
 
     array.array->capacity = capacity;
 }

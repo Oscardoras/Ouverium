@@ -33,19 +33,22 @@ Ov_GC_Reference* Ov_GC_alloc_references(size_t n) {
     Ov_GC_Roots* roots = Ov_GC_roots;
     Ov_GC_Reference** reference_ptr = &roots->free_list;
 
-    assert((*reference_ptr)->type == NONE);
-    while (!((*reference_ptr)->none.size >= n)) {
-        if ((*reference_ptr)->none.next != NULL) {
-            reference_ptr = &(*reference_ptr)->none.next;
-            assert((*reference_ptr)->type == NONE);
-        } else {
+    do {
+        if (*reference_ptr == NULL) {
             if (roots->next == NULL)
                 roots->next = Ov_GC_init_roots(roots->capacity * 2 > n ? roots->capacity * 2 : n);
 
             roots = roots->next;
+            assert(roots != NONE);
             reference_ptr = &roots->free_list;
+        } else if ((*reference_ptr)->none.size >= n) {
+            assert((*reference_ptr)->type == NONE);
+            break;
+        } else {
+            assert((*reference_ptr)->type == NONE);
+            reference_ptr = &(*reference_ptr)->none.next;
         }
-    }
+    } while (true);
 
     Ov_GC_Reference* ref = *reference_ptr;
     if ((*reference_ptr)->none.size > n) {
@@ -93,13 +96,13 @@ void* Ov_GC_alloc_object(Ov_VirtualTable* vtable) {
         .vtable = vtable,
         .data.ptr = ptr + 1
     };
-    if (vtable->array.vtable) {
+    if (vtable->array.offset >= 0) {
         Ov_ArrayInfo array = Ov_UnknownData_get_array(data);
         array.array->capacity = 0;
         array.array->size = 0;
         array.array->tab = NULL;
     }
-    if (vtable->function.offset != -1) {
+    if (vtable->function.offset >= 0) {
         *Ov_UnknownData_get_function(data) = NULL;
     }
 
@@ -141,6 +144,19 @@ void Ov_GC_Reference_iterator(Ov_GC_Reference* reference) {
     }
 }
 
+static void free_ptr(Ov_GC_Element* ptr) {
+    Ov_UnknownData data = {
+        .vtable = ptr->vtable,
+        .data.ptr = ptr + 1
+    };
+    if (ptr->vtable->array.offset >= 0)
+        Ov_Array_set_capacity(Ov_UnknownData_get_array(data), 0);
+    if (ptr->vtable->function.offset >= 0)
+        Ov_Function_free(Ov_UnknownData_get_function(data));
+
+    free(ptr);
+}
+
 void Ov_GC_collect(void) {
     Ov_GC_Roots** roots_ptr;
     for (roots_ptr = &Ov_GC_roots; *roots_ptr != NULL;) {
@@ -180,7 +196,7 @@ void Ov_GC_collect(void) {
     for (ptr = &Ov_GC_list; *ptr != NULL;) {
         if (!(*ptr)->iterated) {
             Ov_GC_Element* next = (*ptr)->next;
-            free(*ptr);
+            free_ptr(*ptr);
             *ptr = next;
         } else {
             (*ptr)->iterated = false;
@@ -200,7 +216,7 @@ void Ov_end(void) {
     Ov_GC_Element* ptr;
     for (ptr = Ov_GC_list; ptr != NULL;) {
         Ov_GC_Element* next = ptr->next;
-        free(ptr);
+        free_ptr(ptr);
         ptr = next;
     }
 }

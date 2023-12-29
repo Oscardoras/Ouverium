@@ -31,10 +31,12 @@ namespace Interpreter {
             }
         }
 
-        auto set_capacity_args = std::make_shared<Parser::Tuple>(Parser::Tuple({
-            std::make_shared<Parser::Symbol>("array"),
-            std::make_shared<Parser::Symbol>("capacity")
-            }));
+        auto set_capacity_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+            {
+                std::make_shared<Parser::Symbol>("array"),
+                std::make_shared<Parser::Symbol>("capacity")
+            }
+        ));
         Reference set_capacity(FunctionContext& context) {
             try {
                 auto array = context["array"].to_data(context).get<Object*>();
@@ -47,10 +49,12 @@ namespace Interpreter {
             }
         }
 
-        auto get_args = std::make_shared<Parser::Tuple>(Parser::Tuple({
-            std::make_shared<Parser::Symbol>("array"),
-            std::make_shared<Parser::Symbol>("i")
-            }));
+        auto get_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+            {
+                std::make_shared<Parser::Symbol>("array"),
+                std::make_shared<Parser::Symbol>("i")
+            }
+        ));
         Reference get(FunctionContext& context) {
             try {
                 auto array = context["array"].to_data(context).get<Object*>();
@@ -64,10 +68,12 @@ namespace Interpreter {
             }
         }
 
-        auto add_args = std::make_shared<Parser::Tuple>(Parser::Tuple({
-            std::make_shared<Parser::Symbol>("array"),
-            std::make_shared<Parser::Symbol>("element")
-            }));
+        auto add_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+            {
+                std::make_shared<Parser::Symbol>("array"),
+                std::make_shared<Parser::Symbol>("element")
+            }
+        ));
         Reference add(FunctionContext& context) {
             try {
                 auto array = context["array"].to_data(context).get<Object*>();
@@ -93,13 +99,15 @@ namespace Interpreter {
             }
         }
 
-        auto foreach_args = std::make_shared<Parser::Tuple>(Parser::Tuple({
-            std::make_shared<Parser::FunctionCall>(
-                std::make_shared<Parser::Symbol>("array"),
-                std::make_shared<Parser::Tuple>()
-            ),
-            std::make_shared<Parser::Symbol>("function")
-            }));
+        auto foreach_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+            {
+                std::make_shared<Parser::FunctionCall>(
+                    std::make_shared<Parser::Symbol>("array"),
+                    std::make_shared<Parser::Tuple>()
+                ),
+                std::make_shared<Parser::Symbol>("function")
+            }
+        ));
         Reference foreach(FunctionContext& context) {
             try {
                 auto array = Interpreter::call_function(context.get_parent(), context.expression, context["array"].to_data(context).get<Object*>()->functions, std::make_shared<Parser::Tuple>());

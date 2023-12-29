@@ -15,10 +15,12 @@ namespace Interpreter {
             else throw FunctionArgumentsError();
         }
 
-        auto is_type_args = std::make_shared<Parser::Tuple>(Parser::Tuple({
-            std::make_shared<Parser::Symbol>("data"),
-            std::make_shared<Parser::Symbol>("type")
-            }));
+        auto is_type_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+            {
+                std::make_shared<Parser::Symbol>("data"),
+                std::make_shared<Parser::Symbol>("type")
+            }
+        ));
         Reference is_type(FunctionContext& context) {
             auto data = context["data"].to_data(context);
             auto type = context["type"].to_data(context);

@@ -478,7 +478,7 @@ Ov_Reference_Owned logical_and_body(Ov_Reference_Shared captures[], Ov_Reference
     (void) (captures);
     (void) (local_variables);
     Ov_UnknownData a = Ov_Reference_get(args[0]);
-    Ov_UnknownData b_lambda = Ov_Reference_get(args[0]);
+    Ov_UnknownData b_lambda = Ov_Reference_get(args[1]);
 
     Ov_UnknownData r;
     r.vtable = &Ov_VirtualTable_Bool;
@@ -505,7 +505,7 @@ Ov_Reference_Owned logical_or_body(Ov_Reference_Shared captures[], Ov_Reference_
     (void) (captures);
     (void) (local_variables);
     Ov_UnknownData a = Ov_Reference_get(args[0]);
-    Ov_UnknownData b_lambda = Ov_Reference_get(args[0]);
+    Ov_UnknownData b_lambda = Ov_Reference_get(args[1]);
 
     Ov_UnknownData r;
     r.vtable = &Ov_VirtualTable_Bool;
@@ -532,7 +532,7 @@ Ov_Reference_Owned addition_body(Ov_Reference_Shared captures[], Ov_Reference_Sh
     (void) (captures);
     (void) (local_variables);
     Ov_UnknownData a = Ov_Reference_get(args[0]);
-    Ov_UnknownData b = Ov_Reference_get(args[0]);
+    Ov_UnknownData b = Ov_Reference_get(args[1]);
 
     Ov_UnknownData r;
     r.vtable = NULL;
@@ -583,7 +583,7 @@ Ov_Reference_Owned substraction_body(Ov_Reference_Shared captures[], Ov_Referenc
     (void) (captures);
     (void) (local_variables);
     Ov_UnknownData a = Ov_Reference_get(args[0]);
-    Ov_UnknownData b = Ov_Reference_get(args[0]);
+    Ov_UnknownData b = Ov_Reference_get(args[1]);
 
     Ov_UnknownData r;
     r.vtable = NULL;
@@ -614,7 +614,7 @@ Ov_Reference_Owned multiplication_body(Ov_Reference_Shared captures[], Ov_Refere
     (void) (captures);
     (void) (local_variables);
     Ov_UnknownData a = Ov_Reference_get(args[0]);
-    Ov_UnknownData b = Ov_Reference_get(args[0]);
+    Ov_UnknownData b = Ov_Reference_get(args[1]);
 
     Ov_UnknownData r;
     r.vtable = NULL;
@@ -645,7 +645,7 @@ Ov_Reference_Owned division_body(Ov_Reference_Shared captures[], Ov_Reference_Sh
     (void) (captures);
     (void) (local_variables);
     Ov_UnknownData a = Ov_Reference_get(args[0]);
-    Ov_UnknownData b = Ov_Reference_get(args[0]);
+    Ov_UnknownData b = Ov_Reference_get(args[1]);
 
     Ov_UnknownData r;
     r.vtable = NULL;
@@ -676,7 +676,7 @@ Ov_Reference_Owned modulo_body(Ov_Reference_Shared captures[], Ov_Reference_Shar
     (void) (captures);
     (void) (local_variables);
     Ov_UnknownData a = Ov_Reference_get(args[0]);
-    Ov_UnknownData b = Ov_Reference_get(args[0]);
+    Ov_UnknownData b = Ov_Reference_get(args[1]);
 
     Ov_UnknownData r;
     r.vtable = NULL;
@@ -700,8 +700,23 @@ Ov_Reference_Owned _x3B;
 Ov_Reference_Owned if_statement;
 Ov_Reference_Owned else_statement;
 Ov_Reference_Owned while_statement;
+Ov_Reference_Owned _x24;
+Ov_Reference_Owned _x24_x3D_x3D;
+Ov_Reference_Owned _x3A;
+Ov_Reference_Owned _x3D_x3D;
+Ov_Reference_Owned _x21_x3D;
+Ov_Reference_Owned _x3D_x3D_x3D;
+Ov_Reference_Owned _x21_x3D_x3D;
 Ov_Reference_Owned string_from;
 Ov_Reference_Owned print;
+Ov_Reference_Owned _x21;
+Ov_Reference_Owned _x26;
+Ov_Reference_Owned _x7C;
+Ov_Reference_Owned _x2B;
+Ov_Reference_Owned _x2D;
+Ov_Reference_Owned _x2A;
+Ov_Reference_Owned _x2F;
+Ov_Reference_Owned _x25;
 
 void Ov_init_functions() {
     Ov_UnknownData getter_data = {
@@ -757,6 +772,48 @@ void Ov_init_functions() {
     Ov_Function_push(Ov_UnknownData_get_function(while_statement_data), while_statement_parameters, while_statement_body, NULL, 0, NULL, 0);
     while_statement = Ov_Reference_new_symbol(while_statement_data);
 
+    Ov_UnknownData copy_data = {
+        .vtable = &Ov_VirtualTable_Function,
+        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
+    };
+    Ov_Function_push(Ov_UnknownData_get_function(copy_data), copy_parameters, copy_body, NULL, 0, NULL, 0);
+    _x24 = Ov_Reference_new_symbol(copy_data);
+
+    Ov_UnknownData copy_pointer_data = {
+        .vtable = &Ov_VirtualTable_Function,
+        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
+    };
+    Ov_Function_push(Ov_UnknownData_get_function(copy_pointer_data), copy_pointer_parameters, copy_pointer_body, NULL, 0, NULL, 0);
+    _x24_x3D_x3D = Ov_Reference_new_symbol(copy_pointer_data);
+
+    Ov_UnknownData function_definition_data = {
+        .vtable = &Ov_VirtualTable_Function,
+        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
+    };
+    Ov_Function_push(Ov_UnknownData_get_function(function_definition_data), function_definition_parameters, function_definition_body, NULL, 0, NULL, 0);
+    _x24_x3D_x3D = Ov_Reference_new_symbol(function_definition_data);
+
+    Ov_UnknownData equals_data = {
+        .vtable = &Ov_VirtualTable_Function,
+        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
+    };
+    Ov_Function_push(Ov_UnknownData_get_function(equals_data), equals_parameters, equals_body, NULL, 0, NULL, 0);
+    _x3D_x3D = Ov_Reference_new_symbol(equals_data);
+
+    Ov_UnknownData check_pointers_data = {
+        .vtable = &Ov_VirtualTable_Function,
+        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
+    };
+    Ov_Function_push(Ov_UnknownData_get_function(check_pointers_data), check_pointers_parameters, check_pointers_body, NULL, 0, NULL, 0);
+    _x3D_x3D_x3D = Ov_Reference_new_symbol(check_pointers_data);
+
+    Ov_UnknownData not_check_pointers_data = {
+        .vtable = &Ov_VirtualTable_Function,
+        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
+    };
+    Ov_Function_push(Ov_UnknownData_get_function(not_check_pointers_data), not_check_pointers_parameters, not_check_pointers_body, NULL, 0, NULL, 0);
+    _x21_x3D_x3D = Ov_Reference_new_symbol(not_check_pointers_data);
+
     Ov_UnknownData string_from_data = {
         .vtable = &Ov_VirtualTable_Function,
         .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
@@ -770,4 +827,61 @@ void Ov_init_functions() {
     };
     Ov_Function_push(Ov_UnknownData_get_function(print_data), print_parameters, print_body, NULL, 0, NULL, 0);
     print = Ov_Reference_new_symbol(print_data);
+
+    Ov_UnknownData logical_not_data = {
+        .vtable = &Ov_VirtualTable_Function,
+        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
+    };
+    Ov_Function_push(Ov_UnknownData_get_function(logical_not_data), logical_not_parameters, logical_not_body, NULL, 0, NULL, 0);
+    _x21 = Ov_Reference_new_symbol(logical_not_data);
+
+    Ov_UnknownData logical_and_data = {
+        .vtable = &Ov_VirtualTable_Function,
+        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
+    };
+    Ov_Function_push(Ov_UnknownData_get_function(logical_and_data), logical_and_parameters, logical_and_body, NULL, 0, NULL, 0);
+    _x26 = Ov_Reference_new_symbol(logical_and_data);
+
+    Ov_UnknownData logical_or_data = {
+        .vtable = &Ov_VirtualTable_Function,
+        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
+    };
+    Ov_Function_push(Ov_UnknownData_get_function(logical_or_data), logical_or_parameters, logical_or_body, NULL, 0, NULL, 0);
+    _x7C = Ov_Reference_new_symbol(logical_or_data);
+
+    Ov_UnknownData addition_data = {
+        .vtable = &Ov_VirtualTable_Function,
+        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
+    };
+    Ov_Function_push(Ov_UnknownData_get_function(addition_data), addition_parameters, addition_body, NULL, 0, NULL, 0);
+    _x2B = Ov_Reference_new_symbol(addition_data);
+
+    Ov_UnknownData minus_data = {
+        .vtable = &Ov_VirtualTable_Function,
+        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
+    };
+    Ov_Function_push(Ov_UnknownData_get_function(minus_data), opposite_parameters, opposite_body, NULL, 0, NULL, 0);
+    Ov_Function_push(Ov_UnknownData_get_function(minus_data), substraction_parameters, substraction_body, NULL, 0, NULL, 0);
+    _x2D = Ov_Reference_new_symbol(minus_data);
+
+    Ov_UnknownData multiplication_data = {
+        .vtable = &Ov_VirtualTable_Function,
+        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
+    };
+    Ov_Function_push(Ov_UnknownData_get_function(multiplication_data), multiplication_parameters, multiplication_body, NULL, 0, NULL, 0);
+    _x2A = Ov_Reference_new_symbol(multiplication_data);
+
+    Ov_UnknownData division_data = {
+        .vtable = &Ov_VirtualTable_Function,
+        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
+    };
+    Ov_Function_push(Ov_UnknownData_get_function(division_data), division_parameters, division_body, NULL, 0, NULL, 0);
+    _x2F = Ov_Reference_new_symbol(division_data);
+
+    Ov_UnknownData modulo_data = {
+        .vtable = &Ov_VirtualTable_Function,
+        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
+    };
+    Ov_Function_push(Ov_UnknownData_get_function(modulo_data), modulo_parameters, modulo_body, NULL, 0, NULL, 0);
+    _x25 = Ov_Reference_new_symbol(modulo_data);
 }

@@ -163,6 +163,10 @@ namespace Translator::CStandard {
         Id() {
             id = count++;
         }
+    public:
+        unsigned get_id() const {
+            return id;
+        }
     };
 
     struct Reference : public LValue, public Instruction, public Id {

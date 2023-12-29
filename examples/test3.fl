@@ -1,8 +1,14 @@
 a.test := 3;
 print(a.test);
 
-if (true) {
+if (false) {
     print("yes")
 } else {
     print("no")
+};
+
+i := 10;
+while (!(i == 0)) {
+    print("test");
+    i := i - 1
 }

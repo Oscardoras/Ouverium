@@ -3,6 +3,8 @@
 
 #include "Translator.hpp"
 
+#include "../../Utils.hpp"
+
 
 namespace Translator::CStandard {
 
@@ -162,6 +164,16 @@ namespace Translator::CStandard {
 
         implementation += "#include \"functions.h\"\n";
         implementation += "\n\n";
+
+        for (auto const& lambda : code.lambdas) {
+            implementation += "Ov_Reference_Owned lambda_" + std::to_string(lambda->get_id()) + "_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {\n";
+            for (size_t i = 0; i < lambda->captures.size(); ++i)
+                implementation += "\tOv_Reference_Shared " + lambda->captures[i].first.get() + " = captures[" + std::to_string(i) + "];\n";
+            for (auto const& instruction : lambda->body.body)
+                implementation += "\t" + instruction->get_instruction_code() + "\n";
+            implementation += "\treturn " + lambda->body.return_value->get_expression_code() + ";\n";
+            implementation += "}\n";
+        }
 
         for (auto const& function : code.functions) {
             if (function->filter.return_value != nullptr) {
@@ -323,13 +335,27 @@ namespace Translator::CStandard {
         std::string code;
 
         if (auto tuple = std::get_if<std::vector<std::shared_ptr<FunctionExpression>>>(this)) {
+            for (auto const& e : *tuple)
+                code += e->get_instruction_code() + "\n\t";
+
             code += "Ov_Expression expression" + std::to_string(id) + "_array[] = { ";
             for (auto const& e : *tuple)
                 code += e->get_expression_code() + ", ";
             code += "};\n";
-            code += "Ov_Expression expression" + std::to_string(id) + " = { .type = Ov_EXPRESSION_TUPLE, .tuple.size = " + std::to_string(tuple->size()) + ", .tuple.tab = expression" + std::to_string(id) + "_array };";
+            code += "\tOv_Expression expression" + std::to_string(id) + " = { .type = Ov_EXPRESSION_TUPLE, .tuple.size = " + std::to_string(tuple->size()) + ", .tuple.tab = expression" + std::to_string(id) + "_array };";
         } else if (auto ref = std::get_if<std::shared_ptr<Reference>>(this)) {
             code += "Ov_Expression expression" + std::to_string(id) + " = { .type = Ov_EXPRESSION_REFERENCE, .reference = Ov_Reference_share(" + (*ref)->get_expression_code() + ") };";
+        } else if (auto lambda = std::get_if<std::shared_ptr<Lambda>>(this)) {
+            code += "Ov_Expression expression" + std::to_string(id) + " = { .type = Ov_EXPRESSION_LAMBDA, .lambda = NULL };\n";
+
+            if (!(*lambda)->captures.empty()) {
+                code += "\tOv_Reference_Shared lambda_" + std::to_string((*lambda)->get_id()) + "_captures[] = { ";
+                for (auto const& capture : (*lambda)->captures)
+                    code += "Ov_Reference_share(" + capture.first.get() + "), ";
+                code += "};\n";
+            }
+
+            code += "\tOv_Function_push(&expression" + std::to_string(id) + ".lambda, \"\", lambda_" + std::to_string((*lambda)->get_id()) + "_body, NULL, 0, " + ((*lambda)->captures.empty() ? "NULL" : ("lambda_" + std::to_string((*lambda)->get_id()) + "_captures")) + ", " + std::to_string((*lambda)->captures.size()) + ");";
         }
 
         return code;

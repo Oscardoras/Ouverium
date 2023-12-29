@@ -154,6 +154,7 @@ Ov_Reference_Owned Ov_Function_execute(Ov_Expression args) {
             };
             Ov_Reference_Owned result = Ov_Function_eval(&args.lambda, expr);
             Ov_Reference_free(ref);
+            Ov_Function_free(&args.lambda);
             return result;
         }
         default:
@@ -179,7 +180,7 @@ bool Ov_Function_parse(Ov_Reference_Shared captures[], Ov_Reference_Shared* vars
                 .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
             };
             if (args->type == Ov_EXPRESSION_LAMBDA) {
-                *((Ov_Function*) data.data.ptr) = Ov_Function_copy(args->lambda);
+                *Ov_UnknownData_get_function(data) = args->lambda;
             } else {
                 Ov_Reference_Owned r = Ov_Function_execute(*args);
                 Ov_Reference_Shared captures[] = { Ov_Reference_share(r) };
@@ -349,7 +350,7 @@ Ov_VirtualTable Ov_VirtualTable_Function = {
     .size = sizeof(Ov_Function),
     .gc_iterator = Ov_VirtualTable_Function_gc_iterator,
     .array.vtable = NULL,
-    .array.offset = 0,
+    .array.offset = -1,
     .function.offset = 0,
     .table_size = 0
 };

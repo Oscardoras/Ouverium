@@ -12,17 +12,21 @@ namespace Interpreter {
     namespace Math {
 
         auto a = std::make_shared<Parser::Symbol>("a");
-        auto ab = std::make_shared<Parser::Tuple>(Parser::Tuple({
-            std::make_shared<Parser::Symbol>("a"),
-            std::make_shared<Parser::Symbol>("b")
-            }));
-        auto a_b = std::make_shared<Parser::Tuple>(Parser::Tuple({
-            std::make_shared<Parser::Symbol>("a"),
-            std::make_shared<Parser::FunctionCall>(
-                std::make_shared<Parser::Symbol>("b"),
-                std::make_shared<Parser::Tuple>()
-            )
-            }));
+        auto ab = std::make_shared<Parser::Tuple>(Parser::Tuple(
+            {
+                std::make_shared<Parser::Symbol>("a"),
+                std::make_shared<Parser::Symbol>("b")
+            }
+        ));
+        auto a_b = std::make_shared<Parser::Tuple>(Parser::Tuple(
+            {
+                std::make_shared<Parser::Symbol>("a"),
+                std::make_shared<Parser::FunctionCall>(
+                    std::make_shared<Parser::Symbol>("b"),
+                    std::make_shared<Parser::Tuple>()
+                )
+            }
+        ));
 
         Reference logical_not(FunctionContext& context) {
             try {
@@ -328,13 +332,15 @@ namespace Interpreter {
             throw FunctionArgumentsError();
         }
 
-        auto for_args = std::make_shared<Parser::Tuple>(Parser::Tuple({
-            std::make_shared<Parser::FunctionCall>(
-                std::make_shared<Parser::Symbol>("array"),
-                std::make_shared<Parser::Tuple>()
-            ),
-            std::make_shared<Parser::Symbol>("function")
-            }));
+        auto for_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+            {
+                std::make_shared<Parser::FunctionCall>(
+                    std::make_shared<Parser::Symbol>("array"),
+                    std::make_shared<Parser::Tuple>()
+                ),
+                std::make_shared<Parser::Symbol>("function")
+            }
+        ));
         Reference forall(FunctionContext& context) {
             try {
                 auto array = Interpreter::call_function(context.get_parent(), context.expression, context["array"].to_data(context).get<Object*>()->functions, std::make_shared<Parser::Tuple>());
