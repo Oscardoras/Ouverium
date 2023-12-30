@@ -3,7 +3,7 @@
 
 #include "Translator.hpp"
 
-#include "../../Utils.hpp"
+#include "../../Types.hpp"
 
 
 namespace Translator::CStandard {

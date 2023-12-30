@@ -13,6 +13,8 @@
 
 #include "parser/Standard.hpp"
 
+#include "Types.hpp"
+
 
 std::filesystem::path program_location = boost::filesystem::canonical(boost::dll::program_location()).string();
 std::vector<std::string> include_path;
@@ -35,7 +37,7 @@ int interactive_mode(std::string const& path) {
 
     std::cout << "> ";
 
-    unsigned long line_number = 0;
+    size_t line_number = 0;
     std::string code;
     std::string line;
     while (std::getline(std::cin, line)) {
@@ -68,14 +70,14 @@ int interactive_mode(std::string const& path) {
 
                 std::cout << "> ";
                 code = "";
-                for (unsigned long i = 0; i < line_number; ++i) code += '\n';
+                for (unsigned i = 0; i < line_number; ++i) code += '\n';
             } catch (Parser::Standard::IncompleteCode const& e) {
                 std::cout << '\t';
             } catch (Parser::Standard::Exception const& e) {
                 std::cerr << e.what();
                 std::cout << "> ";
                 code = "";
-                for (unsigned long i = 0; i < line_number; ++i) code += '\n';
+                for (unsigned i = 0; i < line_number; ++i) code += '\n';
             }
         } else {
             std::cout << "> ";
@@ -102,7 +104,7 @@ int file_mode(std::string const& path, std::istream& is) {
 
             auto r = Interpreter::execute(context, expression);
             try {
-                return static_cast<int>(r.to_data(context).get<long>());
+                return static_cast<int>(r.to_data(context).get<INT>());
             } catch (Interpreter::Data::BadAccess const& e) {
                 return EXIT_SUCCESS;
             }

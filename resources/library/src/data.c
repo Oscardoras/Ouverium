@@ -21,9 +21,9 @@ Ov_UnknownData Ov_UnknownData_from_ptr(Ov_VirtualTable* vtable, void* ptr) {
         data.vtable = vtable;
 
         if (vtable == &Ov_VirtualTable_Int)
-            data.data.i = *((long*) ptr);
+            data.data.i = *((INT*) ptr);
         else if (vtable == &Ov_VirtualTable_Float)
-            data.data.f = *((double*) ptr);
+            data.data.f = *((FLOAT*) ptr);
         else if (vtable == &Ov_VirtualTable_Char)
             data.data.c = *((char*) ptr);
         else if (vtable == &Ov_VirtualTable_Bool)
@@ -43,9 +43,9 @@ void Ov_UnknownData_set(Ov_VirtualTable* vtable, void* ptr, Ov_UnknownData data)
     else if (vtable == &Ov_VirtualTable_Char)
         *(char*) ptr = data.data.c;
     else if (vtable == &Ov_VirtualTable_Float)
-        *(double*) ptr = data.data.f;
+        *(FLOAT*) ptr = data.data.f;
     else if (vtable == &Ov_VirtualTable_Int)
-        *(long*) ptr = data.data.i;
+        *(INT*) ptr = data.data.i;
     else
         *(void**) ptr = data.data.ptr;
 }
@@ -94,7 +94,7 @@ Ov_VirtualTable Ov_VirtualTable_UnknownData = {
 };
 
 Ov_VirtualTable Ov_VirtualTable_Int = {
-    .size = sizeof(long),
+    .size = sizeof(INT),
     .gc_iterator = NULL,
     .array.vtable = NULL,
     .array.offset = -1,
@@ -103,7 +103,7 @@ Ov_VirtualTable Ov_VirtualTable_Int = {
 };
 
 Ov_VirtualTable Ov_VirtualTable_Float = {
-    .size = sizeof(double),
+    .size = sizeof(FLOAT),
     .gc_iterator = NULL,
     .array.vtable = NULL,
     .array.offset = -1,

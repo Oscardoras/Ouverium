@@ -188,7 +188,7 @@ namespace Parser {
                 if (expressions.size() != 2) {
                     auto tuple = std::make_shared<Tuple>();
                     tuple->position = function_call->position;
-                    for (unsigned long i = 1; i < expressions.size(); i++)
+                    for (size_t i = 1; i < expressions.size(); i++)
                         tuple->objects.push_back(expressions[i]);
                     function_call->arguments = tuple;
                 } else function_call->arguments = expressions[1];

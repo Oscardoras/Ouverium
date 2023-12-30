@@ -14,8 +14,6 @@
 
 #include "../parser/Standard.hpp"
 
-#include "../Utils.hpp"
-
 
 namespace Interpreter {
 
@@ -273,9 +271,9 @@ namespace Interpreter {
             auto data = get_symbol(symbol->name);
             if (auto b = std::get_if<bool>(&data)) {
                 return Data(*b);
-            } else if (auto l = std::get_if<long>(&data)) {
+            } else if (auto l = std::get_if<INT>(&data)) {
                 return Data(*l);
-            } else if (auto d = std::get_if<double>(&data)) {
+            } else if (auto d = std::get_if<FLOAT>(&data)) {
                 return Data(*d);
             } else if (auto str = std::get_if<std::string>(&data)) {
                 return context.new_object(*str);

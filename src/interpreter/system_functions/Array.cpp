@@ -14,7 +14,7 @@ namespace Interpreter {
             try {
                 auto array = context["array"].to_data(context).get<Object*>();
 
-                return Reference(Data((long) array->array.size()));
+                return Reference(Data((INT) array->array.size()));
             } catch (Data::BadAccess& e) {
                 throw FunctionArgumentsError();
             }
@@ -25,7 +25,7 @@ namespace Interpreter {
             auto array = context["array"].to_data(context).get<Object*>();
 
             try {
-                return Data((long) array->array.capacity());
+                return Data((INT) array->array.capacity());
             } catch (Data::BadAccess& e) {
                 throw FunctionArgumentsError();
             }
@@ -40,7 +40,7 @@ namespace Interpreter {
         Reference set_capacity(FunctionContext& context) {
             try {
                 auto array = context["array"].to_data(context).get<Object*>();
-                auto capacity = context["capacity"].to_data(context).get<long>();
+                auto capacity = context["capacity"].to_data(context).get<INT>();
 
                 array->array.reserve(capacity);
                 return Data();
@@ -58,9 +58,9 @@ namespace Interpreter {
         Reference get(FunctionContext& context) {
             try {
                 auto array = context["array"].to_data(context).get<Object*>();
-                auto i = context["i"].to_data(context).get<long>();
+                auto i = context["i"].to_data(context).get<INT>();
 
-                if (i >= 0 && i < (long) array->array.size())
+                if (i >= 0 && i < (INT) array->array.size())
                     return ArrayReference{ *array, (size_t) i };
                 else throw FunctionArgumentsError();
             } catch (Data::BadAccess& e) {

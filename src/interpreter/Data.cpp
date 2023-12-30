@@ -11,9 +11,9 @@ namespace Interpreter {
                 os << d;
         } else if (auto c = std::get_if<char>(&data))
             os << *c;
-        else if (auto f = std::get_if<double>(&data))
+        else if (auto f = std::get_if<FLOAT>(&data))
             os << *f;
-        else if (auto i = std::get_if<long>(&data))
+        else if (auto i = std::get_if<INT>(&data))
             os << *i;
         else if (auto b = std::get_if<bool>(&data))
             os << (*b ? "true" : "false");

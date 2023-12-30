@@ -155,11 +155,11 @@ namespace Interpreter {
         Reference for_statement(FunctionContext& context) {
             try {
                 auto variable = context["variable"];
-                auto begin = context["begin"].to_data(context).get<long>();
-                auto end = context["end"].to_data(context).get<long>();
+                auto begin = context["begin"].to_data(context).get<INT>();
+                auto end = context["end"].to_data(context).get<INT>();
                 auto block = context["block"].to_data(context).get<Object*>();
 
-                for (long i = begin; i < end; i++) {
+                for (INT i = begin; i < end; i++) {
                     Interpreter::set(context, variable, Data(i));
                     Interpreter::call_function(context.get_parent(), context.expression, block->functions, std::make_shared<Parser::Tuple>());
                 }
@@ -189,18 +189,18 @@ namespace Interpreter {
                 auto& parent = context.get_parent();
 
                 auto variable = context["variable"];
-                auto begin = context["begin"].to_data(context).get<long>();
-                auto end = context["end"].to_data(context).get<long>();
-                auto s = context["s"].to_data(context).get<long>();
+                auto begin = context["begin"].to_data(context).get<INT>();
+                auto end = context["end"].to_data(context).get<INT>();
+                auto s = context["s"].to_data(context).get<INT>();
                 auto block = context["block"].to_data(context).get<Object*>();
 
                 if (s > 0) {
-                    for (long i = begin; i < end; i += s) {
+                    for (INT i = begin; i < end; i += s) {
                         Interpreter::set(context, variable, i);
                         Interpreter::call_function(parent, parent.expression, block->functions, std::make_shared<Parser::Tuple>());
                     }
                 } else if (s < 0) {
-                    for (long i = begin; i > end; i += s) {
+                    for (INT i = begin; i > end; i += s) {
                         Interpreter::set(context, variable, i);
                         Interpreter::call_function(parent, parent.expression, block->functions, std::make_shared<Parser::Tuple>());
                     }
@@ -288,11 +288,11 @@ namespace Interpreter {
             } else if (auto a_char = std::get_if<char>(&a)) {
                 if (auto b_char = std::get_if<char>(&b)) return *a_char == *b_char;
                 else return false;
-            } else if (auto a_float = std::get_if<double>(&a)) {
-                if (auto b_float = std::get_if<double>(&b)) return *a_float == *b_float;
+            } else if (auto a_float = std::get_if<FLOAT>(&a)) {
+                if (auto b_float = std::get_if<FLOAT>(&b)) return *a_float == *b_float;
                 else return false;
-            } else if (auto a_int = std::get_if<long>(&a)) {
-                if (auto b_int = std::get_if<long>(&b)) return *a_int == *b_int;
+            } else if (auto a_int = std::get_if<INT>(&a)) {
+                if (auto b_int = std::get_if<INT>(&b)) return *a_int == *b_int;
                 else return false;
             } else if (auto a_bool = std::get_if<bool>(&a)) {
                 if (auto b_bool = std::get_if<bool>(&b)) return *a_bool == *b_bool;

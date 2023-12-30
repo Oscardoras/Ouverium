@@ -9,6 +9,8 @@
 
 #include "../Analyzer.hpp"
 
+#include "../../Types.hpp"
+
 
 namespace Translator::CStandard {
 
@@ -111,8 +113,8 @@ namespace Translator::CStandard {
     };
 
     struct Value : public Expression {
-        std::variant<char, bool, long, double, std::string> value;
-        Value(std::variant<char, bool, long, double, std::string> const& value) :
+        std::variant<char, bool, INT, FLOAT, std::string> value;
+        Value(std::variant<char, bool, INT, FLOAT, std::string> const& value) :
             value{ value } {}
 
         std::string get_expression_code() const override;

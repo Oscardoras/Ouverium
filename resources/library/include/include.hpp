@@ -216,11 +216,11 @@ public:
     UnknownData(Ov_VirtualTable* vtable, void* ptr) :
         data{ Ov_UnknownData_from_ptr(vtable, ptr) } {}
 
-    UnknownData(long i) {
+    UnknownData(INT i) {
         data.vtable = &Ov_VirtualTable_Int;
         data.data.i = i;
     }
-    UnknownData(double f) {
+    UnknownData(FLOAT f) {
         data.vtable = &Ov_VirtualTable_Float;
         data.data.f = f;
     }
@@ -242,10 +242,10 @@ public:
         return data;
     }
 
-    operator long() const {
+    operator INT() const {
         return data.data.i;
     }
-    operator double() const {
+    operator FLOAT() const {
         return data.data.f;
     }
     operator char() const {

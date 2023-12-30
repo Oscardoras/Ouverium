@@ -22,7 +22,7 @@ set_property(TARGET capi PROPERTY C_STANDARD 99)
 
 FILE(GLOB_RECURSE ouverium_sources
     src/main.cpp
-    src/Utils.cpp src/Utils.hpp
+    src/Types.cpp src/Types.hpp
     src/parser/*
     src/interpreter/*
     src/compiler/*
