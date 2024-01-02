@@ -10,7 +10,7 @@
 
 extern std::vector<std::string> include_path;
 
-namespace Interpreter {
+namespace Interpreter::SystemFunctions {
 
     namespace Dll {
 
@@ -22,7 +22,7 @@ namespace Interpreter {
                     if (!path.is_absolute())
                         path = std::filesystem::path(position->path) / path;
                     return std::filesystem::canonical(path);
-                } catch (std::exception& e) {
+                } catch (std::exception const&) {
                     for (auto const& i : include_path) {
                         try {
                             auto path = std::filesystem::path(context["path"].to_data(context).get<Object*>()->to_string());
@@ -30,7 +30,7 @@ namespace Interpreter {
                             if (!path.is_absolute())
                                 path = std::filesystem::path(i) / path;
                             return std::filesystem::canonical(path);
-                        } catch (std::exception& e) {}
+                        } catch (std::exception const&) {}
                     }
 
                     throw Interpreter::FunctionArgumentsError();
@@ -39,6 +39,7 @@ namespace Interpreter {
         }
 
         auto path_args = std::make_shared<Parser::Symbol>("path");
+
         Reference import(FunctionContext & context) {
             auto path = get_canonical_path(context);
 
@@ -68,9 +69,9 @@ namespace Interpreter {
                         }
 
                         return Interpreter::execute(global, expression);
-                    } catch (Parser::Standard::IncompleteCode& e) {
+                    } catch (Parser::Standard::IncompleteCode const&) {
                         throw Exception(context, "incomplete code, you must finish the last expression in file \"" + std::string(path.c_str()) + "\"", context.get_global()["ParserException"].to_data(context), context.expression);
-                    } catch (Parser::Standard::Exception& e) {
+                    } catch (Parser::Standard::Exception const& e) {
                         throw Exception(context, e.what(), context.get_global()["ParserException"].to_data(context), context.expression);
                     }
                 } else {

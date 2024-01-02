@@ -8,7 +8,7 @@
 extern "C" {
     constexpr
     #endif
-        uint32_t hash_string(const char* string) {
+        static inline uint32_t hash_string(const char* string) {
         uint32_t hash = 0;
         uint32_t pow = 31;
 

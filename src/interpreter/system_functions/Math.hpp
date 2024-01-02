@@ -4,7 +4,7 @@
 #include "../Interpreter.hpp"
 
 
-namespace Interpreter {
+namespace Interpreter::SystemFunctions {
 
     namespace Math {
 
@@ -48,6 +48,9 @@ namespace Interpreter {
 
         Reference forall(FunctionContext& context);
         Reference exists(FunctionContext& context);
+
+        Reference random(FunctionContext& context);
+
 
         void init(GlobalContext& context);
 

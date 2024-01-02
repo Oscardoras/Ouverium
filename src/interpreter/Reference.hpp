@@ -1,8 +1,6 @@
 #ifndef __INTERPRETER_REFERENCE_HPP__
 #define __INTERPRETER_REFERENCE_HPP__
 
-#include <functional>
-
 #include "Data.hpp"
 
 

@@ -2,9 +2,69 @@
 #include "Types.hpp"
 
 
-namespace Interpreter {
+namespace Interpreter::SystemFunctions {
 
     namespace Types {
+
+        auto constructor_args = std::make_shared<Parser::Symbol>("a");
+
+        Reference char_constructor(FunctionContext& context) {
+            auto a = context["a"].to_data(context);
+
+            if (std::holds_alternative<char>(a))
+                return a;
+            else
+                throw FunctionArgumentsError();
+        }
+
+        Reference float_constructor(FunctionContext& context) {
+            auto a = context["a"].to_data(context);
+
+            if (auto a_int = std::get_if<INT>(&a)) {
+                return Data((FLOAT) *a_int);
+            } else if (std::holds_alternative<FLOAT>(a)) {
+                return a;
+            }
+            throw FunctionArgumentsError();
+        }
+
+        Reference int_constructor(FunctionContext& context) {
+            auto a = context["a"].to_data(context);
+
+            if (std::holds_alternative<INT>(a)) {
+                return a;
+            } else if (auto a_float = std::get_if<FLOAT>(&a)) {
+                return Data((INT) *a_float);
+            }
+            throw FunctionArgumentsError();
+        }
+
+        Reference bool_constructor(FunctionContext& context) {
+            auto a = context["a"].to_data(context);
+
+            if (std::holds_alternative<bool>(a))
+                return a;
+            else
+                throw FunctionArgumentsError();
+        }
+
+        Reference array_constructor(FunctionContext& context) {
+            auto a = context["a"].to_data(context);
+
+            if (std::holds_alternative<Object*>(a))
+                return a;
+            else
+                throw FunctionArgumentsError();
+        }
+
+        Reference function_constructor(FunctionContext& context) {
+            auto a = context["a"].to_data(context);
+
+            if (auto obj = std::get_if<Object*>(&a); obj && !(*obj)->functions.empty())
+                return a;
+            else
+                throw FunctionArgumentsError();
+        }
 
         bool check_type(Context& context, Data data, Data type) {
             if (type == context["Char"].to_data(context)) return std::holds_alternative<char>(data);
@@ -12,7 +72,12 @@ namespace Interpreter {
             else if (type == context["Int"].to_data(context)) return std::holds_alternative<INT>(data);
             else if (type == context["Bool"].to_data(context)) return std::holds_alternative<bool>(data);
             else if (type == context["Array"].to_data(context)) return std::holds_alternative<Object*>(data);
-            else throw FunctionArgumentsError();
+            else if (type == context["Function"].to_data(context)) {
+                if (auto obj = std::get_if<Object*>(&data))
+                    return !(*obj)->functions.empty();
+                else
+                    return false;
+            } else throw FunctionArgumentsError();
         }
 
         auto is_type_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
@@ -29,11 +94,12 @@ namespace Interpreter {
         }
 
         void init(GlobalContext& context) {
-            context["Char"].to_data(context);
-            context["Float"].to_data(context);
-            context["Int"].to_data(context);
-            context["Bool"].to_data(context);
-            context["Array"].to_data(context);
+            context.get_function("Char").push_front(SystemFunction{ constructor_args, char_constructor });
+            context.get_function("Float").push_front(SystemFunction{ constructor_args, float_constructor });
+            context.get_function("Int").push_front(SystemFunction{ constructor_args, int_constructor });
+            context.get_function("Bool").push_front(SystemFunction{ constructor_args, bool_constructor });
+            context.get_function("Array").push_front(SystemFunction{ constructor_args, array_constructor });
+            context.get_function("Function").push_front(SystemFunction{ constructor_args, function_constructor });
 
             Function f = SystemFunction{ is_type_args, is_type };
             f.extern_symbols.emplace("Char", context["Char"]);
@@ -41,6 +107,7 @@ namespace Interpreter {
             f.extern_symbols.emplace("Int", context["Int"]);
             f.extern_symbols.emplace("Bool", context["Bool"]);
             f.extern_symbols.emplace("Array", context["Array"]);
+            f.extern_symbols.emplace("Function", context["Function"]);
             context.get_function("~").push_front(f);
         }
 

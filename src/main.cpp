@@ -54,10 +54,7 @@ int interactive_mode(std::string const& path) {
 
                 try {
                     auto r = Interpreter::execute(context, expression);
-
-                    auto str = Interpreter::string_from(context, r);
-                    if (!str.empty())
-                        std::cout << str << std::endl;
+                    call_function(context, context.expression, context.get_global().get_function("print"), r);
                 } catch (Interpreter::Exception const& ex) {
                     if (!ex.positions.empty()) {
                         std::ostringstream oss;
@@ -71,7 +68,7 @@ int interactive_mode(std::string const& path) {
                 std::cout << "> ";
                 code = "";
                 for (unsigned i = 0; i < line_number; ++i) code += '\n';
-            } catch (Parser::Standard::IncompleteCode const& e) {
+            } catch (Parser::Standard::IncompleteCode const&) {
                 std::cout << '\t';
             } catch (Parser::Standard::Exception const& e) {
                 std::cerr << e.what();
@@ -97,6 +94,7 @@ int file_mode(std::string const& path, std::istream& is) {
         auto expression = Parser::Standard(code, path).get_tree();
 
         Interpreter::GlobalContext context(expression);
+        context.sources[std::filesystem::canonical(".")] = expression;
 
         try {
             std::set<std::string> symbols = context.get_symbols();
@@ -105,7 +103,7 @@ int file_mode(std::string const& path, std::istream& is) {
             auto r = Interpreter::execute(context, expression);
             try {
                 return static_cast<int>(r.to_data(context).get<INT>());
-            } catch (Interpreter::Data::BadAccess const& e) {
+            } catch (std::bad_variant_access const&) {
                 return EXIT_SUCCESS;
             }
         } catch (Interpreter::Exception const& ex) {
@@ -118,10 +116,10 @@ int file_mode(std::string const& path, std::istream& is) {
             }
             return EXIT_FAILURE;
         }
-    } catch (Parser::Standard::IncompleteCode& e) {
+    } catch (Parser::Standard::IncompleteCode const&) {
         std::cerr << "incomplete code, you must finish the last expression in file \"" << path << "\"" << std::endl;
         return EXIT_FAILURE;
-    } catch (Parser::Standard::Exception& e) {
+    } catch (Parser::Standard::Exception const& e) {
         std::cerr << e.what();
         return EXIT_FAILURE;
     }
@@ -145,6 +143,8 @@ void compile_mode(std::string const& path, std::istream& is, std::string const& 
 }
 
 int main(int argc, char** argv) {
+    std::srand(std::time(nullptr));
+
     include_path.push_back(program_location.parent_path() / "libraries");
 
     if (argc == 1)

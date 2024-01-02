@@ -1,13 +1,12 @@
 #include <algorithm>
 #include <cmath>
-#include <iostream>
-#include <fstream>
+#include <cstdlib>
 #include <limits>
 
 #include "Math.hpp"
 
 
-namespace Interpreter {
+namespace Interpreter::SystemFunctions {
 
     namespace Math {
 
@@ -31,7 +30,7 @@ namespace Interpreter {
         Reference logical_not(FunctionContext& context) {
             try {
                 return Reference(Data(!context["a"].to_data(context).get<bool>()));
-            } catch (Data::BadAccess& e) {
+            } catch (std::bad_variant_access const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -45,7 +44,7 @@ namespace Interpreter {
                     return Reference(Data(Interpreter::call_function(context.get_parent(), context.expression, b->functions, std::make_shared<Parser::Tuple>()).to_data(context).get<bool>()));
                 else
                     return Reference(Data(false));
-            } catch (Data::BadAccess& e) {
+            } catch (std::bad_variant_access const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -59,7 +58,7 @@ namespace Interpreter {
                     return Interpreter::call_function(context.get_parent(), context.expression, b->functions, std::make_shared<Parser::Tuple>()).to_data(context).get<bool>();
                 else
                     return Reference(Data(true));
-            } catch (Data::BadAccess& e) {
+            } catch (std::bad_variant_access const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -245,7 +244,7 @@ namespace Interpreter {
 
             try {
                 return set(context, a, a.to_data(context).get<INT>() + 1);
-            } catch (Data::BadAccess const& e) {
+            } catch (std::bad_variant_access const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -255,7 +254,7 @@ namespace Interpreter {
 
             try {
                 return set(context, a, a.to_data(context).get<INT>() - 1);
-            } catch (Data::BadAccess const& e) {
+            } catch (std::bad_variant_access const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -365,7 +364,7 @@ namespace Interpreter {
                 }
 
                 return Data{ value };
-            } catch (Data::BadAccess& e) {
+            } catch (std::bad_variant_access const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -394,9 +393,41 @@ namespace Interpreter {
                 }
 
                 return Data{ value };
-            } catch (Data::BadAccess& e) {
+            } catch (std::bad_variant_access const&) {
                 throw FunctionArgumentsError();
             }
+        }
+
+        Reference random_0(FunctionContext&) {
+            return Data(std::rand() / (FLOAT) (RAND_MAX + 1u));
+        }
+
+        Reference random_1(FunctionContext& context) {
+            auto b = context["b"].to_data(context);
+
+            if (auto b_int = std::get_if<INT>(&b))
+                return Data(std::rand() / ((RAND_MAX + 1u) / *b_int));
+            else if (auto b_float = std::get_if<FLOAT>(&b))
+                return Data(std::rand() / ((RAND_MAX + 1u) / *b_float));
+            throw FunctionArgumentsError();
+        }
+
+        Reference random_2(FunctionContext& context) {
+            auto a = context["a"].to_data(context);
+            auto b = context["b"].to_data(context);
+
+            if (auto a_int = std::get_if<INT>(&a)) {
+                if (auto b_int = std::get_if<INT>(&b))
+                    return Data(std::rand() / ((RAND_MAX + 1u) / (*b_int - *a_int)) + *a_int);
+                else if (auto b_float = std::get_if<FLOAT>(&b))
+                    return Data(std::rand() / ((RAND_MAX + 1u) / (*b_float - *a_int)) + *a_int);
+            } else if (auto a_float = std::get_if<FLOAT>(&a)) {
+                if (auto b_int = std::get_if<INT>(&b))
+                    return Data(std::rand() / ((RAND_MAX + 1u) / (*b_int - *a_int)) + *a_int);
+                else if (auto b_float = std::get_if<FLOAT>(&b))
+                    return Data(std::rand() / ((RAND_MAX + 1u) / (*b_float - *a_float)) + *a_float);
+            }
+            throw FunctionArgumentsError();
         }
 
         FLOAT get_FLOAT(Data const& data) {
@@ -438,12 +469,17 @@ namespace Interpreter {
             context.get_function(">=").push_front(SystemFunction{ ab, sup_equals });
             context.get_function("++").push_front(SystemFunction{ a, increment });
             context.get_function("--").push_front(SystemFunction{ a, decrement });
-            context.get_function(":+").push_front(SystemFunction{ ab, add });
-            context.get_function(":-").push_front(SystemFunction{ ab, remove });
-            context.get_function(":*").push_front(SystemFunction{ ab, mutiply });
-            context.get_function(":/").push_front(SystemFunction{ ab, divide });
+            context.get_function(":+=").push_front(SystemFunction{ ab, add });
+            context.get_function(":-=").push_front(SystemFunction{ ab, remove });
+            context.get_function(":*=").push_front(SystemFunction{ ab, mutiply });
+            context.get_function(":/=").push_front(SystemFunction{ ab, divide });
+
             context.get_function("forall").push_front(SystemFunction{ for_args, forall });
             context.get_function("exists").push_front(SystemFunction{ for_args, exists });
+
+            context.get_function("random").push_front(SystemFunction{ std::make_shared<Parser::Tuple>(), random_0 });
+            context.get_function("random").push_front(SystemFunction{ std::make_shared<Parser::Symbol>("b"), random_1 });
+            context.get_function("random").push_front(SystemFunction{ ab, random_2 });
 
             context.get_function("cos").push_front(SystemFunction{ a, function1<std::cos> });
             context.get_function("sin").push_front(SystemFunction{ a, function1<std::sin> });
@@ -462,8 +498,8 @@ namespace Interpreter {
             context.get_function("log").push_front(SystemFunction{ a, function1<std::log> });
             context.get_function("log10").push_front(SystemFunction{ a, function1<std::log10> });
             context.get_function("pow").push_front(SystemFunction{ ab, function2<std::pow> });
-            context.add_symbol("**", context["pow"]);
-            context.add_symbol("^", context["pow"]);
+            Interpreter::set(context, context["**"], context["pow"]);
+            Interpreter::set(context, context["^"], context["pow"]);
             context.get_function("**").push_front(SystemFunction{ ab, function2<std::pow> });
             context.get_function("sqrt").push_front(SystemFunction{ a, function1<std::sqrt> });
             context.get_function("cbrt").push_front(SystemFunction{ a, function1<std::cbrt> });
@@ -478,9 +514,9 @@ namespace Interpreter {
             context.get_function("isnan").push_front(SystemFunction{ a, function_bool<std::isnan> });
             context.get_function("isnormal").push_front(SystemFunction{ a, function_bool<std::isnormal> });
 
-            context.add_symbol("epsilon", Data(std::numeric_limits<FLOAT>::epsilon()));
-            context.add_symbol("infinity", Data(std::numeric_limits<FLOAT>::infinity()));
-            context.add_symbol("NaN", Data(std::numeric_limits<FLOAT>::quiet_NaN()));
+            Interpreter::set(context, context["epsilon"], Data(std::numeric_limits<FLOAT>::epsilon()));
+            Interpreter::set(context, context["infinity"], Data(std::numeric_limits<FLOAT>::infinity()));
+            Interpreter::set(context, context["NaN"], Data(std::numeric_limits<FLOAT>::quiet_NaN()));
         }
 
     }

@@ -1,12 +1,12 @@
 #ifndef __INTERPRETER_CONTEXT_HPP__
 #define __INTERPRETER_CONTEXT_HPP__
 
+#include <filesystem>
 #include <map>
 #include <set>
 #include <string>
 
 #include "Object.hpp"
-#include "Reference.hpp"
 
 #include "../parser/Parser.hpp"
 
@@ -30,7 +30,7 @@ namespace Interpreter {
 
         virtual Context& get_parent() = 0;
         virtual GlobalContext& get_global() = 0;
-        virtual unsigned int get_recurion_level() = 0;
+        virtual unsigned get_recurion_level() = 0;
 
         Object* new_object(Object const& object = {});
 
@@ -54,8 +54,8 @@ namespace Interpreter {
 
     public:
 
-        std::map<std::string, std::shared_ptr<Parser::Expression>> sources;
-        unsigned int recursion_limit = 50;
+        std::map<std::filesystem::path, std::shared_ptr<Parser::Expression>> sources;
+        unsigned recursion_limit = 50;
 
         GlobalContext(std::shared_ptr<Parser::Expression> expression);
 
@@ -67,7 +67,7 @@ namespace Interpreter {
             return *this;
         }
 
-        virtual unsigned int get_recurion_level() override {
+        virtual unsigned get_recurion_level() override {
             return 0;
         }
 
@@ -87,7 +87,7 @@ namespace Interpreter {
     protected:
 
         Context& parent;
-        unsigned int recursion_level;
+        unsigned recursion_level;
 
     public:
 
@@ -102,7 +102,7 @@ namespace Interpreter {
             return parent;
         }
 
-        virtual unsigned int get_recurion_level() override {
+        virtual unsigned get_recurion_level() override {
             return recursion_level;
         }
 

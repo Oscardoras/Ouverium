@@ -37,22 +37,23 @@ namespace Interpreter {
         auto it = symbols.find(symbol);
         if (it == symbols.end())
             return symbols.emplace(symbol, new_reference()).first->second;
-        else {
+        else
             return it->second;
-        }
     }
 
 
     GlobalContext::~GlobalContext() {
-        for (auto& object : objects) {
-            if (object.array.size() == 0 && object.functions.size() == 0 && object.properties.size() == 0 && !object.c_obj.has_value())
-                break;
-
-            try {
-                auto functions = object["destructor"].to_data(*this).get<Object*>()->functions;
-                if (!functions.empty())
-                    call_function(get_global(), get_global().expression, functions, std::make_shared<Parser::Tuple>());
-            } catch (Data::BadAccess& e) {}
+        try {
+            for (auto& object : objects)
+                object.destruct(*this);
+        } catch (Interpreter::Exception const& ex) {
+            if (!ex.positions.empty()) {
+                std::ostringstream oss;
+                oss << "An exception occured: " << ex.reference.to_data(*this);
+                ex.positions.front()->notify_error(oss.str());
+                for (auto const& p : ex.positions)
+                    p->notify_position();
+            }
         }
     }
 

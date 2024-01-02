@@ -135,11 +135,11 @@ namespace Static {
         } else if (auto p_tuple = std::dynamic_pointer_cast<Parser::Tuple>(parameters)) {
             if (auto tuple_reference = std::dynamic_pointer_cast<TupleReference>(argument)) {
                 if (tuple_reference->size() == p_tuple->objects.size()) {
-                    for (size_t i = 0; i < p_tuple->objects.size(); i++)
+                    for (size_t i = 0; i < p_tuple->objects.size(); ++i)
                         set_arguments(analysis, function_context, p_tuple->objects[i], (*tuple_reference)[i]);
                 } else throw FunctionArgumentsError();
             } else {
-                for (size_t i = 0; i < p_tuple->objects.size(); i++)
+                for (size_t i = 0; i < p_tuple->objects.size(); ++i)
                     set_arguments(analysis, function_context, p_tuple->objects[i], std::make_shared<ArrayReference>(argument, 0));
             }
         } else if (auto p_function = std::dynamic_pointer_cast<Parser::FunctionCall>(parameters)) {

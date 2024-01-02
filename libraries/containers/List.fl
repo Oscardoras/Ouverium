@@ -6,7 +6,7 @@ List : this |-> {
     BidirectionalIterable(this);
     this :~ List;
 
-    this : index \ (index ~ Int & 0 <= index & index < this.lenght()) |-> {};
+    this : index \ (index ~ Int & 0 <= index & index < this.length()) |-> {};
 
     this.filter : (constructor, function) |-> {
         list := constructor();
@@ -18,7 +18,7 @@ List : this |-> {
         list
     };
 
-    this.lenght : () |-> {};
+    this.length : () |-> {};
     this.is_empty : () |-> {};
 
     this.get_first : () \ (!this.is_empty()) |-> {};
@@ -30,10 +30,10 @@ List : this |-> {
     this.remove_first : () \ (!this.is_empty()) |-> {};
     this.remove_last : () \ (!this.is_empty()) |-> {};
 
-    this.insert : (index, object) \ (index ~ Int & 0 <= index & index < this.lenght()) |-> {};
-    this.remove : index \ (index ~ Int & 0 <= index & index < this.lenght()) |-> {};
+    this.insert : (index, object) \ (index ~ Int & 0 <= index & index < this.length()) |-> {};
+    this.remove : index \ (index ~ Int & 0 <= index & index < this.length()) |-> {};
 
-    this.iterator : index \ (index ~ Int & 0 <= index & index < this.lenght()) |-> {};
+    this.iterator : index \ (index ~ Int & 0 <= index & index < this.length()) |-> {};
 
     this
 };

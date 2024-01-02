@@ -108,7 +108,7 @@ namespace Parser {
 
     std::string tabu(int n) {
         std::string s;
-        for (int i = 0; i < n; i++) s += "    ";
+        for (int i = 0; i < n; ++i) s += "    ";
         return s;
     }
 

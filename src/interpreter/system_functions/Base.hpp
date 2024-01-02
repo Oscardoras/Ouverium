@@ -4,7 +4,7 @@
 #include "../Interpreter.hpp"
 
 
-namespace Interpreter {
+namespace Interpreter::SystemFunctions {
 
     namespace Base {
 
@@ -29,9 +29,7 @@ namespace Interpreter {
         Reference copy(FunctionContext& context);
         Reference copy_pointer(FunctionContext& context);
 
-        void assign1(std::vector<Object*>& cache, Reference const& var, Object* const& object);
-        void assign2(Context& context, std::vector<Object*>::iterator& it, Reference const& var);
-        Reference assign(FunctionContext& context);
+        Reference define(FunctionContext& context);
 
         Reference function_definition(FunctionContext& context);
 

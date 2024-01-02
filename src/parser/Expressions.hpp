@@ -1,7 +1,6 @@
 #ifndef __PARSER_EXPRESSIONS_HPP__
 #define __PARSER_EXPRESSIONS_HPP__
 
-#include <map>
 #include <memory>
 #include <set>
 #include <string>
@@ -23,6 +22,12 @@ namespace Parser {
         std::weak_ptr<Expression> parent;
 
         /**
+         * Gets the root expression.
+         * @return the root expression.
+        */
+        std::shared_ptr<Expression> get_root();
+
+        /**
          * The position of the expression in the source.
         */
         std::shared_ptr<Position> position;
@@ -31,8 +36,6 @@ namespace Parser {
          * The list of the symbols used in the expression.
         */
         std::set<std::string> symbols;
-
-        std::shared_ptr<Expression> get_root();
 
         /**
          * Gets all the symbols present in this expression.

@@ -87,7 +87,7 @@ Ov_Reference_Owned Ov_Reference_new_string(const char* string, Ov_VirtualTable* 
     reference->tuple.vtable = vtable;
 
     size_t i;
-    for (i = 0; i < size; i++) {
+    for (i = 0; i < size; ++i) {
         Ov_Data data = { .c = string[i] };
         reference->tuple.references[i] = *((Ov_GC_Reference*) Ov_Reference_new_data(Ov_UnknownData_from_data(&Ov_VirtualTable_Char, data)));
     }

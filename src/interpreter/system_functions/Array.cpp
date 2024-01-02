@@ -5,7 +5,7 @@
 #include "Array.hpp"
 
 
-namespace Interpreter {
+namespace Interpreter::SystemFunctions {
 
     namespace Array {
 
@@ -15,7 +15,7 @@ namespace Interpreter {
                 auto array = context["array"].to_data(context).get<Object*>();
 
                 return Reference(Data((INT) array->array.size()));
-            } catch (Data::BadAccess& e) {
+            } catch (std::bad_variant_access const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -26,7 +26,7 @@ namespace Interpreter {
 
             try {
                 return Data((INT) array->array.capacity());
-            } catch (Data::BadAccess& e) {
+            } catch (std::bad_variant_access const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -44,7 +44,7 @@ namespace Interpreter {
 
                 array->array.reserve(capacity);
                 return Data();
-            } catch (Data::BadAccess& e) {
+            } catch (std::bad_variant_access const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -63,7 +63,7 @@ namespace Interpreter {
                 if (i >= 0 && i < (INT) array->array.size())
                     return ArrayReference{ *array, (size_t) i };
                 else throw FunctionArgumentsError();
-            } catch (Data::BadAccess& e) {
+            } catch (std::bad_variant_access const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -81,7 +81,7 @@ namespace Interpreter {
 
                 array->array.push_back(element);
                 return ArrayReference{ *array, (size_t) array->array.size() - 1 };
-            } catch (Data::BadAccess& e) {
+            } catch (std::bad_variant_access const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -94,7 +94,7 @@ namespace Interpreter {
                 Data d = array->array.back();
                 array->array.pop_back();
                 return Data(d);
-            } catch (Data::BadAccess& e) {
+            } catch (std::bad_variant_access const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -122,7 +122,7 @@ namespace Interpreter {
                 }
 
                 return Data{};
-            } catch (Data::BadAccess& e) {
+            } catch (std::bad_variant_access const&) {
                 throw FunctionArgumentsError();
             }
         }

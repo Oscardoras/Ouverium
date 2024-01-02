@@ -9,7 +9,7 @@ LinkedList : this |-> {
 
     this._first := ();
     this._last := ();
-    this._lenght := 0;
+    this._length := 0;
 
     this : index |-> {
         i := 0;
@@ -35,8 +35,8 @@ LinkedList : this |-> {
         this.filter(LinkedList, function)
     };
 
-    this.lenght : () |-> {
-        this._lenght
+    this.length : () |-> {
+        this._length
     };
 
     this.is_empty : () |-> {
@@ -61,7 +61,7 @@ LinkedList : this |-> {
             this._last := tmp
         };
         this._first := tmp;
-        ++this._lenght;
+        ++this._length;
         tmp.object
     };
 
@@ -75,7 +75,7 @@ LinkedList : this |-> {
             this._first := tmp
         };
         this._last := tmp;
-        ++this._lenght;
+        ++this._length;
         tmp.object
     };
 
@@ -87,7 +87,7 @@ LinkedList : this |-> {
         } else {
             this._last := ()
         };
-        --this._lenght;
+        --this._length;
         tmp
     };
 
@@ -99,11 +99,11 @@ LinkedList : this |-> {
         } else {
             this._first := ()
         };
-        --this._lenght;
+        --this._length;
         tmp
     };
 
-    this.insert : (index, element) \ (0 <= index & index < this._lenght) |-> {
+    this.insert : (index, element) \ (0 <= index & index < this._length) |-> {
         i := 0;
         cell := this._first;
         while (i < index) {
@@ -125,7 +125,7 @@ LinkedList : this |-> {
         tmp.object
     };
 
-    this.remove : index \ (0 <= index & index < this._lenght) |-> {
+    this.remove : index \ (0 <= index & index < this._length) |-> {
         i := 0;
         cell := this._first;
         while (i < index) {
@@ -154,7 +154,7 @@ LinkedList : this |-> {
 
     this.iterator : this.iterator_first;
 
-    this.iterator : index \ (index ~ Int & 0 <= index & index < this._lenght) |-> {
+    this.iterator : index \ (index ~ Int & 0 <= index & index < this._length) |-> {
         cell := this._first;
         for i from 0 to index {
             cell := cell.next

@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <exception>
+#include <functional>
 #include <iostream>
 #include <sstream>
 
@@ -8,7 +9,7 @@
 #include "../../parser/Standard.hpp"
 
 
-namespace Interpreter {
+namespace Interpreter::SystemFunctions {
 
     namespace Base {
 
@@ -20,7 +21,7 @@ namespace Interpreter {
         }
 
         Reference defined(FunctionContext& context) {
-            return Data(std::visit([](auto const& arg) -> Data& {
+            return Data(std::visit([](auto const& arg) -> Data const& {
                 return arg;
             }, context["var"]) != Data{});
         }
@@ -34,10 +35,10 @@ namespace Interpreter {
                 try {
                     auto object = d.get<Object*>();
                     if (tuple_reference->size() == object->array.size()) {
-                        for (size_t i = 0; i < tuple_reference->size(); i++)
+                        for (size_t i = 0; i < tuple_reference->size(); ++i)
                             assignation(context, (*tuple_reference)[i], object->array[i]);
                     } else throw Interpreter::FunctionArgumentsError();
-                } catch (Data::BadAccess const& e) {
+                } catch (std::bad_variant_access const&) {
                     throw Interpreter::FunctionArgumentsError();
                 }
             }
@@ -102,7 +103,7 @@ namespace Interpreter {
                         }
                     } else throw Interpreter::FunctionArgumentsError();
                 } else throw Interpreter::FunctionArgumentsError();
-            } catch (Data::BadAccess& e) {
+            } catch (std::bad_variant_access const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -134,7 +135,7 @@ namespace Interpreter {
                 }
 
                 return result;
-            } catch (Data::BadAccess& e) {
+            } catch (std::bad_variant_access const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -159,12 +160,12 @@ namespace Interpreter {
                 auto end = context["end"].to_data(context).get<INT>();
                 auto block = context["block"].to_data(context).get<Object*>();
 
-                for (INT i = begin; i < end; i++) {
+                for (INT i = begin; i < end; ++i) {
                     Interpreter::set(context, variable, Data(i));
                     Interpreter::call_function(context.get_parent(), context.expression, block->functions, std::make_shared<Parser::Tuple>());
                 }
                 return Reference();
-            } catch (Data::BadAccess& e) {
+            } catch (std::bad_variant_access const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -206,7 +207,7 @@ namespace Interpreter {
                     }
                 } else throw Interpreter::FunctionArgumentsError();
                 return Reference(context.new_object());
-            } catch (Data::BadAccess& e) {
+            } catch (std::bad_variant_access const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -227,10 +228,10 @@ namespace Interpreter {
 
             try {
                 return Interpreter::call_function(context.get_parent(), context.expression, try_block->functions, std::make_shared<Parser::Tuple>());
-            } catch (Exception& ex) {
+            } catch (Exception const& ex) {
                 try {
                     return Interpreter::call_function(context.get_parent(), context.expression, catch_function->functions, ex.reference);
-                } catch (Interpreter::Exception& e) {
+                } catch (Interpreter::Exception const&) {
                     throw ex;
                 }
             }
@@ -251,13 +252,48 @@ namespace Interpreter {
 
             try {
                 return context.new_object(*data.get<Object*>());
-            } catch (Data::BadAccess const& e) {
+            } catch (std::bad_variant_access const&) {
                 return Reference(data);
             }
         }
 
         Reference copy_pointer(FunctionContext& context) {
             return Reference(context["data"].to_data(context));
+        }
+
+        auto define_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+            {
+                std::make_shared<Parser::FunctionCall>(
+                    std::make_shared<Parser::Symbol>("var"),
+                    std::make_shared<Parser::Tuple>()
+                ),
+                std::make_shared<Parser::Symbol>("data")
+            }
+        ));
+        Reference define(FunctionContext& context) {
+            auto var = Interpreter::call_function(context.get_parent(), context.expression, context["var"].to_data(context).get<Object*>()->functions, std::make_shared<Parser::Tuple>());
+            auto data = context["data"].to_data(context);
+
+            std::function<bool(Reference const&)> iterate = [&iterate, &context](Reference const& reference) -> bool {
+                if (auto tuple = std::get_if<TupleReference>(&reference)) {
+                    for (auto const& r : *tuple)
+                        if (iterate(r))
+                            return true;
+
+                    return false;
+                } else {
+                    try {
+                        return call_function(context, context.expression, context.get_global().get_function("defined"), reference).to_data(context).get<bool>();
+                    } catch (std::bad_variant_access const&) {
+                        throw FunctionArgumentsError();
+                    }
+                }
+            };
+
+            if (!iterate(var))
+                return call_function(context, context.expression, context.get_global().get_function("setter"), TupleReference{ var, data });
+            else
+                throw FunctionArgumentsError();
         }
 
         auto function_definition_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
@@ -275,7 +311,7 @@ namespace Interpreter {
                     var->functions.push_front(*it);
 
                 return context["var"];
-            } catch (Data::BadAccess& e) {
+            } catch (std::bad_variant_access const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -343,13 +379,26 @@ namespace Interpreter {
             return Data(context.new_object(oss.str()));
         }
 
+        auto print_args = std::make_shared<Parser::Symbol>("data");
+        Reference print(FunctionContext& context) {
+            auto data = context["data"];
+
+            auto str = Interpreter::string_from(context, data);
+            if (!str.empty())
+                std::cout << str << std::endl;
+
+            return Reference();
+        }
+
+        auto scan_args = std::make_shared<Parser::Tuple>();
+        Reference scan(FunctionContext& context) {
+            std::string str;
+            getline(std::cin, str);
+
+            return Data(context.new_object(str));
+        }
+
         void init(GlobalContext& context) {
-            context.add_symbol("NotAFunction", context.new_object());
-            context.add_symbol("IncorrectFunctionArguments", context.new_object());
-            context.add_symbol("ParserException", context.new_object());
-            context.add_symbol("RecursionLimitExceeded", context.new_object());
-
-
             auto object = context.new_object();
             object->functions.push_front(SystemFunction{ getter_args, getter });
             context.add_symbol("getter", context.new_reference(object));
@@ -360,10 +409,16 @@ namespace Interpreter {
             set(context, context[":="], context["setter"]);
 
 
+            context["NotAFunction"].to_data(context);
+            context["IncorrectFunctionArguments"].to_data(context);
+            context["ParserException"].to_data(context);
+            context["RecursionLimitExceeded"].to_data(context);
+
+
             context.get_function(";").push_front(SystemFunction{ separator_args, separator });
 
-            context.add_symbol("if", context.new_object());
-            context.add_symbol("else", context.new_object());
+            context["if"].to_data(context);
+            context["else"].to_data(context);
             Function if_s = SystemFunction{ if_statement_args, if_statement };
             if_s.extern_symbols.emplace("if", context["if"]);
             if_s.extern_symbols.emplace("else", context["else"]);
@@ -371,21 +426,21 @@ namespace Interpreter {
 
             context.get_function("while").push_front(SystemFunction{ while_statement_args, while_statement });
 
-            context.add_symbol("from", context.new_object());
-            context.add_symbol("to", context.new_object());
+            context["from"].to_data(context);
+            context["to"].to_data(context);
             Function for_s = SystemFunction{ for_statement_args, for_statement };
             for_s.extern_symbols.emplace("from", context["from"]);
             for_s.extern_symbols.emplace("to", context["to"]);
             context.get_function("for").push_front(for_s);
 
-            context.add_symbol("step", context.new_object());
+            context["step"].to_data(context);
             Function for_step_s = SystemFunction{ for_step_statement_args, for_step_statement };
             for_step_s.extern_symbols.emplace("from", context["from"]);
             for_step_s.extern_symbols.emplace("to", context["to"]);
             for_step_s.extern_symbols.emplace("step", context["step"]);
             context.get_function("for").push_front(for_step_s);
 
-            context.add_symbol("catch", context.new_object());
+            context["catch"].to_data(context);
             Function try_s = SystemFunction{ try_statement_args, try_statement };
             try_s.extern_symbols.emplace("catch", context["catch"]);
             context.get_function("try").push_front(try_s);
@@ -394,6 +449,7 @@ namespace Interpreter {
             context.get_function("$").push_front(SystemFunction{ copy_args, copy });
             context.get_function("$==").push_front(SystemFunction{ copy_args, copy_pointer });
 
+            context.get_function("=").push_front(SystemFunction{ define_args, define });
             context.get_function(":").push_front(SystemFunction{ function_definition_args, function_definition });
 
             context.get_function("==").push_front(SystemFunction{ equals_args, equals });
@@ -402,6 +458,8 @@ namespace Interpreter {
             context.get_function("!==").push_front(SystemFunction{ equals_args, not_check_pointers });
 
             context.get_function("string_from").push_front(SystemFunction{ string_from_args, string_from });
+            context.get_function("print").push_front(SystemFunction{ print_args, print });
+            context.get_function("scan").push_front(SystemFunction{ scan_args, scan });
         }
 
     }

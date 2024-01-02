@@ -4,7 +4,7 @@
 #include "../Interpreter.hpp"
 
 
-namespace Interpreter {
+namespace Interpreter::SystemFunctions {
 
     namespace Array {
 
@@ -21,6 +21,7 @@ namespace Interpreter {
         Reference remove(FunctionContext& context);
 
         Reference foreach(FunctionContext& context);
+
 
         void init(GlobalContext& context);
 

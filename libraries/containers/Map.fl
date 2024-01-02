@@ -8,7 +8,7 @@ Map : this |-> {
 
     this : key |-> {};
 
-    this.lenght : () |-> {};
+    this.length : () |-> {};
     this.is_empty : () |-> {};
 
     this.has : key |-> {};

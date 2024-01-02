@@ -14,7 +14,7 @@ while (file.has()) {
 print(str);
 
 words := get_words(str);
-print("Longueur : ", words.lenght(), "\n");
+print("Longueur : ", words.length(), "\n");
 words.foreach(x |-> {
     print(x, "\n")
 });

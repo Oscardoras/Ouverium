@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <fstream>
 #include <iostream>
 #include <sstream>
 
@@ -19,7 +18,7 @@ namespace Parser {
     }
 
     void Standard::TextPosition::notify_position() const {
-        std::cerr << "\tin file \"" << path << "\" at line " << std::to_string(line) << ", column " << std::to_string(column) << std::endl;
+        std::cerr << "\tin file \"" << path << "\" at line " << line << ", column " << column << std::endl;
     }
 
     Standard::Word::Word(std::string const& word, TextPosition const& position) :
@@ -82,7 +81,6 @@ namespace Parser {
     std::vector<Standard::Word> Standard::get_words() const {
         std::vector<Word> words;
 
-        size_t size = code.size();
         size_t b = 0;
         auto last = '\n';
         bool is_comment = false;
@@ -94,7 +92,7 @@ namespace Parser {
         TextPosition position(path, line, column);
 
         size_t i;
-        for (i = 0; i < size; i++) {
+        for (i = 0; i < code.size(); ++i) {
             char c = code[i];
 
             if (!is_comment) {
@@ -142,9 +140,9 @@ namespace Parser {
 
             last = c;
             if (c == '\n') {
-                line++;
+                ++line;
                 column = 1;
-            } else column++;
+            } else ++column;
             position = TextPosition(path, line, column);
         }
         if (b < i && !is_comment) words.push_back(Word(code.substr(b, i - b), position));
@@ -164,7 +162,7 @@ namespace Parser {
     }
 
     int compare_operators(std::string const& a, std::string const& b) {
-        for (size_t i = 0; i < a.size() && i < b.size(); i++) {
+        for (size_t i = 0; i < a.size() && i < b.size(); ++i) {
             if (get_char_priority(a[i]) < get_char_priority(b[i])) return 1;
             if (get_char_priority(a[i]) > get_char_priority(b[i])) return -1;
         }
@@ -188,7 +186,7 @@ namespace Parser {
                 if (expressions.size() != 2) {
                     auto tuple = std::make_shared<Tuple>();
                     tuple->position = function_call->position;
-                    for (size_t i = 1; i < expressions.size(); i++)
+                    for (size_t i = 1; i < expressions.size(); ++i)
                         tuple->objects.push_back(expressions[i]);
                     function_call->arguments = tuple;
                 } else function_call->arguments = expressions[1];
@@ -216,11 +214,9 @@ namespace Parser {
                     }
                 }
 
-                std::sort(operators.begin(), operators.end(),
-                    [](auto const& a, auto const& b) {
+                std::sort(operators.begin(), operators.end(), [](auto const& a, auto const& b) {
                     return compare_operators(a[0], b[0]) >= 0;
-                }
-                );
+                });
 
                 for (auto const& op : operators) {
                     for (auto it = expressions.begin(); it != expressions.end();) {
@@ -240,8 +236,8 @@ namespace Parser {
                                     it = expressions.erase(it);
                                     it = expressions.erase(it);
                                 } else errors.push_back(Standard::ParsingError("operator " + symbol->name + " must be placed between two expressions", *std::static_pointer_cast<Standard::TextPosition>(symbol->position)));
-                            } else it++;
-                        } else it++;
+                            } else ++it;
+                        } else ++it;
                     }
                 }
 
@@ -432,7 +428,7 @@ namespace Parser {
                 return expression;
             else
                 throw Standard::Exception(errors);
-        } catch (std::out_of_range const& e) {
+        } catch (std::out_of_range const&) {
             throw Standard::IncompleteCode();
         }
     }

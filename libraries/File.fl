@@ -1,0 +1,43 @@
+import "Type.fl";
+import "String.fl";
+
+
+class File;
+
+(~) : (file, File) |-> {
+    try {
+        System.has(file);
+        true
+    } catch (e |-> {
+        false
+    })
+};
+
+File : (String path) |-> {
+    System.open(path)
+};
+
+
+File::(this.read |-> (
+    () |-> {
+        System.read(this)
+    }
+));
+
+File::(this.has |-> (
+    () |-> {
+        System.has(this)
+    }
+));
+
+File::(this.write |-> (
+    data |-> {
+        System.write(this, data)
+    }
+));
+
+File::(this.flush |-> (
+    () |-> {
+        System.flush(this)
+    }
+));

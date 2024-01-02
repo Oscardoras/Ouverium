@@ -6,7 +6,7 @@
 #include "../Interpreter.hpp"
 
 
-namespace Interpreter {
+namespace Interpreter::SystemFunctions {
 
     namespace Dll {
 
@@ -19,6 +19,7 @@ namespace Interpreter {
         Reference dlopen(FunctionContext& context);
 
         Reference extern_statement(FunctionContext& context);
+
 
         void init(GlobalContext& context);
 

@@ -2,14 +2,13 @@
 #include <iostream>
 #include <sstream>
 
-#include "Function.hpp"
 #include "Interpreter.hpp"
 
 #include "system_functions/Array.hpp"
 #include "system_functions/Base.hpp"
 #include "system_functions/Dll.hpp"
 #include "system_functions/Math.hpp"
-#include "system_functions/Streams.hpp"
+#include "system_functions/System.hpp"
 #include "system_functions/Types.hpp"
 
 #include "../parser/Standard.hpp"
@@ -19,12 +18,12 @@ namespace Interpreter {
 
     GlobalContext::GlobalContext(std::shared_ptr<Parser::Expression> expression) :
         Context(expression) {
-        Base::init(*this);
-        Array::init(*this);
-        Math::init(*this);
-        Streams::init(*this);
-        Types::init(*this);
-        Dll::init(*this);
+        SystemFunctions::Base::init(*this);
+        SystemFunctions::Dll::init(*this);
+        SystemFunctions::Array::init(*this);
+        SystemFunctions::Math::init(*this);
+        SystemFunctions::System::init(*this);
+        SystemFunctions::Types::init(*this);
     }
 
 
@@ -70,11 +69,11 @@ namespace Interpreter {
         }
 
         Reference compute(Context& context, Arguments const& arguments) {
-            if (auto expression = std::get_if<ParserExpression>(&arguments)) {
+            if (auto expression = std::get_if<ParserExpression>(&arguments))
                 return operator[](*expression) = Interpreter::execute(context, *expression);
-            } else if (auto reference = std::get_if<Reference>(&arguments)) {
+            else if (auto reference = std::get_if<Reference>(&arguments))
                 return *reference;
-            } else return *((Reference*) nullptr);
+            else return *((Reference*) nullptr);
         }
 
     };
@@ -95,7 +94,7 @@ namespace Interpreter {
             if (auto expression = std::get_if<ParserExpression>(&arguments)) {
                 if (auto a_tuple = std::dynamic_pointer_cast<Parser::Tuple>(*expression)) {
                     if (p_tuple->objects.size() == a_tuple->objects.size()) {
-                        for (size_t i = 0; i < p_tuple->objects.size(); i++)
+                        for (size_t i = 0; i < p_tuple->objects.size(); ++i)
                             set_arguments(context, function_context, computed, p_tuple->objects[i], a_tuple->objects[i]);
 
                         TupleReference cache;
@@ -113,77 +112,70 @@ namespace Interpreter {
             } else if (auto reference = std::get_if<Reference>(&arguments)) {
                 if (auto tuple_reference = std::get_if<TupleReference>(reference)) {
                     if (tuple_reference->size() == p_tuple->objects.size()) {
-                        for (size_t i = 0; i < p_tuple->objects.size(); i++)
+                        for (size_t i = 0; i < p_tuple->objects.size(); ++i)
                             set_arguments(context, function_context, computed, p_tuple->objects[i], (*tuple_reference)[i]);
                     } else throw Interpreter::FunctionArgumentsError();
                 } else {
                     try {
                         auto object = reference->to_data(function_context).get<Object*>();
                         if (object->array.size() == p_tuple->objects.size()) {
-                            for (size_t i = 0; i < p_tuple->objects.size(); i++)
+                            for (size_t i = 0; i < p_tuple->objects.size(); ++i)
                                 set_arguments(context, function_context, computed, p_tuple->objects[i], ArrayReference{ *object, i });
                         } else throw Interpreter::FunctionArgumentsError();
-                    } catch (Data::BadAccess const& e) {
+                    } catch (std::bad_variant_access const&) {
                         throw Interpreter::FunctionArgumentsError();
                     }
                 }
             }
         } else if (auto p_function = std::dynamic_pointer_cast<Parser::FunctionCall>(parameters)) {
-            if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(p_function->function)) {
-                if (!function_context.has_symbol(symbol->name)) {
-                    Object* object = context.new_object();
-                    auto function_definition = std::make_shared<Parser::FunctionDefinition>();
-                    function_definition->parameters = p_function->arguments;
+            if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(p_function->function); symbol && !function_context.has_symbol(symbol->name)) {
+                Object* object = context.new_object();
+                auto function_definition = std::make_shared<Parser::FunctionDefinition>();
+                function_definition->parameters = p_function->arguments;
 
-                    if (auto expression = std::get_if<ParserExpression>(&arguments)) {
-                        auto it = computed.find(*expression);
-                        if (it == computed.end()) {
-                            function_definition->body = *expression;
+                if (auto expression = std::get_if<ParserExpression>(&arguments)) {
+                    auto it = computed.find(*expression);
+                    if (it == computed.end()) {
+                        function_definition->body = *expression;
 
-                            object->functions.push_front(CustomFunction{ function_definition });
-                            auto& f = object->functions.back();
-                            for (auto symbol : function_definition->body->symbols)
-                                f.extern_symbols.emplace(symbol, context[symbol]);
-                        } else {
-                            function_definition->body = std::make_shared<Parser::Symbol>("#cached");
-
-                            object->functions.push_front(CustomFunction{ function_definition });
-                            object->functions.back().extern_symbols.emplace("#cached", it->second.to_indirect_reference(context));
-                        }
-
-                    } else if (auto reference = std::get_if<Reference>(&arguments)) {
+                        object->functions.push_front(CustomFunction{ function_definition });
+                        auto& f = object->functions.back();
+                        for (auto symbol : function_definition->body->symbols)
+                            f.extern_symbols.emplace(symbol, context[symbol]);
+                    } else {
                         function_definition->body = std::make_shared<Parser::Symbol>("#cached");
 
                         object->functions.push_front(CustomFunction{ function_definition });
-                        object->functions.back().extern_symbols.emplace("#cached", reference->to_indirect_reference(context));
+                        object->functions.back().extern_symbols.emplace("#cached", it->second.to_indirect_reference(context));
                     }
 
-                    function_context.add_symbol(symbol->name, Reference(object));
-                    return;
+                } else if (auto reference = std::get_if<Reference>(&arguments)) {
+                    function_definition->body = std::make_shared<Parser::Symbol>("#cached");
+
+                    object->functions.push_front(CustomFunction{ function_definition });
+                    object->functions.back().extern_symbols.emplace("#cached", reference->to_indirect_reference(context));
                 }
-            }
 
-            auto r = execute(context, p_function->function).to_data(context);
-            std::list<Function> functions;
-            try {
-                functions = r.get<Object*>()->functions;
-            } catch (Data::BadAccess const& e) {}
-
-            Arguments args;
-            if (auto expression = std::get_if<ParserExpression>(&arguments)) {
-                auto it = computed.find(*expression);
-                args = it != computed.end() ? it->second : arguments;
+                function_context.add_symbol(symbol->name, Reference(object));
             } else {
-                args = arguments;
-            }
+                auto r = execute(context, p_function->function).to_data(context);
 
-            Reference reference;
-            try {
-                reference = call_function(context, p_function, functions, args);
-            } catch (Exception const& e) {
-                throw Interpreter::FunctionArgumentsError();
+                Arguments args;
+                if (auto expression = std::get_if<ParserExpression>(&arguments)) {
+                    auto it = computed.find(*expression);
+                    args = it != computed.end() ? it->second : arguments;
+                } else {
+                    args = arguments;
+                }
+
+                Reference reference;
+                try {
+                    reference = call_function(context, p_function, r, args);
+                } catch (Exception const&) {
+                    throw Interpreter::FunctionArgumentsError();
+                }
+                set_arguments(context, function_context, computed, p_function->arguments, reference);
             }
-            set_arguments(context, function_context, computed, p_function->arguments, reference);
         } else if (auto p_property = std::dynamic_pointer_cast<Parser::Property>(parameters)) {
             auto reference = computed.compute(context, arguments);
 
@@ -195,9 +187,19 @@ namespace Interpreter {
         } else throw Interpreter::FunctionArgumentsError();
     }
 
-    Reference call_function(Context& context, std::shared_ptr<Parser::Expression> expression, std::list<Function> const& functions, Arguments const& arguments) {
+    Reference call_function(Context& context, std::shared_ptr<Parser::Expression> expression, Reference const& func, Arguments const& arguments) {
         if (context.get_recurion_level() >= context.get_global().recursion_limit)
             throw Exception(context, "recursion limit exceeded", context.get_global()["RecursionLimitExceeded"].to_data(context), expression);
+
+        std::list<Function> functions;
+        try {
+            functions = func.to_data(context).get<Object*>()->functions;
+        } catch (std::bad_variant_access const&) {}
+
+        try {
+            if (functions.empty())
+                functions = call_function(context, context.expression, context.get_global()["getter"], func).to_data(context).get<Object*>()->functions;
+        } catch (std::bad_variant_access const&) {}
 
         Computed computed;
 
@@ -218,7 +220,7 @@ namespace Interpreter {
                         if (filter.get<bool>())
                             return Interpreter::execute(function_context, (*custom_function)->body);
                         else continue;
-                    } catch (Data::BadAccess& e) {
+                    } catch (std::bad_variant_access const&) {
                         throw FunctionArgumentsError();
                     }
                 } else if (auto system_function = std::get_if<SystemFunction>(&function)) {
@@ -226,7 +228,7 @@ namespace Interpreter {
 
                     return system_function->pointer(function_context);
                 } else return Reference();
-            } catch (FunctionArgumentsError& e) {}
+            } catch (FunctionArgumentsError&) {}
         }
 
         if (functions.empty())
@@ -239,17 +241,7 @@ namespace Interpreter {
         if (auto function_call = std::dynamic_pointer_cast<Parser::FunctionCall>(expression)) {
             auto reference = execute(context, function_call->function);
 
-            std::list<Function> functions;
-            try {
-                functions = reference.to_data(context).get<Object*>()->functions;
-            } catch (Data::BadAccess const& e) {}
-
-            try {
-                if (functions.empty())
-                    functions = call_function(context, context.expression, context.get_global()["getter"].to_data(context).get<Object*>()->functions, reference).to_data(context).get<Object*>()->functions;
-            } catch (Data::BadAccess const& e) {}
-
-            return call_function(context, function_call, functions, function_call->arguments);
+            return call_function(context, function_call, reference, function_call->arguments);
         } else if (auto function_definition = std::dynamic_pointer_cast<Parser::FunctionDefinition>(expression)) {
             auto object = context.new_object();
             object->functions.push_front(CustomFunction{ function_definition });
@@ -264,7 +256,7 @@ namespace Interpreter {
             try {
                 auto object = data.get<Object*>();
                 return (*object)[property->name];
-            } catch (Data::BadAccess const& e) {
+            } catch (std::bad_variant_access const&) {
                 return Data{};
             }
         } else if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(expression)) {
@@ -290,12 +282,12 @@ namespace Interpreter {
 
 
     Reference set(Context& context, Reference const& var, Reference const& data) {
-        return call_function(context, context.expression, context.get_global().get_function("setter"), TupleReference{ var, data });
+        return call_function(context, context.expression, context["setter"], TupleReference{ var, data });
     }
 
     std::string string_from(Context& context, Reference const& data) {
         std::ostringstream oss;
-        oss << call_function(context, context.expression, context.get_global().get_function("string_from"), data).to_data(context);
+        oss << call_function(context, context.expression, context["string_from"], data).to_data(context);
         return oss.str();
     }
 

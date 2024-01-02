@@ -2,7 +2,6 @@
 #define __INTERPRETER_OBJECT_HPP__
 
 #include <any>
-#include <functional>
 #include <list>
 #include <map>
 #include <memory>
@@ -16,6 +15,7 @@
 namespace Interpreter {
 
     struct Context;
+    struct Function;
 
     class CObj : public std::any {
     public:
@@ -52,9 +52,11 @@ namespace Interpreter {
                 array.push_back(c);
         }
 
-        IndirectReference operator[](std::string name);
+        IndirectReference operator[](std::string const& name);
 
         std::string to_string() const;
+
+        void destruct(Context& context);
 
     };
 

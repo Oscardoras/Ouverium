@@ -1,9 +1,6 @@
 #ifndef __PARSER_STANDARD_HPP__
 #define __PARSER_STANDARD_HPP__
 
-#include <iostream>
-#include <list>
-
 #include "Parser.hpp"
 
 
@@ -21,7 +18,6 @@ namespace Parser {
             unsigned int column;
             std::string stack_trace;
 
-            TextPosition(TextPosition const&) = default;
             TextPosition(std::string const& path, unsigned int line, unsigned int column);
 
             virtual void notify_error(std::string const& message) const override;

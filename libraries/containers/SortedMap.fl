@@ -9,7 +9,7 @@ SortedMap : this |-> {
     this :~ SortedMap;
 
     this._root := ();
-    this._lenght := 0;
+    this._length := 0;
 
     this : key |-> {
         cell := this._root;
@@ -22,16 +22,16 @@ SortedMap : this |-> {
         };
         if (cell == ()) {
             cell.key := key;
-            ++this._lenght
+            ++this._length
         };
         $== cell.value
     };
 
-    this.lenght : () |-> {
-        this._lenght
+    this.length : () |-> {
+        this._length
     };
     this.is_empty : () |-> {
-        this._lenght == 0
+        this._length == 0
     };
 
     this.has : key |-> {
@@ -80,7 +80,7 @@ SortedMap : this |-> {
             };
             parent.left := cell.left
         };
-        --this._lenght;
+        --this._length;
 
         ()
     };
