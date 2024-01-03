@@ -95,6 +95,41 @@ namespace Interpreter::SystemFunctions {
         }
 
 
+        struct WeakReference {
+            Object* obj;
+        };
+
+        auto weak_reference_args = std::make_shared<Parser::Symbol>("object");
+        Reference weak_reference(FunctionContext& context) {
+            try {
+                auto obj = context["object"].to_data(context).get<Object*>();
+
+                if (!obj->weak_ref) {
+                    auto reference = context.new_object();
+                    reference->c_obj = WeakReference{ obj };
+                    obj->weak_ref = reference;
+                }
+
+                return Data(obj->weak_ref);
+            } catch (Data::BadAccess const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        auto weak_reference_get_args = std::make_shared<Parser::Symbol>("reference");
+        Reference weak_reference_get(FunctionContext& context) {
+            try {
+                auto reference = context["reference"].to_data(context).get<Object*>();
+
+                auto weak_reference = reference->c_obj.get<WeakReference>();
+
+                return Data(weak_reference.obj);
+            } catch (std::exception const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+
         void init(GlobalContext& context) {
             auto system = context["System"].to_data(context).get<Object*>();
 
@@ -118,6 +153,9 @@ namespace Interpreter::SystemFunctions {
             system->properties["err"] = err;
 
             (*system)["time"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ std::make_shared<Parser::Tuple>(), time });
+
+            (*system)["weak_reference"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ weak_reference_args, weak_reference });
+            (*system)["weak_reference_get"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ weak_reference_get_args, weak_reference_get });
         }
 
     }

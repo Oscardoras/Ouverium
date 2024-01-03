@@ -37,6 +37,7 @@ namespace Interpreter {
         CObj c_obj;
 
         bool referenced = false;
+        Object* weak_ref = nullptr;
 
         Object() = default;
 

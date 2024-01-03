@@ -8,9 +8,16 @@ namespace Interpreter::SystemFunctions {
 
     namespace System {
 
+        Reference read(FunctionContext& context);
+        Reference has(FunctionContext& context);
+        Reference write(FunctionContext& context);
+        Reference flush(FunctionContext& context);
+        Reference open(FunctionContext& context);
+        Reference working_directory(FunctionContext& context);
+
         Reference time(FunctionContext& context);
 
-        Reference random(FunctionContext& context);
+        Reference weak_reference(FunctionContext& context);
 
 
         void init(GlobalContext& context);
