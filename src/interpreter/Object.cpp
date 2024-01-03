@@ -21,10 +21,9 @@ namespace Interpreter {
             return;
 
         try {
-            auto functions = (*this)["destructor"].to_data(context).get<Object*>()->functions;
-            if (!functions.empty())
-                call_function(context.get_global(), context.get_global().expression, functions, std::make_shared<Parser::Tuple>());
-        } catch (std::exception const&) {}
+            if (this->properties.contains("destructor"))
+                call_function(context.get_global(), context.get_global().expression, (*this)["destructor"], std::make_shared<Parser::Tuple>());
+        } catch (Interpreter::Exception const&) {}
     }
 
 }

@@ -85,7 +85,7 @@ namespace Interpreter {
             auto reference = computed.compute(context, arguments);
 
             if (function_context.has_symbol(symbol->name)) {
-                if (reference.to_data(context) != function_context[symbol->name].to_data(context))
+                if (reference != Reference(function_context[symbol->name]))
                     throw Interpreter::FunctionArgumentsError();
             } else {
                 function_context.add_symbol(symbol->name, reference);
@@ -282,12 +282,12 @@ namespace Interpreter {
 
 
     Reference set(Context& context, Reference const& var, Reference const& data) {
-        return call_function(context, context.expression, context["setter"], TupleReference{ var, data });
+        return call_function(context, context.expression, context.get_global()["setter"], TupleReference{ var, data });
     }
 
     std::string string_from(Context& context, Reference const& data) {
         std::ostringstream oss;
-        oss << call_function(context, context.expression, context["string_from"], data).to_data(context);
+        oss << call_function(context, context.expression, context.get_global()["string_from"], data).to_data(context);
         return oss.str();
     }
 

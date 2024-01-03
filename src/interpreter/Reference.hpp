@@ -52,6 +52,18 @@ namespace Interpreter {
 
     };
 
+    inline auto operator==(SymbolReference const& a, SymbolReference const& b) {
+        return &a.get() == &b.get();
+    }
+
+    inline auto operator==(PropertyReference const& a, PropertyReference const& b) {
+        return &a.parent.get() == &b.parent.get() && a.name == b.name;
+    }
+
+    inline auto operator==(ArrayReference const& a, ArrayReference const& b) {
+        return &a.array.get() == &b.array.get() && a.i == b.i;
+    }
+
 }
 
 

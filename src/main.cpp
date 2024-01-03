@@ -21,12 +21,30 @@ std::vector<std::string> include_path;
 
 #ifdef __unix__
 #include <unistd.h>
+#include <readline/readline.h>
+#include <readline/history.h>
 bool is_interactive() {
     return isatty(STDIN_FILENO);
+}
+bool get_line(std::string& line) {
+    char* input = readline("> ");
+    if (input) {
+        add_history(input);
+        line = input;
+        free(input);
+    }
+    return input;
 }
 #else
 bool is_interactive() {
     return true;
+}
+bool get_line(std::string& line) {
+    std::cout << "> ";
+    if (std::getline(std::cin, line))
+        return true;
+    else
+        return false;
 }
 #endif
 
@@ -35,12 +53,10 @@ int interactive_mode(std::string const& path) {
     Interpreter::GlobalContext context(nullptr);
     auto symbols = context.get_symbols();
 
-    std::cout << "> ";
-
     size_t line_number = 0;
     std::string code;
     std::string line;
-    while (std::getline(std::cin, line)) {
+    while (get_line(line)) {
         if (line.length() > 0) {
             ++line_number;
             code += line + '\n';
@@ -54,7 +70,7 @@ int interactive_mode(std::string const& path) {
 
                 try {
                     auto r = Interpreter::execute(context, expression);
-                    call_function(context, context.expression, context.get_global().get_function("print"), r);
+                    call_function(context, context.expression, context["print"], r);
                 } catch (Interpreter::Exception const& ex) {
                     if (!ex.positions.empty()) {
                         std::ostringstream oss;
@@ -65,23 +81,18 @@ int interactive_mode(std::string const& path) {
                     }
                 }
 
-                std::cout << "> ";
                 code = "";
                 for (unsigned i = 0; i < line_number; ++i) code += '\n';
             } catch (Parser::Standard::IncompleteCode const&) {
                 std::cout << '\t';
             } catch (Parser::Standard::Exception const& e) {
                 std::cerr << e.what();
-                std::cout << "> ";
                 code = "";
                 for (unsigned i = 0; i < line_number; ++i) code += '\n';
             }
-        } else {
-            std::cout << "> ";
         }
     }
 
-    std::cout << std::endl;
     return EXIT_SUCCESS;
 }
 

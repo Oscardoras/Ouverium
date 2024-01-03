@@ -43,18 +43,8 @@ namespace Interpreter {
 
 
     GlobalContext::~GlobalContext() {
-        try {
-            for (auto& object : objects)
-                object.destruct(*this);
-        } catch (Interpreter::Exception const& ex) {
-            if (!ex.positions.empty()) {
-                std::ostringstream oss;
-                oss << "An exception occured: " << ex.reference.to_data(*this);
-                ex.positions.front()->notify_error(oss.str());
-                for (auto const& p : ex.positions)
-                    p->notify_position();
-            }
-        }
+        for (auto& object : objects)
+            object.destruct(*this);
     }
 
 }

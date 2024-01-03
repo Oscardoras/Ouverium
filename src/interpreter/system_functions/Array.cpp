@@ -110,15 +110,14 @@ namespace Interpreter::SystemFunctions {
         ));
         Reference foreach(FunctionContext& context) {
             try {
-                auto array = Interpreter::call_function(context.get_parent(), context.expression, context["array"].to_data(context).get<Object*>()->functions, std::make_shared<Parser::Tuple>());
-                auto functions = context["function"].to_data(context).get<Object*>()->functions;
+                auto array = Interpreter::call_function(context.get_parent(), context.expression, context["array"], std::make_shared<Parser::Tuple>());
 
                 if (auto tuple = std::get_if<TupleReference>(&array)) {
                     for (auto const& r : *tuple)
-                        Interpreter::call_function(context.get_parent(), context.expression, functions, r);
+                        Interpreter::call_function(context.get_parent(), context.expression, context["function"], r);
                 } else {
                     for (auto const& d : array.to_data(context).get<Object*>()->array)
-                        Interpreter::call_function(context.get_parent(), context.expression, functions, d);
+                        Interpreter::call_function(context.get_parent(), context.expression, context["function"], d);
                 }
 
                 return Data{};

@@ -28,6 +28,10 @@ FILE(GLOB_RECURSE ouverium_sources
     src/compiler/*
 )
 add_executable(ouverium ${ouverium_sources})
+if (UNIX)
+    target_include_directories(ouverium PRIVATE ${Readline_INCLUDE_DIRS})
+    target_link_libraries(ouverium PRIVATE -lreadline)
+endif()
 target_include_directories(ouverium PRIVATE ${Boost_INCLUDE_DIRS})
 target_link_libraries(ouverium PRIVATE ${Boost_LIBRARIES})
 target_link_libraries(ouverium PUBLIC capi)

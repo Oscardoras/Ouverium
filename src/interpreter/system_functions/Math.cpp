@@ -38,10 +38,10 @@ namespace Interpreter::SystemFunctions {
         Reference logical_and(FunctionContext& context) {
             try {
                 auto a = context["a"].to_data(context).get<bool>();
-                auto b = context["b"].to_data(context).get<Object*>();
+                auto b = context["b"];
 
                 if (a)
-                    return Reference(Data(Interpreter::call_function(context.get_parent(), context.expression, b->functions, std::make_shared<Parser::Tuple>()).to_data(context).get<bool>()));
+                    return Reference(Data(Interpreter::call_function(context.get_parent(), context.expression, b, std::make_shared<Parser::Tuple>()).to_data(context).get<bool>()));
                 else
                     return Reference(Data(false));
             } catch (std::bad_variant_access const&) {
@@ -52,10 +52,10 @@ namespace Interpreter::SystemFunctions {
         Reference logical_or(FunctionContext& context) {
             try {
                 auto a = context["a"].to_data(context).get<bool>();
-                auto b = context["b"].to_data(context).get<Object*>();
+                auto b = context["b"];
 
                 if (!a)
-                    return Interpreter::call_function(context.get_parent(), context.expression, b->functions, std::make_shared<Parser::Tuple>()).to_data(context).get<bool>();
+                    return Interpreter::call_function(context.get_parent(), context.expression, b, std::make_shared<Parser::Tuple>()).to_data(context).get<bool>();
                 else
                     return Reference(Data(true));
             } catch (std::bad_variant_access const&) {
@@ -342,8 +342,8 @@ namespace Interpreter::SystemFunctions {
         ));
         Reference forall(FunctionContext& context) {
             try {
-                auto array = Interpreter::call_function(context.get_parent(), context.expression, context["array"].to_data(context).get<Object*>()->functions, std::make_shared<Parser::Tuple>());
-                auto functions = context["function"].to_data(context).get<Object*>()->functions;
+                auto array = Interpreter::call_function(context.get_parent(), context.expression, context["array"], std::make_shared<Parser::Tuple>());
+                auto functions = context["function"];
 
                 bool value = true;
 
@@ -371,8 +371,8 @@ namespace Interpreter::SystemFunctions {
 
         Reference exists(FunctionContext& context) {
             try {
-                auto array = Interpreter::call_function(context.get_parent(), context.expression, context["array"].to_data(context).get<Object*>()->functions, std::make_shared<Parser::Tuple>());
-                auto functions = context["function"].to_data(context).get<Object*>()->functions;
+                auto array = Interpreter::call_function(context.get_parent(), context.expression, context["array"], std::make_shared<Parser::Tuple>());
+                auto functions = context["function"];
 
                 bool value = false;
 
