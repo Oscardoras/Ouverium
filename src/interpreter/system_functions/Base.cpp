@@ -1,12 +1,6 @@
-#include <algorithm>
-#include <exception>
-#include <functional>
 #include <iostream>
-#include <sstream>
 
 #include "Base.hpp"
-
-#include "../../parser/Standard.hpp"
 
 
 namespace Interpreter::SystemFunctions {
@@ -38,7 +32,7 @@ namespace Interpreter::SystemFunctions {
                         for (size_t i = 0; i < tuple_reference->size(); ++i)
                             assignation(context, (*tuple_reference)[i], object->array[i]);
                     } else throw Interpreter::FunctionArgumentsError();
-                } catch (std::bad_variant_access const&) {
+                } catch (Data::BadAccess const&) {
                     throw Interpreter::FunctionArgumentsError();
                 }
             }
@@ -103,7 +97,7 @@ namespace Interpreter::SystemFunctions {
                         }
                     } else throw Interpreter::FunctionArgumentsError();
                 } else throw Interpreter::FunctionArgumentsError();
-            } catch (std::bad_variant_access const&) {
+            } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -135,7 +129,7 @@ namespace Interpreter::SystemFunctions {
                 }
 
                 return result;
-            } catch (std::bad_variant_access const&) {
+            } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -165,7 +159,7 @@ namespace Interpreter::SystemFunctions {
                     Interpreter::call_function(context.get_parent(), context.expression, block, std::make_shared<Parser::Tuple>());
                 }
                 return Reference();
-            } catch (std::bad_variant_access const&) {
+            } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -197,17 +191,17 @@ namespace Interpreter::SystemFunctions {
 
                 if (s > 0) {
                     for (INT i = begin; i < end; i += s) {
-                        Interpreter::set(context, variable, i);
+                        Interpreter::set(context, variable, Data(i));
                         Interpreter::call_function(parent, parent.expression, block, std::make_shared<Parser::Tuple>());
                     }
                 } else if (s < 0) {
                     for (INT i = begin; i > end; i += s) {
-                        Interpreter::set(context, variable, i);
+                        Interpreter::set(context, variable, Data(i));
                         Interpreter::call_function(parent, parent.expression, block, std::make_shared<Parser::Tuple>());
                     }
                 } else throw Interpreter::FunctionArgumentsError();
-                return Reference(context.new_object());
-            } catch (std::bad_variant_access const&) {
+                return Reference(Data(context.new_object()));
+            } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -251,9 +245,9 @@ namespace Interpreter::SystemFunctions {
             auto data = context["data"].to_data(context);
 
             try {
-                return context.new_object(*data.get<Object*>());
-            } catch (std::bad_variant_access const&) {
-                return Reference(data);
+                return Data(context.new_object(*data.get<Object*>()));
+            } catch (Data::BadAccess const&) {
+                return data;
             }
         }
 
@@ -309,7 +303,7 @@ namespace Interpreter::SystemFunctions {
                     var->functions.push_front(*it);
 
                 return context["var"];
-            } catch (std::bad_variant_access const&) {
+            } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -399,7 +393,7 @@ namespace Interpreter::SystemFunctions {
         void init(GlobalContext& context) {
             auto object = context.new_object();
             object->functions.push_front(SystemFunction{ getter_args, getter });
-            context.add_symbol("getter", context.new_reference(object));
+            context.add_symbol("getter", context.new_reference(Data(object)));
 
             context.get_function("defined").push_front(SystemFunction{ getter_args, defined });
 

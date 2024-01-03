@@ -1,7 +1,3 @@
-#include <stdexcept>
-#include <iostream>
-#include <sstream>
-
 #include "Interpreter.hpp"
 
 #include "system_functions/Array.hpp"
@@ -10,8 +6,6 @@
 #include "system_functions/Math.hpp"
 #include "system_functions/System.hpp"
 #include "system_functions/Types.hpp"
-
-#include "../parser/Standard.hpp"
 
 
 namespace Interpreter {
@@ -122,7 +116,7 @@ namespace Interpreter {
                             for (size_t i = 0; i < p_tuple->objects.size(); ++i)
                                 set_arguments(context, function_context, computed, p_tuple->objects[i], ArrayReference{ *object, i });
                         } else throw Interpreter::FunctionArgumentsError();
-                    } catch (std::bad_variant_access const&) {
+                    } catch (Data::BadAccess const&) {
                         throw Interpreter::FunctionArgumentsError();
                     }
                 }
@@ -156,7 +150,7 @@ namespace Interpreter {
                     object->functions.back().extern_symbols.emplace("#cached", reference->to_indirect_reference(context));
                 }
 
-                function_context.add_symbol(symbol->name, Reference(object));
+                function_context.add_symbol(symbol->name, Reference(Data(object)));
             } else {
                 auto r = execute(context, p_function->function).to_data(context);
 
@@ -194,12 +188,12 @@ namespace Interpreter {
         std::list<Function> functions;
         try {
             functions = func.to_data(context).get<Object*>()->functions;
-        } catch (std::bad_variant_access const&) {}
+        } catch (Data::BadAccess const&) {}
 
         try {
             if (functions.empty())
                 functions = call_function(context, context.expression, context.get_global()["getter"], func).to_data(context).get<Object*>()->functions;
-        } catch (std::bad_variant_access const&) {}
+        } catch (Data::BadAccess const&) {}
 
         Computed computed;
 
@@ -212,7 +206,7 @@ namespace Interpreter {
                 if (auto custom_function = std::get_if<CustomFunction>(&function)) {
                     set_arguments(context, function_context, computed, (*custom_function)->parameters, arguments);
 
-                    Data filter = true;
+                    Data filter = Data(true);
                     if ((*custom_function)->filter != nullptr)
                         filter = execute(function_context, (*custom_function)->filter).to_data(context);
 
@@ -220,7 +214,7 @@ namespace Interpreter {
                         if (filter.get<bool>())
                             return Interpreter::execute(function_context, (*custom_function)->body);
                         else continue;
-                    } catch (std::bad_variant_access const&) {
+                    } catch (Data::BadAccess const&) {
                         throw FunctionArgumentsError();
                     }
                 } else if (auto system_function = std::get_if<SystemFunction>(&function)) {
@@ -256,7 +250,7 @@ namespace Interpreter {
             try {
                 auto object = data.get<Object*>();
                 return (*object)[property->name];
-            } catch (std::bad_variant_access const&) {
+            } catch (Data::BadAccess const&) {
                 return Data{};
             }
         } else if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(expression)) {
@@ -268,7 +262,7 @@ namespace Interpreter {
             } else if (auto d = std::get_if<FLOAT>(&data)) {
                 return Data(*d);
             } else if (auto str = std::get_if<std::string>(&data)) {
-                return context.new_object(*str);
+                return Data(context.new_object(*str));
             } else {
                 return context[symbol->name];
             }

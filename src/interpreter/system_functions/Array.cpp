@@ -1,7 +1,3 @@
-#include <algorithm>
-#include <iostream>
-#include <fstream>
-
 #include "Array.hpp"
 
 
@@ -15,7 +11,7 @@ namespace Interpreter::SystemFunctions {
                 auto array = context["array"].to_data(context).get<Object*>();
 
                 return Reference(Data((INT) array->array.size()));
-            } catch (std::bad_variant_access const&) {
+            } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -26,7 +22,7 @@ namespace Interpreter::SystemFunctions {
 
             try {
                 return Data((INT) array->array.capacity());
-            } catch (std::bad_variant_access const&) {
+            } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -44,7 +40,7 @@ namespace Interpreter::SystemFunctions {
 
                 array->array.reserve(capacity);
                 return Data();
-            } catch (std::bad_variant_access const&) {
+            } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -63,7 +59,7 @@ namespace Interpreter::SystemFunctions {
                 if (i >= 0 && i < (INT) array->array.size())
                     return ArrayReference{ *array, (size_t) i };
                 else throw FunctionArgumentsError();
-            } catch (std::bad_variant_access const&) {
+            } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -81,7 +77,7 @@ namespace Interpreter::SystemFunctions {
 
                 array->array.push_back(element);
                 return ArrayReference{ *array, (size_t) array->array.size() - 1 };
-            } catch (std::bad_variant_access const&) {
+            } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -94,7 +90,7 @@ namespace Interpreter::SystemFunctions {
                 Data d = array->array.back();
                 array->array.pop_back();
                 return Data(d);
-            } catch (std::bad_variant_access const&) {
+            } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -121,7 +117,7 @@ namespace Interpreter::SystemFunctions {
                 }
 
                 return Data{};
-            } catch (std::bad_variant_access const&) {
+            } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
             }
         }

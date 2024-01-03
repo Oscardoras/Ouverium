@@ -2,7 +2,6 @@
 #define __UTILS_HPP__
 
 #include <cstddef>
-
 #include <string>
 #include <variant>
 

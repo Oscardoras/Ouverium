@@ -47,7 +47,7 @@ namespace Interpreter {
             object->array.reserve(tuple_reference->size());
             for (auto d : *tuple_reference)
                 object->array.push_back(d.to_data(context));
-            return object;
+            return Data(object);
         } else return Data{};
     }
 
@@ -69,7 +69,7 @@ namespace Interpreter {
             object->array.reserve(tuple_reference->size());
             for (auto d : *tuple_reference)
                 object->array.push_back(d.to_data(context));
-            return context.new_reference(object);
+            return context.new_reference(Data(object));
         } else return context.new_reference();
     }
 }

@@ -1,6 +1,3 @@
-#include <fstream>
-
-#include "Function.hpp"
 #include "Interpreter.hpp"
 
 

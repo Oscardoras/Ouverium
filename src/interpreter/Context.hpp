@@ -2,13 +2,9 @@
 #define __INTERPRETER_CONTEXT_HPP__
 
 #include <filesystem>
-#include <map>
 #include <set>
-#include <string>
 
 #include "Object.hpp"
-
-#include "../parser/Parser.hpp"
 
 
 namespace Interpreter {

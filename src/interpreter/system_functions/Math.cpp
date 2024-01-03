@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <cmath>
 #include <cstdlib>
 #include <limits>
@@ -30,7 +29,7 @@ namespace Interpreter::SystemFunctions {
         Reference logical_not(FunctionContext& context) {
             try {
                 return Reference(Data(!context["a"].to_data(context).get<bool>()));
-            } catch (std::bad_variant_access const&) {
+            } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -41,10 +40,10 @@ namespace Interpreter::SystemFunctions {
                 auto b = context["b"];
 
                 if (a)
-                    return Reference(Data(Interpreter::call_function(context.get_parent(), context.expression, b, std::make_shared<Parser::Tuple>()).to_data(context).get<bool>()));
+                    return Data(Interpreter::call_function(context.get_parent(), context.expression, b, std::make_shared<Parser::Tuple>()).to_data(context).get<bool>());
                 else
                     return Reference(Data(false));
-            } catch (std::bad_variant_access const&) {
+            } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -55,10 +54,10 @@ namespace Interpreter::SystemFunctions {
                 auto b = context["b"];
 
                 if (!a)
-                    return Interpreter::call_function(context.get_parent(), context.expression, b, std::make_shared<Parser::Tuple>()).to_data(context).get<bool>();
+                    return Data(Interpreter::call_function(context.get_parent(), context.expression, b, std::make_shared<Parser::Tuple>()).to_data(context).get<bool>());
                 else
                     return Reference(Data(true));
-            } catch (std::bad_variant_access const&) {
+            } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -243,8 +242,8 @@ namespace Interpreter::SystemFunctions {
             auto a = context["a"];
 
             try {
-                return set(context, a, a.to_data(context).get<INT>() + 1);
-            } catch (std::bad_variant_access const&) {
+                return set(context, a, Data(a.to_data(context).get<INT>() + 1));
+            } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -253,8 +252,8 @@ namespace Interpreter::SystemFunctions {
             auto a = context["a"];
 
             try {
-                return set(context, a, a.to_data(context).get<INT>() - 1);
-            } catch (std::bad_variant_access const&) {
+                return set(context, a, Data(a.to_data(context).get<INT>() - 1));
+            } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -364,7 +363,7 @@ namespace Interpreter::SystemFunctions {
                 }
 
                 return Data{ value };
-            } catch (std::bad_variant_access const&) {
+            } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -393,7 +392,7 @@ namespace Interpreter::SystemFunctions {
                 }
 
                 return Data{ value };
-            } catch (std::bad_variant_access const&) {
+            } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
             }
         }

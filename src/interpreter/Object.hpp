@@ -3,19 +3,13 @@
 
 #include <any>
 #include <list>
-#include <map>
-#include <memory>
-#include <string>
-#include <vector>
 
-#include "Data.hpp"
-#include "Reference.hpp"
+#include "Function.hpp"
 
 
 namespace Interpreter {
 
     struct Context;
-    struct Function;
 
     class CObj : public std::any {
     public:
@@ -49,7 +43,7 @@ namespace Interpreter {
         Object(std::string const& str) {
             array.reserve(str.size());
             for (auto c : str)
-                array.push_back(c);
+                array.push_back(Data(c));
         }
 
         IndirectReference operator[](std::string const& name);

@@ -1,9 +1,7 @@
 #ifndef __INTERPRETER_INTERPRETER_HPP__
 #define __INTERPRETER_INTERPRETER_HPP__
 
-#include <iostream>
-
-#include "Function.hpp"
+#include "Context.hpp"
 
 
 namespace Interpreter {

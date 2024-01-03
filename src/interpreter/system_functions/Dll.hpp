@@ -1,8 +1,6 @@
 #ifndef __INTERPRETER_SYSTEMFUNCTIONS_DLL_HPP__
 #define __INTERPRETER_SYSTEMFUNCTIONS_DLL_HPP__
 
-#include <filesystem>
-
 #include "../Interpreter.hpp"
 
 

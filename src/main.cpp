@@ -114,7 +114,7 @@ int file_mode(std::string const& path, std::istream& is) {
             auto r = Interpreter::execute(context, expression);
             try {
                 return static_cast<int>(r.to_data(context).get<INT>());
-            } catch (std::bad_variant_access const&) {
+            } catch (Interpreter::Data::BadAccess const&) {
                 return EXIT_SUCCESS;
             }
         } catch (Interpreter::Exception const& ex) {

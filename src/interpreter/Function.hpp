@@ -3,12 +3,15 @@
 
 #include <map>
 #include <memory>
-#include <string>
 
-#include "Context.hpp"
+#include "Reference.hpp"
+
+#include "../parser/Expressions.hpp"
 
 
 namespace Interpreter {
+
+    class FunctionContext;
 
     using CustomFunction = std::shared_ptr<Parser::FunctionDefinition>;
 
