@@ -17,7 +17,7 @@ namespace Interpreter::SystemFunctions {
         Reference getter(FunctionContext& context) {
             return std::visit([](auto const& arg) -> Data& {
                 return arg;
-            }, context["var"]) = context.new_object();
+            }, context["var"]) = Data(context.new_object());
         }
 
         Reference defined(FunctionContext& context) {
@@ -315,21 +315,21 @@ namespace Interpreter::SystemFunctions {
         }
 
         bool equals(Data a, Data b) {
-            if (auto a_object = std::get_if<Object*>(&a)) {
-                if (auto b_object = std::get_if<Object*>(&b))
+            if (auto a_object = get_if<Object*>(&a)) {
+                if (auto b_object = get_if<Object*>(&b))
                     return (*a_object)->properties == (*b_object)->properties && (*a_object)->array == (*b_object)->array;
                 else return false;
-            } else if (auto a_char = std::get_if<char>(&a)) {
-                if (auto b_char = std::get_if<char>(&b)) return *a_char == *b_char;
+            } else if (auto a_char = get_if<char>(&a)) {
+                if (auto b_char = get_if<char>(&b)) return *a_char == *b_char;
                 else return false;
-            } else if (auto a_float = std::get_if<FLOAT>(&a)) {
-                if (auto b_float = std::get_if<FLOAT>(&b)) return *a_float == *b_float;
+            } else if (auto a_float = get_if<FLOAT>(&a)) {
+                if (auto b_float = get_if<FLOAT>(&b)) return *a_float == *b_float;
                 else return false;
-            } else if (auto a_int = std::get_if<INT>(&a)) {
-                if (auto b_int = std::get_if<INT>(&b)) return *a_int == *b_int;
+            } else if (auto a_int = get_if<INT>(&a)) {
+                if (auto b_int = get_if<INT>(&b)) return *a_int == *b_int;
                 else return false;
-            } else if (auto a_bool = std::get_if<bool>(&a)) {
-                if (auto b_bool = std::get_if<bool>(&b)) return *a_bool == *b_bool;
+            } else if (auto a_bool = get_if<bool>(&a)) {
+                if (auto b_bool = get_if<bool>(&b)) return *a_bool == *b_bool;
                 else return false;
             } else throw FunctionArgumentsError();
         }

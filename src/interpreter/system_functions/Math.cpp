@@ -67,15 +67,15 @@ namespace Interpreter::SystemFunctions {
             auto a = context["a"].to_data(context);
             auto b = context["b"].to_data(context);
 
-            if (auto a_int = std::get_if<INT>(&a)) {
-                if (auto b_int = std::get_if<INT>(&b))
+            if (auto a_int = get_if<INT>(&a)) {
+                if (auto b_int = get_if<INT>(&b))
                     return Reference(Data(*a_int + *b_int));
-                else if (auto b_float = std::get_if<FLOAT>(&b))
+                else if (auto b_float = get_if<FLOAT>(&b))
                     return Reference(Data(*a_int + *b_float));
-            } else if (auto a_float = std::get_if<FLOAT>(&a)) {
-                if (auto b_int = std::get_if<INT>(&b))
+            } else if (auto a_float = get_if<FLOAT>(&a)) {
+                if (auto b_int = get_if<INT>(&b))
                     return Reference(Data(*a_float + *b_int));
-                else if (auto b_float = std::get_if<FLOAT>(&b))
+                else if (auto b_float = get_if<FLOAT>(&b))
                     return Reference(Data(*a_float + *b_float));
             }
             throw FunctionArgumentsError();
@@ -84,9 +84,9 @@ namespace Interpreter::SystemFunctions {
         Reference opposite(FunctionContext& context) {
             auto a = context["a"].to_data(context);
 
-            if (auto a_int = std::get_if<INT>(&a))
+            if (auto a_int = get_if<INT>(&a))
                 return Reference(Data(-*a_int));
-            else if (auto a_float = std::get_if<FLOAT>(&a))
+            else if (auto a_float = get_if<FLOAT>(&a))
                 return Reference(Data(-*a_float));
             throw FunctionArgumentsError();
         }
@@ -95,15 +95,15 @@ namespace Interpreter::SystemFunctions {
             auto a = context["a"].to_data(context);
             auto b = context["b"].to_data(context);
 
-            if (auto a_int = std::get_if<INT>(&a)) {
-                if (auto b_int = std::get_if<INT>(&b))
+            if (auto a_int = get_if<INT>(&a)) {
+                if (auto b_int = get_if<INT>(&b))
                     return Reference(Data(*a_int - *b_int));
-                else if (auto b_float = std::get_if<FLOAT>(&b))
+                else if (auto b_float = get_if<FLOAT>(&b))
                     return Reference(Data(*a_int - *b_float));
-            } else if (auto a_float = std::get_if<FLOAT>(&a)) {
-                if (auto b_int = std::get_if<INT>(&b))
+            } else if (auto a_float = get_if<FLOAT>(&a)) {
+                if (auto b_int = get_if<INT>(&b))
                     return Reference(Data(*a_float - *b_int));
-                else if (auto b_float = std::get_if<FLOAT>(&b))
+                else if (auto b_float = get_if<FLOAT>(&b))
                     return Reference(Data(*a_float - *b_float));
             }
             throw FunctionArgumentsError();
@@ -113,15 +113,15 @@ namespace Interpreter::SystemFunctions {
             auto a = context["a"].to_data(context);
             auto b = context["b"].to_data(context);
 
-            if (auto a_int = std::get_if<INT>(&a)) {
-                if (auto b_int = std::get_if<INT>(&b))
+            if (auto a_int = get_if<INT>(&a)) {
+                if (auto b_int = get_if<INT>(&b))
                     return Reference(Data(*a_int * *b_int));
-                else if (auto b_float = std::get_if<FLOAT>(&b))
+                else if (auto b_float = get_if<FLOAT>(&b))
                     return Reference(Data(*a_int * *b_float));
-            } else if (auto a_float = std::get_if<FLOAT>(&a)) {
-                if (auto b_int = std::get_if<INT>(&b))
+            } else if (auto a_float = get_if<FLOAT>(&a)) {
+                if (auto b_int = get_if<INT>(&b))
                     return Reference(Data(*a_float * *b_int));
-                else if (auto b_float = std::get_if<FLOAT>(&b))
+                else if (auto b_float = get_if<FLOAT>(&b))
                     return Reference(Data(*a_float * *b_float));
             }
             throw FunctionArgumentsError();
@@ -131,15 +131,15 @@ namespace Interpreter::SystemFunctions {
             auto a = context["a"].to_data(context);
             auto b = context["b"].to_data(context);
 
-            if (auto a_int = std::get_if<INT>(&a)) {
-                if (auto b_int = std::get_if<INT>(&b))
+            if (auto a_int = get_if<INT>(&a)) {
+                if (auto b_int = get_if<INT>(&b))
                     return Reference(Data(*a_int / *b_int));
-                else if (auto b_float = std::get_if<FLOAT>(&b))
+                else if (auto b_float = get_if<FLOAT>(&b))
                     return Reference(Data(*a_int / *b_float));
-            } else if (auto a_float = std::get_if<FLOAT>(&a)) {
-                if (auto b_int = std::get_if<INT>(&b))
+            } else if (auto a_float = get_if<FLOAT>(&a)) {
+                if (auto b_int = get_if<INT>(&b))
                     return Reference(Data(*a_float / *b_int));
-                else if (auto b_float = std::get_if<FLOAT>(&b))
+                else if (auto b_float = get_if<FLOAT>(&b))
                     return Reference(Data(*a_float / *b_float));
             }
             throw FunctionArgumentsError();
@@ -149,8 +149,8 @@ namespace Interpreter::SystemFunctions {
             auto a = context["a"].to_data(context);
             auto b = context["b"].to_data(context);
 
-            if (auto a_int = std::get_if<INT>(&a))
-                if (auto b_int = std::get_if<INT>(&b))
+            if (auto a_int = get_if<INT>(&a))
+                if (auto b_int = get_if<INT>(&b))
                     return Reference(Data(*a_int % *b_int));
             throw Interpreter::FunctionArgumentsError();
         }
@@ -159,19 +159,19 @@ namespace Interpreter::SystemFunctions {
             auto a = context["a"].to_data(context);
             auto b = context["b"].to_data(context);
 
-            if (auto a_int = std::get_if<INT>(&a)) {
-                if (auto b_int = std::get_if<INT>(&b))
+            if (auto a_int = get_if<INT>(&a)) {
+                if (auto b_int = get_if<INT>(&b))
                     return Reference(Data(*a_int < *b_int));
-                else if (auto b_float = std::get_if<FLOAT>(&b))
+                else if (auto b_float = get_if<FLOAT>(&b))
                     return Reference(Data(*a_int < *b_float));
-            } else if (auto a_float = std::get_if<FLOAT>(&a)) {
-                if (auto b_int = std::get_if<INT>(&b))
+            } else if (auto a_float = get_if<FLOAT>(&a)) {
+                if (auto b_int = get_if<INT>(&b))
                     return Reference(Data(*a_float < *b_int));
-                else if (auto b_float = std::get_if<FLOAT>(&b))
+                else if (auto b_float = get_if<FLOAT>(&b))
                     return Reference(Data(*a_float < *b_float));
             }
-            if (auto a_char = std::get_if<char>(&a))
-                if (auto b_char = std::get_if<char>(&b))
+            if (auto a_char = get_if<char>(&a))
+                if (auto b_char = get_if<char>(&b))
                     return Reference(Data(*a_char < *b_char));
             throw FunctionArgumentsError();
         }
@@ -180,19 +180,19 @@ namespace Interpreter::SystemFunctions {
             auto a = context["a"].to_data(context);
             auto b = context["b"].to_data(context);
 
-            if (auto a_int = std::get_if<INT>(&a)) {
-                if (auto b_int = std::get_if<INT>(&b))
+            if (auto a_int = get_if<INT>(&a)) {
+                if (auto b_int = get_if<INT>(&b))
                     return Reference(Data(*a_int > *b_int));
-                else if (auto b_float = std::get_if<FLOAT>(&b))
+                else if (auto b_float = get_if<FLOAT>(&b))
                     return Reference(Data(*a_int > *b_float));
-            } else if (auto a_float = std::get_if<FLOAT>(&a)) {
-                if (auto b_int = std::get_if<INT>(&b))
+            } else if (auto a_float = get_if<FLOAT>(&a)) {
+                if (auto b_int = get_if<INT>(&b))
                     return Reference(Data(*a_float > *b_int));
-                else if (auto b_float = std::get_if<FLOAT>(&b))
+                else if (auto b_float = get_if<FLOAT>(&b))
                     return Reference(Data(*a_float > *b_float));
             }
-            if (auto a_char = std::get_if<char>(&a))
-                if (auto b_char = std::get_if<char>(&b))
+            if (auto a_char = get_if<char>(&a))
+                if (auto b_char = get_if<char>(&b))
                     return Reference(Data(*a_char > *b_char));
             throw FunctionArgumentsError();
         }
@@ -201,19 +201,19 @@ namespace Interpreter::SystemFunctions {
             auto a = context["a"].to_data(context);
             auto b = context["b"].to_data(context);
 
-            if (auto a_int = std::get_if<INT>(&a)) {
-                if (auto b_int = std::get_if<INT>(&b))
+            if (auto a_int = get_if<INT>(&a)) {
+                if (auto b_int = get_if<INT>(&b))
                     return Reference(Data(*a_int <= *b_int));
-                else if (auto b_float = std::get_if<FLOAT>(&b))
+                else if (auto b_float = get_if<FLOAT>(&b))
                     return Reference(Data(*a_int <= *b_float));
-            } else if (auto a_float = std::get_if<FLOAT>(&a)) {
-                if (auto b_int = std::get_if<INT>(&b))
+            } else if (auto a_float = get_if<FLOAT>(&a)) {
+                if (auto b_int = get_if<INT>(&b))
                     return Reference(Data(*a_float <= *b_int));
-                else if (auto b_float = std::get_if<FLOAT>(&b))
+                else if (auto b_float = get_if<FLOAT>(&b))
                     return Reference(Data(*a_float <= *b_float));
             }
-            if (auto a_char = std::get_if<char>(&a))
-                if (auto b_char = std::get_if<char>(&b))
+            if (auto a_char = get_if<char>(&a))
+                if (auto b_char = get_if<char>(&b))
                     return Reference(Data(*a_char <= *b_char));
             throw FunctionArgumentsError();
         }
@@ -222,19 +222,19 @@ namespace Interpreter::SystemFunctions {
             auto a = context["a"].to_data(context);
             auto b = context["b"].to_data(context);
 
-            if (auto a_int = std::get_if<INT>(&a)) {
-                if (auto b_int = std::get_if<INT>(&b))
+            if (auto a_int = get_if<INT>(&a)) {
+                if (auto b_int = get_if<INT>(&b))
                     return Reference(Data(*a_int >= *b_int));
-                else if (auto b_float = std::get_if<FLOAT>(&b))
+                else if (auto b_float = get_if<FLOAT>(&b))
                     return Reference(Data(*a_int >= *b_float));
-            } else if (auto a_float = std::get_if<FLOAT>(&a)) {
-                if (auto b_int = std::get_if<INT>(&b))
+            } else if (auto a_float = get_if<FLOAT>(&a)) {
+                if (auto b_int = get_if<INT>(&b))
                     return Reference(Data(*a_float >= *b_int));
-                else if (auto b_float = std::get_if<FLOAT>(&b))
+                else if (auto b_float = get_if<FLOAT>(&b))
                     return Reference(Data(*a_float >= *b_float));
             }
-            if (auto a_char = std::get_if<char>(&a))
-                if (auto b_char = std::get_if<char>(&b))
+            if (auto a_char = get_if<char>(&a))
+                if (auto b_char = get_if<char>(&b))
                     return Reference(Data(*a_char >= *b_char));
             throw FunctionArgumentsError();
         }
@@ -263,15 +263,15 @@ namespace Interpreter::SystemFunctions {
             auto a = context["a"].to_data(context);
             auto b = context["b"].to_data(context);
 
-            if (auto a_int = std::get_if<INT>(&a)) {
-                if (auto b_int = std::get_if<INT>(&b))
+            if (auto a_int = get_if<INT>(&a)) {
+                if (auto b_int = get_if<INT>(&b))
                     return set(context, context["a"], Data(*a_int + *b_int));
-                else if (auto b_float = std::get_if<FLOAT>(&b))
+                else if (auto b_float = get_if<FLOAT>(&b))
                     return set(context, context["a"], Data(*a_int + *b_float));
-            } else if (auto a_float = std::get_if<FLOAT>(&a)) {
-                if (auto b_int = std::get_if<INT>(&b))
+            } else if (auto a_float = get_if<FLOAT>(&a)) {
+                if (auto b_int = get_if<INT>(&b))
                     return set(context, context["a"], Data(*a_float + *b_int));
-                else if (auto b_float = std::get_if<FLOAT>(&b))
+                else if (auto b_float = get_if<FLOAT>(&b))
                     return set(context, context["a"], Data(*a_float + *b_float));
             }
             throw FunctionArgumentsError();
@@ -281,15 +281,15 @@ namespace Interpreter::SystemFunctions {
             auto a = context["a"].to_data(context);
             auto b = context["b"].to_data(context);
 
-            if (auto a_int = std::get_if<INT>(&a)) {
-                if (auto b_int = std::get_if<INT>(&b))
+            if (auto a_int = get_if<INT>(&a)) {
+                if (auto b_int = get_if<INT>(&b))
                     return set(context, context["a"], Data(*a_int - *b_int));
-                else if (auto b_float = std::get_if<FLOAT>(&b))
+                else if (auto b_float = get_if<FLOAT>(&b))
                     return set(context, context["a"], Data(*a_int - *b_float));
-            } else if (auto a_float = std::get_if<FLOAT>(&a)) {
-                if (auto b_int = std::get_if<INT>(&b))
+            } else if (auto a_float = get_if<FLOAT>(&a)) {
+                if (auto b_int = get_if<INT>(&b))
                     return set(context, context["a"], Data(*a_float - *b_int));
-                else if (auto b_float = std::get_if<FLOAT>(&b))
+                else if (auto b_float = get_if<FLOAT>(&b))
                     return set(context, context["a"], Data(*a_float - *b_float));
             }
             throw FunctionArgumentsError();
@@ -299,15 +299,15 @@ namespace Interpreter::SystemFunctions {
             auto a = context["a"].to_data(context);
             auto b = context["b"].to_data(context);
 
-            if (auto a_int = std::get_if<INT>(&a)) {
-                if (auto b_int = std::get_if<INT>(&b))
+            if (auto a_int = get_if<INT>(&a)) {
+                if (auto b_int = get_if<INT>(&b))
                     return set(context, context["a"], Data(*a_int * *b_int));
-                else if (auto b_float = std::get_if<FLOAT>(&b))
+                else if (auto b_float = get_if<FLOAT>(&b))
                     return set(context, context["a"], Data(*a_int * *b_float));
-            } else if (auto a_float = std::get_if<FLOAT>(&a)) {
-                if (auto b_int = std::get_if<INT>(&b))
+            } else if (auto a_float = get_if<FLOAT>(&a)) {
+                if (auto b_int = get_if<INT>(&b))
                     return set(context, context["a"], Data(*a_float * *b_int));
-                else if (auto b_float = std::get_if<FLOAT>(&b))
+                else if (auto b_float = get_if<FLOAT>(&b))
                     return set(context, context["a"], Data(*a_float * *b_float));
             }
             throw FunctionArgumentsError();
@@ -317,15 +317,15 @@ namespace Interpreter::SystemFunctions {
             auto a = context["a"].to_data(context);
             auto b = context["b"].to_data(context);
 
-            if (auto a_int = std::get_if<INT>(&a)) {
-                if (auto b_int = std::get_if<INT>(&b))
+            if (auto a_int = get_if<INT>(&a)) {
+                if (auto b_int = get_if<INT>(&b))
                     return set(context, context["a"], Data(*a_int / *b_int));
-                else if (auto b_float = std::get_if<FLOAT>(&b))
+                else if (auto b_float = get_if<FLOAT>(&b))
                     return set(context, context["a"], Data(*a_int / *b_float));
-            } else if (auto a_float = std::get_if<FLOAT>(&a)) {
-                if (auto b_int = std::get_if<INT>(&b))
+            } else if (auto a_float = get_if<FLOAT>(&a)) {
+                if (auto b_int = get_if<INT>(&b))
                     return set(context, context["a"], Data(*a_float / *b_int));
-                else if (auto b_float = std::get_if<FLOAT>(&b))
+                else if (auto b_float = get_if<FLOAT>(&b))
                     return set(context, context["a"], Data(*a_float / *b_float));
             }
             throw FunctionArgumentsError();
@@ -405,9 +405,9 @@ namespace Interpreter::SystemFunctions {
         Reference random_1(FunctionContext& context) {
             auto b = context["b"].to_data(context);
 
-            if (auto b_int = std::get_if<INT>(&b))
+            if (auto b_int = get_if<INT>(&b))
                 return Data(std::rand() / ((RAND_MAX + 1u) / *b_int));
-            else if (auto b_float = std::get_if<FLOAT>(&b))
+            else if (auto b_float = get_if<FLOAT>(&b))
                 return Data(std::rand() / ((RAND_MAX + 1u) / *b_float));
             throw FunctionArgumentsError();
         }
@@ -416,24 +416,24 @@ namespace Interpreter::SystemFunctions {
             auto a = context["a"].to_data(context);
             auto b = context["b"].to_data(context);
 
-            if (auto a_int = std::get_if<INT>(&a)) {
-                if (auto b_int = std::get_if<INT>(&b))
+            if (auto a_int = get_if<INT>(&a)) {
+                if (auto b_int = get_if<INT>(&b))
                     return Data(std::rand() / ((RAND_MAX + 1u) / (*b_int - *a_int)) + *a_int);
-                else if (auto b_float = std::get_if<FLOAT>(&b))
+                else if (auto b_float = get_if<FLOAT>(&b))
                     return Data(std::rand() / ((RAND_MAX + 1u) / (*b_float - *a_int)) + *a_int);
-            } else if (auto a_float = std::get_if<FLOAT>(&a)) {
-                if (auto b_int = std::get_if<INT>(&b))
+            } else if (auto a_float = get_if<FLOAT>(&a)) {
+                if (auto b_int = get_if<INT>(&b))
                     return Data(std::rand() / ((RAND_MAX + 1u) / (*b_int - *a_int)) + *a_int);
-                else if (auto b_float = std::get_if<FLOAT>(&b))
+                else if (auto b_float = get_if<FLOAT>(&b))
                     return Data(std::rand() / ((RAND_MAX + 1u) / (*b_float - *a_float)) + *a_float);
             }
             throw FunctionArgumentsError();
         }
 
         FLOAT get_FLOAT(Data const& data) {
-            if (auto data_int = std::get_if<INT>(&data))
+            if (auto data_int = get_if<INT>(&data))
                 return static_cast<FLOAT>(*data_int);
-            else if (auto data_float = std::get_if<FLOAT>(&data))
+            else if (auto data_float = get_if<FLOAT>(&data))
                 return *data_float;
             else throw FunctionArgumentsError();
         }

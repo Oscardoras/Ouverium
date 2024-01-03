@@ -11,7 +11,7 @@ namespace Interpreter::SystemFunctions {
         Reference char_constructor(FunctionContext& context) {
             auto a = context["a"].to_data(context);
 
-            if (std::holds_alternative<char>(a))
+            if (a.is<char>())
                 return a;
             else
                 throw FunctionArgumentsError();
@@ -20,9 +20,9 @@ namespace Interpreter::SystemFunctions {
         Reference float_constructor(FunctionContext& context) {
             auto a = context["a"].to_data(context);
 
-            if (auto a_int = std::get_if<INT>(&a)) {
+            if (auto a_int = get_if<INT>(&a)) {
                 return Data((FLOAT) *a_int);
-            } else if (std::holds_alternative<FLOAT>(a)) {
+            } else if (a.is<FLOAT>()) {
                 return a;
             }
             throw FunctionArgumentsError();
@@ -31,9 +31,9 @@ namespace Interpreter::SystemFunctions {
         Reference int_constructor(FunctionContext& context) {
             auto a = context["a"].to_data(context);
 
-            if (std::holds_alternative<INT>(a)) {
+            if (a.is<INT>()) {
                 return a;
-            } else if (auto a_float = std::get_if<FLOAT>(&a)) {
+            } else if (auto a_float = get_if<FLOAT>(&a)) {
                 return Data((INT) *a_float);
             }
             throw FunctionArgumentsError();
@@ -42,7 +42,7 @@ namespace Interpreter::SystemFunctions {
         Reference bool_constructor(FunctionContext& context) {
             auto a = context["a"].to_data(context);
 
-            if (std::holds_alternative<bool>(a))
+            if (a.is<bool>())
                 return a;
             else
                 throw FunctionArgumentsError();
@@ -51,7 +51,7 @@ namespace Interpreter::SystemFunctions {
         Reference array_constructor(FunctionContext& context) {
             auto a = context["a"].to_data(context);
 
-            if (std::holds_alternative<Object*>(a))
+            if (a.is<Object*>())
                 return a;
             else
                 throw FunctionArgumentsError();
@@ -60,20 +60,20 @@ namespace Interpreter::SystemFunctions {
         Reference function_constructor(FunctionContext& context) {
             auto a = context["a"].to_data(context);
 
-            if (auto obj = std::get_if<Object*>(&a); obj && !(*obj)->functions.empty())
+            if (auto obj = get_if<Object*>(&a); obj && !(*obj)->functions.empty())
                 return a;
             else
                 throw FunctionArgumentsError();
         }
 
         bool check_type(Context& context, Data data, Data type) {
-            if (type == context["Char"].to_data(context)) return std::holds_alternative<char>(data);
-            else if (type == context["Float"].to_data(context)) return std::holds_alternative<FLOAT>(data);
-            else if (type == context["Int"].to_data(context)) return std::holds_alternative<INT>(data);
-            else if (type == context["Bool"].to_data(context)) return std::holds_alternative<bool>(data);
-            else if (type == context["Array"].to_data(context)) return std::holds_alternative<Object*>(data);
+            if (type == context["Char"].to_data(context)) return data.is<char>();
+            else if (type == context["Float"].to_data(context)) return data.is<FLOAT>();
+            else if (type == context["Int"].to_data(context)) return data.is<INT>();
+            else if (type == context["Bool"].to_data(context)) return data.is<bool>();
+            else if (type == context["Array"].to_data(context)) return data.is<Object*>();
             else if (type == context["Function"].to_data(context)) {
-                if (auto obj = std::get_if<Object*>(&data))
+                if (auto obj = get_if<Object*>(&data))
                     return !(*obj)->functions.empty();
                 else
                     return false;
