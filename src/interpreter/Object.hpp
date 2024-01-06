@@ -55,6 +55,10 @@ namespace Interpreter {
 
     };
 
+    struct WeakReference {
+        Object* obj;
+    };
+
 }
 
 

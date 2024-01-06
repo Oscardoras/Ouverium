@@ -29,8 +29,8 @@ namespace Interpreter {
         virtual unsigned get_recurion_level() = 0;
 
         Object* new_object(Object const& object = {});
-
         Data& new_reference(Data const& data = {});
+        void GC_collect();
 
         std::set<std::string> get_symbols() const;
         bool has_symbol(std::string const& symbol) const;
@@ -73,8 +73,7 @@ namespace Interpreter {
 
         ~GlobalContext();
 
-        friend Object* Context::new_object(Object const& object);
-        friend Data& Context::new_reference(Data const& data);
+        friend Context;
 
     };
 

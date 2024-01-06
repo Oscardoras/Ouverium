@@ -95,10 +95,6 @@ namespace Interpreter::SystemFunctions {
         }
 
 
-        struct WeakReference {
-            Object* obj;
-        };
-
         auto weak_reference_args = std::make_shared<Parser::Symbol>("object");
         Reference weak_reference(FunctionContext& context) {
             try {
@@ -129,6 +125,12 @@ namespace Interpreter::SystemFunctions {
             }
         }
 
+        auto GC_collect_args = std::make_shared<Parser::Tuple>();
+        Reference GC_collect(FunctionContext& context) {
+            context.GC_collect();
+            return Reference();
+        }
+
 
         void init(GlobalContext& context) {
             auto system = context["System"].to_data(context).get<Object*>();
@@ -156,6 +158,7 @@ namespace Interpreter::SystemFunctions {
 
             (*system)["weak_reference"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ weak_reference_args, weak_reference });
             (*system)["weak_reference_get"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ weak_reference_get_args, weak_reference_get });
+            (*system)["GC_collect"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ GC_collect_args, GC_collect });
         }
 
     }

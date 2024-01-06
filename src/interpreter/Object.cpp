@@ -17,6 +17,10 @@ namespace Interpreter {
     }
 
     void Object::destruct(Context& context) {
+        if (weak_ref) {
+            weak_ref->c_obj.get<WeakReference>().obj = nullptr;
+        }
+
         if (array.size() == 0 && functions.size() == 0 && properties.size() == 0 && !c_obj.has_value())
             return;
 

@@ -39,7 +39,9 @@ class : (type, extends, parents) |-> {
 };
 
 
-(::) : (() |-> {
+(::);
+
+(() |-> {
 
     methods_getter;
 
@@ -56,7 +58,7 @@ class : (type, extends, parents) |-> {
         r
     };
 
-    (type, method_getter) |-> {
+    (::) : (type, method_getter) |-> {
         filters := (a |-> false) : (this \ (defined this & this ~ type) |-> true) : ((this. .) \ (this ~ type) |-> true);
 
         mg := x \ {
@@ -69,7 +71,6 @@ class : (type, extends, parents) |-> {
             r
         };
         methods_getter : mg;
-        mg
-    }
+    };
 
 })();

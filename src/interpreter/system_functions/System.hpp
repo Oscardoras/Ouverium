@@ -18,6 +18,7 @@ namespace Interpreter::SystemFunctions {
         Reference time(FunctionContext& context);
 
         Reference weak_reference(FunctionContext& context);
+        Reference GC_collect(FunctionContext& context);
 
 
         void init(GlobalContext& context);
