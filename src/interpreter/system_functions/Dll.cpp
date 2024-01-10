@@ -138,7 +138,6 @@ namespace Interpreter::SystemFunctions {
                     auto file = std::ofstream("/tmp/ouverium_dll/call.cpp");
                     file << "#include \"" << c_symbol.include << "\"" << std::endl;
                     file << "void* ptr = (void*) &" << symbol << ";" << std::endl;
-                    file << std::endl;
                     file.close();
                 }
             }
@@ -171,7 +170,6 @@ namespace Interpreter::SystemFunctions {
                         auto file = std::ofstream("/tmp/ouverium_dll/header.cpp");
                         file << "#include " << path << std::endl;
                         file << "void* ptr = (void*) &" << symbol << ";" << std::endl;
-                        file << std::endl;
                         file.close();
 
                         if (system("g++ -shared -o /tmp/ouverium_dll/libheader.so /tmp/ouverium_dll/header.cpp 2> /dev/null") == 0) {
