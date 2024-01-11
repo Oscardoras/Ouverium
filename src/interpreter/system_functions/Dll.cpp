@@ -1,12 +1,16 @@
-#include <iostream>
+#include <functional>
+#include <fstream>
 
 #include <boost/dll.hpp>
+
+#include <include.h>
 
 #include "Dll.hpp"
 
 #include "../../parser/Standard.hpp"
 
 
+extern std::filesystem::path program_location;
 extern std::vector<std::string> include_path;
 
 namespace Interpreter::SystemFunctions {
@@ -85,7 +89,6 @@ namespace Interpreter::SystemFunctions {
             } else throw Interpreter::FunctionArgumentsError();
         }
 
-/*
         void compile(std::set<std::filesystem::path> const& include_path, std::set<std::filesystem::path> const& files, std::filesystem::path const& out) {
             std::string cmd = "g++ -g -Wall -Wextra -shared";
             if (!include_path.empty()) {
@@ -103,6 +106,7 @@ namespace Interpreter::SystemFunctions {
         struct CSymbol {
             std::string symbol;
             std::string include;
+            std::function<Ov_Data(Ov_Data[])> caller;
         };
 
         auto getter_args = std::make_shared<Parser::Symbol>("var");
@@ -136,8 +140,31 @@ namespace Interpreter::SystemFunctions {
                 {
                     std::filesystem::create_directory("/tmp/ouverium_dll");
                     auto file = std::ofstream("/tmp/ouverium_dll/call.cpp");
+
+                    file << "#include <include.h>" << std::endl;
                     file << "#include \"" << c_symbol.include << "\"" << std::endl;
-                    file << "void* ptr = (void*) &" << symbol << ";" << std::endl;
+                    file << std::endl;
+                    file << "Ov_Data Ov_" << c_symbol.symbol << "_caller(Ov_Data args[]) {" << std::endl;
+                    file << "\t" << c_symbol.symbol << "(";
+                    for (size_t i = 0; i < data.size();) {
+                        auto const& d = data[i];
+
+                        if (d.is<char>())
+                            file << "args[" << i << "].c";
+                        else if (d.is<INT>())
+                            file << "args[" << i << "].i";
+                        else if (d.is<FLOAT>())
+                            file << "args[" << i << "].f";
+                        else if (d.is<bool>())
+                            file << "args[" << i << "].b";
+
+                        if (i < data.size())
+                            file << ", ";
+                        ++i;
+                    }
+                    file << ");" << std::endl;
+                    file << "}" << std::endl;
+
                     file.close();
                 }
             }
@@ -184,7 +211,6 @@ namespace Interpreter::SystemFunctions {
                 return Reference();
             } else throw Interpreter::FunctionArgumentsError();
         }
-*/
 
 
         /*

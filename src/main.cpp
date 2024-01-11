@@ -16,7 +16,7 @@
 #include "Types.hpp"
 
 
-std::filesystem::path program_location = boost::filesystem::canonical(boost::dll::program_location()).string();
+std::filesystem::path program_location = boost::filesystem::canonical(boost::dll::program_location()).parent_path().string();
 std::vector<std::string> include_path;
 
 #ifdef __unix__
@@ -149,7 +149,7 @@ void compile_mode(std::string const& path, std::istream& is, std::string const& 
     auto translator = Translator::CStandard::Translator(expression, meta_data);
 
     translator.translate(out);
-    std::string cmd = "gcc -g -Wall -Wextra " + out + "/*.c -o " + out + "/executable -I resources/library/include/ -Wl,-rpath," + program_location.parent_path().c_str() + " build/libcapi.so";
+    std::string cmd = "gcc -g -Wall -Wextra " + out + "/*.c -o " + out + "/executable -I " + (program_location / "capi_include").c_str() + " -Wl,-rpath," + program_location.c_str() + " build/libcapi.so";
     system(cmd.c_str());
 }
 

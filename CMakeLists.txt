@@ -37,3 +37,4 @@ target_link_libraries(ouverium PRIVATE ${Boost_LIBRARIES})
 target_link_libraries(ouverium PUBLIC capi)
 
 file(CREATE_LINK ../libraries libraries SYMBOLIC)
+file(CREATE_LINK ../resources/library/include capi_include SYMBOLIC)
