@@ -85,7 +85,7 @@ namespace Interpreter::SystemFunctions {
             } else throw Interpreter::FunctionArgumentsError();
         }
 
-
+/*
         void compile(std::set<std::filesystem::path> const& include_path, std::set<std::filesystem::path> const& files, std::filesystem::path const& out) {
             std::string cmd = "g++ -g -Wall -Wextra -shared";
             if (!include_path.empty()) {
@@ -184,6 +184,7 @@ namespace Interpreter::SystemFunctions {
                 return Reference();
             } else throw Interpreter::FunctionArgumentsError();
         }
+*/
 
 
         /*
@@ -251,7 +252,7 @@ namespace Interpreter::SystemFunctions {
 
         void init(GlobalContext& context) {
             context.get_function("import").push_front(SystemFunction{ path_args, import });
-            context.get_function("import").push_front(SystemFunction{ path_args, import_h });
+            //context.get_function("import").push_front(SystemFunction{ path_args, import_h });
         }
 
     }

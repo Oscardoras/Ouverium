@@ -4,6 +4,12 @@ import "Type.fl";
 ArrayList := Array;
 class ArrayList;
 
+ArrayList : this |-> {
+    Array.set_capacity(this, 1);
+
+    this
+};
+
 
 ArrayList::(this |-> (
     index \ (index ~ Int & 0 <= index & index < this.length) |-> {

@@ -70,8 +70,12 @@ namespace Interpreter::SystemFunctions {
             else if (type == context["Float"].to_data(context)) return data.is<FLOAT>();
             else if (type == context["Int"].to_data(context)) return data.is<INT>();
             else if (type == context["Bool"].to_data(context)) return data.is<bool>();
-            else if (type == context["Array"].to_data(context)) return data.is<Object*>();
-            else if (type == context["Function"].to_data(context)) {
+            else if (type == context["Array"].to_data(context)) {
+                if (auto obj = get_if<Object*>(&data))
+                    return (*obj)->array.capacity() > 0;
+                else
+                    return false;
+            } else if (type == context["Function"].to_data(context)) {
                 if (auto obj = get_if<Object*>(&data))
                     return !(*obj)->functions.empty();
                 else
