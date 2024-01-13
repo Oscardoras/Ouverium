@@ -19,7 +19,7 @@
 std::filesystem::path program_location = boost::filesystem::canonical(boost::dll::program_location()).parent_path().string();
 std::vector<std::string> include_path;
 
-#ifdef __unix__
+#ifdef READLINE
 #include <unistd.h>
 #include <readline/readline.h>
 #include <readline/history.h>
