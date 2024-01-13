@@ -18,7 +18,7 @@ set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 # Dependencies
 
 # Boost
-set(BOOST_INCLUDE_LIBRARIES filesystem system)
+set(BOOST_INCLUDE_LIBRARIES dll)
 set(BOOST_ENABLE_CMAKE ON)
 FetchContent_Declare(
     Boost
@@ -35,6 +35,8 @@ if (UNIX)
         message(WARNING "Readline is not installed.")
         set(Readline "")
     endif()
+else()
+    set(Readline "")
 endif()
 
 
@@ -57,7 +59,7 @@ FILE(GLOB_RECURSE ouverium_sources
     src/compiler/*
 )
 add_executable(ouverium ${ouverium_sources})
-target_link_libraries(ouverium PRIVATE Boost::filesystem)
+target_link_libraries(ouverium PRIVATE Boost::dll)
 target_link_libraries(ouverium PRIVATE ${Readline})
 target_link_libraries(ouverium PUBLIC capi)
 
