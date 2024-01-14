@@ -3,7 +3,7 @@
 
 #include <boost/dll.hpp>
 
-#include <include.h>
+#include <include.hpp>
 
 #include "Dll.hpp"
 
@@ -42,6 +42,7 @@ namespace Interpreter::SystemFunctions {
         }
 
         auto path_args = std::make_shared<Parser::Symbol>("path");
+
 
         Reference import(FunctionContext & context) {
             auto path = get_canonical_path(context);
@@ -89,37 +90,19 @@ namespace Interpreter::SystemFunctions {
             } else throw Interpreter::FunctionArgumentsError();
         }
 
-        void compile(std::set<std::filesystem::path> const& include_path, std::set<std::filesystem::path> const& files, std::filesystem::path const& out) {
-            std::string cmd = "g++ -g -Wall -Wextra -shared";
-            if (!include_path.empty()) {
-                cmd += " -I";
-                for (auto const& p : include_path)
-                    cmd += " " + p.string();
-            }
-            cmd += " -o " + out.string();
-            for (auto const& p : files)
-                cmd += " " + p.string();
-
-            system(cmd.c_str());
-        }
 
         struct CSymbol {
+            enum class Type {
+                Bool, Int, Float, Char
+            };
+            struct Caller {
+                boost::dll::shared_library library;
+                std::function<Ov::UnknownData(Ov::UnknownData[])> function;
+            };
             std::string symbol;
             std::string include;
-            std::function<Ov_Data(Ov_Data[])> caller;
+            std::map<std::vector<CSymbol::Type>, Caller> callers;
         };
-
-        auto getter_args = std::make_shared<Parser::Symbol>("var");
-        Reference getter_c(FunctionContext& context) {
-            auto ref = context["var"];
-            if (auto property_reference = std::get_if<PropertyReference>(&ref)) {
-                try {
-                    auto c_symbol = std::any_cast<CSymbol>(property_reference->parent.get().c_obj);
-
-
-                } catch (std::bad_any_cast const&) {}
-            }
-        }
 
         auto c_function_args = std::make_shared<Parser::FunctionCall>(
             std::make_shared<Parser::Symbol>("function"),
@@ -127,46 +110,112 @@ namespace Interpreter::SystemFunctions {
         );
         Reference c_function(FunctionContext& context) {
             auto self = context["this"].to_data(context).get<Object*>();
-            auto c_symbol = std::any_cast<CSymbol>(self->c_obj);
+            auto& c_symbol = std::any_cast<CSymbol&>(self->c_obj);
             auto args = std::get<CustomFunction>(context["function"].to_data(context).get<Object*>()->functions.front())->body;
+            auto& parent = context.get_parent();
+
+            std::vector<Data> data;
 
             if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(args)) {
-                auto& parent = context.get_parent();
-
-                std::vector<Data> data;
                 for (auto arg : tuple->objects)
                     data.push_back(Interpreter::execute(parent, arg).to_data(context));
+            } else {
+                data.push_back(Interpreter::execute(parent, args).to_data(context));
+            }
 
-                {
-                    std::filesystem::create_directory("/tmp/ouverium_dll");
-                    auto file = std::ofstream("/tmp/ouverium_dll/call.cpp");
-
-                    file << "#include <include.h>" << std::endl;
-                    file << "#include \"" << c_symbol.include << "\"" << std::endl;
-                    file << std::endl;
-                    file << "Ov_Data Ov_" << c_symbol.symbol << "_caller(Ov_Data args[]) {" << std::endl;
-                    file << "\t" << c_symbol.symbol << "(";
-                    for (size_t i = 0; i < data.size();) {
-                        auto const& d = data[i];
-
-                        if (d.is<char>())
-                            file << "args[" << i << "].c";
-                        else if (d.is<INT>())
-                            file << "args[" << i << "].i";
-                        else if (d.is<FLOAT>())
-                            file << "args[" << i << "].f";
-                        else if (d.is<bool>())
-                            file << "args[" << i << "].b";
-
-                        if (i < data.size())
-                            file << ", ";
-                        ++i;
-                    }
-                    file << ");" << std::endl;
-                    file << "}" << std::endl;
-
-                    file.close();
+            std::vector<CSymbol::Type> types;
+            std::vector<Ov::UnknownData> arguments;
+            for (auto const& d : data) {
+                if (auto c = get_if<char>(&d)) {
+                    types.push_back(CSymbol::Type::Char);
+                    arguments.push_back(*c);
+                } else if (auto i = get_if<INT>(&d)) {
+                    types.push_back(CSymbol::Type::Int);
+                    arguments.push_back(*i);
+                } else if (auto f = get_if<FLOAT>(&d)) {
+                    types.push_back(CSymbol::Type::Float);
+                    arguments.push_back(*f);
+                } else if (auto b = get_if<bool>(&d)) {
+                    types.push_back(CSymbol::Type::Bool);
+                    arguments.push_back(*b);
                 }
+            }
+
+            if (!c_symbol.callers.contains(types)) {
+                std::filesystem::create_directory("/tmp/ouverium_dll");
+                auto file = std::ofstream("/tmp/ouverium_dll/call.cpp");
+
+                file << "#include <include.hpp>" << std::endl;
+                file << "#include \"" << c_symbol.include << "\"" << std::endl;
+                file << std::endl;
+                file << "extern \"C\" Ov::UnknownData Ov_" << c_symbol.symbol << "_caller(Ov::UnknownData args[]) {" << std::endl;
+                file << "\treturn Ov::UnknownData(" << c_symbol.symbol << "(";
+                for (size_t i = 0; i < data.size();) {
+                    file << "args[" << i << "]";
+
+                    ++i;
+                    if (i < data.size())
+                        file << ", ";
+                }
+                file << "));" << std::endl;
+                file << "}" << std::endl;
+
+                file.close();
+
+                std::string cmd = "g++ -shared -fPIC -o /tmp/ouverium_dll/call.so /tmp/ouverium_dll/call.cpp -I ";
+                cmd += (program_location / "capi_include").c_str();
+                cmd += " " + c_symbol.include;
+                if (system(cmd.c_str()) == 0) {
+                    auto& caller = c_symbol.callers[types];
+                    caller.library.load("/tmp/ouverium_dll/call.so");
+                    auto f = caller.library.get<Ov::UnknownData(Ov::UnknownData[])>("Ov_" + c_symbol.symbol + "_caller");
+                    caller.function = f;
+                } else throw FunctionArgumentsError();
+            }
+
+            auto caller = c_symbol.callers[types].function;
+            auto result = caller(arguments.data());
+            if (result.vtable() == &Ov_VirtualTable_Char) {
+                return Data(static_cast<char>(result));
+            } else if (result.vtable() == &Ov_VirtualTable_Int) {
+                return Data(static_cast<INT>(result));
+            } else if (result.vtable() == &Ov_VirtualTable_Float) {
+                return Data(static_cast<FLOAT>(result));
+            } else if (result.vtable() == &Ov_VirtualTable_Bool) {
+                return Data(static_cast<bool>(result));
+            } else {
+                return Data();
+            }
+        }
+
+        auto getter_args = std::make_shared<Parser::Symbol>("var");
+        Reference getter_c(FunctionContext& context) {
+            auto ref = context["var"];
+            if (ref.get_raw() == Data{})
+                throw FunctionArgumentsError();
+
+            if (auto property_reference = std::get_if<PropertyReference>(&ref)) {
+                try {
+                    auto c_symbol = std::any_cast<CSymbol>(property_reference->parent.get().c_obj);
+
+                } catch (std::bad_any_cast const&) {}
+
+                throw FunctionArgumentsError(); // TODO
+            } else {
+                try {
+                    std::any_cast<CSymbol>(ref.to_data(context).get<Object*>()->c_obj);
+                } catch (Data::BadAccess const&) {
+                    throw FunctionArgumentsError();
+                } catch (std::bad_any_cast const&) {
+                    throw FunctionArgumentsError();
+                }
+
+                Function function = SystemFunction{ c_function_args, c_function };
+                function.extern_symbols.emplace("this", ref);
+
+                auto object = context.new_object();
+                object->functions.push_front(function);
+                return Data(object);
             }
         }
 
@@ -200,9 +249,12 @@ namespace Interpreter::SystemFunctions {
                         file.close();
 
                         if (system("g++ -shared -o /tmp/ouverium_dll/libheader.so /tmp/ouverium_dll/header.cpp 2> /dev/null") == 0) {
-                            symbols.insert(symbol);
+                            try {
+                                auto object = global[symbol].to_data(context).get<Object*>();
+                                object->c_obj = CSymbol{ symbol, path, {} };
 
-                            global[symbol].to_data(context);
+                                symbols.insert(symbol);
+                            } catch (Data::BadAccess const&) {}
                         }
                     }
                     root->compute_symbols(symbols);
@@ -278,9 +330,33 @@ namespace Interpreter::SystemFunctions {
 
         void init(GlobalContext& context) {
             context.get_function("import").push_front(SystemFunction{ path_args, import });
-            //context.get_function("import").push_front(SystemFunction{ path_args, import_h });
+            context.get_function("import").push_front(SystemFunction{ path_args, import_h });
+
+            context.get_function("getter").push_front(SystemFunction{ getter_args, getter_c });
         }
 
     }
 
 }
+
+
+struct Object {
+    Ov_Function Ov_function;
+    Ov_Array Ov_array;
+};
+void Ov_VirtualTable_Object_gc_iterator(void*) {}
+Ov_VirtualTable Ov_VirtualTable_Object = {
+    .size = sizeof(struct Object),
+    .gc_iterator = Ov_VirtualTable_Object_gc_iterator,
+    .array = {
+        .vtable = &Ov_VirtualTable_UnknownData,
+        .offset = offsetof(struct Object, Ov_array)
+    },
+    .function = {
+        .offset = offsetof(struct Object, Ov_function)
+    },
+    .table_size = 0,
+    .table_tab = {}
+};
+
+Ov_VirtualTable* Ov_VirtualTable_string_from_tuple = &Ov_VirtualTable_Object;

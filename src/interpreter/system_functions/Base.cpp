@@ -9,15 +9,11 @@ namespace Interpreter::SystemFunctions {
 
         auto getter_args = std::make_shared<Parser::Symbol>("var");
         Reference getter(FunctionContext& context) {
-            return std::visit([](auto const& arg) -> Data& {
-                return arg;
-            }, context["var"]) = Data(context.new_object());
+            return context["var"].get_raw() = Data(context.new_object());
         }
 
         Reference defined(FunctionContext& context) {
-            return Data(std::visit([](auto const& arg) -> Data const& {
-                return arg;
-            }, context["var"]) != Data{});
+            return context["var"].get_raw() != Data{};
         }
 
         Reference assignation(Context& context, Reference const& var, Data const& d) {

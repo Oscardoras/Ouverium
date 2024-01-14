@@ -1,13 +1,12 @@
-#ifndef __UTILS_HPP__
-#define __UTILS_HPP__
+#ifndef __TYPES_HPP__
+#define __TYPES_HPP__
 
 #include <cstddef>
 #include <string>
 #include <variant>
 
+#include "types.h"
 
-#define INT long
-#define FLOAT double
 
 /**
  * Gets a data from a symbol name.

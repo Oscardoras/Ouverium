@@ -36,6 +36,18 @@ namespace Interpreter {
 
         Data to_data(Context& context) const;
 
+        Data const& get_raw() const {
+            return std::visit([](auto const& arg) -> Data const& {
+                return arg;
+            }, *this);
+        }
+
+        Data& get_raw() {
+            return std::visit([](auto& arg) -> Data& {
+                return arg;
+            }, *this);
+        }
+
     };
 
     class Reference : public std::variant<Data, TupleReference, SymbolReference, PropertyReference, ArrayReference> {
