@@ -17,8 +17,8 @@
 #define INT int16_t
 #define FLOAT float
 #else
-#define INT long
-#define FLOAT double
+#define INT int
+#define FLOAT float
 #endif
 
 

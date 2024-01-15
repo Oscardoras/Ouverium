@@ -3,7 +3,7 @@
 
 #include <boost/dll.hpp>
 
-#include <include.hpp>
+#include <data.hpp>
 
 #include "Dll.hpp"
 
@@ -97,7 +97,7 @@ namespace Interpreter::SystemFunctions {
             };
             struct Caller {
                 boost::dll::shared_library library;
-                std::function<Ov::UnknownData(Ov::UnknownData[])> function;
+                std::function<Ov::Data(Ov::Data[])> function;
             };
             std::string symbol;
             std::string include;
@@ -124,7 +124,7 @@ namespace Interpreter::SystemFunctions {
             }
 
             std::vector<CSymbol::Type> types;
-            std::vector<Ov::UnknownData> arguments;
+            std::vector<Ov::Data> arguments;
             for (auto const& d : data) {
                 if (auto c = get_if<char>(&d)) {
                     types.push_back(CSymbol::Type::Char);
@@ -148,8 +148,8 @@ namespace Interpreter::SystemFunctions {
                 file << "#include <include.hpp>" << std::endl;
                 file << "#include \"" << c_symbol.include << "\"" << std::endl;
                 file << std::endl;
-                file << "extern \"C\" Ov::UnknownData Ov_" << c_symbol.symbol << "_caller(Ov::UnknownData args[]) {" << std::endl;
-                file << "\treturn Ov::UnknownData(" << c_symbol.symbol << "(";
+                file << "extern \"C\" Ov::Data Ov_" << c_symbol.symbol << "_caller(Ov::Data args[]) {" << std::endl;
+                file << "\treturn " << c_symbol.symbol << "(";
                 for (size_t i = 0; i < data.size();) {
                     file << "args[" << i << "]";
 
@@ -157,7 +157,7 @@ namespace Interpreter::SystemFunctions {
                     if (i < data.size())
                         file << ", ";
                 }
-                file << "));" << std::endl;
+                file << ");" << std::endl;
                 file << "}" << std::endl;
 
                 file.close();
@@ -168,21 +168,28 @@ namespace Interpreter::SystemFunctions {
                 if (system(cmd.c_str()) == 0) {
                     auto& caller = c_symbol.callers[types];
                     caller.library.load("/tmp/ouverium_dll/call.so");
-                    auto f = caller.library.get<Ov::UnknownData(Ov::UnknownData[])>("Ov_" + c_symbol.symbol + "_caller");
+                    auto f = caller.library.get<Ov::Data(Ov::Data[])>("Ov_" + c_symbol.symbol + "_caller");
                     caller.function = f;
                 } else throw FunctionArgumentsError();
             }
 
             auto caller = c_symbol.callers[types].function;
             auto result = caller(arguments.data());
-            if (result.vtable() == &Ov_VirtualTable_Char) {
-                return Data(static_cast<char>(result));
-            } else if (result.vtable() == &Ov_VirtualTable_Int) {
-                return Data(static_cast<INT>(result));
-            } else if (result.vtable() == &Ov_VirtualTable_Float) {
-                return Data(static_cast<FLOAT>(result));
-            } else if (result.vtable() == &Ov_VirtualTable_Bool) {
-                return Data(static_cast<bool>(result));
+            if (auto c = std::any_cast<char>(&result.data)) {
+                return Data(*c);
+            } else if (auto i = std::any_cast<INT>(&result.data)) {
+                return Data(*i);
+            } else if (auto f = std::any_cast<FLOAT>(&result.data)) {
+                return Data(*f);
+            } else if (auto b = std::any_cast<bool>(&result.data)) {
+                return Data(*b);
+            } else if (auto str = std::any_cast<std::string>(&result.data)) {
+                return Data(context.new_object(*str));
+            } else if (auto vector = std::any_cast<std::vector<Ov::Data>>(&result.data)) {
+                auto object = context.new_object();
+                for (auto const& d : *vector)
+                    object->array.push_back(d);
+                return Data(object);
             } else {
                 return Data();
             }
@@ -338,25 +345,3 @@ namespace Interpreter::SystemFunctions {
     }
 
 }
-
-
-struct Object {
-    Ov_Function Ov_function;
-    Ov_Array Ov_array;
-};
-void Ov_VirtualTable_Object_gc_iterator(void*) {}
-Ov_VirtualTable Ov_VirtualTable_Object = {
-    .size = sizeof(struct Object),
-    .gc_iterator = Ov_VirtualTable_Object_gc_iterator,
-    .array = {
-        .vtable = &Ov_VirtualTable_UnknownData,
-        .offset = offsetof(struct Object, Ov_array)
-    },
-    .function = {
-        .offset = offsetof(struct Object, Ov_function)
-    },
-    .table_size = 0,
-    .table_tab = {}
-};
-
-Ov_VirtualTable* Ov_VirtualTable_string_from_tuple = &Ov_VirtualTable_Object;

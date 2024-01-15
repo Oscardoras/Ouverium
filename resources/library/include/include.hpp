@@ -1,7 +1,6 @@
 #ifndef __INCLUDE_HPP__
 #define __INCLUDE_HPP__
 
-#include <concepts>
 #include <cstring>
 #include <functional>
 #include <string>
@@ -111,35 +110,27 @@ namespace Ov {
 
     };
 
-    class ArrayInfo {
-
-    protected:
-
-        Ov_ArrayInfo array;
+    class ArrayInfo : public Ov_ArrayInfo {
 
     public:
 
         ArrayInfo(Ov_ArrayInfo array) :
-            array{ array } {}
-
-        operator Ov_ArrayInfo () const {
-            return array;
-        }
+            Ov_ArrayInfo{ array } {}
 
         size_t size() const {
-            return array.array->size;
+            return array->size;
         }
 
         void set_size(size_t const size) {
-            return Ov_Array_set_size(array, size);
+            return Ov_Array_set_size(*this, size);
         }
 
         size_t capacity() const {
-            return array.array->capacity;
+            return array->capacity;
         }
 
         void set_capacity(size_t const size) {
-            return Ov_Array_set_capacity(array, size);
+            return Ov_Array_set_capacity(*this, size);
         }
 
         bool empty() const {
@@ -202,90 +193,78 @@ namespace Ov {
 
     };
 
-    class UnknownData {
-
-    protected:
-
-        Ov_UnknownData data;
+    class UnknownData : public Ov_UnknownData {
 
     public:
 
         UnknownData(Ov_UnknownData const& data) :
-            data{ data } {}
+            Ov_UnknownData{ data } {}
 
         UnknownData(Ov_VirtualTable* vtable, union Ov_Data d) :
-            data{ Ov_UnknownData_from_data(vtable, d) } {}
+            Ov_UnknownData{ Ov_UnknownData_from_data(vtable, d) } {}
 
         UnknownData(Ov_VirtualTable* vtable, void* ptr) :
-            data{ Ov_UnknownData_from_ptr(vtable, ptr) } {}
+            Ov_UnknownData{ Ov_UnknownData_from_ptr(vtable, ptr) } {}
 
         UnknownData(INT i) {
-            data.vtable = &Ov_VirtualTable_Int;
-            data.data.i = i;
+            vtable = &Ov_VirtualTable_Int;
+            data.i = i;
         }
-        UnknownData(float f) {
-            data.vtable = &Ov_VirtualTable_Float;
-            data.data.f = f;
-        }
-        UnknownData(double f) {
-            data.vtable = &Ov_VirtualTable_Float;
-            data.data.f = f;
+        UnknownData(FLOAT f) {
+            vtable = &Ov_VirtualTable_Float;
+            data.f = f;
         }
         UnknownData(char c) {
-            data.vtable = &Ov_VirtualTable_Char;
-            data.data.c = c;
+            vtable = &Ov_VirtualTable_Char;
+            data.c = c;
         }
         UnknownData(bool b) {
-            data.vtable = &Ov_VirtualTable_Bool;
-            data.data.b = b;
+            vtable = &Ov_VirtualTable_Bool;
+            data.b = b;
         }
         template<class T>
         UnknownData(T* ptr) {
-            data.vtable = &T::vtable;
-            data.data.b = ptr;
+            vtable = &T::vtable;
+            data.b = ptr;
         }
         template<typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
         UnknownData(T i) : UnknownData(static_cast<INT>(i)) {}
 
-        operator Ov_UnknownData() const {
-            return data;
-        }
-
         operator Ov_Data() const {
-            return data.data;
+            return Ov_UnknownData::data;
         }
 
         operator INT() const {
-            return data.data.i;
+            return data.i;
         }
         operator FLOAT() const {
-            return data.data.f;
+            return data.f;
         }
         operator char() const {
-            return data.data.c;
+            return data.c;
         }
         operator bool() const {
-            return data.data.b;
+            return data.b;
         }
         operator void* () const {
-            return data.data.ptr;
+            return data.ptr;
+        }
+        template<typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
+        operator T() const {
+            return static_cast<T>(data.i);
         }
 
         template<typename T>
         T& get_property(const char* name) {
             constexpr auto h = hash_string(name);
-            return *static_cast<T*>(Ov_UnknownData_get_property(data, h));
+            return *static_cast<T*>(Ov_UnknownData_get_property(*this, h));
         }
 
         ArrayInfo get_array() {
-            return Ov_UnknownData_get_array(data);
+            return Ov_UnknownData_get_array(*this);
         }
 
         Function get_function();
-
-        Ov_VirtualTable* vtable() const {
-            return data.vtable;
-        }
 
     };
 
@@ -637,7 +616,7 @@ namespace Ov {
     };
 
     Function UnknownData::get_function() {
-        return *Ov_UnknownData_get_function(data);
+        return *Ov_UnknownData_get_function(*this);
     }
 
 }
