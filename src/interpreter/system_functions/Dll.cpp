@@ -104,6 +104,54 @@ namespace Interpreter::SystemFunctions {
             std::map<std::vector<CSymbol::Type>, Caller> callers;
         };
 
+        Ov::Data get_data(Data const& data) {
+            if (auto c = get_if<char>(&data)) {
+                return *c;
+            } else if (auto i = get_if<INT>(&data)) {
+                return *i;
+            } else if (auto f = get_if<FLOAT>(&data)) {
+                return *f;
+            } else if (auto b = get_if<bool> (&data)) {
+                return *b;
+            } else if (auto object = get_if<Object*>(&data)) {
+                try {
+                    return (*object)->to_string();
+                } catch (Data::BadAccess const&) {
+                    if ((*object)->array.capacity() > 0) {
+                        std::vector<Ov::Data> array;
+                        for (auto const& d : (*object)->array)
+                            array.push_back(get_data(d));
+                        return array;
+                    } else {
+                        return (*object)->c_obj;
+                    }
+                }
+            }
+        }
+
+        Data get_data(Context& context, Ov::Data const& data) {
+            if (auto c = std::any_cast<char>(&data.data)) {
+                return *c;
+            } else if (auto i = std::any_cast<INT>(&data.data)) {
+                return *i;
+            } else if (auto f = std::any_cast<FLOAT>(&data.data)) {
+                return *f;
+            } else if (auto b = std::any_cast<bool>(&data.data)) {
+                return *b;
+            } else if (auto str = std::any_cast<std::string>(&data.data)) {
+                return context.new_object(*str);
+            } else if (auto vector = std::any_cast<std::vector<Ov::Data>>(&data.data)) {
+                auto object = context.new_object();
+                for (auto const& d : *vector)
+                    object->array.push_back(get_data(context, d));
+                return object;
+            } else {
+                auto object = context.new_object();
+                object->c_obj = data.data;
+                return object;
+            }
+        }
+
         auto c_function_args = std::make_shared<Parser::FunctionCall>(
             std::make_shared<Parser::Symbol>("function"),
             std::make_shared<Parser::Tuple>()
@@ -174,25 +222,7 @@ namespace Interpreter::SystemFunctions {
             }
 
             auto caller = c_symbol.callers[types].function;
-            auto result = caller(arguments.data());
-            if (auto c = std::any_cast<char>(&result.data)) {
-                return Data(*c);
-            } else if (auto i = std::any_cast<INT>(&result.data)) {
-                return Data(*i);
-            } else if (auto f = std::any_cast<FLOAT>(&result.data)) {
-                return Data(*f);
-            } else if (auto b = std::any_cast<bool>(&result.data)) {
-                return Data(*b);
-            } else if (auto str = std::any_cast<std::string>(&result.data)) {
-                return Data(context.new_object(*str));
-            } else if (auto vector = std::any_cast<std::vector<Ov::Data>>(&result.data)) {
-                auto object = context.new_object();
-                for (auto const& d : *vector)
-                    object->array.push_back(d);
-                return Data(object);
-            } else {
-                return Data();
-            }
+            return get_data(context, caller(arguments.data()));
         }
 
         auto getter_args = std::make_shared<Parser::Symbol>("var");

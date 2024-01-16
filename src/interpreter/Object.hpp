@@ -14,6 +14,7 @@ namespace Interpreter {
     class CObj : public std::any {
     public:
         using std::any::any;
+        using std::any::operator=;
 
         template<typename T>
         T& get() {
