@@ -4,6 +4,7 @@
 #include <any>
 #include <string>
 #include <vector>
+#include <iostream>
 
 #include "types.h"
 
@@ -19,8 +20,11 @@ namespace Ov {
         Data(INT i) {
             data = i;
         }
-        Data(FLOAT f) {
-            data = f;
+        Data(float f) {
+            data = static_cast<FLOAT>(f);
+        }
+        Data(double f) {
+            data = static_cast<FLOAT>(f);
         }
         Data(char c) {
             data = c;
@@ -28,6 +32,7 @@ namespace Ov {
         Data(bool b) {
             data = b;
         }
+        Data(int i) : Data(static_cast<INT>(i)) {}
         template<typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
         Data(T i) : Data(static_cast<INT>(i)) {}
 
@@ -57,7 +62,10 @@ namespace Ov {
         operator INT() const {
             return std::any_cast<INT>(data);
         }
-        operator FLOAT() const {
+        operator float() const {
+            return std::any_cast<FLOAT>(data);
+        }
+        operator double() const {
             return std::any_cast<FLOAT>(data);
         }
         operator char() const {
@@ -91,7 +99,19 @@ namespace Ov {
 
         template<typename T>
         operator T const& () {
+            if (!data.has_value())
+                data = T{};
+
             return std::any_cast<T const&>(data);
+        }
+
+        template<typename T>
+        operator T* () {
+            std::cerr << data.type().name() << std::endl;
+            if (data.has_value())
+                return std::any_cast<T*>(data);
+            else
+                return nullptr;
         }
 
     };

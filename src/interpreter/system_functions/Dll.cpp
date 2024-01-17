@@ -93,7 +93,7 @@ namespace Interpreter::SystemFunctions {
 
         struct CSymbol {
             enum class Type {
-                Bool, Int, Float, Char
+                Bool, Int, Float, Char, String, Array, CObject
             };
             struct Caller {
                 boost::dll::shared_library library;
@@ -104,29 +104,29 @@ namespace Interpreter::SystemFunctions {
             std::map<std::vector<CSymbol::Type>, Caller> callers;
         };
 
-        Ov::Data get_data(Data const& data) {
+        std::pair<CSymbol::Type, Ov::Data> get_data(Data const& data) {
             if (auto c = get_if<char>(&data)) {
-                return *c;
+                return { CSymbol::Type::Char , *c };
             } else if (auto i = get_if<INT>(&data)) {
-                return *i;
+                return { CSymbol::Type::Int, *i };
             } else if (auto f = get_if<FLOAT>(&data)) {
-                return *f;
-            } else if (auto b = get_if<bool> (&data)) {
-                return *b;
+                return { CSymbol::Type::Float, *f };
+            } else if (auto b = get_if<bool>(&data)) {
+                return { CSymbol::Type::Bool, *b };
             } else if (auto object = get_if<Object*>(&data)) {
-                try {
-                    return (*object)->to_string();
-                } catch (Data::BadAccess const&) {
-                    if ((*object)->array.capacity() > 0) {
+                if ((*object)->array.capacity() > 0) {
+                    try {
+                        return { CSymbol::Type::String, (*object)->to_string() };
+                    } catch (Data::BadAccess const&) {
                         std::vector<Ov::Data> array;
                         for (auto const& d : (*object)->array)
                             array.push_back(get_data(d));
-                        return array;
-                    } else {
-                        return (*object)->c_obj;
+                        return { CSymbol::Type::Array, array };
                     }
+                } else {
+                    return { CSymbol::Type::CObject, (*object)->c_obj };
                 }
-            }
+            } else return {};
         }
 
         Data get_data(Context& context, Ov::Data const& data) {
@@ -174,30 +174,20 @@ namespace Interpreter::SystemFunctions {
             std::vector<CSymbol::Type> types;
             std::vector<Ov::Data> arguments;
             for (auto const& d : data) {
-                if (auto c = get_if<char>(&d)) {
-                    types.push_back(CSymbol::Type::Char);
-                    arguments.push_back(*c);
-                } else if (auto i = get_if<INT>(&d)) {
-                    types.push_back(CSymbol::Type::Int);
-                    arguments.push_back(*i);
-                } else if (auto f = get_if<FLOAT>(&d)) {
-                    types.push_back(CSymbol::Type::Float);
-                    arguments.push_back(*f);
-                } else if (auto b = get_if<bool>(&d)) {
-                    types.push_back(CSymbol::Type::Bool);
-                    arguments.push_back(*b);
-                }
+                auto const& [type, ov_data] = get_data(d);
+                types.push_back(type);
+                arguments.push_back(ov_data);
             }
 
             if (!c_symbol.callers.contains(types)) {
                 std::filesystem::create_directory("/tmp/ouverium_dll");
                 auto file = std::ofstream("/tmp/ouverium_dll/call.cpp");
 
-                file << "#include <include.hpp>" << std::endl;
+                file << "#include <data.hpp>" << std::endl;
                 file << "#include \"" << c_symbol.include << "\"" << std::endl;
                 file << std::endl;
                 file << "extern \"C\" Ov::Data Ov_" << c_symbol.symbol << "_caller(Ov::Data args[]) {" << std::endl;
-                file << "\treturn " << c_symbol.symbol << "(";
+                file << "\treturn Ov::Data(" << c_symbol.symbol << "(";
                 for (size_t i = 0; i < data.size();) {
                     file << "args[" << i << "]";
 
@@ -205,12 +195,12 @@ namespace Interpreter::SystemFunctions {
                     if (i < data.size())
                         file << ", ";
                 }
-                file << ");" << std::endl;
+                file << "));" << std::endl;
                 file << "}" << std::endl;
 
                 file.close();
 
-                std::string cmd = "g++ -shared -fPIC -o /tmp/ouverium_dll/call.so /tmp/ouverium_dll/call.cpp -I ";
+                std::string cmd = "g++ -g -shared -fPIC -o /tmp/ouverium_dll/call.so /tmp/ouverium_dll/call.cpp -I ";
                 cmd += (program_location / "capi_include").c_str();
                 cmd += " " + c_symbol.include;
                 if (system(cmd.c_str()) == 0) {
