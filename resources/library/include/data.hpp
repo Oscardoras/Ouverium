@@ -4,7 +4,6 @@
 #include <any>
 #include <string>
 #include <vector>
-#include <iostream>
 
 #include "types.h"
 
@@ -80,7 +79,7 @@ namespace Ov {
         }
 
         operator const char* () const {
-            return std::any_cast<std::string>(data).c_str();
+            return std::any_cast<std::string const&>(data).c_str();
         }
         operator std::string const& () const {
             return std::any_cast<std::string const&>(data);
@@ -105,9 +104,8 @@ namespace Ov {
             return std::any_cast<T const&>(data);
         }
 
-        template<typename T>
+        template<typename T, typename = std::enable_if_t<std::is_same<T, const char*>::value>>
         operator T* () {
-            std::cerr << data.type().name() << std::endl;
             if (data.has_value())
                 return std::any_cast<T*>(data);
             else

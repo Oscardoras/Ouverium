@@ -120,13 +120,13 @@ namespace Interpreter::SystemFunctions {
                     } catch (Data::BadAccess const&) {
                         std::vector<Ov::Data> array;
                         for (auto const& d : (*object)->array)
-                            array.push_back(get_data(d));
+                            array.push_back(get_data(d).second);
                         return { CSymbol::Type::Array, array };
                     }
                 } else {
-                    return { CSymbol::Type::CObject, (*object)->c_obj };
+                    return { CSymbol::Type::CObject, static_cast<std::any&>((*object)->c_obj) };
                 }
-            } else return {};
+            } else return { CSymbol::Type::CObject, Data(nullptr) };
         }
 
         Data get_data(Context& context, Ov::Data const& data) {
@@ -200,12 +200,12 @@ namespace Interpreter::SystemFunctions {
 
                 file.close();
 
-                std::string cmd = "g++ -g -shared -fPIC -o /tmp/ouverium_dll/call.so /tmp/ouverium_dll/call.cpp -I ";
+                std::string cmd = "g++ -g -shared -fPIC -o /tmp/ouverium_dll/" + c_symbol.symbol + ".so /tmp/ouverium_dll/call.cpp -I ";
                 cmd += (program_location / "capi_include").c_str();
                 cmd += " " + c_symbol.include;
                 if (system(cmd.c_str()) == 0) {
                     auto& caller = c_symbol.callers[types];
-                    caller.library.load("/tmp/ouverium_dll/call.so");
+                    caller.library.load("/tmp/ouverium_dll/" + c_symbol.symbol + ".so");
                     auto f = caller.library.get<Ov::Data(Ov::Data[])>("Ov_" + c_symbol.symbol + "_caller");
                     caller.function = f;
                 } else throw FunctionArgumentsError();
