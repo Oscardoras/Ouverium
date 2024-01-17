@@ -3,6 +3,7 @@
 
 #include <any>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 #include "types.h"
@@ -104,7 +105,7 @@ namespace Ov {
             return std::any_cast<T const&>(data);
         }
 
-        template<typename T, typename = std::enable_if_t<std::is_same<T, const char*>::value>>
+        template<typename T, typename = std::enable_if_t<!std::is_convertible_v<T*, const char*>>>
         operator T* () {
             if (data.has_value())
                 return std::any_cast<T*>(data);
