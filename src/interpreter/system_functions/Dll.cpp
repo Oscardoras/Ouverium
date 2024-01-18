@@ -33,7 +33,9 @@ namespace Interpreter::SystemFunctions {
                             if (!path.is_absolute())
                                 path = std::filesystem::path(i) / path;
                             return std::filesystem::canonical(path);
-                        } catch (std::exception const&) {}
+                        } catch (std::exception const&) {
+                            return context["path"].to_data(context).get<Object*>()->to_string();
+                        }
                     }
 
                     throw Interpreter::FunctionArgumentsError();
@@ -183,10 +185,6 @@ namespace Interpreter::SystemFunctions {
                 std::filesystem::create_directory("/tmp/ouverium_dll");
                 auto file = std::ofstream("/tmp/ouverium_dll/call.cpp");
 
-                file << "#include <data.hpp>" << std::endl;
-                file << "#include \"" << c_symbol.include << "\"" << std::endl;
-                file << std::endl;
-                file << "extern \"C\" Ov::Data Ov_" << c_symbol.symbol << "_caller(Ov::Data args[]) {" << std::endl;
                 std::string call = c_symbol.symbol + "(";
                 for (size_t i = 0; i < data.size();) {
                     call += "args[" + std::to_string(i) + "]";
@@ -197,19 +195,32 @@ namespace Interpreter::SystemFunctions {
                     else
                         call += ")";
                 }
-                file << "\tif constexpr (!std::is_void_v<decltype(" << call << ")>)\n";
-                file << "\t\treturn Ov::Data(" << call << ");\n";
-                file << "\telse {\n";
-                file << "\t\t" << call << ";\n";
-                file << "\t\treturn Ov::Data{};\n";
-                file << "\t}\n";
+
+                file << "#include <data.hpp>" << std::endl;
+                file << "#include \"" << c_symbol.include << "\"" << std::endl;
+                file << std::endl;
+
+                file << "namespace {" << std::endl;
+                file << "\ttemplate<typename T>" << std::endl;
+                file << "\tOv::Data Ov_" << c_symbol.symbol << "_caller_f(Ov::Data args[]) {" << std::endl;
+                file << "\t\treturn Ov::Data(" << call << ");" << std::endl;
+                file << "\t}" << std::endl;
+                file << "\ttemplate<>" << std::endl;
+                file << "\tOv::Data Ov_" << c_symbol.symbol << "_caller_f<void>(Ov::Data args[]) {" << std::endl;
+                file << "\t\t" << call << ";" << std::endl;
+                file << "\t\treturn Ov::Data{};" << std::endl;
+                file << "\t}" << std::endl;
+                file << "}" << std::endl;
+
+                file << std::endl;
+                file << "extern \"C\" Ov::Data Ov_" << c_symbol.symbol << "_caller(Ov::Data args[]) {" << std::endl;
+                file << "\treturn Ov_" << c_symbol.symbol << "_caller_f<decltype(" << call << ")>(args);" << std::endl;
                 file << "}" << std::endl;
 
                 file.close();
 
                 std::string cmd = "g++ -g --std=c++20 -shared -fPIC -o /tmp/ouverium_dll/" + c_symbol.symbol + ".so /tmp/ouverium_dll/call.cpp -I ";
                 cmd += (program_location / "capi_include").c_str();
-                cmd += " " + c_symbol.include;
                 if (system(cmd.c_str()) == 0) {
                     auto& caller = c_symbol.callers[types];
                     caller.library.load("/tmp/ouverium_dll/" + c_symbol.symbol + ".so");
@@ -256,43 +267,39 @@ namespace Interpreter::SystemFunctions {
         Reference import_h(FunctionContext& context) {
             auto path = get_canonical_path(context);
 
-            if (std::set<std::string>{".h", ".hpp"}.contains(path.extension())) {
+            bool std = path == path.stem();
+            if (std || std::set<std::string>{".h", ".hpp"}.contains(path.extension())) {
                 auto& global = context.get_global();
                 auto root = context.expression->get_root();
 
-                auto it = global.sources.find(path);
-                if (it == global.sources.end()) {
-                    global.sources[path] = std::make_shared<Parser::Tuple>();
-
-                    auto symbols = root->symbols;
-                    for (auto const& symbol : context.expression->get_root()->get_symbols()) {
-                        bool c_symbol = true;
-                        for (char c : symbol) {
-                            if (!(std::isalnum(c) || c == '_')) {
-                                c_symbol = false;
-                                break;
-                            }
-                        }
-                        if (!c_symbol)
-                            continue;
-
-                        std::filesystem::create_directory("/tmp/ouverium_dll");
-                        auto file = std::ofstream("/tmp/ouverium_dll/header.cpp");
-                        file << "#include " << path << std::endl;
-                        file << "void* ptr = (void*) &" << symbol << ";" << std::endl;
-                        file.close();
-
-                        if (system("g++ -shared -o /tmp/ouverium_dll/libheader.so /tmp/ouverium_dll/header.cpp 2> /dev/null") == 0) {
-                            try {
-                                auto object = global[symbol].to_data(context).get<Object*>();
-                                object->c_obj = CSymbol{ symbol, path, {} };
-
-                                symbols.insert(symbol);
-                            } catch (Data::BadAccess const&) {}
+                auto symbols = root->symbols;
+                for (auto const& symbol : context.expression->get_root()->get_symbols()) {
+                    bool c_symbol = true;
+                    for (char c : symbol) {
+                        if (!(std::isalnum(c) || c == '_')) {
+                            c_symbol = false;
+                            break;
                         }
                     }
-                    root->compute_symbols(symbols);
+                    if (!c_symbol)
+                        continue;
+
+                    std::filesystem::create_directory("/tmp/ouverium_dll");
+                    auto file = std::ofstream("/tmp/ouverium_dll/header.cpp");
+                    file << "#include " << path << std::endl;
+                    file << "void* ptr = (void*) &" << symbol << ";" << std::endl;
+                    file.close();
+
+                    if (system("g++ -shared -o /tmp/ouverium_dll/libheader.so /tmp/ouverium_dll/header.cpp 2> /dev/null") == 0) {
+                        try {
+                            auto object = global[symbol].to_data(context).get<Object*>();
+                            object->c_obj = CSymbol{ symbol, path, {} };
+
+                            symbols.insert(symbol);
+                        } catch (Data::BadAccess const&) {}
+                    }
                 }
+                root->compute_symbols(symbols);
 
                 return Reference();
             } else throw Interpreter::FunctionArgumentsError();
