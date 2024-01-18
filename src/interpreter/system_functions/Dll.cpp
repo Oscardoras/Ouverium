@@ -126,7 +126,7 @@ namespace Interpreter::SystemFunctions {
                 } else {
                     return { CSymbol::Type::CObject, static_cast<std::any&>((*object)->c_obj) };
                 }
-            } else return { CSymbol::Type::CObject, Data(nullptr) };
+            } else return { CSymbol::Type::CObject, Data() };
         }
 
         Data get_data(Context& context, Ov::Data const& data) {
@@ -187,20 +187,27 @@ namespace Interpreter::SystemFunctions {
                 file << "#include \"" << c_symbol.include << "\"" << std::endl;
                 file << std::endl;
                 file << "extern \"C\" Ov::Data Ov_" << c_symbol.symbol << "_caller(Ov::Data args[]) {" << std::endl;
-                file << "\treturn Ov::Data(" << c_symbol.symbol << "(";
+                std::string call = c_symbol.symbol + "(";
                 for (size_t i = 0; i < data.size();) {
-                    file << "args[" << i << "]";
+                    call += "args[" + std::to_string(i) + "]";
 
                     ++i;
                     if (i < data.size())
-                        file << ", ";
+                        call += ", ";
+                    else
+                        call += ")";
                 }
-                file << "));" << std::endl;
+                file << "\tif constexpr (!std::is_void_v<decltype(" << call << ")>)\n";
+                file << "\t\treturn Ov::Data(" << call << ");\n";
+                file << "\telse {\n";
+                file << "\t\t" << call << ";\n";
+                file << "\t\treturn Ov::Data{};\n";
+                file << "\t}\n";
                 file << "}" << std::endl;
 
                 file.close();
 
-                std::string cmd = "g++ -g -shared -fPIC -o /tmp/ouverium_dll/" + c_symbol.symbol + ".so /tmp/ouverium_dll/call.cpp -I ";
+                std::string cmd = "g++ -g --std=c++20 -shared -fPIC -o /tmp/ouverium_dll/" + c_symbol.symbol + ".so /tmp/ouverium_dll/call.cpp -I ";
                 cmd += (program_location / "capi_include").c_str();
                 cmd += " " + c_symbol.include;
                 if (system(cmd.c_str()) == 0) {

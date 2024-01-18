@@ -2,6 +2,7 @@
 #define __DATA_HPP__
 
 #include <any>
+#include <concepts>
 #include <string>
 #include <type_traits>
 #include <vector>
@@ -17,8 +18,10 @@ namespace Ov {
 
         std::any data;
 
-        Data(INT i) {
-            data = i;
+        Data() {}
+
+        Data(std::integral auto i) {
+            data = static_cast<INT>(i);
         }
         Data(float f) {
             data = static_cast<FLOAT>(f);
@@ -32,9 +35,6 @@ namespace Ov {
         Data(bool b) {
             data = b;
         }
-        Data(int i) : Data(static_cast<INT>(i)) {}
-        template<typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
-        Data(T i) : Data(static_cast<INT>(i)) {}
 
         Data(const char* str) {
             data = std::string(str);
@@ -53,14 +53,15 @@ namespace Ov {
             data = array;
         }
 
-        template<typename T>
+        template<typename T, typename = std::enable_if_t<!std::is_integral_v<T> && !std::is_convertible_v<T*, const char*>>>
         Data(T const& t) {
             data = t;
         }
 
 
-        operator INT() const {
-            return std::any_cast<INT>(data);
+        template<std::integral T>
+        operator T() const {
+            return static_cast<T>(std::any_cast<INT>(data));
         }
         operator float() const {
             return std::any_cast<FLOAT>(data);
@@ -73,10 +74,6 @@ namespace Ov {
         }
         operator bool() const {
             return std::any_cast<bool>(data);
-        }
-        template<typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
-        operator T() const {
-            return std::any_cast<T>(data);
         }
 
         operator const char* () const {
@@ -97,7 +94,7 @@ namespace Ov {
             return vector;
         }
 
-        template<typename T>
+        template<typename T, typename = std::enable_if_t<!std::is_integral_v<T> && !std::is_convertible_v<T*, const char*>>>
         operator T const& () {
             if (!data.has_value())
                 data = T{};
