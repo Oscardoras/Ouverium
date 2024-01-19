@@ -263,8 +263,12 @@ namespace Interpreter::SystemFunctions {
                         file << "#include \"" << c_symbol.include << "\"" << std::endl;
                         file << std::endl;
 
-                        file << "extern \"C\" Ov::Data Ov_" << c_symbol.symbol << "_caller(Ov::Data args[]) {" << std::endl;
-                        file << "\treturn Ov_" << c_symbol.symbol << "_caller_f<decltype(" << call << ")>(args);" << std::endl;
+                        file << "extern \"C\" Ov::Data Ov_" << c_symbol.symbol << "_" << property_reference->name << "_getter(Ov::Data object) {" << std::endl;
+                        file << "\treturn Ov::Data(object." << property_reference->name << ");" << std::endl;
+                        file << "}" << std::endl;
+
+                        file << "extern \"C\" void Ov_" << c_symbol.symbol << "_" << property_reference->name << "_setter(Ov::Data object, Ov::Data value) {" << std::endl;
+                        file << "\tobject." << property_reference->name << " = value;" << std::endl;
                         file << "}" << std::endl;
 
                         file.close();
