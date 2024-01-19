@@ -46,6 +46,8 @@ namespace Interpreter::SystemFunctions {
         auto path_args = std::make_shared<Parser::Symbol>("path");
 
 
+        // Import source file
+
         Reference import(FunctionContext & context) {
             auto path = get_canonical_path(context);
 
@@ -93,16 +95,26 @@ namespace Interpreter::SystemFunctions {
         }
 
 
+        // Import c++ header
+
         struct CSymbol {
             enum class Type {
                 Bool, Int, Float, Char, String, Array, CObject
+            };
+            struct Property {
+                boost::dll::shared_library library;
+                std::function<Ov::Data()> getter;
+                std::function<void(Ov::Data)> setter;
             };
             struct Caller {
                 boost::dll::shared_library library;
                 std::function<Ov::Data(Ov::Data[])> function;
             };
+
             std::string symbol;
             std::string include;
+
+            std::map<std::string, Property> properties;
             std::map<std::vector<CSymbol::Type>, Caller> callers;
         };
 
@@ -243,6 +255,29 @@ namespace Interpreter::SystemFunctions {
                 try {
                     auto c_symbol = std::any_cast<CSymbol>(property_reference->parent.get().c_obj);
 
+                    if (!c_symbol.properties.contains(property_reference->name)) {
+                        std::filesystem::create_directory("/tmp/ouverium_dll");
+                        auto file = std::ofstream("/tmp/ouverium_dll/call.cpp");
+
+                        file << "#include <data.hpp>" << std::endl;
+                        file << "#include \"" << c_symbol.include << "\"" << std::endl;
+                        file << std::endl;
+
+                        file << "extern \"C\" Ov::Data Ov_" << c_symbol.symbol << "_caller(Ov::Data args[]) {" << std::endl;
+                        file << "\treturn Ov_" << c_symbol.symbol << "_caller_f<decltype(" << call << ")>(args);" << std::endl;
+                        file << "}" << std::endl;
+
+                        file.close();
+
+                        std::string cmd = "g++ -g --std=c++20 -shared -fPIC -o /tmp/ouverium_dll/" + c_symbol.symbol + ".so /tmp/ouverium_dll/call.cpp -I ";
+                        cmd += (program_location / "capi_include").c_str();
+                        if (system(cmd.c_str()) == 0) {
+                            auto& caller = c_symbol.callers[types];
+                            caller.library.load("/tmp/ouverium_dll/" + c_symbol.symbol + ".so");
+                            auto f = caller.library.get<Ov::Data(Ov::Data[])>("Ov_" + c_symbol.symbol + "_caller");
+                            caller.function = f;
+                        } else throw FunctionArgumentsError();
+                    }
                 } catch (std::bad_any_cast const&) {}
 
                 throw FunctionArgumentsError(); // TODO
@@ -304,69 +339,6 @@ namespace Interpreter::SystemFunctions {
                 return Reference();
             } else throw Interpreter::FunctionArgumentsError();
         }
-
-
-        /*
-                struct DllSymbol {
-                    void* ptr;
-                };
-
-                auto getter_args = std::make_shared<Parser::Symbol>("var");
-                Reference getter(FunctionContext& context) {
-                    auto ref = context["var"];
-                    if (auto property_reference = std::get_if<PropertyReference>(&ref)) {
-                        try {
-                            auto dll_symbol = std::any_cast<DllSymbol>(property_reference->parent.get().c_obj);
-
-
-                        }
-                        catch (std::bad_any_cast const&) {}
-                    }
-
-                    try {
-                        auto dll_symbol = std::any_cast<DllSymbol>(ref.to_data(context).get<Object*>()->c_obj);
-
-
-                    }
-                    catch (Data::BadAccess const&) {}
-                    catch (std::bad_any_cast const&) {}
-                }
-
-                static std::vector<boost::dll::shared_library> libraries;
-
-                Reference import_dll(FunctionContext & context) {
-                    auto path = get_canonical_path(context);
-
-                    if (!path.has_extension()) {
-                        auto& global = context.get_global();
-                        auto root = context.expression->get_root();
-
-                        for (auto const& l : libraries) {
-                            if (std::filesystem::equivalent(l.location().c_str(), path))
-                                return {};
-                        }
-                        libraries.push_back(std::move(boost::dll::shared_library(path.c_str(), boost::dll::load_mode::append_decorations)));
-                        auto& library = libraries.back();
-
-                        auto symbols = root->symbols;
-                        for (auto const& symbol : context.expression->get_root()->get_symbols()) {
-                            if (library.has(symbol)) {
-                                symbols.insert(symbol);
-
-                                try {
-                                    global[symbol].to_data(global).get<Object*>()->c_obj = DllSymbol{ library.get<void*>(symbol) };
-                                }
-                                catch (Data::BadAccess const&) {
-                                    // TODO
-                                }
-                            }
-                        }
-                        root->compute_symbols(symbols);
-
-                    }
-                    else throw Interpreter::FunctionArgumentsError();
-                }
-        */
 
 
         void init(GlobalContext& context) {
