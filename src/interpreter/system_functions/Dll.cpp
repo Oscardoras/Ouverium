@@ -97,50 +97,65 @@ namespace Interpreter::SystemFunctions {
 
         // Import c++ header
 
-        struct CSymbol {
-            enum class Type {
-                Bool, Int, Float, Char, String, Array, CObject
-            };
+        struct CType {
+            std::string header_definition;
+
             struct Property {
                 boost::dll::shared_library library;
+                CType& type;
                 std::function<Ov::Data()> getter;
                 std::function<void(Ov::Data)> setter;
             };
-            struct Caller {
+            struct Function {
+                enum class Type {
+                    Bool, Int, Float, Char, String, Array, CObject
+                };
                 boost::dll::shared_library library;
+                CType& type;
                 std::function<Ov::Data(Ov::Data[])> function;
             };
-
-            std::string symbol;
-            std::string include;
+            struct Array {
+                boost::dll::shared_library library;
+                CType& type;
+                std::function<Ov::Data()> getter;
+                std::function<void(Ov::Data)> setter;
+            };
 
             std::map<std::string, Property> properties;
-            std::map<std::vector<CSymbol::Type>, Caller> callers;
+            std::map<std::vector<Function::Type>, Function> functions;
+            std::unique_ptr<Array> array;
         };
 
-        std::pair<CSymbol::Type, Ov::Data> get_data(Data const& data) {
+        std::map<std::type_info, CType> c_types;
+
+        struct CSymbol {
+            std::string symbol;
+            std::string include;
+        };
+
+        std::pair<CType::Function::Type, Ov::Data> get_data(Data const& data) {
             if (auto c = get_if<char>(&data)) {
-                return { CSymbol::Type::Char , *c };
+                return { CType::Function::Type::Char , *c };
             } else if (auto i = get_if<INT>(&data)) {
-                return { CSymbol::Type::Int, *i };
+                return { CType::Function::Type::Int, *i };
             } else if (auto f = get_if<FLOAT>(&data)) {
-                return { CSymbol::Type::Float, *f };
+                return { CType::Function::Type::Float, *f };
             } else if (auto b = get_if<bool>(&data)) {
-                return { CSymbol::Type::Bool, *b };
+                return { CType::Function::Type::Bool, *b };
             } else if (auto object = get_if<Object*>(&data)) {
                 if ((*object)->array.capacity() > 0) {
                     try {
-                        return { CSymbol::Type::String, (*object)->to_string() };
+                        return { CType::Function::Type::String, (*object)->to_string() };
                     } catch (Data::BadAccess const&) {
                         std::vector<Ov::Data> array;
                         for (auto const& d : (*object)->array)
                             array.push_back(get_data(d).second);
-                        return { CSymbol::Type::Array, array };
+                        return { CType::Function::Type::Array, array };
                     }
                 } else {
-                    return { CSymbol::Type::CObject, static_cast<std::any&>((*object)->c_obj) };
+                    return { CType::Function::Type::CObject, static_cast<std::any&>((*object)->c_obj) };
                 }
-            } else return { CSymbol::Type::CObject, Data() };
+            } else return { CType::Function::Type::CObject, Data() };
         }
 
         Data get_data(Context& context, Ov::Data const& data) {
@@ -332,7 +347,7 @@ namespace Interpreter::SystemFunctions {
                     if (system("g++ -shared -o /tmp/ouverium_dll/libheader.so /tmp/ouverium_dll/header.cpp 2> /dev/null") == 0) {
                         try {
                             auto object = global[symbol].to_data(context).get<Object*>();
-                            object->c_obj = CSymbol{ symbol, path, {} };
+                            object->c_obj = CSymbol{ symbol, path };
 
                             symbols.insert(symbol);
                         } catch (Data::BadAccess const&) {}
