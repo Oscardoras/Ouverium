@@ -126,11 +126,13 @@ namespace Interpreter::SystemFunctions {
             std::unique_ptr<Array> array;
         };
 
-        std::map<std::type_info, CType> c_types;
+        std::map<std::type_info&, CType> c_types;
 
         struct CSymbol {
             std::string symbol;
             std::string include;
+
+            CType& type;
         };
 
         std::pair<CType::Function::Type, Ov::Data> get_data(Data const& data) {
@@ -187,12 +189,11 @@ namespace Interpreter::SystemFunctions {
         );
         Reference c_function(FunctionContext& context) {
             auto self = context["this"].to_data(context).get<Object*>();
-            auto& c_symbol = std::any_cast<CSymbol&>(self->c_obj);
+
             auto args = std::get<CustomFunction>(context["function"].to_data(context).get<Object*>()->functions.front())->body;
             auto& parent = context.get_parent();
 
             std::vector<Data> data;
-
             if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(args)) {
                 for (auto arg : tuple->objects)
                     data.push_back(Interpreter::execute(parent, arg).to_data(context));
@@ -200,7 +201,7 @@ namespace Interpreter::SystemFunctions {
                 data.push_back(Interpreter::execute(parent, args).to_data(context));
             }
 
-            std::vector<CSymbol::Type> types;
+            std::vector<CType::Function::Type> types;
             std::vector<Ov::Data> arguments;
             for (auto const& d : data) {
                 auto const& [type, ov_data] = get_data(d);
@@ -208,56 +209,60 @@ namespace Interpreter::SystemFunctions {
                 arguments.push_back(ov_data);
             }
 
-            if (!c_symbol.callers.contains(types)) {
-                std::filesystem::create_directory("/tmp/ouverium_dll");
-                auto file = std::ofstream("/tmp/ouverium_dll/call.cpp");
+            if (auto c_symbol = std::any_cast<CSymbol>(&self->c_obj)) {
 
-                std::string call = c_symbol.symbol + "(";
-                for (size_t i = 0; i < data.size();) {
-                    call += "args[" + std::to_string(i) + "]";
+                if (!c_symbol->type.functions.contains(types)) {
+                    std::filesystem::create_directory("/tmp/ouverium_dll");
+                    auto file = std::ofstream("/tmp/ouverium_dll/call.cpp");
 
-                    ++i;
-                    if (i < data.size())
-                        call += ", ";
-                    else
-                        call += ")";
+                    std::string call = c_symbol->symbol + "(";
+                    for (size_t i = 0; i < data.size();) {
+                        call += "args[" + std::to_string(i) + "]";
+
+                        ++i;
+                        if (i < data.size())
+                            call += ", ";
+                        else
+                            call += ")";
+                    }
+
+                    file << "#include <data.hpp>" << std::endl;
+                    file << "#include \"" << c_symbol->include << "\"" << std::endl;
+                    file << std::endl;
+
+                    file << "namespace {" << std::endl;
+                    file << "\ttemplate<typename T>" << std::endl;
+                    file << "\tOv::Data Ov_" << c_symbol->symbol << "_caller_f(Ov::Data args[]) {" << std::endl;
+                    file << "\t\treturn Ov::Data(" << call << ");" << std::endl;
+                    file << "\t}" << std::endl;
+                    file << "\ttemplate<>" << std::endl;
+                    file << "\tOv::Data Ov_" << c_symbol->symbol << "_caller_f<void>(Ov::Data args[]) {" << std::endl;
+                    file << "\t\t" << call << ";" << std::endl;
+                    file << "\t\treturn Ov::Data{};" << std::endl;
+                    file << "\t}" << std::endl;
+                    file << "}" << std::endl;
+
+                    file << std::endl;
+                    file << "extern \"C\" Ov::Data Ov_" << c_symbol->symbol << "_caller(Ov::Data args[]) {" << std::endl;
+                    file << "\treturn Ov_" << c_symbol->symbol << "_caller_f<decltype(" << call << ")>(args);" << std::endl;
+                    file << "}" << std::endl;
+
+                    file.close();
+
+                    std::string cmd = "g++ -g --std=c++20 -shared -fPIC -o /tmp/ouverium_dll/" + c_symbol->symbol + ".so /tmp/ouverium_dll/call.cpp -I ";
+                    cmd += (program_location / "capi_include").c_str();
+                    if (system(cmd.c_str()) == 0) {
+                        auto& caller = c_symbol->type.functions[types];
+                        caller.library.load("/tmp/ouverium_dll/" + c_symbol->symbol + ".so");
+                        auto f = caller.library.get<Ov::Data(Ov::Data[])>("Ov_" + c_symbol->symbol + "_caller");
+                        caller.function = f;
+                    } else throw FunctionArgumentsError();
                 }
 
-                file << "#include <data.hpp>" << std::endl;
-                file << "#include \"" << c_symbol.include << "\"" << std::endl;
-                file << std::endl;
-
-                file << "namespace {" << std::endl;
-                file << "\ttemplate<typename T>" << std::endl;
-                file << "\tOv::Data Ov_" << c_symbol.symbol << "_caller_f(Ov::Data args[]) {" << std::endl;
-                file << "\t\treturn Ov::Data(" << call << ");" << std::endl;
-                file << "\t}" << std::endl;
-                file << "\ttemplate<>" << std::endl;
-                file << "\tOv::Data Ov_" << c_symbol.symbol << "_caller_f<void>(Ov::Data args[]) {" << std::endl;
-                file << "\t\t" << call << ";" << std::endl;
-                file << "\t\treturn Ov::Data{};" << std::endl;
-                file << "\t}" << std::endl;
-                file << "}" << std::endl;
-
-                file << std::endl;
-                file << "extern \"C\" Ov::Data Ov_" << c_symbol.symbol << "_caller(Ov::Data args[]) {" << std::endl;
-                file << "\treturn Ov_" << c_symbol.symbol << "_caller_f<decltype(" << call << ")>(args);" << std::endl;
-                file << "}" << std::endl;
-
-                file.close();
-
-                std::string cmd = "g++ -g --std=c++20 -shared -fPIC -o /tmp/ouverium_dll/" + c_symbol.symbol + ".so /tmp/ouverium_dll/call.cpp -I ";
-                cmd += (program_location / "capi_include").c_str();
-                if (system(cmd.c_str()) == 0) {
-                    auto& caller = c_symbol.callers[types];
-                    caller.library.load("/tmp/ouverium_dll/" + c_symbol.symbol + ".so");
-                    auto f = caller.library.get<Ov::Data(Ov::Data[])>("Ov_" + c_symbol.symbol + "_caller");
-                    caller.function = f;
-                } else throw FunctionArgumentsError();
-            }
-
-            auto caller = c_symbol.callers[types].function;
-            return get_data(context, caller(arguments.data()));
+                auto caller = c_symbol->type.functions[types].function;
+                return get_data(context, caller(arguments.data()));
+            } else
+                return Data{};
         }
 
         auto getter_args = std::make_shared<Parser::Symbol>("var");
@@ -270,7 +275,7 @@ namespace Interpreter::SystemFunctions {
                 try {
                     auto c_symbol = std::any_cast<CSymbol>(property_reference->parent.get().c_obj);
 
-                    if (!c_symbol.properties.contains(property_reference->name)) {
+                    if (!c_symbol.type.properties.contains(property_reference->name)) {
                         std::filesystem::create_directory("/tmp/ouverium_dll");
                         auto file = std::ofstream("/tmp/ouverium_dll/call.cpp");
 
@@ -302,10 +307,9 @@ namespace Interpreter::SystemFunctions {
                 throw FunctionArgumentsError(); // TODO
             } else {
                 try {
-                    std::any_cast<CSymbol>(ref.to_data(context).get<Object*>()->c_obj);
+                    if (!ref.to_data(context).get<Object*>()->c_obj.has_value())
+                        throw FunctionArgumentsError();
                 } catch (Data::BadAccess const&) {
-                    throw FunctionArgumentsError();
-                } catch (std::bad_any_cast const&) {
                     throw FunctionArgumentsError();
                 }
 
