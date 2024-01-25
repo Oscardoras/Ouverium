@@ -95,6 +95,7 @@ namespace Interpreter::SystemFunctions {
         }
 
 
+/*
         // Import c++ header
 
         struct CType {
@@ -126,13 +127,14 @@ namespace Interpreter::SystemFunctions {
             std::unique_ptr<Array> array;
         };
 
-        std::map<std::type_info&, CType> c_types;
+        std::map<std::type_info*, CType> c_types;
 
         struct CSymbol {
+            boost::dll::shared_library library;
+            CType& type;
+
             std::string symbol;
             std::string include;
-
-            CType& type;
         };
 
         std::pair<CType::Function::Type, Ov::Data> get_data(Data const& data) {
@@ -344,14 +346,19 @@ namespace Interpreter::SystemFunctions {
 
                     std::filesystem::create_directory("/tmp/ouverium_dll");
                     auto file = std::ofstream("/tmp/ouverium_dll/header.cpp");
+                    file << "#include <typeinfo>" << std::endl;
                     file << "#include " << path << std::endl;
-                    file << "void* ptr = (void*) &" << symbol << ";" << std::endl;
+                    file << "extern \"C\" std::type_info " << symbol << "_type = typeid(" << symbol << ");" << std::endl;
                     file.close();
 
-                    if (system("g++ -shared -o /tmp/ouverium_dll/libheader.so /tmp/ouverium_dll/header.cpp 2> /dev/null") == 0) {
+                    std::string cmd = "g++ -shared -o /tmp/ouverium_dll/" + symbol + ".so /tmp/ouverium_dll/header.cpp 2> /dev/null";
+                    if (system(cmd.c_str()) == 0) {
+                        boost::dll::shared_library library("/tmp/ouverium_dll/" + symbol + ".so");
+                        auto& type_info = library.get<std::type_info>(symbol + "_type");
+
                         try {
                             auto object = global[symbol].to_data(context).get<Object*>();
-                            object->c_obj = CSymbol{ symbol, path };
+                            object->c_obj = CSymbol{ std::move(library), c_types[&type_info], symbol, path };
 
                             symbols.insert(symbol);
                         } catch (Data::BadAccess const&) {}
@@ -362,13 +369,14 @@ namespace Interpreter::SystemFunctions {
                 return Reference();
             } else throw Interpreter::FunctionArgumentsError();
         }
+*/
 
 
         void init(GlobalContext& context) {
             context.get_function("import").push_front(SystemFunction{ path_args, import });
-            context.get_function("import").push_front(SystemFunction{ path_args, import_h });
+            //context.get_function("import").push_front(SystemFunction{ path_args, import_h });
 
-            context.get_function("getter").push_front(SystemFunction{ getter_args, getter_c });
+            //context.get_function("getter").push_front(SystemFunction{ getter_args, getter_c });
         }
 
     }
