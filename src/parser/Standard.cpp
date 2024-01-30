@@ -310,16 +310,23 @@ namespace Parser {
             if (words.at(i) == "}") break;
 
             if (words.at(i) == ".") {
-                auto property = std::make_shared<Property>();
-                property->position = std::make_shared<Standard::TextPosition>(words.at(i).position);
-                property->object = expression;
-                ++i;
-                property->name = words.at(i);
-                if (is_system(words.at(i)) && words.at(i) != ".")
-                    errors.push_back(Standard::ParsingError(words.at(i) + " is reserved", words.at(i).position));
-                expression = property;
-                ++i;
-                continue;
+                if (is_function) {
+                    expression = expressions_to_expression(errors, expressions, expression, is_function, escaped);
+                    expressions.clear();
+                }
+
+                if (!in_function) {
+                    auto property = std::make_shared<Property>();
+                    property->position = std::make_shared<Standard::TextPosition>(words.at(i).position);
+                    property->object = expression;
+                    ++i;
+                    property->name = words.at(i);
+                    if (is_system(words.at(i)) && words.at(i) != ".")
+                        errors.push_back(Standard::ParsingError(words.at(i) + " is reserved", words.at(i).position));
+                    expression = property;
+                    ++i;
+                    continue;
+                } else break;
             }
             if (words.at(i) == ",") {
                 if (!in_tuple && priority) {

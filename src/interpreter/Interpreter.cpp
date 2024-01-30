@@ -12,6 +12,7 @@ namespace Interpreter {
 
     GlobalContext::GlobalContext(std::shared_ptr<Parser::Expression> expression) :
         Context(expression) {
+        system = new_object();
         SystemFunctions::Base::init(*this);
         SystemFunctions::Dll::init(*this);
         SystemFunctions::Array::init(*this);

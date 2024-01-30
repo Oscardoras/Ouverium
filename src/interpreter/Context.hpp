@@ -51,6 +51,7 @@ namespace Interpreter {
     public:
 
         std::map<std::filesystem::path, std::shared_ptr<Parser::Expression>> sources;
+        Object* system;
         unsigned recursion_limit = 50;
 
         GlobalContext(std::shared_ptr<Parser::Expression> expression);

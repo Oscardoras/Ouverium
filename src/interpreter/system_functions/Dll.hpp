@@ -10,6 +10,7 @@ namespace Interpreter::SystemFunctions {
 
         std::filesystem::path get_canonical_path(FunctionContext& context);
 
+        Reference import_system(FunctionContext & context);
         Reference import(FunctionContext & context);
 
         Reference import_dll(FunctionContext& context);

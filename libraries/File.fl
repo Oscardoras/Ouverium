@@ -6,7 +6,7 @@ class File;
 
 (~) : (file, File) |-> {
     try {
-        System.has(file);
+        import("system").file_has(file);
         true
     } catch (e |-> {
         false
@@ -14,30 +14,38 @@ class File;
 };
 
 File : (String path) |-> {
-    System.open(path)
+    import("system").file_open(path)
 };
 
 
 File::(this.read |-> (
     () |-> {
-        System.read(this)
+        import("system").file_read(this)
     }
 ));
 
 File::(this.has |-> (
     () |-> {
-        System.has(this)
+        import("system").file_has(this)
     }
 ));
 
 File::(this.write |-> (
     data |-> {
-        System.write(this, data)
+        import("system").file_write(this, data)
     }
 ));
 
 File::(this.flush |-> (
     () |-> {
-        System.flush(this)
+        import("system").file_flush(this)
     }
 ));
+
+
+getter : (this.working_directory) \ (this === File) |-> {
+    import("system").working_directory()
+};
+setter : (this.working_directory, value) \ (this === File) |-> {
+    import("system").working_directory()
+}

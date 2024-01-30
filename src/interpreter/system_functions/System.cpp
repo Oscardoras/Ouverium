@@ -133,14 +133,21 @@ namespace Interpreter::SystemFunctions {
 
 
         void init(GlobalContext& context) {
-            auto system = context["System"].to_data(context).get<Object*>();
+            (*context.get_global().system)["file_read"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ read_args, read });
+            (*context.get_global().system)["file_has"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ has_args, has });
+            (*context.get_global().system)["file_write"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ write_args, write });
+            (*context.get_global().system)["file_flush"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ flush_args, flush });
+            (*context.get_global().system)["file_open"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ open_args, open });
+            (*context.get_global().system)["working_directory"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ working_directory_args, working_directory });
 
-            (*system)["read"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ read_args, read });
-            (*system)["has"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ has_args, has });
-            (*system)["write"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ write_args, write });
-            (*system)["flush"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ flush_args, flush });
-            (*system)["open"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ open_args, open });
-            (*system)["working_directory"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ working_directory_args, working_directory });
+            (*context.get_global().system)["time"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ std::make_shared<Parser::Tuple>(), time });
+
+            (*context.get_global().system)["weak_reference"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ weak_reference_args, weak_reference });
+            (*context.get_global().system)["weak_reference_get"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ weak_reference_get_args, weak_reference_get });
+            (*context.get_global().system)["GC_collect"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ GC_collect_args, GC_collect });
+
+
+            auto system = context["System"].to_data(context).get<Object*>();
 
             auto in = context.new_object();
             in->c_obj = std::reference_wrapper<std::ios>(std::cin);
@@ -153,12 +160,6 @@ namespace Interpreter::SystemFunctions {
             auto err = context.new_object();
             err->c_obj = std::reference_wrapper<std::ios>(std::cerr);
             system->properties["err"] = err;
-
-            (*system)["time"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ std::make_shared<Parser::Tuple>(), time });
-
-            (*system)["weak_reference"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ weak_reference_args, weak_reference });
-            (*system)["weak_reference_get"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ weak_reference_get_args, weak_reference_get });
-            (*system)["GC_collect"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ GC_collect_args, GC_collect });
         }
 
     }
