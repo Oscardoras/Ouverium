@@ -58,6 +58,36 @@ class : (type, extends, parents) |-> {
         r
     };
 
+    (::) : (type, (getter, method_getter)) |-> {
+        filters := (a |-> false) : ((this. .) \ (this ~ type) |-> true);
+
+        mg := x \ {
+            filters(x) &
+            try {
+                r := method_getter(x);
+                true
+            } catch (e |-> false)
+        } |-> {
+            r
+        };
+        methods_getter : mg;
+    };
+
+    (::) : (type, (setter, method_getter)) |-> {
+        filters := (a |-> false) : (this \ (defined this & this ~ type) |-> true) : ((this. .) \ (this ~ type) |-> true);
+
+        mg := x \ {
+            filters(x) &
+            try {
+                r := method_getter(x);
+                true
+            } catch (e |-> false)
+        } |-> {
+            r
+        };
+        methods_getter : mg;
+    };
+
     (::) : (type, method_getter) |-> {
         filters := (a |-> false) : (this \ (defined this & this ~ type) |-> true) : ((this. .) \ (this ~ type) |-> true);
 
@@ -70,6 +100,7 @@ class : (type, extends, parents) |-> {
         } |-> {
             r
         };
+        type._methods : mg;
         methods_getter : mg;
     };
 
