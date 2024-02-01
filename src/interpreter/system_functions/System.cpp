@@ -83,10 +83,23 @@ namespace Interpreter::SystemFunctions {
             }
         }
 
-        auto working_directory_args = std::make_shared<Parser::Tuple>();
-        Reference working_directory(FunctionContext& context) {
-            std::filesystem::path p(".");
-            return Data(context.new_object(std::filesystem::canonical(p).string()));
+        auto working_directory_get_args = std::make_shared<Parser::Tuple>();
+        Reference working_directory_get(FunctionContext& context) {
+            return Data(context.new_object(std::filesystem::current_path().string()));
+        }
+
+        auto working_directory_set_args = std::make_shared<Parser::Symbol>("path");
+        Reference working_directory_set(FunctionContext& context) {
+            try {
+                auto path = context["path"].to_data(context).get<Object*>()->to_string();
+                std::filesystem::current_path(path);
+
+                return Data();
+            } catch (Data::BadAccess const&) {
+                throw FunctionArgumentsError();
+            } catch (std::filesystem::filesystem_error const&) {
+                throw FunctionArgumentsError();
+            }
         }
 
 
@@ -138,7 +151,8 @@ namespace Interpreter::SystemFunctions {
             (*context.get_global().system)["file_write"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ write_args, write });
             (*context.get_global().system)["file_flush"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ flush_args, flush });
             (*context.get_global().system)["file_open"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ open_args, open });
-            (*context.get_global().system)["working_directory"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ working_directory_args, working_directory });
+            (*context.get_global().system)["working_directory"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ working_directory_set_args, working_directory_set });
+            (*context.get_global().system)["working_directory"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ working_directory_get_args, working_directory_get });
 
             (*context.get_global().system)["time"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ std::make_shared<Parser::Tuple>(), time });
 

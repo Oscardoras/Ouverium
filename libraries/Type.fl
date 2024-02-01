@@ -41,6 +41,8 @@ class : (type, extends, parents) |-> {
 
 (::);
 
+static;
+
 (() |-> {
 
     methods_getter;
@@ -103,5 +105,7 @@ class : (type, extends, parents) |-> {
         type._methods : mg;
         methods_getter : mg;
     };
+
+    
 
 })();

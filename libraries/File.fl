@@ -43,9 +43,11 @@ File::(this.flush |-> (
 ));
 
 
+get 
+
 getter : (this.working_directory) \ (this === File) |-> {
     import("system").working_directory()
 };
 setter : (this.working_directory, value) \ (this === File) |-> {
-    import("system").working_directory()
+    import("system").working_directory(value)
 }
