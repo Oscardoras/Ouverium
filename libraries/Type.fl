@@ -40,72 +40,66 @@ class : (type, extends, parents) |-> {
 
 
 (::);
-
-static;
+(::?);
+(::=);
 
 (() |-> {
-
-    methods_getter;
+    types := ();
 
     getter : x \ {
+        getters := ();
+        foreach(types, type |-> {
+            if (type._filter(x)) {
+                getters : type._methods;
+                getters : type._getters;
+            };
+        });
+
         try {
-            if (defined methods_getter) {
-                r := methods_getter(x);
-                true
-            } else {
-                false
-            }
+            r := getters(x);
+            true
         } catch (e |-> false)
     } |-> {
         r
     };
 
-    (::) : (type, (getter, method_getter)) |-> {
-        filters := (a |-> false) : ((this. .) \ (this ~ type) |-> true);
+    # setter : (x, value) \ {
+    #     setters;
+    #     foreach(types, type |-> {
+    #         if (type._filter(x)) {
+    #             setters : type._setters;
+    #         };
+    #     });
 
-        mg := x \ {
-            filters(x) &
-            try {
-                r := method_getter(x);
-                true
-            } catch (e |-> false)
-        } |-> {
-            r
+    #     try {
+    #         r := setters(x, value);
+    #         true
+    #     } catch (e |-> false)
+    # } |-> {
+    #     r
+    # };
+
+    add_type : type |-> {
+        if (!exists(types, x |-> {
+            x === type
+        })) {
+            Array.add(types, type);
+            type._filter := (a |-> false) : (this \ (defined this & this ~ type) |-> true) : ((this. .) \ (this ~ type) |-> true);
         };
-        methods_getter : mg;
-    };
-
-    (::) : (type, (setter, method_getter)) |-> {
-        filters := (a |-> false) : (this \ (defined this & this ~ type) |-> true) : ((this. .) \ (this ~ type) |-> true);
-
-        mg := x \ {
-            filters(x) &
-            try {
-                r := method_getter(x);
-                true
-            } catch (e |-> false)
-        } |-> {
-            r
-        };
-        methods_getter : mg;
     };
 
     (::) : (type, method_getter) |-> {
-        filters := (a |-> false) : (this \ (defined this & this ~ type) |-> true) : ((this. .) \ (this ~ type) |-> true);
-
-        mg := x \ {
-            filters(x) &
-            try {
-                r := method_getter(x);
-                true
-            } catch (e |-> false)
-        } |-> {
-            r
-        };
-        type._methods : mg;
-        methods_getter : mg;
+        type._methods : method_getter;
+        add_type(type);
     };
 
-    
+    (::?) : (type, property_getter) |-> {
+        type._getters : property_getter;
+        add_type(type);
+    };
 
+    (::=) : (type, property_setter) |-> {
+        type._setters : property_setter;
+        add_type(type);
+    };
 })();
