@@ -152,7 +152,7 @@ void compile_mode(std::string const& path, std::istream& is, std::string const& 
     auto translator = Translator::CStandard::Translator(expression, meta_data);
 
     translator.translate(out);
-    std::string cmd = "gcc -g -Wall -Wextra " + out + "/*.c -o " + out + "/executable -I " + (program_location / "capi_include").c_str() + " -Wl,-rpath," + program_location.c_str() + " build/libcapi.so";
+    std::string cmd = "gcc -g -Wall -Wextra " + out + "/*.c -o " + out + "/executable -I " + (program_location / "capi_include").string() + " -Wl,-rpath," + program_location.string() + " build/libcapi.so";
     system(cmd.c_str());
 }
 
@@ -162,7 +162,7 @@ int main(int argc, char** argv) {
 
     std::srand(std::time(nullptr));
 
-    include_path.push_back(program_location.parent_path() / "libraries");
+    include_path.push_back((program_location.parent_path() / "libraries").string());
 
     if (argc == 1)
         if (is_interactive())

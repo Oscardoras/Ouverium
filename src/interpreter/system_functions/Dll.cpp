@@ -62,7 +62,7 @@ namespace Interpreter::SystemFunctions {
         Reference import(FunctionContext & context) {
             auto path = get_canonical_path(context);
 
-            if (std::set<std::string>{".fl", ".ov", ".ouv"}.contains(path.extension())) {
+            if (std::set<std::string>{".fl", ".ov", ".ouv"}.contains(path.extension().string())) {
                 auto& global = context.get_global();
                 auto root = context.expression->get_root();
 
@@ -73,7 +73,7 @@ namespace Interpreter::SystemFunctions {
                     std::string code = oss.str();
 
                     try {
-                        auto expression = Parser::Standard(code, path).get_tree();
+                        auto expression = Parser::Standard(code, path.string()).get_tree();
                         global.sources[path] = expression;
 
                         {
@@ -89,7 +89,7 @@ namespace Interpreter::SystemFunctions {
 
                         return Interpreter::execute(global, expression);
                     } catch (Parser::Standard::IncompleteCode const&) {
-                        throw Exception(context, "incomplete code, you must finish the last expression in file \"" + std::string(path.c_str()) + "\"", context.get_global()["ParserException"].to_data(context), context.expression);
+                        throw Exception(context, "incomplete code, you must finish the last expression in file \"" + path.string() + "\"", context.get_global()["ParserException"].to_data(context), context.expression);
                     } catch (Parser::Standard::Exception const& e) {
                         throw Exception(context, e.what(), context.get_global()["ParserException"].to_data(context), context.expression);
                     }

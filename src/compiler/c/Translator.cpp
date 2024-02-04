@@ -19,7 +19,7 @@ namespace Translator::CStandard {
             create_structures();
 
             for (auto const& symbol : expression->symbols)
-                if (std::holds_alternative<nullptr_t>(get_symbol(symbol)))
+                if (std::holds_alternative<std::nullptr_t>(get_symbol(symbol)))
                     code.main.global_variables[symbol] = Unknown;
 
             code.main.return_value = get_expression(expression, code.main.body, code.main.body.end());
@@ -142,7 +142,7 @@ namespace Translator::CStandard {
                     } else {
                         auto lambda = std::make_shared<Lambda>();
                         for (auto const& symbol : expression->symbols)
-                            if (std::holds_alternative<nullptr_t>(get_symbol(symbol)))
+                            if (std::holds_alternative<std::nullptr_t>(get_symbol(symbol)))
                                 lambda->captures.push_back({ symbol, Unknown });
                         lambda->body.return_value = get_expression(expression, lambda->body.body, lambda->body.body.begin());
 
@@ -320,7 +320,7 @@ namespace Translator::CStandard {
         } else if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(expression)) {
             auto v = get_symbol(symbol->name);
 
-            if (std::holds_alternative<nullptr_t>(v)) {
+            if (std::holds_alternative<std::nullptr_t>(v)) {
                 auto r = std::make_shared<Reference>(false);
 
                 instructions.insert(it, std::make_shared<Affectation>(
