@@ -14,6 +14,7 @@
 #include "parser/Standard.hpp"
 
 #include "Types.hpp"
+#include "GUIApp.hpp"
 
 
 std::filesystem::path program_location = boost::filesystem::canonical(boost::dll::program_location()).parent_path().string();
@@ -157,8 +158,7 @@ void compile_mode(std::string const& path, std::istream& is, std::string const& 
 }
 
 int main(int argc, char** argv) {
-    global_argc = argc;
-    global_argv = argv;
+    auto app = GUIApp(argc, argv);
 
     std::srand(std::time(nullptr));
 
