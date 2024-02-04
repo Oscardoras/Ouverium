@@ -37,8 +37,8 @@ class String extends ArrayList;
     }
 };
 
-String : this |-> {
-    ArrayList this
+String : () |-> {
+    ArrayList()
 };
 
 String : (Char c) |-> {

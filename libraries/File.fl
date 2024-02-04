@@ -43,11 +43,29 @@ File::(this.flush |-> (
 ));
 
 
-get 
+(static File)::?(this.working_directory |-> {
+    import("system").file_get_working_directory()
+});
+(static File)::=((this.working_directory, value) |-> {
+    import("system").file_set_working_directory(value)
+});
 
-getter : (this.working_directory) \ (this === File) |-> {
-    import("system").working_directory()
+File.exists : path |-> {
+    import("system").file_exists(path)
 };
-setter : (this.working_directory, value) \ (this === File) |-> {
-    import("system").working_directory(value)
-}
+
+File.is_directory : path |-> {
+    import("system").file_is_directory(path)
+};
+
+File.create_directories : path |-> {
+    import("system").file_create_directories(path)
+};
+
+File.copy : (from_path, to_path) |-> {
+    import("system").file_copy(from_path, to_path)
+};
+
+File.delete : path |-> {
+    import("system").file_delete(path)
+};

@@ -26,6 +26,20 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(Boost)
 
+#WxWidgets
+set(wxWidgets_USE_STATIC 1)
+set(wxBUILD_SHARED OFF)
+FetchContent_Declare(
+   wxWidgets
+   GIT_REPOSITORY https://github.com/wxWidgets/wxWidgets.git
+   GIT_TAG v3.2.1
+)
+FetchContent_GetProperties(wxwidgets)
+if(NOT wxwidgets_POPULATED)
+   FetchContent_Populate(wxwidgets)
+   add_subdirectory(${wxwidgets_SOURCE_DIR} ${wxwidgets_BUILD_DIR})
+endif()
+
 # Readline
 if (UNIX)
     if (EXISTS /usr/include/readline)
@@ -61,6 +75,7 @@ FILE(GLOB_RECURSE ouverium_sources
 add_executable(ouverium ${ouverium_sources})
 target_link_libraries(ouverium PRIVATE Boost::dll)
 target_link_libraries(ouverium PRIVATE ${Readline})
+target_link_libraries(ouverium PRIVATE wx::core wx::base)
 target_link_libraries(ouverium PUBLIC capi)
 
 

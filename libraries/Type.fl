@@ -4,10 +4,10 @@
 };
 
 (~) := ((object, type) |-> {
-    defined object._types &
+    defined (object._types) &
     exists(object._types, x |-> {
         x === type | {
-            if (defined type._parents) {
+            if (defined (type._parents)) {
                 exists(type._parents, x |-> {
                     x === type
                 })
@@ -39,6 +39,14 @@ class : (type, extends, parents) |-> {
 };
 
 
+static : type |-> {
+    type._static
+};
+
+(~) : (object, type) \ (defined (object._static)) |-> {
+    object._static === type
+};
+
 (::);
 (::?);
 (::=);
@@ -46,8 +54,13 @@ class : (type, extends, parents) |-> {
 (() |-> {
     types := ();
 
+    default_setter : setter;
+
     getter : x \ {
-        getters := ();
+        default_setter(found, true);
+        default_setter(getters, y |-> {
+            default_setter(found, false);
+        });
         foreach(types, type |-> {
             if (type._filter(x)) {
                 getters : type._methods;
@@ -55,36 +68,35 @@ class : (type, extends, parents) |-> {
             };
         });
 
-        try {
-            r := getters(x);
-            true
-        } catch (e |-> false)
+        default_setter(r, getters(x));
+        found
     } |-> {
         r
     };
 
-    # setter : (x, value) \ {
-    #     setters;
-    #     foreach(types, type |-> {
-    #         if (type._filter(x)) {
-    #             setters : type._setters;
-    #         };
-    #     });
+    setter : (x, value) \ {
+        default_setter(found, true);
+        default_setter(setters,  y |-> {
+            default_setter(found, false);
+        });
+        foreach(types, type |-> {
+            if (type._filter(x)) {
+                setters : type._setters;
+            };
+        });
 
-    #     try {
-    #         r := setters(x, value);
-    #         true
-    #     } catch (e |-> false)
-    # } |-> {
-    #     r
-    # };
+        default_setter(r, setters(x, value));
+        found
+    } |-> {
+        r
+    };
 
     add_type : type |-> {
         if (!exists(types, x |-> {
             x === type
         })) {
+            type._filter : (a |-> false) : (this \ (defined this & this ~ type) |-> true) : ((this. .) \ (this ~ type) |-> true);
             Array.add(types, type);
-            type._filter := (a |-> false) : (this \ (defined this & this ~ type) |-> true) : ((this. .) \ (this ~ type) |-> true);
         };
     };
 

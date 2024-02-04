@@ -6,6 +6,7 @@
 #include "system_functions/Math.hpp"
 #include "system_functions/System.hpp"
 #include "system_functions/Types.hpp"
+#include "system_functions/UI.hpp"
 
 
 namespace Interpreter {
@@ -19,6 +20,7 @@ namespace Interpreter {
         SystemFunctions::Math::init(*this);
         SystemFunctions::System::init(*this);
         SystemFunctions::Types::init(*this);
+        SystemFunctions::UI::init(*this);
     }
 
 
@@ -138,17 +140,39 @@ namespace Interpreter {
                         for (auto symbol : function_definition->body->symbols)
                             f.extern_symbols.emplace(symbol, context[symbol]);
                     } else {
-                        function_definition->body = std::make_shared<Parser::Symbol>("#cached");
+                        if (auto tuple_reference = std::get_if<TupleReference>(&it->second)) {
+                            auto tuple = std::make_shared<Parser::Tuple>();
+                            for (size_t i = 0; i < tuple_reference->size(); ++i)
+                                tuple->objects.push_back(std::make_shared<Parser::Symbol>("#cached" + std::to_string(i)));
+                            function_definition->body = tuple;
 
-                        object->functions.push_front(CustomFunction{ function_definition });
-                        object->functions.back().extern_symbols.emplace("#cached", it->second.to_indirect_reference(context));
+                            object->functions.push_front(CustomFunction{ function_definition });
+                            for (size_t i = 0; i < tuple_reference->size(); ++i)
+                                object->functions.back().extern_symbols.emplace("#cached" + std::to_string(i), (*tuple_reference)[i].to_indirect_reference(context));
+                        } else {
+                            function_definition->body = std::make_shared<Parser::Symbol>("#cached");
+
+                            object->functions.push_front(CustomFunction{ function_definition });
+                            object->functions.back().extern_symbols.emplace("#cached", it->second.to_indirect_reference(context));
+                        }
                     }
 
                 } else if (auto reference = std::get_if<Reference>(&arguments)) {
-                    function_definition->body = std::make_shared<Parser::Symbol>("#cached");
+                    if (auto tuple_reference = std::get_if<TupleReference>(reference)) {
+                        auto tuple = std::make_shared<Parser::Tuple>();
+                        for (size_t i = 0; i < tuple_reference->size(); ++i)
+                            tuple->objects.push_back(std::make_shared<Parser::Symbol>("#cached" + std::to_string(i)));
+                        function_definition->body = tuple;
 
-                    object->functions.push_front(CustomFunction{ function_definition });
-                    object->functions.back().extern_symbols.emplace("#cached", reference->to_indirect_reference(context));
+                        object->functions.push_front(CustomFunction{ function_definition });
+                        for (size_t i = 0; i < tuple_reference->size(); ++i)
+                            object->functions.back().extern_symbols.emplace("#cached" + std::to_string(i), (*tuple_reference)[i].to_indirect_reference(context));
+                    } else {
+                        function_definition->body = std::make_shared<Parser::Symbol>("#cached");
+
+                        object->functions.push_front(CustomFunction{ function_definition });
+                        object->functions.back().extern_symbols.emplace("#cached", reference->to_indirect_reference(context));
+                    }
                 }
 
                 function_context.add_symbol(symbol->name, Reference(Data(object)));

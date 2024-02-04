@@ -9,8 +9,10 @@ namespace Interpreter::SystemFunctions {
 
     namespace System {
 
-        auto read_args = std::make_shared<Parser::Symbol>("file");
-        Reference read(FunctionContext& context) {
+        auto file_path_args = std::make_shared<Parser::Symbol>("path");
+        auto file_args = std::make_shared<Parser::Symbol>("file");
+
+        Reference file_read(FunctionContext& context) {
             try {
                 auto file = context["file"].to_data(context).get<Object*>();
                 auto& stream = dynamic_cast<std::istream&>(file->c_obj.get<std::ios>());
@@ -24,8 +26,7 @@ namespace Interpreter::SystemFunctions {
             }
         }
 
-        auto has_args = std::make_shared<Parser::Symbol>("file");
-        Reference has(FunctionContext& context) {
+        Reference file_has(FunctionContext& context) {
             try {
                 auto file = context["file"].to_data(context).get<Object*>();
                 auto& stream = dynamic_cast<std::istream&>(file->c_obj.get<std::ios>());
@@ -35,13 +36,13 @@ namespace Interpreter::SystemFunctions {
             }
         }
 
-        auto write_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+        auto file_write_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
             {
                 std::make_shared<Parser::Symbol>("file"),
                 std::make_shared<Parser::Symbol>("data")
             }
         ));
-        Reference write(FunctionContext& context) {
+        Reference file_write(FunctionContext& context) {
             try {
                 auto file = context["file"].to_data(context).get<Object*>();
                 auto& stream = dynamic_cast<std::ostream&>(file->c_obj.get<std::ios>());
@@ -55,8 +56,7 @@ namespace Interpreter::SystemFunctions {
             }
         }
 
-        auto flush_args = std::make_shared<Parser::Symbol>("file");
-        Reference flush(FunctionContext& context) {
+        Reference file_flush(FunctionContext& context) {
             try {
                 auto file = context["file"].to_data(context).get<Object*>();
                 auto& stream = dynamic_cast<std::ostream&>(file->c_obj.get<std::ios>());
@@ -69,8 +69,7 @@ namespace Interpreter::SystemFunctions {
             }
         }
 
-        auto open_args = std::make_shared<Parser::Symbol>("path");
-        Reference open(FunctionContext& context) {
+        Reference file_open(FunctionContext& context) {
             try {
                 auto path = context["path"].to_data(context).get<Object*>()->to_string();
 
@@ -83,13 +82,11 @@ namespace Interpreter::SystemFunctions {
             }
         }
 
-        auto working_directory_get_args = std::make_shared<Parser::Tuple>();
-        Reference working_directory_get(FunctionContext& context) {
+        Reference file_get_working_directory(FunctionContext& context) {
             return Data(context.new_object(std::filesystem::current_path().string()));
         }
 
-        auto working_directory_set_args = std::make_shared<Parser::Symbol>("path");
-        Reference working_directory_set(FunctionContext& context) {
+        Reference file_set_working_directory(FunctionContext& context) {
             try {
                 auto path = context["path"].to_data(context).get<Object*>()->to_string();
                 std::filesystem::current_path(path);
@@ -97,6 +94,59 @@ namespace Interpreter::SystemFunctions {
                 return Data();
             } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
+            } catch (std::filesystem::filesystem_error const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        Reference file_exists(FunctionContext& context) {
+            try {
+                std::filesystem::path p = context["path"].to_data(context).get<Object*>()->to_string();
+                return Data(std::filesystem::exists(p));
+            } catch (std::filesystem::filesystem_error const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        Reference file_is_directory(FunctionContext& context) {
+            try {
+                std::filesystem::path p = context["path"].to_data(context).get<Object*>()->to_string();
+                return Data(std::filesystem::is_directory(p));
+            } catch (std::filesystem::filesystem_error const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        Reference file_create_directories(FunctionContext& context) {
+            try {
+                std::filesystem::path p = context["path"].to_data(context).get<Object*>()->to_string();
+                return Data(std::filesystem::create_directory(p));
+            } catch (std::filesystem::filesystem_error const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        auto file_copy_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+            {
+                std::make_shared<Parser::Symbol>("from"),
+                std::make_shared<Parser::Symbol>("to")
+            }
+        ));
+        Reference file_copy(FunctionContext& context) {
+            try {
+                std::filesystem::path from = context["from"].to_data(context).get<Object*>()->to_string();
+                std::filesystem::path to = context["to"].to_data(context).get<Object*>()->to_string();
+                std::filesystem::copy(from, to);
+                return Data{};
+            } catch (std::filesystem::filesystem_error const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        Reference file_delete(FunctionContext& context) {
+            try {
+                std::filesystem::path p = context["path"].to_data(context).get<Object*>()->to_string();
+                return Data(static_cast<INT>(std::filesystem::remove_all(p)));
             } catch (std::filesystem::filesystem_error const&) {
                 throw FunctionArgumentsError();
             }
@@ -146,19 +196,26 @@ namespace Interpreter::SystemFunctions {
 
 
         void init(GlobalContext& context) {
-            (*context.get_global().system)["file_read"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ read_args, read });
-            (*context.get_global().system)["file_has"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ has_args, has });
-            (*context.get_global().system)["file_write"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ write_args, write });
-            (*context.get_global().system)["file_flush"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ flush_args, flush });
-            (*context.get_global().system)["file_open"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ open_args, open });
-            (*context.get_global().system)["working_directory"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ working_directory_set_args, working_directory_set });
-            (*context.get_global().system)["working_directory"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ working_directory_get_args, working_directory_get });
+            auto& s = *context.get_global().system;
+            
+            s["file_read"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_args, file_read });
+            s["file_has"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_args, file_has });
+            s["file_write"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_write_args, file_write });
+            s["file_flush"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_args, file_flush });
+            s["file_open"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_path_args, file_open });
+            s["file_get_working_directory"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ std::make_shared<Parser::Tuple>(), file_get_working_directory });
+            s["file_set_working_directory"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_path_args, file_set_working_directory });
+            s["file_exists"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_path_args, file_exists });
+            s["file_is_directory"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_path_args, file_is_directory });
+            s["file_create_directories"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_path_args, file_create_directories });
+            s["file_copy"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_copy_args, file_copy });
+            s["file_delete"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_path_args, file_delete });
 
-            (*context.get_global().system)["time"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ std::make_shared<Parser::Tuple>(), time });
+            s["time"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ std::make_shared<Parser::Tuple>(), time });
 
-            (*context.get_global().system)["weak_reference"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ weak_reference_args, weak_reference });
-            (*context.get_global().system)["weak_reference_get"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ weak_reference_get_args, weak_reference_get });
-            (*context.get_global().system)["GC_collect"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ GC_collect_args, GC_collect });
+            s["weak_reference"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ weak_reference_args, weak_reference });
+            s["weak_reference_get"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ weak_reference_get_args, weak_reference_get });
+            s["GC_collect"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ GC_collect_args, GC_collect });
 
 
             auto system = context["System"].to_data(context).get<Object*>();

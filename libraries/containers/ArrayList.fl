@@ -17,11 +17,11 @@ ArrayList::(this |-> (
     }
 ));
 
-ArrayList::(this.length |-> {
+ArrayList::?(this.length |-> {
     Array.length(this)
 });
 
-ArrayList::(this.empty |-> {
+ArrayList::?(this.empty |-> {
     this.length == 0
 });
 
@@ -37,7 +37,7 @@ ArrayList::(this.foreach |-> (
     }
 ));
 
-ArrayList::(this.capacity |-> {
+ArrayList::?(this.capacity |-> {
     Array.get_capacity(this)
 });
 
@@ -48,11 +48,11 @@ ArrayList::(this.reserve |-> (
     }
 ));
 
-ArrayList::(this.front |-> {
+ArrayList::?(this.front |-> {
     this[0]
 });
 
-ArrayList::(this.back |-> {
+ArrayList::?(this.back |-> {
     this[this.length - 1]
 });
 

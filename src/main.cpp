@@ -19,6 +19,9 @@
 std::filesystem::path program_location = boost::filesystem::canonical(boost::dll::program_location()).parent_path().string();
 std::vector<std::string> include_path;
 
+int global_argc;
+char** global_argv;
+
 #ifdef READLINE
 #include <unistd.h>
 #include <readline/readline.h>
@@ -154,6 +157,9 @@ void compile_mode(std::string const& path, std::istream& is, std::string const& 
 }
 
 int main(int argc, char** argv) {
+    global_argc = argc;
+    global_argv = argv;
+
     std::srand(std::time(nullptr));
 
     include_path.push_back(program_location.parent_path() / "libraries");
