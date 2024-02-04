@@ -68,6 +68,7 @@ set_property(TARGET capi PROPERTY C_STANDARD 99)
 FILE(GLOB_RECURSE ouverium_sources
     src/main.cpp
     src/Types.cpp src/Types.hpp
+    src/GUIApp.cpp src/GUIApp.hpp
     src/parser/*
     src/interpreter/*
     src/compiler/*
@@ -81,5 +82,7 @@ target_link_libraries(ouverium PUBLIC capi)
 
 # Installation
 
-file(CREATE_LINK ../libraries libraries SYMBOLIC)
-file(CREATE_LINK ../resources/library/include capi_include SYMBOLIC)
+if (UNIX)
+    file(CREATE_LINK ../libraries libraries SYMBOLIC)
+    file(CREATE_LINK ../resources/library/include capi_include SYMBOLIC)
+endif()
