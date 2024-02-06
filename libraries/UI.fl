@@ -1,4 +1,4 @@
-import "Type.fl"
+import "Type.fl";
 
 
 class UI.Frame;
@@ -7,6 +7,6 @@ UI.Frame : (String title) |-> {
     import("system").ui_new_frame(title)
 };
 
-UI.Button : (String text) |-> {
-    import("system").ui_new_button(text);
+UI.Button : (parent) |-> {
+    import("system").ui_new_button(parent);
 };
