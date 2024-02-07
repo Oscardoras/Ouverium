@@ -1,8 +1,12 @@
+#include "UI.hpp"
+
+
+#ifdef WXWIDGETS
+
+
 #include <iostream>
 
 #include <wx/wx.h>
-
-#include "UI.hpp"
 
 
 namespace Interpreter::SystemFunctions {
@@ -60,3 +64,20 @@ namespace Interpreter::SystemFunctions {
     }
 
 }
+
+
+#else
+
+
+namespace Interpreter::SystemFunctions {
+
+    namespace UI {
+
+        void init(GlobalContext& context) {}
+
+    }
+
+}
+
+
+#endif

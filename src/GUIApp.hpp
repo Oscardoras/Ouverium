@@ -9,6 +9,8 @@ public:
     GUIApp(int argc, char** argv);
     ~GUIApp();
 
+    int run();
+
 };
 
 
