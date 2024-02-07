@@ -10,6 +10,11 @@
 class App : public wxApp {
 public:
     bool OnInit() override {
+        this->Bind(wxEVT_IDLE, [](wxIdleEvent& ev) {
+            std::cout << "idle" << std::endl;
+
+            ev.RequestMore();
+        });
         return true;
     }
 };

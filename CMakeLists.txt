@@ -27,9 +27,27 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Boost)
 
 #WxWidgets
-find_package(wxWidgets REQUIRED COMPONENTS core base)
+find_package(wxWidgets COMPONENTS core base)
 if(wxWidgets_FOUND)
+    include(${wxWidgets_USE_FILE})
     add_compile_definitions(WXWIDGETS)
+    set(wxWidgets ${wxWidgets_LIBRARIES})
+else()
+    message(WARNING "wxWidgets is not installed.")
+    set(wxWidgets_USE_STATIC 1)
+    set(wxBUILD_SHARED OFF)
+    FetchContent_Declare(
+        wxWidgets
+        GIT_REPOSITORY https://github.com/wxWidgets/wxWidgets.git
+        GIT_TAG v3.2.1
+    )
+    FetchContent_GetProperties(wxWidgets)
+    if(NOT wxWidgets_POPULATED)
+        FetchContent_Populate(wxWidgets)
+        add_subdirectory(${wxWidgets_SOURCE_DIR} ${wxWidgets_BUILD_DIR})
+    endif()
+    add_compile_definitions(WXWIDGETS)
+    set(wxWidgets wx::core wx::base)
 endif()
 
 # Readline
@@ -68,10 +86,7 @@ FILE(GLOB_RECURSE ouverium_sources
 add_executable(ouverium ${ouverium_sources})
 target_link_libraries(ouverium PRIVATE Boost::dll)
 target_link_libraries(ouverium PRIVATE ${Readline})
-if(wxWidgets_FOUND)
-    include(${wxWidgets_USE_FILE})
-    target_link_libraries(ouverium PRIVATE ${wxWidgets_LIBRARIES})
-endif()
+target_link_libraries(ouverium PRIVATE ${wxWidgets})
 target_link_libraries(ouverium PUBLIC capi)
 
 
