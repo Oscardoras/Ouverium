@@ -16,6 +16,8 @@ namespace Interpreter {
         Exception(Context& context, Reference const& reference, std::shared_ptr<Parser::Expression> expression);
         Exception(Context& context, std::string const& message, Data const& type, std::shared_ptr<Parser::Expression> expression);
 
+        void print_stack_trace(Context& context) const;
+
     };
     class FunctionArgumentsError {};
 

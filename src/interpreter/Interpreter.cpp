@@ -48,6 +48,16 @@ namespace Interpreter {
         return Data(object);
     }(), expression) {}
 
+    void Exception::print_stack_trace(Context& context) const {
+        if (!positions.empty()) {
+            std::ostringstream oss;
+            oss << "An exception occured: " << reference.to_data(context);
+            positions.front()->notify_error(oss.str());
+            for (auto const& p : positions)
+                p->notify_position();
+        }
+    }
+
 
     using ParserExpression = std::shared_ptr<Parser::Expression>;
     class Computed : public std::map<ParserExpression, Reference> {

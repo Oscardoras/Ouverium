@@ -24,6 +24,11 @@ namespace Interpreter::SystemFunctions {
         Reference thread_get_id(FunctionContext& context);
         Reference thread_current_id(FunctionContext& context);
 
+        Reference mutex_is(FunctionContext& context);
+        Reference mutex_create(FunctionContext& context);
+        Reference mutex_lock(FunctionContext& context);
+        Reference mutex_unlock(FunctionContext& context);
+
         Reference weak_reference(FunctionContext& context);
         Reference GC_collect(FunctionContext& context);
 

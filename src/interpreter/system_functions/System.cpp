@@ -197,24 +197,6 @@ namespace Interpreter::SystemFunctions {
             }
         };
 
-        auto thread_create_args = std::make_shared<Parser::Symbol>("function");
-        Reference thread_create(FunctionContext& context) {
-            try {
-                auto function = context["function"].to_data(context).get<Object*>();
-
-                auto& global = context.get_global();
-                auto expression = context.expression;
-
-                auto obj = context.new_object();
-                obj->c_obj = std::make_shared<Thread>([&global, expression, function]() {
-                    Interpreter::call_function(global, expression, Data(function), std::make_shared<Parser::Tuple>());
-                });
-                return Data(obj);
-            } catch (Data::BadAccess const&) {
-                throw FunctionArgumentsError();
-            }
-        }
-
         auto thread_is_args = std::make_shared<Parser::Symbol>("thread");
         Reference thread_is(FunctionContext& context) {
             try {
@@ -225,6 +207,28 @@ namespace Interpreter::SystemFunctions {
                 return Data(false);
             } catch (Data::BadAccess const&) {
                 return Data(false);
+            }
+        }
+
+        auto thread_create_args = std::make_shared<Parser::Symbol>("function");
+        Reference thread_create(FunctionContext& context) {
+            try {
+                auto function = context["function"].to_data(context).get<Object*>();
+
+                auto& global = context.get_global();
+                auto expression = context.expression;
+
+                auto obj = context.new_object();
+                obj->c_obj = std::make_shared<Thread>([&global, expression, function]() {
+                    try {
+                        Interpreter::call_function(global, expression, Data(function), std::make_shared<Parser::Tuple>());
+                    } catch (Interpreter::Exception const& ex) {
+                        ex.print_stack_trace(global);
+                    }
+                });
+                return Data(obj);
+            } catch (Data::BadAccess const&) {
+                throw FunctionArgumentsError();
             }
         }
 
@@ -272,6 +276,63 @@ namespace Interpreter::SystemFunctions {
         auto thread_current_id_args = std::make_shared<Parser::Tuple>();
         Reference thread_current_id(FunctionContext&) {
             return Data(static_cast<INT>(std::hash<std::thread::id>{}(std::this_thread::get_id())));
+        }
+
+
+        auto mutex_is_args = std::make_shared<Parser::Symbol>("mutex");
+        Reference mutex_is(FunctionContext& context) {
+            try {
+                context["mutex"].to_data(context).get<Object*>()->c_obj.get<std::mutex>();
+
+                return Data(true);
+            } catch (std::bad_any_cast const&) {
+                return Data(false);
+            } catch (Data::BadAccess const&) {
+                return Data(false);
+            }
+        }
+
+        auto mutex_create_args = std::make_shared<Parser::Tuple>();
+        Reference mutex_create(FunctionContext& context) {
+            try {
+                auto obj = context.new_object();
+                obj->c_obj = std::make_shared<std::mutex>();
+                return Data(obj);
+            } catch (Data::BadAccess const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        auto mutex_lock_args = std::make_shared<Parser::Symbol>("mutex");
+        Reference mutex_lock(FunctionContext& context) {
+            try {
+                auto& mutex = context["mutex"].to_data(context).get<Object*>()->c_obj.get<std::mutex>();
+                mutex.lock();
+                return Data{};
+            } catch (Data::BadAccess const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        auto mutex_try_lock_args = std::make_shared<Parser::Symbol>("mutex");
+        Reference mutex_try_lock(FunctionContext& context) {
+            try {
+                auto& mutex = context["mutex"].to_data(context).get<Object*>()->c_obj.get<std::mutex>();
+                return Data(mutex.try_lock());
+            } catch (Data::BadAccess const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        auto mutex_unlock_args = std::make_shared<Parser::Symbol>("mutex");
+        Reference mutex_unlock(FunctionContext& context) {
+            try {
+                auto& mutex = context["mutex"].to_data(context).get<Object*>()->c_obj.get<std::mutex>();
+                mutex.unlock();
+                return Data{};
+            } catch (Data::BadAccess const&) {
+                throw FunctionArgumentsError();
+            }
         }
 
 
@@ -336,6 +397,12 @@ namespace Interpreter::SystemFunctions {
             s["thread_detach"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ thread_detach_args, thread_detach });
             s["thread_get_id"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ thread_get_id_args, thread_get_id });
             s["thread_current_id"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ thread_current_id_args, thread_current_id });
+
+            s["mutex_is"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ mutex_is_args, mutex_is });
+            s["mutex_create"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ mutex_create_args, mutex_create });
+            s["mutex_lock"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ mutex_lock_args, mutex_lock });
+            s["mutex_try_lock"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ mutex_try_lock_args, mutex_try_lock });
+            s["mutex_unlock"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ mutex_unlock_args, mutex_unlock });
 
             s["weak_reference"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ weak_reference_args, weak_reference });
             s["weak_reference_get"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ weak_reference_get_args, weak_reference_get });

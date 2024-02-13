@@ -61,9 +61,7 @@ ArrayList::(this.add_front |-> (
         l := this.length;
         if (l > 0) {
             Array.add(this, this[l-1]);
-            for i from (l-1) to 0 step (-1) {
-                this[i] := this[i-1]
-            };
+            Array.shift(this, 1);
             this[0] := element
         } else {
             Array.add(this, element)
@@ -81,9 +79,7 @@ ArrayList::(this.remove_front |-> (
     () \ (!this.empty) |-> {
         l := this.length;
         value := this[0];
-        for i from 0 to (l-1) {
-            this[i] := this[i+1]
-        };
+        Array.shift(this, -1);
         Array.remove(this);
         value
     }

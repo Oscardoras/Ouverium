@@ -7,7 +7,7 @@ class Thread;
     import("system").thread_is(thread)
 };
 
-Thread : (Function function) |-> {
+Thread : (function()) |-> {
     import("system").thread_create(function)
 };
 
@@ -32,3 +32,33 @@ Thread::?(this.id |-> (
 (static Thread)::?(this.current_id |-> {
     import("system").thread_current_id()
 });
+
+
+class Mutex;
+
+(~) : (mutex, Mutex) |-> {
+    import("system").mutex_is(mutex)
+};
+
+Mutex : () |-> {
+    import("system").mutex_create()
+};
+
+
+Mutex::(this.lock |-> (
+    () |-> {
+        import("system").mutex_lock(this)
+    }
+));
+
+Mutex::(this.try_lock |-> (
+    () |-> {
+        import("system").mutex_try_lock(this)
+    }
+));
+
+Mutex::(this.unlock |-> (
+    () |-> {
+        import("system").mutex_unlock(this)
+    }
+));

@@ -98,34 +98,14 @@ String::(this.index_of |-> (
 (+) : (String str1, String str2) |-> {
     str := String();
 
-    (l1,l2) := (str1.length, str2.length);
-    l := l1+l2;
-    str.reserve(l);
-
-    for i from 0 to l1 {
-        str.add_back(str1[i])
-    };
-    i := 0;
-    for i from 0 to l2 {
-        str.add_back(str2[i])
-    };
+    Array.concat(str, str1);
+    Array.concat(str, str2);
 
     str
 };
 
 (:+) : (String str1, String str2) |-> {
-    (l1,l2) := (str1.length, str2.length);
-    l := l1+l2;
-
-    if (str1.capacity < l) {
-        str1.reserve(l)
-    };
-
-    str1.reserve(l);
-
-    for i from 0 to l2 {
-        str1.add_back(str2[i])
-    };
+    Array.concat(str1, str2);
 
     str1
 };

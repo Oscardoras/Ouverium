@@ -20,6 +20,8 @@ namespace Interpreter::SystemFunctions {
 
         Reference remove(FunctionContext& context);
 
+        Reference copy(FunctionContext& context);
+
         Reference foreach(FunctionContext& context);
 
 

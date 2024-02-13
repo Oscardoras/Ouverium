@@ -84,13 +84,7 @@ int interactive_mode(GUIApp& gui_app, std::string const& path) {
                             auto r = Interpreter::execute(context, expression);
                             call_function(context, context.expression, context["print"], r);
                         } catch (Interpreter::Exception const& ex) {
-                            if (!ex.positions.empty()) {
-                                std::ostringstream oss;
-                                oss << "An exception occured: " << ex.reference.to_data(context);
-                                ex.positions.front()->notify_error(oss.str());
-                                for (auto const& p : ex.positions)
-                                    p->notify_position();
-                            }
+                            ex.print_stack_trace(context);
                         }
 
                         code = "";
@@ -138,13 +132,7 @@ int file_mode(GUIApp& gui_app, std::string const& path, std::istream& is) {
                 return EXIT_SUCCESS;
             }
         } catch (Interpreter::Exception const& ex) {
-            if (!ex.positions.empty()) {
-                std::ostringstream oss;
-                oss << "An exception occured: " << ex.reference.to_data(context);
-                ex.positions.front()->notify_error(oss.str());
-                for (auto const& p : ex.positions)
-                    p->notify_position();
-            }
+            ex.print_stack_trace(context);
             return EXIT_FAILURE;
         }
     } catch (Parser::Standard::IncompleteCode const&) {
