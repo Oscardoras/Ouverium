@@ -2,6 +2,7 @@
 #include <iostream>
 #include <filesystem>
 #include <fstream>
+#include <future>
 #include <sstream>
 
 #include <boost/dll.hpp>
@@ -19,9 +20,6 @@
 
 std::filesystem::path program_location = boost::filesystem::canonical(boost::dll::program_location()).parent_path().string();
 std::vector<std::string> include_path;
-
-int global_argc;
-char** global_argv;
 
 #ifdef READLINE
 #include <unistd.h>
@@ -57,53 +55,61 @@ int interactive_mode(GUIApp& gui_app, std::string const& path) {
     Interpreter::GlobalContext context(nullptr);
     auto symbols = context.get_symbols();
 
-    //gui_app.run();
-
     size_t line_number = 0;
     std::string code;
     std::string line;
 
-    auto func = [&path, &context, &symbols, &line_number, &code, &line]() {
-        if (get_line(line)) {
-            if (line.length() > 0) {
-                ++line_number;
-                code += line + '\n';
-
-                try {
-                    auto expression = Parser::Standard(code, path).get_tree();
-                    context.expression = expression;
-
-                    auto new_symbols = expression->compute_symbols(symbols);
-                    symbols.insert(new_symbols.begin(), new_symbols.end());
-
-                    try {
-                        auto r = Interpreter::execute(context, expression);
-                        call_function(context, context.expression, context["print"], r);
-                    } catch (Interpreter::Exception const& ex) {
-                        if (!ex.positions.empty()) {
-                            std::ostringstream oss;
-                            oss << "An exception occured: " << ex.reference.to_data(context);
-                            ex.positions.front()->notify_error(oss.str());
-                            for (auto const& p : ex.positions)
-                                p->notify_position();
-                        }
-                    }
-
-                    code = "";
-                    for (unsigned i = 0; i < line_number; ++i) code += '\n';
-                } catch (Parser::Standard::IncompleteCode const&) {
-                    std::cout << '\t';
-                } catch (Parser::Standard::Exception const& e) {
-                    std::cerr << e.what();
-                    code = "";
-                    for (unsigned i = 0; i < line_number; ++i) code += '\n';
-                }
-            }
-            return true;
-        } else return false;
+    auto async_read = [&line]() {
+        return get_line(line);
     };
 
-    while (func());
+    auto f = std::async(std::launch::async, async_read);
+
+    bool exit = false;
+    while (!exit) {
+        if (f.wait_for(std::chrono::milliseconds(10)) == std::future_status::ready) {
+            if (f.get()) {
+                if (line.length() > 0) {
+                    ++line_number;
+                    code += line + '\n';
+
+                    try {
+                        auto expression = Parser::Standard(code, path).get_tree();
+                        context.expression = expression;
+
+                        auto new_symbols = expression->compute_symbols(symbols);
+                        symbols.insert(new_symbols.begin(), new_symbols.end());
+
+                        try {
+                            auto r = Interpreter::execute(context, expression);
+                            call_function(context, context.expression, context["print"], r);
+                        } catch (Interpreter::Exception const& ex) {
+                            if (!ex.positions.empty()) {
+                                std::ostringstream oss;
+                                oss << "An exception occured: " << ex.reference.to_data(context);
+                                ex.positions.front()->notify_error(oss.str());
+                                for (auto const& p : ex.positions)
+                                    p->notify_position();
+                            }
+                        }
+
+                        code = "";
+                        for (unsigned i = 0; i < line_number; ++i) code += '\n';
+                    } catch (Parser::Standard::IncompleteCode const&) {
+                        std::cout << '\t';
+                    } catch (Parser::Standard::Exception const& e) {
+                        std::cerr << e.what();
+                        code = "";
+                        for (unsigned i = 0; i < line_number; ++i) code += '\n';
+                    }
+                }
+
+                f = std::async(std::launch::async, async_read);
+            } else break;
+        } else {
+            gui_app.yield();
+        }
+    }
 
     return EXIT_SUCCESS;
 }
@@ -124,7 +130,7 @@ int file_mode(GUIApp& gui_app, std::string const& path, std::istream& is) {
             expression->compute_symbols(symbols);
 
             auto r = Interpreter::execute(context, expression);
-            gui_app.run();
+            while (gui_app.yield());
 
             try {
                 return static_cast<int>(r.to_data(context).get<INT>());

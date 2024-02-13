@@ -304,7 +304,7 @@ namespace Interpreter::SystemFunctions {
             }
         }
 
-        bool equals(Data a, Data b) {
+        bool eq(Data a, Data b) {
             if (auto a_object = get_if<Object*>(&a)) {
                 if (auto b_object = get_if<Object*>(&b))
                     return (*a_object)->properties == (*b_object)->properties && (*a_object)->array == (*b_object)->array;
@@ -334,14 +334,14 @@ namespace Interpreter::SystemFunctions {
             auto a = context["a"].to_data(context);
             auto b = context["b"].to_data(context);
 
-            return Reference(Data(equals(a, b)));
+            return Reference(Data(eq(a, b)));
         }
 
         Reference not_equals(FunctionContext& context) {
             auto a = context["a"].to_data(context);
             auto b = context["b"].to_data(context);
 
-            return Reference(Data(!equals(a, b)));
+            return Reference(Data(!eq(a, b)));
         }
 
         Reference check_pointers(FunctionContext& context) {

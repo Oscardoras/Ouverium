@@ -1,0 +1,9 @@
+import "Type.fl";
+
+
+class Time;
+
+
+(static Time)::?(this.time |-> {
+    import("system").time()
+});

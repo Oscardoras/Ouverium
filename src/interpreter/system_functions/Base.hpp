@@ -33,7 +33,7 @@ namespace Interpreter::SystemFunctions {
 
         Reference function_definition(FunctionContext& context);
 
-        bool equals(Data a, Data b);
+        bool eq(Data a, Data b);
 
         Reference equals(FunctionContext& context);
 

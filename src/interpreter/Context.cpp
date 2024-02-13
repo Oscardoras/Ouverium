@@ -1,16 +1,23 @@
+#include <mutex>
+
 #include "Interpreter.hpp"
 
 
 namespace Interpreter {
 
+    static std::mutex new_object_mutex;
+    static std::mutex new_reference_mutex;
+
     Object* Context::new_object(Object const& object) {
         auto& objects = get_global().objects;
+        std::lock_guard guard(new_object_mutex);
         objects.push_back(std::move(object));
         return &objects.back();
     }
 
     Data& Context::new_reference(Data const& data) {
         auto& references = get_global().references;
+        std::lock_guard guard(new_reference_mutex);
         references.push_back(data);
         return references.back();
     }

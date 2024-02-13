@@ -19,7 +19,7 @@ Char::(this.alphanum |-> {
 });
 
 
-class String extends ArrayList;
+class String;
 
 (~) : (str, String) |-> {
     str ~ Array & {

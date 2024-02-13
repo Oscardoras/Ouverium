@@ -7,9 +7,9 @@
     defined (object._types) &
     exists(object._types, x |-> {
         x === type | {
-            if (defined (type._parents)) {
-                exists(type._parents, x |-> {
-                    x === type
+            if (defined (x._parents)) {
+                exists(x._parents, y |-> {
+                    y === type
                 })
             } else {
                 false

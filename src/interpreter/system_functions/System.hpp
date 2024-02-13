@@ -17,6 +17,13 @@ namespace Interpreter::SystemFunctions {
 
         Reference time(FunctionContext& context);
 
+        Reference thread_is(FunctionContext& context);
+        Reference thread_create(FunctionContext& context);
+        Reference thread_join(FunctionContext& context);
+        Reference thread_detach(FunctionContext& context);
+        Reference thread_get_id(FunctionContext& context);
+        Reference thread_current_id(FunctionContext& context);
+
         Reference weak_reference(FunctionContext& context);
         Reference GC_collect(FunctionContext& context);
 

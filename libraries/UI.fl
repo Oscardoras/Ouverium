@@ -1,12 +1,44 @@
 import "Type.fl";
+import "String.fl";
 
 
-class UI.Frame;
+class UI.Window;
+
+(UI.Window)::(this.add_event |-> (
+    callback |-> {
+        import("system").ui_add_event(this, callback)
+    }
+));
+
+(UI.Window)::(this.set_position |-> (
+    (x, y) |-> {
+        import("system").ui_set_position(this, x, y)
+    }
+));
+
+(UI.Window)::(this.set_size |-> (
+    (x, y) |-> {
+        import("system").ui_set_size(this, x, y)
+    }
+));
+
+
+class (UI.Frame) extends (UI.Window,);
 
 UI.Frame : (String title) |-> {
-    import("system").ui_new_frame(title)
+    (import("system").ui_new_frame(title)) :~ (UI.Frame)
 };
 
+
+class (UI.Panel) extends (UI.Window,);
+
+UI.Panel : (parent) |-> {
+    (import("system").ui_new_panel(parent)) :~ (UI.Panel)
+};
+
+
+class (UI.Button) extends (UI.Window,);
+
 UI.Button : (parent) |-> {
-    import("system").ui_new_button(parent);
+    (import("system").ui_new_button(parent)) :~ (UI.Button)
 };

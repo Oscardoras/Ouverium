@@ -1,0 +1,34 @@
+import "Type.fl";
+
+
+class Thread;
+
+(~) : (thread, Thread) |-> {
+    import("system").thread_is(thread)
+};
+
+Thread : (Function function) |-> {
+    import("system").thread_create(function)
+};
+
+
+Thread::(this.join |-> (
+    () |-> {
+        import("system").thread_join(this)
+    }
+));
+
+Thread::(this.detach |-> (
+    () |-> {
+        import("system").thread_detach(this)
+    }
+));
+
+Thread::?(this.id |-> (
+    import("system").thread_get_id(this)
+));
+
+
+(static Thread)::?(this.current_id |-> {
+    import("system").thread_current_id()
+});

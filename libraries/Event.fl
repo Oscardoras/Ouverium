@@ -1,0 +1,19 @@
+import "Type.fl";
+
+
+class Event;
+
+
+Event::(this |-> (
+    args |-> {
+        foreach(this._callbacks, callback |-> {
+            callback(args);
+        });
+    }
+));
+
+
+(:+) : (event, callback) \ (event ~ Event & callback ~ Function) |-> {
+    Array.add(event._callbacks, callback);
+    event
+};

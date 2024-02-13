@@ -1,6 +1,7 @@
 #ifndef __INTERPRETER_FUNCTION_HPP__
 #define __INTERPRETER_FUNCTION_HPP__
 
+#include <functional>
 #include <map>
 #include <memory>
 
@@ -17,7 +18,7 @@ namespace Interpreter {
 
     struct SystemFunction {
         std::shared_ptr<Parser::Expression> parameters;
-        Reference(*pointer)(FunctionContext&);
+        std::function<Reference(FunctionContext&)> pointer;
     };
 
     struct Function : public std::variant<CustomFunction, SystemFunction> {

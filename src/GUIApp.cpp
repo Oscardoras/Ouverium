@@ -10,11 +10,6 @@
 class App : public wxApp {
 public:
     bool OnInit() override {
-        this->Bind(wxEVT_IDLE, [](wxIdleEvent& ev) {
-            std::cout << "idle" << std::endl;
-
-            ev.RequestMore();
-        });
         return true;
     }
 };
@@ -22,26 +17,28 @@ public:
 GUIApp::GUIApp(int argc, char** argv) {
     wxApp::SetInstance(new App);
     wxEntryStart(argc, argv);
+    wxTheApp->OnInit();
 }
 
 GUIApp::~GUIApp() {
+    wxTheApp->OnExit();
     wxEntryCleanup();
 }
 
-int GUIApp::run() {
-    wxTheApp->CallOnInit();
-        return wxTheApp->OnRun();
+bool GUIApp::yield() {
+    wxYield();
+    return wxTheApp->GetTopWindow() != nullptr;
 }
 
 
 #else
 
 
-GUIApp::GUIApp(int argc, char** argv) {}
+GUIApp::GUIApp(int, char**) {}
 
 GUIApp::~GUIApp() {}
 
-int GUIApp::run() {}
+bool GUIApp::yield() {}
 
 
 #endif
