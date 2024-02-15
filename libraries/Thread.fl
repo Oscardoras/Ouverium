@@ -62,3 +62,15 @@ Mutex::(this.unlock |-> (
         import("system").mutex_unlock(this)
     }
 ));
+
+
+class Future extends (ConditionVariable,);
+
+async : (code()) |-> {
+    future = Future();
+    Thread {
+        future._value := code();
+        future.notify_all();
+    };
+    future
+};
