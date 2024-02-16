@@ -1,17 +1,11 @@
 import "Type.fl";
+import "containers/List.fl";
 
 
 ArrayList := Array;
-class ArrayList;
+class ArrayList extends List;
 
-ArrayList : this |-> {
-    Array.set_capacity(this, 1);
-
-    this
-};
-
-
-ArrayList::(this |-> (
+ArrayList:::(this |-> (
     index \ (index ~ Int & 0 <= index & index < this.length) |-> {
         Array.get(this, index)
     }
@@ -24,18 +18,6 @@ ArrayList::?(this.length |-> {
 ArrayList::?(this.empty |-> {
     this.length == 0
 });
-
-ArrayList::(this.foreach |-> (
-    function |-> {
-        l := this.length;
-        list := ArrayList();
-        list.reserve(l);
-        for i from 0 to l {
-            list.add_back(function(this[i]))
-        };
-        list
-    }
-));
 
 ArrayList::?(this.capacity |-> {
     Array.get_capacity(this)
@@ -128,6 +110,66 @@ ArrayList::(this.resize |-> (
         };
     } : size \ (size ~ Int & 0 <= size) |-> {
         this.resize(size, ());
+    }
+));
+
+ArrayList::?(this.iterator_begin |-> {
+    ArrayList.Iterator(this, 0)
+});
+
+ArrayList::?(this.iterator_end |-> {
+    ArrayList.Iterator(this, this.length-1)
+});
+
+ArrayList::?(this.iterator |-> {
+    this.iterator_begin
+});
+
+
+class (ArrayList.Iterator) extends (List.Iterator);
+
+ArrayList.Iterator : (array, index) |-> {
+    this :~ ArrayList.Iterator;
+
+    this._array := array;
+    this._index := index;
+
+    this
+};
+
+(ArrayList.Iterator)::(this.is_valid |-> (
+    () |-> {
+        0 <= this._index & this._index < this._array.length
+    }
+));
+
+(ArrayList.Iterator)::(this.get |-> (
+    () \ (this.is_valid()) |-> {
+        this._array[this._index]
+    }
+));
+
+(ArrayList.Iterator)::(this.remove |-> (
+    () \ (this.is_valid()) |-> {
+        this._array.remove(this._index);
+    }
+));
+
+(ArrayList.Iterator)::(this.insert |-> (
+    element \ (this.is_valid()) |-> {
+        this._array.insert(this._index, element);
+    }
+));
+
+(ArrayList.Iterator)::(this.next |-> (
+    () |-> {
+        ++this._index;
+    }
+));
+
+(ArrayList.Iterator)::(this.previous |-> (
+    () |-> {
+        --this._index;
     }
 ));
 

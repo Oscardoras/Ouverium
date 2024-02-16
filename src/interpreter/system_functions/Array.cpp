@@ -160,8 +160,10 @@ namespace Interpreter::SystemFunctions {
                     for (auto const& r : *tuple)
                         Interpreter::call_function(context.get_parent(), context.expression, context["function"], r);
                 } else {
-                    for (auto const& d : array.to_data(context).get<Object*>()->array)
-                        Interpreter::call_function(context.get_parent(), context.expression, context["function"], d);
+                    auto obj = array.to_data(context).get<Object*>();
+                    size_t size = obj->array.size();
+                    for (size_t i = 0; i < size; ++i)
+                        Interpreter::call_function(context.get_parent(), context.expression, context["function"], ArrayReference{ *obj , i });
                 }
 
                 return Data{};

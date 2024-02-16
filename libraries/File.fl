@@ -17,7 +17,6 @@ File : (String path) |-> {
     import("system").file_open(path)
 };
 
-
 File::(this.read |-> (
     () |-> {
         import("system").file_read(this)
@@ -41,7 +40,6 @@ File::(this.flush |-> (
         import("system").file_flush(this)
     }
 ));
-
 
 (static File)::?(this.working_directory |-> {
     import("system").file_get_working_directory()

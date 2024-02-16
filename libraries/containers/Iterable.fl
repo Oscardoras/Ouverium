@@ -1,47 +1,19 @@
-import "../Type.fl";
+import "Type.fl";
 
 
-Iterable : this |-> {
-    this :~ Iterable;
+class Iterable;
+class (Iterable.Iterator);
 
-    abstract this.foreach;
-    abstract this.filter;
+class BidirectionalIterable extends Iterable;
+class (BidirectionalIterable.Iterator) extends (Iterable.Iterator);
 
-    abstract this.iterator;
 
-    this
-};
-
-Iterable.Iterator : (this, iterable) |-> {
-    this :~ Iterable.Iterator;
-
-    this.iterable := iterable;
-
-    abstract this.has_next;
-    abstract this.next;
-
-    abstract this.get;
-    abstract this.remove;
-
-    this
-};
-
-BidirectionalIterable : this |-> {
-    Iterable(this);
-    this :~ BidirectionalIterable;
-
-    abstract this.iterator_first;
-    abstract this.iterator_last;
-
-    this
-};
-
-BidirectionalIterable.Iterator : (this, iterable) |-> {
-    Iterable.Iterator(this, iterable);
-    this :~ BidirectionalIterable.Iterator;
-
-    abstract this.has_previous;
-    abstract this.previous;
-
-    this
-}
+Iterable::(this.foreach |-> (
+    (Function function) |-> {
+        it := this.iterator;
+        while (it.is_valid()) {
+            function(it.get());
+            it.next();
+        };
+    }
+));

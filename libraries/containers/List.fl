@@ -1,48 +1,6 @@
-import "../Type.fl";
-import "Iterable.fl";
+import "Type.fl";
+import "containers/Iterable.fl";
 
 
-List : this |-> {
-    BidirectionalIterable(this);
-    this :~ List;
-
-    this : index \ (index ~ Int & 0 <= index & index < this.length()) |-> {};
-
-    this.filter : (constructor, function) |-> {
-        list := constructor();
-        this.foreach(object |-> {
-            if (function(object)) {
-                list.add_last(object)
-            }
-        });
-        list
-    };
-
-    this.length : () |-> {};
-    this.is_empty : () |-> {};
-
-    this.get_first : () \ (!this.is_empty()) |-> {};
-    this.get_last : () \ (!this.is_empty()) |-> {};
-
-    this.add_first : () |-> {};
-    this.add_last : () |-> {};
-
-    this.remove_first : () \ (!this.is_empty()) |-> {};
-    this.remove_last : () \ (!this.is_empty()) |-> {};
-
-    this.insert : (index, object) \ (index ~ Int & 0 <= index & index < this.length()) |-> {};
-    this.remove : index \ (index ~ Int & 0 <= index & index < this.length()) |-> {};
-
-    this.iterator : index \ (index ~ Int & 0 <= index & index < this.length()) |-> {};
-
-    this
-};
-
-List.Iterator : (this, iterable) |-> {
-    BidirectionalIterable.Iterator(this, iterable);
-    this :~ List.Iterator;
-
-    this.insert : object |-> {};
-
-    this
-}
+class List extends BidirectionalIterable;
+class (List.Iterator) extends (BidirectionalIterable.Iterator);

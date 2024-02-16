@@ -47,13 +47,32 @@ namespace Interpreter::SystemFunctions {
                 throw FunctionArgumentsError();
         }
 
+        auto array_constructor_args = std::make_shared<Parser::FunctionCall>(
+            std::make_shared<Parser::Symbol>("array"),
+            std::make_shared<Parser::Tuple>()
+        );
         Reference array_constructor(FunctionContext& context) {
-            auto a = context["a"].to_data(context);
+            auto array = Interpreter::call_function(context.get_parent(), context.expression, context["array"], std::make_shared<Parser::Tuple>());
 
-            if (a.is<Object*>())
-                return a;
-            else
-                throw FunctionArgumentsError();
+            if (auto tuple = std::get_if<TupleReference>(&array)) {
+                auto object = context.new_object();
+                object->array.reserve(tuple->size());
+
+                for (auto const& r : *tuple)
+                    object->array.push_back(r.to_data(context));
+
+                return object;
+            } else {
+                auto data = array.to_data(context);
+                auto obj = get_if<Object*>(&data);
+                if (obj && (*obj)->array.capacity() > 0) {
+                    return Data(*obj);
+                } else {
+                    auto object = context.new_object();
+                    object->array.push_back(data);
+                    return object;
+                }
+            }
         }
 
         Reference function_constructor(FunctionContext& context) {
@@ -101,7 +120,7 @@ namespace Interpreter::SystemFunctions {
             context.get_function("Float").push_front(SystemFunction{ constructor_args, float_constructor });
             context.get_function("Int").push_front(SystemFunction{ constructor_args, int_constructor });
             context.get_function("Bool").push_front(SystemFunction{ constructor_args, bool_constructor });
-            context.get_function("Array").push_front(SystemFunction{ constructor_args, array_constructor });
+            context.get_function("Array").push_front(SystemFunction{ array_constructor_args, array_constructor });
             context.get_function("Function").push_front(SystemFunction{ constructor_args, function_constructor });
 
             Function f = SystemFunction{ is_type_args, is_type };

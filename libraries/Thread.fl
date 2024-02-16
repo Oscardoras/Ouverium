@@ -1,4 +1,5 @@
 import "Type.fl";
+import "containers/Iterable.fl";
 
 
 class Thread;
@@ -10,7 +11,6 @@ class Thread;
 Thread : (function()) |-> {
     import("system").thread_create(function)
 };
-
 
 Thread::(this.join |-> (
     () |-> {
@@ -28,9 +28,12 @@ Thread::?(this.id |-> (
     import("system").thread_get_id(this)
 ));
 
-
 (static Thread)::?(this.current_id |-> {
     import("system").thread_current_id()
+});
+
+(static Thread)::?(this.hardware_concurrency |-> {
+    import("system").thread_hardware_concurrency()
 });
 
 
@@ -43,7 +46,6 @@ class Mutex;
 Mutex : () |-> {
     import("system").mutex_create()
 };
-
 
 Mutex::(this.lock |-> (
     () |-> {
@@ -64,13 +66,53 @@ Mutex::(this.unlock |-> (
 ));
 
 
-class Future extends (ConditionVariable,);
+class Future;
+
+Future : this |-> {
+    this :~ Future;
+
+    this._mutex := Mutex();
+    this._mutex.lock();
+
+    this
+};
+
+Future::(this.wait |-> {
+    () |-> {
+        this._mutex.lock();
+        this._mutex.unlock();
+    }
+});
+
+Future::?(this.available |-> {
+    defined (this.value)
+});
+
 
 async : (code()) |-> {
-    future = Future();
+    future := Future();
     Thread {
-        future._value := code();
-        future.notify_all();
+        future.value := code();
+        future._mutex.unlock();
     };
     future
 };
+
+
+Iterable::(this.parallel |-> (
+    (Function function) |-> {
+        threads := [];
+
+        it := this.iterator;
+        while (it.is_valid()) {
+            (value |-> {
+                Array.add(threads, Thread { function(value) });
+            })(it.get());
+            it.next();
+        };
+
+        threads.foreach(thread |-> {
+            thread.join();
+        });
+    }
+));

@@ -187,7 +187,7 @@ namespace Interpreter {
 
                 function_context.add_symbol(symbol->name, Reference(Data(object)));
             } else {
-                auto r = execute(context, p_function->function).to_data(context);
+                auto r = execute(function_context, p_function->function).to_data(context);
 
                 Arguments args;
                 if (auto expression = std::get_if<ParserExpression>(&arguments)) {

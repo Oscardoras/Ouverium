@@ -45,7 +45,6 @@ String : (Char c) |-> {
     [c,]
 };
 
-
 String::(this.substring |-> (
     (Int begin) \ (begin >= 0 & begin < this.length) |-> {
         str := String();

@@ -23,7 +23,7 @@ class UI.Window;
 ));
 
 
-class (UI.Frame) extends (UI.Window,);
+class (UI.Frame) extends (UI.Window);
 
 UI.Frame : (String title) |-> {
     (import("system").ui_new_frame(title)) :~ (UI.Frame)

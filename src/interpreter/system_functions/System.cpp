@@ -1,3 +1,4 @@
+#include <condition_variable>
 #include <ctime>
 #include <fstream>
 #include <iostream>
@@ -279,6 +280,12 @@ namespace Interpreter::SystemFunctions {
         }
 
 
+        auto thread_hardware_concurrency_args = std::make_shared<Parser::Tuple>();
+        Reference thread_hardware_concurrency(FunctionContext&) {
+            return Data(static_cast<INT>(std::thread::hardware_concurrency()));
+        }
+
+
         auto mutex_is_args = std::make_shared<Parser::Symbol>("mutex");
         Reference mutex_is(FunctionContext& context) {
             try {
@@ -397,6 +404,7 @@ namespace Interpreter::SystemFunctions {
             s["thread_detach"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ thread_detach_args, thread_detach });
             s["thread_get_id"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ thread_get_id_args, thread_get_id });
             s["thread_current_id"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ thread_current_id_args, thread_current_id });
+            s["thread_hardware_concurrency"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ thread_hardware_concurrency_args, thread_hardware_concurrency });
 
             s["mutex_is"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ mutex_is_args, mutex_is });
             s["mutex_create"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ mutex_create_args, mutex_create });

@@ -4,18 +4,11 @@
 };
 
 (~) := ((object, type) |-> {
-    defined (object._types) &
-    exists(object._types, x |-> {
-        x === type | {
-            if (defined (x._parents)) {
-                exists(x._parents, y |-> {
-                    y === type
-                })
-            } else {
-                false
-            }
-        }
-    })
+    (defined (object._types) & exists(object._types, t |-> {
+        t === type
+    })) | (defined(type._children) & exists(type._children, child |-> {
+        object ~ child
+    }))
 } : (~));
 
 
@@ -24,15 +17,18 @@ extends;
 class : type |-> {
     class type extends ()
 };
-class : (type, extends, parents) |-> {
-    if (Array.length(parents) > 0) {
-        type._parents := parents
-    };
 
-    type : this \ (this ~ type) |-> { this };
-    type : () |-> {
-        this :~ type;
-        this
+class : (type, extends, Array parents) |-> {
+    foreach(parents, p |-> {
+        Array.add(p._children, type);
+    });
+
+    if (!(type ~ Function)) {
+        type : this \ (this ~ type) |-> { this };
+        type : () |-> {
+            this :~ type;
+            this
+        };
     };
 
     type
@@ -48,6 +44,7 @@ static : type |-> {
 };
 
 (::);
+(:::);
 (::?);
 (::=);
 
@@ -65,6 +62,8 @@ static : type |-> {
             if (type._filter(x)) {
                 getters : type._methods;
                 getters : type._getters;
+            } else if (type._functor_filter(x)) {
+                getters : type._functors;
             };
         });
 
@@ -95,13 +94,19 @@ static : type |-> {
         if (!exists(types, x |-> {
             x === type
         })) {
-            type._filter : (a |-> false) : (this \ (defined this & this ~ type) |-> true) : ((this. .) \ (this ~ type) |-> true);
+            type._filter : (a |-> false) : ((this. .) \ (this ~ type) |-> true);
+            type._functor_filter : (a |-> false) : (this \ (defined this & this ~ type) |-> true);
             Array.add(types, type);
         };
     };
 
     (::) : (type, method_getter) |-> {
         type._methods : method_getter;
+        add_type(type);
+    };
+
+    (:::) : (type, functor_getter) |-> {
+        type._functors : functor_getter;
         add_type(type);
     };
 
