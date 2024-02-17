@@ -14,13 +14,13 @@ Thread : (function()) |-> {
 
 Thread::(this.join |-> (
     () |-> {
-        import("system").thread_join(this)
+        import("system").thread_join(this);
     }
 ));
 
 Thread::(this.detach |-> (
     () |-> {
-        import("system").thread_detach(this)
+        import("system").thread_detach(this);
     }
 ));
 
@@ -31,6 +31,10 @@ Thread::?(this.id |-> (
 (static Thread)::?(this.current_id |-> {
     import("system").thread_current_id()
 });
+
+Thread.sleep : time |-> {
+    import("system").thread_sleep(time);
+};
 
 (static Thread)::?(this.hardware_concurrency |-> {
     import("system").thread_hardware_concurrency()

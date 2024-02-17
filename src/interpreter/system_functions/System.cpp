@@ -157,7 +157,19 @@ namespace Interpreter::SystemFunctions {
 
         auto time_args = std::make_shared<Parser::Tuple>();
         Reference time(FunctionContext&) {
-            return Data((INT) std::time(nullptr));
+            return Data(static_cast<INT>(std::time(nullptr)));
+        }
+
+        auto clock_system_args = std::make_shared<Parser::Tuple>();
+        Reference clock_system(FunctionContext&) {
+            std::chrono::duration<double> d = std::chrono::system_clock::now().time_since_epoch();
+            return Data(static_cast<FLOAT>(d.count()));
+        }
+
+        auto clock_steady_args = std::make_shared<Parser::Tuple>();
+        Reference clock_steady(FunctionContext&) {
+            std::chrono::duration<double> d = std::chrono::steady_clock::now().time_since_epoch();
+            return Data(static_cast<FLOAT>(d.count()));
         }
 
 
@@ -279,6 +291,22 @@ namespace Interpreter::SystemFunctions {
             return Data(static_cast<INT>(std::hash<std::thread::id>{}(std::this_thread::get_id())));
         }
 
+        auto thread_sleep_args = std::make_shared<Parser::Symbol>("time");
+        Reference thread_sleep(FunctionContext& context) {
+            auto time = context["time"].to_data(context);
+
+            try {
+                std::this_thread::sleep_for(std::chrono::duration<double>(time.get<INT>()));
+                return Data{};
+            } catch (Data::BadAccess const&) {
+                try {
+                    std::this_thread::sleep_for(std::chrono::duration<double>(time.get<FLOAT>()));
+                    return Data{};
+                } catch (Data::BadAccess const&) {
+                    throw FunctionArgumentsError();
+                }
+            }
+        }
 
         auto thread_hardware_concurrency_args = std::make_shared<Parser::Tuple>();
         Reference thread_hardware_concurrency(FunctionContext&) {
@@ -397,6 +425,8 @@ namespace Interpreter::SystemFunctions {
             s["file_delete"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_path_args, file_delete });
 
             s["time"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ time_args, time });
+            s["clock_system"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ clock_system_args, clock_system });
+            s["clock_steady"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ clock_steady_args, clock_steady });
 
             s["thread_is"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ thread_is_args, thread_is });
             s["thread_create"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ thread_create_args, thread_create });
@@ -404,6 +434,7 @@ namespace Interpreter::SystemFunctions {
             s["thread_detach"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ thread_detach_args, thread_detach });
             s["thread_get_id"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ thread_get_id_args, thread_get_id });
             s["thread_current_id"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ thread_current_id_args, thread_current_id });
+            s["thread_sleep"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ thread_sleep_args, thread_sleep });
             s["thread_hardware_concurrency"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ thread_hardware_concurrency_args, thread_hardware_concurrency });
 
             s["mutex_is"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ mutex_is_args, mutex_is });

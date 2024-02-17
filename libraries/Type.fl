@@ -18,7 +18,7 @@ class : type |-> {
     class type extends ()
 };
 
-class : (type, extends, Array parents) |-> {
+class : (type, extends, Tuple parents) |-> {
     foreach(parents, p |-> {
         Array.add(p._children, type);
     });

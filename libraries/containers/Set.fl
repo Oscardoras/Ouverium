@@ -1,16 +1,9 @@
-import "../Type.fl";
-import "Iterable.fl";
+import "Type.fl";
+import "containers/Iterable.fl";
 
 
-Set : this |-> {
-    Iterable(this);
-    this :~ Set;
+class Set extends BidirectionalIterable;
+class (Set.Iterator) extends (BidirectionalIterable.Iterator);
 
-    this.length : () |-> {};
-    this.is_empty : () |-> {};
 
-    this.add : object |-> {};
-    this.remove : object |-> {};
-
-    this
-}
+import "containers/ArraySet.fl";

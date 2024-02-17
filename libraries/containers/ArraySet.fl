@@ -1,0 +1,50 @@
+import "Type.fl";
+import "containers/Set.fl";
+import "containers/ArrayList.fl";
+
+
+class ArraySet extends Set;
+
+ArraySet : this |-> {
+    ArrayList this;
+    this :~ ArraySet;
+    this
+};
+
+ArraySet::(this.contains |-> (
+    value |-> {
+        exists(this, v |-> {
+            v == value
+        })
+    }
+));
+
+ArraySet::(this.insert |-> (
+    value |-> {
+        exists(this, v |-> {
+            v == value
+        })
+    }
+));
+
+ArraySet::(this.remove_value |-> (
+    value |-> {
+        found := false;
+        it := this.iterator;
+        while (!found & it.is_valid()) {
+            v := it.get();
+            if (v == value) {
+                found := true;
+                it.remove()
+            } else {
+                it.next();
+            };
+        };
+    }
+));
+
+
+class (ArraySet.Iterator) extends (Set.Iterator, ArrayList.Iterator);
+
+
+Map : ArraySet;

@@ -76,7 +76,7 @@ namespace Interpreter::SystemFunctions {
                 auto element = context["element"].to_data(context);
 
                 array->array.push_back(element);
-                return ArrayReference{ *array, (size_t) array->array.size() - 1 };
+                return ArrayReference{ *array, array->array.size() - 1 };
             } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
             }

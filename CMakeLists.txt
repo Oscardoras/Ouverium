@@ -7,8 +7,10 @@ include(FetchContent)
 
 # Configuration
 
-check_ipo_supported()
-#set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+if(NOT CMAKE_BUILD_TYPE MATCHES Debug)
+    check_ipo_supported()
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
@@ -33,7 +35,6 @@ if(wxWidgets_FOUND)
     add_compile_definitions(WXWIDGETS)
     set(wxWidgets ${wxWidgets_LIBRARIES})
 else()
-    message(WARNING "wxWidgets is not installed.")
     set(wxWidgets_USE_STATIC 1)
     set(wxBUILD_SHARED OFF)
     FetchContent_Declare(
@@ -95,4 +96,7 @@ target_link_libraries(ouverium PUBLIC capi)
 if (UNIX)
     file(CREATE_LINK ../libraries libraries SYMBOLIC)
     file(CREATE_LINK ../resources/library/include capi_include SYMBOLIC)
+else()
+    file(COPY ../libraries libraries)
+    file(COPY ../resources/library/include capi_include)
 endif()

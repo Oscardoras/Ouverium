@@ -22,19 +22,9 @@ Char::(this.alphanum |-> {
 class String;
 
 (~) : (str, String) |-> {
-    str ~ Array & {
-        chars := true;
-        l := Array.length(str);
-        i := 0;
-        while (chars & i < l) {
-            if (Array.get(str, i) ~ Char) {
-                ++i
-            } else {
-                chars := false
-            }
-        };
-        chars
-    }
+    str ~ Array & forall(str, x |-> {
+        x ~ Char
+    })
 };
 
 String : () |-> {

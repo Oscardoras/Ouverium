@@ -6,3 +6,11 @@ class Time;
 (static Time)::?(this.time |-> {
     import("system").time()
 });
+
+(static Time)::?(this.system |-> {
+    import("system").clock_system()
+});
+
+(static Time)::?(this.steady |-> {
+    import("system").clock_steady()
+});

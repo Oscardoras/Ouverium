@@ -1,9 +1,8 @@
-import "../Type.fl"
-import "../containers/ArrayList.fl"
+import "Type.fl"
+import "containers/ArrayList.fl"
 
 
 class Matrix;
-
 
 Matrix.of : shape \ (shape ~ Int & shape > 0 | shape ~ Array & forall(shape, x |-> {
     x ~ Int & x > 0
@@ -12,46 +11,41 @@ Matrix.of : shape \ (shape ~ Int & shape > 0 | shape ~ Array & forall(shape, x |
 
     this._shape := if (shape ~ Int) [shape,] else shape;
 
-    array_size = if (this._shape.length > 0) 1 else 0;
-    foreach(this._shape, x |-> {
-        array_size *= size;
+    this._sizes := Array[];
+    product := if (this._shape.length > 0) 1 else 0;
+    this._shape.foreach(s |-> {
+        this._sizes.add_back(product);
+        product := product * s;
     });
+
+    this._array := Array[];
     this._array.resize(array_size, 0.);
 
     this
 };
 
-Matrix::(this.shape |-> {
+Matrix::?(this.shape |-> {
     $(this._shape)
 });
 
-Matrix::(this.dimension |-> {
+Matrix::?(this.dimension |-> {
     this._shape.length
 });
 
-Matrix::(this.length |-> {
+Matrix::?(this.length |-> {
     $(this._shape[0])
 });
 
-Matrix::(this |-> (
-    ($==indexes) |-> {
-        if (indexes ~ Int) {
-            indexes := [indexes,];
-        };
-
-        sizes := [];
-        product := 1;
-        foreach(this._shape, s |-> {
-            sizes.add_back(product);
-            product :* s;
-        });
+Matrix:::(this |-> (
+    (ind) |-> {
+        indexes := if (ind ~ Int) [indexes,] else ind;
 
         index := 0;
         for i from 0 to (indexes.length) {
-            index :+ indexes[i] * sizes[i];
+            index :+ indexes[i] * this._sizes[i];
         };
 
-        this._array[index];
+        this._array[index]
     }
 ));
 
@@ -62,7 +56,7 @@ Matrix.identity : (Int n) |-> {
         matrix[i,i] := 1.;
     };
 
-    matrix;
+    matrix
 };
 
 Matrix.arange : (start, stop, s) {
@@ -129,5 +123,5 @@ Vector.dot : (Vector a, Vector b) \ (a.length == b.length) |-> {
 
 
 Matrix.Slice : (matrix, indexes) |-> {
-    
+
 };

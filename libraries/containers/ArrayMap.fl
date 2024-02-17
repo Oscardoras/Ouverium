@@ -1,0 +1,62 @@
+import "Type.fl";
+import "containers/Map.fl";
+import "containers/ArrayList.fl";
+
+
+class ArrayMap extends Map;
+
+ArrayMap : this |-> {
+    ArrayList this;
+    this :~ ArrayMap;
+    this
+};
+
+ArrayMap:::(this |-> (
+    key |-> {
+        if (!this.has_key(key)) {
+            Array.add(this, (key, ()));
+        };
+
+        found := false;
+        it := this.iterator;
+        while (!found & it.is_valid()) {
+            (k, v) := it.get();
+            if (k == key) {
+                found := true;
+                Array.get(it.get(), 1)
+            } else {
+                it.next();
+            }
+        }
+    }
+));
+
+ArrayMap::(this.has_key |-> (
+    key |-> {
+        exists(this, (k, v) |-> {
+            k == key
+        })
+    }
+));
+
+ArrayMap::(this.remove_key |-> (
+    key |-> {
+        found := false;
+        it := this.iterator;
+        while (!found & it.is_valid()) {
+            (k, v) := it.get();
+            if (k == key) {
+                found := true;
+                it.remove()
+            } else {
+                it.next();
+            };
+        };
+    }
+));
+
+
+class (ArrayMap.Iterator) extends (Map.Iterator, ArrayList.Iterator);
+
+
+Map : ArrayMap;

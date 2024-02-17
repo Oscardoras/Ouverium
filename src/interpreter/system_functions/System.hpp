@@ -16,6 +16,8 @@ namespace Interpreter::SystemFunctions {
         Reference working_directory(FunctionContext& context);
 
         Reference time(FunctionContext& context);
+        Reference clock_system(FunctionContext& context);
+        Reference clock_steady(FunctionContext& context);
 
         Reference thread_is(FunctionContext& context);
         Reference thread_create(FunctionContext& context);
@@ -23,6 +25,7 @@ namespace Interpreter::SystemFunctions {
         Reference thread_detach(FunctionContext& context);
         Reference thread_get_id(FunctionContext& context);
         Reference thread_current_id(FunctionContext& context);
+        Reference thread_sleep(FunctionContext& context);
         Reference thread_hardware_concurrency(FunctionContext& context);
 
         Reference mutex_is(FunctionContext& context);

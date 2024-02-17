@@ -5,6 +5,12 @@ import "containers/List.fl";
 ArrayList := Array;
 class ArrayList extends List;
 
+ArrayList : () |-> {
+    Array.set_capacity(this, 1);
+
+    this
+};
+
 ArrayList:::(this |-> (
     index \ (index ~ Int & 0 <= index & index < this.length) |-> {
         Array.get(this, index)
@@ -78,7 +84,7 @@ ArrayList::(this.insert |-> (
         l := this.length;
         Array.add(this, this[l-1]);
         for i from (l-1) to index step (-1) {
-            this[i] := this[i-1]
+            this[i] := this[i-1];
         };
         this[index] := element
     }
@@ -87,9 +93,9 @@ ArrayList::(this.insert |-> (
 ArrayList::(this.remove |-> (
     index \ (index ~ Int & 0 <= index & index < this.length) |-> {
         l := this.length;
-        tmp := this[index];
+        tmp := Array.get(this, index);
         for i from index to (l-1) {
-            this[i] := this[i+1]
+            Array.get(this, i) := Array.get(this, i+1);
         };
         Array.remove(this);
         tmp
@@ -145,19 +151,19 @@ ArrayList.Iterator : (array, index) |-> {
 
 (ArrayList.Iterator)::(this.get |-> (
     () \ (this.is_valid()) |-> {
-        this._array[this._index]
+        Array.get(this._array, this._index)
     }
 ));
 
 (ArrayList.Iterator)::(this.remove |-> (
     () \ (this.is_valid()) |-> {
-        this._array.remove(this._index);
+        this._array.remove(this._index)
     }
 ));
 
 (ArrayList.Iterator)::(this.insert |-> (
     element \ (this.is_valid()) |-> {
-        this._array.insert(this._index, element);
+        this._array.insert(this._index, element)
     }
 ));
 
@@ -185,3 +191,6 @@ ArrayList.Iterator : (array, index) |-> {
         x === element
     })
 );
+
+
+List : ArrayList;

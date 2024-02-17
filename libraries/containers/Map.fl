@@ -1,20 +1,9 @@
-import "../Type.fl";
-import "Iterable.fl";
+import "Type.fl";
+import "containers/Iterable.fl";
 
 
-Map : this |-> {
-    Iterable(this);
-    this :~ Map;
+class Map extends BidirectionalIterable;
+class (Map.Iterator) extends (BidirectionalIterable.Iterator);
 
-    this : key |-> {};
 
-    this.length : () |-> {};
-    this.is_empty : () |-> {};
-
-    this.has : key |-> {};
-    this.remove : key \ (this.has(key)) |-> {};
-
-    this.iterator : key \ (this.has(key)) |-> {};
-
-    this
-}
+import "containers/ArrayMap.fl";
