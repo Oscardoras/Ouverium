@@ -4,193 +4,204 @@ import "containers/List.fl";
 
 ArrayList := Array;
 class ArrayList extends List;
+{
+    ArrayList : () |-> {
+        Array.set_capacity(this, 1);
 
-ArrayList : () |-> {
-    Array.set_capacity(this, 1);
+        this
+    };
 
-    this
-};
+    ArrayList:::(this |-> (
+        index \ (index ~ Int & 0 <= index & index < this.length) |-> {
+            Array.get(this, index)
+        }
+    ));
 
-ArrayList:::(this |-> (
-    index \ (index ~ Int & 0 <= index & index < this.length) |-> {
-        Array.get(this, index)
-    }
-));
+    ArrayList::(
+        this.length |-> {
+            Array.length(this)
+        },
+        (this.length, value) |-> {}
+    );
 
-ArrayList::?(this.length |-> {
-    Array.length(this)
-});
+    ArrayList::(
+        this.capacity |-> {
+            Array.get_capacity(this)
+        },
+        (this.capacity, value) |-> {}
+    );
 
-ArrayList::?(this.empty |-> {
-    this.length == 0
-});
+    ArrayList::(this.reserve |-> (
+        capacity \ (capacity ~ Int & this.capacity <= capacity) |-> {
+            c := capacity * 3 / 2;
+            Array.set_capacity(this, if (capacity > c) capacity else c)
+        }
+    ));
 
-ArrayList::?(this.capacity |-> {
-    Array.get_capacity(this)
-});
+    ArrayList::(
+        this.front |-> {
+            this[0]
+        },
+        (this.front, value) |-> {}
+    );
 
-ArrayList::(this.reserve |-> (
-    capacity \ (capacity ~ Int & this.capacity <= capacity) |-> {
-        c := capacity * 3 / 2;
-        Array.set_capacity(this, if (capacity > c) capacity else c)
-    }
-));
+    ArrayList::(
+        this.back |-> {
+            this[this.length - 1]
+        },
+        (this.back, value) |-> {}
+    );
 
-ArrayList::?(this.front |-> {
-    this[0]
-});
+    ArrayList::(this.add_front |-> (
+        element |-> {
+            l := this.length;
+            if (l > 0) {
+                Array.add(this, this[l-1]);
+                Array.shift(this, 1);
+                this[0] := element
+            } else {
+                Array.add(this, element)
+            }
+        }
+    ));
 
-ArrayList::?(this.back |-> {
-    this[this.length - 1]
-});
-
-ArrayList::(this.add_front |-> (
-    element |-> {
-        l := this.length;
-        if (l > 0) {
-            Array.add(this, this[l-1]);
-            Array.shift(this, 1);
-            this[0] := element
-        } else {
+    ArrayList::(this.add_back |-> (
+        element |-> {
             Array.add(this, element)
         }
-    }
-));
+    ));
 
-ArrayList::(this.add_back |-> (
-    element |-> {
-        Array.add(this, element)
-    }
-));
+    ArrayList::(this.remove_front |-> (
+        () \ (!this.empty) |-> {
+            l := this.length;
+            value := this[0];
+            Array.shift(this, -1);
+            Array.remove(this);
+            value
+        }
+    ));
 
-ArrayList::(this.remove_front |-> (
-    () \ (!this.empty) |-> {
-        l := this.length;
-        value := this[0];
-        Array.shift(this, -1);
-        Array.remove(this);
-        value
-    }
-));
+    ArrayList::(this.remove_back |-> (
+        () \ (!this.empty) |-> {
+            Array.remove(this)
+        }
+    ));
 
-ArrayList::(this.remove_back |-> (
-    () \ (!this.empty) |-> {
-        Array.remove(this)
-    }
-));
-
-ArrayList::(this.insert |-> (
-    (index, element) \ (index ~ Int & 0 <= index & index < this.length) |-> {
-        l := this.length;
-        Array.add(this, this[l-1]);
-        for i from (l-1) to index step (-1) {
-            this[i] := this[i-1];
-        };
-        this[index] := element
-    }
-));
-
-ArrayList::(this.remove |-> (
-    index \ (index ~ Int & 0 <= index & index < this.length) |-> {
-        l := this.length;
-        tmp := Array.get(this, index);
-        for i from index to (l-1) {
-            Array.get(this, i) := Array.get(this, i+1);
-        };
-        Array.remove(this);
-        tmp
-    }
-));
-
-ArrayList::(this.resize |-> (
-    (size, value) \ (size ~ Int & 0 <= size) |-> {
-        if (size < this.length) {
-            for i from 0 to (this.length - size) {
-                Array.remove(this);
+    ArrayList::(this.insert |-> (
+        (index, element) \ (index ~ Int & 0 <= index & index < this.length) |-> {
+            l := this.length;
+            Array.add(this, this[l-1]);
+            for i from (l-1) to index step (-1) {
+                this[i] := this[i-1];
             };
-        } else if (size > this.length) {
-            Array.reserve(size);
-            for i from 0 to (size - this.length) {
-                Array.add(this, value);
+            this[index] := element
+        }
+    ));
+
+    ArrayList::(this.remove |-> (
+        index \ (index ~ Int & 0 <= index & index < this.length) |-> {
+            l := this.length;
+            tmp := this[index];
+            for i from index to (l-1) {
+                this[i] := this[i+1];
             };
+            Array.remove(this);
+            tmp
+        }
+    ));
+
+    ArrayList::(this.resize |-> (
+        (size, value) \ (size ~ Int & 0 <= size) |-> {
+            if (size < this.length) {
+                for i from 0 to (this.length - size) {
+                    Array.remove(this);
+                };
+            } else if (size > this.length) {
+                Array.reserve(size);
+                for i from 0 to (size - this.length) {
+                    Array.add(this, value);
+                };
+            };
+        } : size \ (size ~ Int & 0 <= size) |-> {
+            this.resize(size, ());
+        }
+    ));
+
+    ArrayList::(
+        this.iterator_begin |-> {
+            ArrayList.Iterator(this, 0)
+        },
+        (this.iterator_begin, value) |-> {}
+    );
+
+    ArrayList::(
+        this.iterator_end |-> {
+            ArrayList.Iterator(this, this.length-1)
+        },
+        (this.iterator_end, value) |-> {}
+    );
+
+    ArrayList::(
+        this.iterator |-> {
+            this.iterator_begin
+        },
+        (this.iterator, value) |-> {}
+    );
+
+    ArrayList::(this.get_iterator |-> (
+        index |-> {
+            ArrayList.Iterator(this, index)
+        }
+    ));
+
+    class (ArrayList.Iterator) extends (List.Iterator);
+    {
+        ArrayList.Iterator : (array, index) |-> {
+            this :~ ArrayList.Iterator;
+
+            this._array := array;
+            this._index := index;
+
+            this
         };
-    } : size \ (size ~ Int & 0 <= size) |-> {
-        this.resize(size, ());
-    }
-));
 
-ArrayList::?(this.iterator_begin |-> {
-    ArrayList.Iterator(this, 0)
-});
+        (ArrayList.Iterator)::(this.is_valid |-> (
+            () |-> {
+                0 <= this._index & this._index < this._array.length
+            }
+        ));
 
-ArrayList::?(this.iterator_end |-> {
-    ArrayList.Iterator(this, this.length-1)
-});
+        (ArrayList.Iterator)::(this.get |-> (
+            () \ (this.is_valid()) |-> {
+                this._array[this._index]
+            }
+        ));
 
-ArrayList::?(this.iterator |-> {
-    this.iterator_begin
-});
+        (ArrayList.Iterator)::(this.remove |-> (
+            () \ (this.is_valid()) |-> {
+                this._array.remove(this._index)
+            }
+        ));
 
+        (ArrayList.Iterator)::(this.insert |-> (
+            element \ (this.is_valid()) |-> {
+                this._array.insert(this._index, element)
+            }
+        ));
 
-class (ArrayList.Iterator) extends (List.Iterator);
+        (ArrayList.Iterator)::(this.next |-> (
+            () |-> {
+                ++this._index;
+            }
+        ));
 
-ArrayList.Iterator : (array, index) |-> {
-    this :~ ArrayList.Iterator;
-
-    this._array := array;
-    this._index := index;
-
-    this
+        (ArrayList.Iterator)::(this.previous |-> (
+            () |-> {
+                --this._index;
+            }
+        ));
+    };
 };
-
-(ArrayList.Iterator)::(this.is_valid |-> (
-    () |-> {
-        0 <= this._index & this._index < this._array.length
-    }
-));
-
-(ArrayList.Iterator)::(this.get |-> (
-    () \ (this.is_valid()) |-> {
-        Array.get(this._array, this._index)
-    }
-));
-
-(ArrayList.Iterator)::(this.remove |-> (
-    () \ (this.is_valid()) |-> {
-        this._array.remove(this._index)
-    }
-));
-
-(ArrayList.Iterator)::(this.insert |-> (
-    element \ (this.is_valid()) |-> {
-        this._array.insert(this._index, element)
-    }
-));
-
-(ArrayList.Iterator)::(this.next |-> (
-    () |-> {
-        ++this._index;
-    }
-));
-
-(ArrayList.Iterator)::(this.previous |-> (
-    () |-> {
-        --this._index;
-    }
-));
-
-
-(@) : (element, list) \ (list ~ ArrayList) |-> (
-    exists(list, x |-> {
-        x == element
-    })
-);
-
-(@==) : (element, list) \ (list ~ ArrayList) |-> (
-    exists(list, x |-> {
-        x === element
-    })
-);
 
 
 List : ArrayList;

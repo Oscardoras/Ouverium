@@ -24,21 +24,30 @@ Thread::(this.detach |-> (
     }
 ));
 
-Thread::?(this.id |-> (
-    import("system").thread_get_id(this)
-));
+Thread::(
+    this.id |-> (
+        import("system").thread_get_id(this)
+    ),
+    (this.id, value) |-> {}
+);
 
-(static Thread)::?(this.current_id |-> {
-    import("system").thread_current_id()
-});
+static Thread::(
+    this.current_id |-> {
+        import("system").thread_current_id()
+    },
+    (this.current_id, value) |-> {}
+);
 
 Thread.sleep : time |-> {
     import("system").thread_sleep(time);
 };
 
-(static Thread)::?(this.hardware_concurrency |-> {
-    import("system").thread_hardware_concurrency()
-});
+static Thread::(
+    this.hardware_concurrency |-> {
+        import("system").thread_hardware_concurrency()
+    },
+    (this.hardware_concurrency, value) |-> {}
+);
 
 
 class Mutex;
@@ -88,8 +97,10 @@ Future::(this.wait |-> {
     }
 });
 
-Future::?(this.available |-> {
-    defined (this.value)
+Future::(this.is_available |-> {
+    () |-> {
+        defined (this.value)
+    }
 });
 
 

@@ -39,14 +39,14 @@ static : type |-> {
     type._static
 };
 
+abstract;
+
 (~) : (object, type) \ (defined (object._static)) |-> {
     object._static === type
 };
 
 (::);
 (:::);
-(::?);
-(::=);
 
 (() |-> {
     types := ();
@@ -100,23 +100,23 @@ static : type |-> {
         };
     };
 
-    (::) : (type, method_getter) |-> {
+    (::) : (type, Function method_getter) |-> {
         type._methods : method_getter;
         add_type(type);
     };
+
+    (::) : (type, (Function property_getter, Function property_setter)) |-> {
+        type._getters : property_getter;
+        type._setters : property_setter;
+        add_type(type);
+    };
+
+    (::) : (type, abstract) |-> {};
 
     (:::) : (type, functor_getter) |-> {
         type._functors : functor_getter;
         add_type(type);
     };
 
-    (::?) : (type, property_getter) |-> {
-        type._getters : property_getter;
-        add_type(type);
-    };
-
-    (::=) : (type, property_setter) |-> {
-        type._setters : property_setter;
-        add_type(type);
-    };
+    (:::) : (type, abstract) |-> {};
 })();

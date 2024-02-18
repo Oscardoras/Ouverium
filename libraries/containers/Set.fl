@@ -3,7 +3,25 @@ import "containers/Iterable.fl";
 
 
 class Set extends BidirectionalIterable;
-class (Set.Iterator) extends (BidirectionalIterable.Iterator);
+{
+    Set::(this.length |-> abstract);
+    Set::(
+        this.empty |-> {
+            this.length == 0
+        },
+        (this.empty, value) |-> {}
+    );
+
+    Set::(this.insert |-> abstract);
+    Set::(this.remove |-> abstract);
+
+    Set::(this.get_iterator |-> abstract);
+
+    class (Set.Iterator) extends (BidirectionalIterable.Iterator);
+    {
+        (Set.Iterator)::(this.remove |-> abstract);
+    };
+};
 
 
 import "containers/ArraySet.fl";

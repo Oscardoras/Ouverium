@@ -3,7 +3,35 @@ import "containers/Iterable.fl";
 
 
 class List extends BidirectionalIterable;
-class (List.Iterator) extends (BidirectionalIterable.Iterator);
+{
+    List:::(this |-> abstract);
+
+    List::(this.length |-> abstract);
+    List::(
+        this.empty |-> {
+            this.length == 0
+        },
+        (this.empty, value) |-> {}
+    );
+
+    List::(this.front |-> abstract);
+    List::(this.back |-> abstract);
+
+    List::(this.add_front |-> abstract);
+    List::(this.add_back |-> abstract);
+    List::(this.remove_front |-> abstract);
+    List::(this.remove_back |-> abstract);
+    List::(this.insert |-> abstract);
+    List::(this.remove |-> abstract);
+
+    List::(this.get_iterator |-> abstract);
+
+    class (List.Iterator) extends (BidirectionalIterable.Iterator);
+    {
+        (List.Iterator)::(this.remove |-> abstract);
+        (List.Iterator)::(this.insert |-> abstract);
+    };
+};
 
 
 import "containers/ArrayList.fl";

@@ -41,12 +41,14 @@ File::(this.flush |-> (
     }
 ));
 
-(static File)::?(this.working_directory |-> {
-    import("system").file_get_working_directory()
-});
-(static File)::=((this.working_directory, value) |-> {
-    import("system").file_set_working_directory(value)
-});
+static File::(
+    this.working_directory |-> {
+        import("system").file_get_working_directory()
+    },
+    (this.working_directory, value) |-> {
+        import("system").file_set_working_directory(value)
+    }
+);
 
 File.exists : path |-> {
     import("system").file_exists(path)

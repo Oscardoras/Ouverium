@@ -3,14 +3,23 @@ import "Type.fl";
 
 class Time;
 
-(static Time)::?(this.time |-> {
-    import("system").time()
-});
+static Time::(
+    this.time |-> {
+        import("system").time()
+    },
+    (this.time, value) |-> {}
+);
 
-(static Time)::?(this.system |-> {
-    import("system").clock_system()
-});
+static Time::(
+    this.system |-> {
+        import("system").clock_system()
+    },
+    (this.system, value) |-> {}
+);
 
-(static Time)::?(this.steady |-> {
-    import("system").clock_steady()
-});
+static Time::(
+    his.steady |-> {
+        import("system").clock_steady()
+    },
+    (this.steady, value) |-> {}
+);
