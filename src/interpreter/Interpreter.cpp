@@ -292,9 +292,9 @@ namespace Interpreter {
             auto data = get_symbol(symbol->name);
             if (auto b = std::get_if<bool>(&data)) {
                 return Data(*b);
-            } else if (auto l = std::get_if<INT>(&data)) {
+            } else if (auto l = std::get_if<OV_INT>(&data)) {
                 return Data(*l);
-            } else if (auto d = std::get_if<FLOAT>(&data)) {
+            } else if (auto d = std::get_if<OV_FLOAT>(&data)) {
                 return Data(*d);
             } else if (auto str = std::get_if<std::string>(&data)) {
                 return Data(context.new_object(*str));

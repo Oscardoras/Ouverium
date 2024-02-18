@@ -1,7 +1,0 @@
-Position : this |-> {
-    this :~ Position;
-
-    this.notify : () |-> {};
-
-    this
-}

@@ -8,17 +8,17 @@
 #define BYTE uint8_t
 
 #if (SIZE_MAX == UINT64_MAX)
-#define INT int64_t
-#define FLOAT double
+#define OV_INT int64_t
+#define OV_FLOAT double
 #elif (SIZE_MAX == UINT32_MAX)
-#define INT int32_t
-#define FLOAT float
+#define OV_INT int32_t
+#define OV_FLOAT float
 #elif (SIZE_MAX == UINT16_MAX)
-#define INT int16_t
-#define FLOAT float
+#define OV_INT int16_t
+#define OV_FLOAT float
 #else
-#define INT int
-#define FLOAT float
+#define OV_INT int
+#define OV_FLOAT float
 #endif
 
 

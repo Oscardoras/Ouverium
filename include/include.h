@@ -42,8 +42,8 @@ extern "C" {
 
     typedef union Ov_Data {
         void* ptr;
-        INT i;
-        FLOAT f;
+        OV_INT i;
+        OV_FLOAT f;
         char c;
         bool b;
     } Ov_Data;

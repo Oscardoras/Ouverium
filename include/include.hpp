@@ -206,11 +206,11 @@ namespace Ov {
         UnknownData(Ov_VirtualTable* vtable, void* ptr) :
             Ov_UnknownData{ Ov_UnknownData_from_ptr(vtable, ptr) } {}
 
-        UnknownData(INT i) {
+        UnknownData(OV_INT i) {
             vtable = &Ov_VirtualTable_Int;
             data.i = i;
         }
-        UnknownData(FLOAT f) {
+        UnknownData(OV_FLOAT f) {
             vtable = &Ov_VirtualTable_Float;
             data.f = f;
         }
@@ -228,16 +228,16 @@ namespace Ov {
             data.b = ptr;
         }
         template<typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
-        UnknownData(T i) : UnknownData(static_cast<INT>(i)) {}
+        UnknownData(T i) : UnknownData(static_cast<OV_INT>(i)) {}
 
         operator Ov_Data() const {
             return Ov_UnknownData::data;
         }
 
-        operator INT() const {
+        operator OV_INT() const {
             return data.i;
         }
-        operator FLOAT() const {
+        operator OV_FLOAT() const {
             return data.f;
         }
         operator char() const {

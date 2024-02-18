@@ -9,9 +9,9 @@ namespace Interpreter {
                 os << d;
         } else if (auto c = get_if<char>(&data))
             os << *c;
-        else if (auto f = get_if<FLOAT>(&data))
+        else if (auto f = get_if<OV_FLOAT>(&data))
             os << *f;
-        else if (auto i = get_if<INT>(&data))
+        else if (auto i = get_if<OV_INT>(&data))
             os << *i;
         else if (auto b = get_if<bool>(&data))
             os << (*b ? "true" : "false");

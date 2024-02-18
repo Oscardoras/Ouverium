@@ -155,9 +155,9 @@ namespace Interpreter::SystemFunctions {
                 std::pair<CType::Function::Type, Ov::Data> get_data(Data const& data) {
                     if (auto c = get_if<char>(&data)) {
                         return { CType::Function::Type::Char , *c };
-                    } else if (auto i = get_if<INT>(&data)) {
+                    } else if (auto i = get_if<OV_INT>(&data)) {
                         return { CType::Function::Type::Int, *i };
-                    } else if (auto f = get_if<FLOAT>(&data)) {
+                    } else if (auto f = get_if<OV_FLOAT>(&data)) {
                         return { CType::Function::Type::Float, *f };
                     } else if (auto b = get_if<bool>(&data)) {
                         return { CType::Function::Type::Bool, *b };
@@ -180,9 +180,9 @@ namespace Interpreter::SystemFunctions {
                 Data get_data(Context& context, Ov::Data const& data) {
                     if (auto c = std::any_cast<char>(&data.data)) {
                         return *c;
-                    } else if (auto i = std::any_cast<INT>(&data.data)) {
+                    } else if (auto i = std::any_cast<OV_INT>(&data.data)) {
                         return *i;
-                    } else if (auto f = std::any_cast<FLOAT>(&data.data)) {
+                    } else if (auto f = std::any_cast<OV_FLOAT>(&data.data)) {
                         return *f;
                     } else if (auto b = std::any_cast<bool>(&data.data)) {
                         return *b;

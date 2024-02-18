@@ -53,9 +53,9 @@ namespace Static {
             auto data = get_symbol(symbol->name);
             if (auto b = std::get_if<bool>(&data)) {
                 return std::make_shared<DirectReference>(*b);
-            } else if (auto l = std::get_if<INT>(&data)) {
+            } else if (auto l = std::get_if<OV_INT>(&data)) {
                 return std::make_shared<DirectReference>(*l);
-            } else if (auto d = std::get_if<FLOAT>(&data)) {
+            } else if (auto d = std::get_if<OV_FLOAT>(&data)) {
                 return std::make_shared<DirectReference>(*d);
             } else if (auto str = std::get_if<std::string>(&data)) {
                 std::vector<std::shared_ptr<Reference>> string;

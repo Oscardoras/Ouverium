@@ -19,8 +19,8 @@ namespace Static {
     struct Data {
         std::optional<bool> Bool;
         std::optional<char> Char;
-        std::optional<INT> Int;
-        std::optional<FLOAT> Float;
+        std::optional<OV_INT> Int;
+        std::optional<OV_FLOAT> Float;
 
         std::optional<Function> function;
         std::unique_ptr<Data> array;

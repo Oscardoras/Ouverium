@@ -1,4 +1,0 @@
-Expression : this |-> {
-    this :~ Expression;
-    this
-}

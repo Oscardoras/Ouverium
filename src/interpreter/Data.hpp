@@ -12,15 +12,15 @@ namespace Interpreter {
 
     class Object;
 
-    class Data : protected std::variant<Object*, char, FLOAT, INT, bool> {
+    class Data : protected std::variant<Object*, char, OV_FLOAT, OV_INT, bool> {
 
     public:
 
-        using std::variant<Object*, char, FLOAT, INT, bool>::variant;
+        using std::variant<Object*, char, OV_FLOAT, OV_INT, bool>::variant;
 
-        using std::variant<Object*, char, FLOAT, INT, bool>::operator=;
+        using std::variant<Object*, char, OV_FLOAT, OV_INT, bool>::operator=;
         friend auto operator==(Data const& a, Data const& b) {
-            return static_cast<std::variant<Object*, char, FLOAT, INT, bool> const&>(a) == static_cast<std::variant<Object*, char, FLOAT, INT, bool> const&>(b);
+            return static_cast<std::variant<Object*, char, OV_FLOAT, OV_INT, bool> const&>(a) == static_cast<std::variant<Object*, char, OV_FLOAT, OV_INT, bool> const&>(b);
         }
 
         class BadAccess : public std::exception {};

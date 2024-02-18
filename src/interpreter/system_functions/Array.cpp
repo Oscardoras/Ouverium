@@ -10,7 +10,7 @@ namespace Interpreter::SystemFunctions {
             try {
                 auto array = context["array"].to_data(context).get<Object*>();
 
-                return Reference(Data((INT) array->array.size()));
+                return Reference(Data((OV_INT) array->array.size()));
             } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
             }
@@ -21,7 +21,7 @@ namespace Interpreter::SystemFunctions {
             auto array = context["array"].to_data(context).get<Object*>();
 
             try {
-                return Data((INT) array->array.capacity());
+                return Data((OV_INT) array->array.capacity());
             } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
             }
@@ -36,7 +36,7 @@ namespace Interpreter::SystemFunctions {
         Reference set_capacity(FunctionContext& context) {
             try {
                 auto array = context["array"].to_data(context).get<Object*>();
-                auto capacity = context["capacity"].to_data(context).get<INT>();
+                auto capacity = context["capacity"].to_data(context).get<OV_INT>();
 
                 array->array.reserve(capacity);
                 return Data();
@@ -54,9 +54,9 @@ namespace Interpreter::SystemFunctions {
         Reference get(FunctionContext& context) {
             try {
                 auto array = context["array"].to_data(context).get<Object*>();
-                auto i = context["i"].to_data(context).get<INT>();
+                auto i = context["i"].to_data(context).get<OV_INT>();
 
-                if (i >= 0 && i < (INT) array->array.size())
+                if (i >= 0 && i < (OV_INT) array->array.size())
                     return ArrayReference{ *array, (size_t) i };
                 else throw FunctionArgumentsError();
             } catch (Data::BadAccess const&) {
@@ -104,14 +104,14 @@ namespace Interpreter::SystemFunctions {
         Reference shift(FunctionContext& context) {
             try {
                 auto& array = context["array"].to_data(context).get<Object*>()->array;
-                auto n = context["n"].to_data(context).get<INT>();
+                auto n = context["n"].to_data(context).get<OV_INT>();
 
                 if (n > 0) {
-                    for (INT i = array.size() - 1; i >= n; --i) {
+                    for (OV_INT i = array.size() - 1; i >= n; --i) {
                         array[i] = array[i - n];
                     }
                 } else {
-                    for (INT i = 0; i < static_cast<INT>(array.size()) + n; ++i) {
+                    for (OV_INT i = 0; i < static_cast<OV_INT>(array.size()) + n; ++i) {
                         array[i] = array[i - n];
                     }
                 }

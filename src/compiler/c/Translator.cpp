@@ -274,7 +274,7 @@ namespace Translator::CStandard {
                         std::make_shared<Symbol>(function->name.get() + "_body"),
                         function->filter.return_value ? std::make_shared<Symbol>(function->name.get() + "_filter") : std::make_shared<Symbol>("NULL"),
                         captures,
-                        std::make_shared<Value>((INT) captures->objects.size())
+                        std::make_shared<Value>(static_cast<OV_INT>(captures->objects.size()))
                     }
                 ))
             );
@@ -302,7 +302,7 @@ namespace Translator::CStandard {
                             }
                         )),
                         std::make_shared<Referencing>(std::make_shared<Symbol>("Ov_VirtualTable_UnknownData")),
-                        std::make_shared<Value>(static_cast<INT>(hash_string(property->name.c_str())))
+                        std::make_shared<Value>(static_cast<OV_INT>(hash_string(property->name.c_str())))
                     }
                 ))
             ));
@@ -357,10 +357,10 @@ namespace Translator::CStandard {
                 if (auto b = std::get_if<bool>(&v)) {
                     value = std::make_shared<Value>(*b);
                     type = Bool;
-                } else if (auto l = std::get_if<INT>(&v)) {
+                } else if (auto l = std::get_if<OV_INT>(&v)) {
                     value = std::make_shared<Value>(*l);
                     type = Int;
-                } else if (auto d = std::get_if<FLOAT>(&v)) {
+                } else if (auto d = std::get_if<OV_FLOAT>(&v)) {
                     value = std::make_shared<Value>(*d);
                     type = Float;
                 }
@@ -414,7 +414,7 @@ namespace Translator::CStandard {
                     std::make_shared<Symbol>("Ov_Reference_new_tuple"),
                     {
                         list,
-                        std::make_shared<Value>(static_cast<INT>(list->objects.size())),
+                        std::make_shared<Value>(static_cast<OV_INT>(list->objects.size())),
                         std::make_shared<Referencing>(std::make_shared<Symbol>("Ov_VirtualTable_Object"))
                     }
                 ))

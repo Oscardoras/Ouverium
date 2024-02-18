@@ -113,8 +113,8 @@ namespace Translator::CStandard {
     };
 
     struct Value : public Expression {
-        std::variant<char, bool, INT, FLOAT, std::string> value;
-        Value(std::variant<char, bool, INT, FLOAT, std::string> const& value) :
+        std::variant<char, bool, OV_INT, OV_FLOAT, std::string> value;
+        Value(std::variant<char, bool, OV_INT, OV_FLOAT, std::string> const& value) :
             value{ value } {}
 
         std::string get_expression_code() const override;

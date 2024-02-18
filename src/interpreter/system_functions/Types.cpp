@@ -19,9 +19,9 @@ namespace Interpreter::SystemFunctions {
         Reference float_constructor(FunctionContext& context) {
             auto a = context["a"].to_data(context);
 
-            if (auto a_int = get_if<INT>(&a)) {
-                return Data((FLOAT) *a_int);
-            } else if (a.is<FLOAT>()) {
+            if (auto a_int = get_if<OV_INT>(&a)) {
+                return Data((OV_FLOAT) *a_int);
+            } else if (a.is<OV_FLOAT>()) {
                 return a;
             }
             throw FunctionArgumentsError();
@@ -30,10 +30,10 @@ namespace Interpreter::SystemFunctions {
         Reference int_constructor(FunctionContext& context) {
             auto a = context["a"].to_data(context);
 
-            if (a.is<INT>()) {
+            if (a.is<OV_INT>()) {
                 return a;
-            } else if (auto a_float = get_if<FLOAT>(&a)) {
-                return Data((INT) *a_float);
+            } else if (auto a_float = get_if<OV_FLOAT>(&a)) {
+                return Data((OV_INT) *a_float);
             }
             throw FunctionArgumentsError();
         }
@@ -81,8 +81,8 @@ namespace Interpreter::SystemFunctions {
 
         bool check_type(Context& context, Data data, Data type) {
             if (type == context["Char"].to_data(context)) return data.is<char>();
-            else if (type == context["Float"].to_data(context)) return data.is<FLOAT>();
-            else if (type == context["Int"].to_data(context)) return data.is<INT>();
+            else if (type == context["Float"].to_data(context)) return data.is<OV_FLOAT>();
+            else if (type == context["Int"].to_data(context)) return data.is<OV_INT>();
             else if (type == context["Bool"].to_data(context)) return data.is<bool>();
             else if (type == context["Array"].to_data(context)) {
                 if (auto obj = get_if<Object*>(&data))

@@ -107,8 +107,8 @@ namespace Interpreter::SystemFunctions {
         Reference ui_set_position(FunctionContext& context) {
             try {
                 auto window = dynamic_cast<wxWindow*>(context["window"].to_data(context).get<Object*>()->c_obj.get<wxObject*>());
-                auto x = context["x"].to_data(context).get<INT>();
-                auto y = context["y"].to_data(context).get<INT>();
+                auto x = context["x"].to_data(context).get<OV_INT>();
+                auto y = context["y"].to_data(context).get<OV_INT>();
 
                 window->SetPosition(wxPoint(x, y));
 
@@ -130,8 +130,8 @@ namespace Interpreter::SystemFunctions {
         Reference ui_set_size(FunctionContext& context) {
             try {
                 auto window = dynamic_cast<wxWindow*>(context["window"].to_data(context).get<Object*>()->c_obj.get<wxObject*>());
-                auto x = context["x"].to_data(context).get<INT>();
-                auto y = context["y"].to_data(context).get<INT>();
+                auto x = context["x"].to_data(context).get<OV_INT>();
+                auto y = context["y"].to_data(context).get<OV_INT>();
 
                 window->SetSize(wxSize(x, y));
 

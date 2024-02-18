@@ -21,13 +21,13 @@ namespace Ov {
         Data() {}
 
         Data(std::integral auto i) {
-            data = static_cast<INT>(i);
+            data = static_cast<OV_INT>(i);
         }
         Data(float f) {
-            data = static_cast<FLOAT>(f);
+            data = static_cast<OV_FLOAT>(f);
         }
         Data(double f) {
-            data = static_cast<FLOAT>(f);
+            data = static_cast<OV_FLOAT>(f);
         }
         Data(char c) {
             data = c;
@@ -61,13 +61,13 @@ namespace Ov {
 
         template<std::integral T>
         operator T() const {
-            return static_cast<T>(std::any_cast<INT>(data));
+            return static_cast<T>(std::any_cast<OV_INT>(data));
         }
         operator float() const {
-            return std::any_cast<FLOAT>(data);
+            return std::any_cast<OV_FLOAT>(data);
         }
         operator double() const {
-            return std::any_cast<FLOAT>(data);
+            return std::any_cast<OV_FLOAT>(data);
         }
         operator char() const {
             return std::any_cast<char>(data);

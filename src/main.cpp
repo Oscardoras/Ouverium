@@ -127,7 +127,7 @@ int file_mode(GUIApp& gui_app, std::string const& path, std::istream& is) {
             while (gui_app.yield());
 
             try {
-                return static_cast<int>(r.to_data(context).get<INT>());
+                return static_cast<int>(r.to_data(context).get<OV_INT>());
             } catch (Interpreter::Data::BadAccess const&) {
                 return EXIT_SUCCESS;
             }
@@ -157,7 +157,7 @@ void compile_mode(std::string const& path, std::istream& is, std::string const& 
     auto translator = Translator::CStandard::Translator(expression, meta_data);
 
     translator.translate(out);
-    std::string cmd = "gcc -g -Wall -Wextra " + out + "/*.c -o " + out + "/executable -I " + (program_location / "capi_include").string() + " -Wl,-rpath," + program_location.string() + " build/libcapi.so";
+    std::string cmd = "gcc -g -Wall -Wextra " + out + "/*.c -o " + out + "/executable -I " + (program_location / "include").string() + " -Wl,-rpath," + program_location.string() + " build/libcapi.so";
     system(cmd.c_str());
 }
 

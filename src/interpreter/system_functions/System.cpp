@@ -148,7 +148,7 @@ namespace Interpreter::SystemFunctions {
         Reference file_delete(FunctionContext& context) {
             try {
                 std::filesystem::path p = context["path"].to_data(context).get<Object*>()->to_string();
-                return Data(static_cast<INT>(std::filesystem::remove_all(p)));
+                return Data(static_cast<OV_INT>(std::filesystem::remove_all(p)));
             } catch (std::filesystem::filesystem_error const&) {
                 throw FunctionArgumentsError();
             }
@@ -157,19 +157,19 @@ namespace Interpreter::SystemFunctions {
 
         auto time_args = std::make_shared<Parser::Tuple>();
         Reference time(FunctionContext&) {
-            return Data(static_cast<INT>(std::time(nullptr)));
+            return Data(static_cast<OV_INT>(std::time(nullptr)));
         }
 
         auto clock_system_args = std::make_shared<Parser::Tuple>();
         Reference clock_system(FunctionContext&) {
             std::chrono::duration<double> d = std::chrono::system_clock::now().time_since_epoch();
-            return Data(static_cast<FLOAT>(d.count()));
+            return Data(static_cast<OV_FLOAT>(d.count()));
         }
 
         auto clock_steady_args = std::make_shared<Parser::Tuple>();
         Reference clock_steady(FunctionContext&) {
             std::chrono::duration<double> d = std::chrono::steady_clock::now().time_since_epoch();
-            return Data(static_cast<FLOAT>(d.count()));
+            return Data(static_cast<OV_FLOAT>(d.count()));
         }
 
 
@@ -199,8 +199,8 @@ namespace Interpreter::SystemFunctions {
                 }
             }
 
-            INT get_id() const {
-                return static_cast<INT>(std::hash<std::thread::id>{}(std::thread::get_id()));
+            OV_INT get_id() const {
+                return static_cast<OV_INT>(std::hash<std::thread::id>{}(std::thread::get_id()));
             }
 
             ~Thread() {
@@ -278,7 +278,7 @@ namespace Interpreter::SystemFunctions {
             try {
                 auto& thread = context["thread"].to_data(context).get<Object*>()->c_obj.get<Thread>();
 
-                return Data(static_cast<INT>(thread.get_id()));
+                return Data(static_cast<OV_INT>(thread.get_id()));
             } catch (std::bad_any_cast const&) {
                 throw FunctionArgumentsError();
             } catch (Data::BadAccess const&) {
@@ -288,7 +288,7 @@ namespace Interpreter::SystemFunctions {
 
         auto thread_current_id_args = std::make_shared<Parser::Tuple>();
         Reference thread_current_id(FunctionContext&) {
-            return Data(static_cast<INT>(std::hash<std::thread::id>{}(std::this_thread::get_id())));
+            return Data(static_cast<OV_INT>(std::hash<std::thread::id>{}(std::this_thread::get_id())));
         }
 
         auto thread_sleep_args = std::make_shared<Parser::Symbol>("time");
@@ -296,11 +296,11 @@ namespace Interpreter::SystemFunctions {
             auto time = context["time"].to_data(context);
 
             try {
-                std::this_thread::sleep_for(std::chrono::duration<double>(time.get<INT>()));
+                std::this_thread::sleep_for(std::chrono::duration<double>(time.get<OV_INT>()));
                 return Data{};
             } catch (Data::BadAccess const&) {
                 try {
-                    std::this_thread::sleep_for(std::chrono::duration<double>(time.get<FLOAT>()));
+                    std::this_thread::sleep_for(std::chrono::duration<double>(time.get<OV_FLOAT>()));
                     return Data{};
                 } catch (Data::BadAccess const&) {
                     throw FunctionArgumentsError();
@@ -310,7 +310,7 @@ namespace Interpreter::SystemFunctions {
 
         auto thread_hardware_concurrency_args = std::make_shared<Parser::Tuple>();
         Reference thread_hardware_concurrency(FunctionContext&) {
-            return Data(static_cast<INT>(std::thread::hardware_concurrency()));
+            return Data(static_cast<OV_INT>(std::thread::hardware_concurrency()));
         }
 
 
