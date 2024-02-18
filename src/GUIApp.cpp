@@ -5,11 +5,14 @@
 
 
 #include <wx/wx.h>
+#include <wx/evtloop.h>
 
 
 class App : public wxApp {
 public:
     bool OnInit() override {
+        m_mainLoop = CreateMainLoop();
+
         return true;
     }
 };
@@ -19,7 +22,7 @@ IMPLEMENT_WX_THEME_SUPPORT;
 
 GUIApp::GUIApp(int argc, char** argv) {
     wxEntryStart(argc, argv);
-    wxTheApp->OnInit();
+    wxTheApp->CallOnInit();
 }
 
 GUIApp::~GUIApp() {
@@ -28,7 +31,9 @@ GUIApp::~GUIApp() {
 }
 
 bool GUIApp::yield() {
-    wxYield();
+    while (wxTheApp->GetMainLoop()->Pending())
+        wxTheApp->GetMainLoop()->Dispatch();
+
     return wxTheApp->GetTopWindow() != nullptr;
 }
 
@@ -40,7 +45,9 @@ GUIApp::GUIApp(int, char**) {}
 
 GUIApp::~GUIApp() {}
 
-bool GUIApp::yield() {}
+bool GUIApp::yield() {
+    return false;
+}
 
 
 #endif
