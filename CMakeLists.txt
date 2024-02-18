@@ -84,14 +84,10 @@ target_include_directories(ouverium PRIVATE include)
 target_link_libraries(ouverium PRIVATE Boost::dll)
 target_link_libraries(ouverium PRIVATE ${Readline})
 target_link_libraries(ouverium PRIVATE ${wxWidgets})
+target_link_libraries(ouverium INTERFACE capi)
 
 
 # Installation
 
-if (UNIX)
-    file(CREATE_LINK ../libraries libraries SYMBOLIC)
-    file(CREATE_LINK ../include include SYMBOLIC)
-else()
-    file(COPY ../libraries DESTINATION libraries)
-    file(COPY ../include DESTINATION include)
-endif()
+file(CREATE_LINK ../libraries libraries SYMBOLIC)
+file(CREATE_LINK ../include include SYMBOLIC)

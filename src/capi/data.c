@@ -93,6 +93,20 @@ Ov_VirtualTable Ov_VirtualTable_UnknownData = {
     .table_size = 0
 };
 
+struct Object {
+    Ov_Function Ov_function;
+    Ov_Array Ov_array;
+};
+Ov_VirtualTable Ov_VirtualTable_Object = {
+    .size = sizeof(struct Object),
+    .gc_iterator = NULL,
+    .array.vtable = &Ov_VirtualTable_UnknownData,
+    .array.offset = offsetof(struct Object, Ov_array),
+    .function.offset = offsetof(struct Object, Ov_function),
+    .table_size = 0
+};
+Ov_VirtualTable* Ov_VirtualTable_string_from_tuple = &Ov_VirtualTable_Object;
+
 Ov_VirtualTable Ov_VirtualTable_Int = {
     .size = sizeof(OV_INT),
     .gc_iterator = NULL,
