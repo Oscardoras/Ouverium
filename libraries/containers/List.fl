@@ -6,10 +6,16 @@ class List extends BidirectionalIterable;
 {
     List:::(this |-> abstract);
 
-    List::(this.length |-> abstract);
+    List::(this.size |-> abstract);
+    List::(
+        this.length |-> {
+            this.size
+        },
+        (this.length, value) |-> {}
+    );
     List::(
         this.empty |-> {
-            this.length == 0
+            this.size == 0
         },
         (this.empty, value) |-> {}
     );

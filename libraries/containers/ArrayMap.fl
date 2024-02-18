@@ -4,59 +4,147 @@ import "containers/ArrayList.fl";
 
 
 class ArrayMap extends Map;
+{
+    ArrayMap : () |-> {
+        this :~ ArrayMap;
 
-ArrayMap : this |-> {
-    ArrayList this;
-    this :~ ArrayMap;
-    this
-};
+        this._array := Array[];
 
-ArrayMap:::(this |-> (
-    key |-> {
-        if (!this.has_key(key)) {
-            Array.add(this, (key, ()));
-        };
+        this
+    };
 
-        found := false;
-        it := this.iterator;
-        while (!found & it.is_valid()) {
-            (k, v) := it.get();
-            if (k == key) {
-                found := true;
-                Array.get(it.get(), 1)
+    ArrayMap::(
+        this.size |-> {
+            this._array.size
+        },
+        (this.size, value) |-> {}
+    );
+
+    ArrayMap:::(this |-> (
+        key |-> {
+            found := false;
+            it := this._array.iterator;
+            if (it.is_valid()) {
+                while (!found) {
+                    if ((it.get())[0] == key) {
+                        found := true;
+                        (it.get())[1]
+                    } else {
+                        it.next();
+                        if (!it.is_valid()) {
+                            found := true;
+                            (this._array.add_back(key, ()))[1]
+                        }
+                    }
+                }
             } else {
-                it.next();
+                (this._array.add_back(key, ()))[1]
             }
         }
-    }
-));
+    ));
 
-ArrayMap::(this.has_key |-> (
-    key |-> {
-        exists(this, (k, v) |-> {
-            k == key
-        })
-    }
-));
+    ArrayMap::(this.has |-> (
+        key |-> {
+            exists(this._array, (k, v) |-> {
+                k == key
+            })
+        }
+    ));
 
-ArrayMap::(this.remove_key |-> (
-    key |-> {
-        found := false;
-        it := this.iterator;
-        while (!found & it.is_valid()) {
-            (k, v) := it.get();
-            if (k == key) {
-                found := true;
-                it.remove()
-            } else {
-                it.next();
+    ArrayMap::(this.remove |-> (
+        key |-> {
+            found := false;
+            it := this.iterator;
+            while (!found & it.is_valid()) {
+                (k, v) := it.get();
+                if (k == key) {
+                    found := true;
+                    it.remove()
+                } else {
+                    it.next();
+                };
             };
+        }
+    ));
+
+    ArrayMap::(
+        this.iterator_begin |-> {
+            ArrayMap.Iterator(this._array.iterator_begin)
+        },
+        (this.iterator_begin, value) |-> {}
+    );
+
+    ArrayMap::(
+        this.iterator_end |-> {
+            ArrayMap.Iterator(this._array.iterator_end)
+        },
+        (this.iterator_end, value) |-> {}
+    );
+
+    ArrayMap::(
+        this.iterator |-> {
+            this.iterator_begin
+        },
+        (this.iterator, value) |-> {}
+    );
+
+    ArrayMap::(this.get_iterator |-> (
+        key |-> {
+            found := false;
+            it := this.iterator;
+            while (!found & it.is_valid()) {
+                (k, v) := it.get();
+                if (k == key) {
+                    found := true;
+                } else {
+                    it.next();
+                };
+            };
+            it
+        }
+    ));
+
+    class (ArrayMap.Iterator) extends (Map.Iterator);
+    {
+        ArrayMap.Iterator : (ArrayList.Iterator it) |-> {
+            this :~ ArrayMap.Iterator;
+
+            this._it := it;
+
+            this
         };
+
+        (ArrayMap.Iterator)::(this.is_valid |-> (
+            () |-> {
+                this._it.is_valid()
+            }
+        ));
+
+        (ArrayMap.Iterator)::(this.get |-> (
+            () \ (this.is_valid()) |-> {
+                this._it.get()
+            }
+        ));
+
+        (ArrayMap.Iterator)::(this.remove |-> (
+            () \ (this.is_valid()) |-> {
+                this._it.remove()
+            }
+        ));
+
+        (ArrayMap.Iterator)::(this.next |-> (
+            () |-> {
+                this._it.next()
+            }
+        ));
+
+        (ArrayMap.Iterator)::(this.previous |-> (
+            () |-> {
+                this._it.previous()
+            }
+        ));
     }
-));
-
-
-class (ArrayMap.Iterator) extends (Map.Iterator, ArrayList.Iterator);
+};
 
 
 Map : ArrayMap;

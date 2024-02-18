@@ -36,17 +36,17 @@ String : (Char c) |-> {
 };
 
 String::(this.substring |-> (
-    (Int begin) \ (begin >= 0 & begin < this.length) |-> {
+    (Int begin) \ (begin >= 0 & begin < this.size) |-> {
         str := String();
-        str.reserve(this.length - begin);
+        str.reserve(this.size - begin);
 
-        for i from begin to (this.length) {
+        for i from begin to (this.size) {
             str.add_back(this[i])
         };
 
         str
     } :
-    (Int begin, Int len) \ (begin >= 0 & len >= 0 & begin+len < this.length) |-> {
+    (Int begin, Int len) \ (begin >= 0 & len >= 0 & begin+len < this.size) |-> {
         str := String();
         str.reserve(len);
 
@@ -63,12 +63,12 @@ String::(this.index_of |-> (
         index := -1;
 
         i := 0;
-        while (index < 0 & i < this.length) {
+        while (index < 0 & i < this.size) {
             j := 0;
-            while (j < substring.length & this[i+j] == substring[j]) {
+            while (j < substring.size & this[i+j] == substring[j]) {
                 ++j
             };
-            if (j == substring.length) {
+            if (j == substring.size) {
                 index := i
             } else {
                 ++i

@@ -14,10 +14,10 @@ class ArraySet extends Set;
     };
 
     ArraySet::(
-        this.length |-> {
-            this._array.length
+        this.size |-> {
+            this._array.size
         },
-        (this.length, value) |-> {}
+        (this.size, value) |-> {}
     );
 
     ArraySet::(this.insert |-> (
@@ -61,14 +61,14 @@ class ArraySet extends Set;
 
     ArraySet::(
         this.iterator_begin |-> {
-            this._array.iterator_begin
+            ArraySet.Iterator(this._array.iterator_begin)
         },
         (this.iterator_begin, value) |-> {}
     );
 
     ArraySet::(
         this.iterator_end |-> {
-            this._array.iterator_end
+            ArraySet.Iterator(this._array.iterator_end)
         },
         (this.iterator_end, value) |-> {}
     );
@@ -79,12 +79,6 @@ class ArraySet extends Set;
         },
         (this.iterator, value) |-> {}
     );
-
-    ArraySet::(this.get_iterator |-> (
-        index |-> {
-            ArraySet.Iterator(this, index)
-        }
-    ));
 
     ArraySet::(this.get_iterator |-> (
         value |-> {
@@ -101,7 +95,7 @@ class ArraySet extends Set;
         }
     ));
 
-    class (ArraySet.Iterator) extends Set.Iterator;
+    class (ArraySet.Iterator) extends (Set.Iterator);
     {
         ArraySet.Iterator : (ArrayList.Iterator it) |-> {
             this :~ ArraySet.Iterator;

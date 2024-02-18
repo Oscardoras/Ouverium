@@ -4,10 +4,10 @@ import "containers/Iterable.fl";
 
 class Set extends BidirectionalIterable;
 {
-    Set::(this.length |-> abstract);
+    Set::(this.size |-> abstract);
     Set::(
         this.empty |-> {
-            this.length == 0
+            this.size == 0
         },
         (this.empty, value) |-> {}
     );

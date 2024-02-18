@@ -12,6 +12,7 @@ class App : public wxApp {
 public:
     bool OnInit() override {
         m_mainLoop = CreateMainLoop();
+        wxEventLoopBase::SetActive(m_mainLoop);
 
         return true;
     }
@@ -31,8 +32,7 @@ GUIApp::~GUIApp() {
 }
 
 bool GUIApp::yield() {
-    while (wxTheApp->GetMainLoop()->Pending())
-        wxTheApp->GetMainLoop()->Dispatch();
+    wxYield();
 
     return wxTheApp->GetTopWindow() != nullptr;
 }

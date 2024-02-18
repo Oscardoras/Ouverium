@@ -3,7 +3,28 @@ import "containers/Iterable.fl";
 
 
 class Map extends BidirectionalIterable;
-class (Map.Iterator) extends (BidirectionalIterable.Iterator);
+{
+    List:::(this |-> abstract);
+
+    Map::(this.size |-> abstract);
+    Map::(
+        this.empty |-> {
+            this.size == 0
+        },
+        (this.empty, value) |-> {}
+    );
+
+    Map::(this.has |-> abstract);
+
+    Map::(this.remove |-> abstract);
+
+    Map::(this.get_iterator |-> abstract);
+
+    class (Map.Iterator) extends (BidirectionalIterable.Iterator);
+    {
+        (Set.Iterator)::(this.remove |-> abstract);
+    };
+};
 
 
 import "containers/ArrayMap.fl";

@@ -12,16 +12,16 @@ class ArrayList extends List;
     };
 
     ArrayList:::(this |-> (
-        index \ (index ~ Int & 0 <= index & index < this.length) |-> {
+        index \ (index ~ Int & 0 <= index & index < this.size) |-> {
             Array.get(this, index)
         }
     ));
 
     ArrayList::(
-        this.length |-> {
+        this.size |-> {
             Array.length(this)
         },
-        (this.length, value) |-> {}
+        (this.size, value) |-> {}
     );
 
     ArrayList::(
@@ -47,14 +47,14 @@ class ArrayList extends List;
 
     ArrayList::(
         this.back |-> {
-            this[this.length - 1]
+            this[this.size - 1]
         },
         (this.back, value) |-> {}
     );
 
     ArrayList::(this.add_front |-> (
         element |-> {
-            l := this.length;
+            l := this.size;
             if (l > 0) {
                 Array.add(this, this[l-1]);
                 Array.shift(this, 1);
@@ -73,7 +73,7 @@ class ArrayList extends List;
 
     ArrayList::(this.remove_front |-> (
         () \ (!this.empty) |-> {
-            l := this.length;
+            l := this.size;
             value := this[0];
             Array.shift(this, -1);
             Array.remove(this);
@@ -88,8 +88,8 @@ class ArrayList extends List;
     ));
 
     ArrayList::(this.insert |-> (
-        (index, element) \ (index ~ Int & 0 <= index & index < this.length) |-> {
-            l := this.length;
+        (index, element) \ (index ~ Int & 0 <= index & index < this.size) |-> {
+            l := this.size;
             Array.add(this, this[l-1]);
             for i from (l-1) to index step (-1) {
                 this[i] := this[i-1];
@@ -99,8 +99,8 @@ class ArrayList extends List;
     ));
 
     ArrayList::(this.remove |-> (
-        index \ (index ~ Int & 0 <= index & index < this.length) |-> {
-            l := this.length;
+        index \ (index ~ Int & 0 <= index & index < this.size) |-> {
+            l := this.size;
             tmp := this[index];
             for i from index to (l-1) {
                 this[i] := this[i+1];
@@ -112,13 +112,13 @@ class ArrayList extends List;
 
     ArrayList::(this.resize |-> (
         (size, value) \ (size ~ Int & 0 <= size) |-> {
-            if (size < this.length) {
-                for i from 0 to (this.length - size) {
+            if (size < this.size) {
+                for i from 0 to (this.size - size) {
                     Array.remove(this);
                 };
-            } else if (size > this.length) {
+            } else if (size > this.size) {
                 Array.reserve(size);
-                for i from 0 to (size - this.length) {
+                for i from 0 to (size - this.size) {
                     Array.add(this, value);
                 };
             };
@@ -136,7 +136,7 @@ class ArrayList extends List;
 
     ArrayList::(
         this.iterator_end |-> {
-            ArrayList.Iterator(this, this.length-1)
+            ArrayList.Iterator(this, this.size-1)
         },
         (this.iterator_end, value) |-> {}
     );
@@ -167,7 +167,7 @@ class ArrayList extends List;
 
         (ArrayList.Iterator)::(this.is_valid |-> (
             () |-> {
-                0 <= this._index & this._index < this._array.length
+                0 <= this._index & this._index < this._array.size
             }
         ));
 
