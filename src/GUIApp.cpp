@@ -14,8 +14,10 @@ public:
     }
 };
 
+IMPLEMENT_APP_NO_MAIN(App);
+IMPLEMENT_WX_THEME_SUPPORT;
+
 GUIApp::GUIApp(int argc, char** argv) {
-    wxApp::SetInstance(new App);
     wxEntryStart(argc, argv);
     wxTheApp->OnInit();
 }
