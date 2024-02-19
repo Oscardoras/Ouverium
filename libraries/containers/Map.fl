@@ -2,8 +2,7 @@ import "Type.fl";
 import "containers/Iterable.fl";
 
 
-class Map extends BidirectionalIterable;
-{
+class Map extends BidirectionalIterable {
     List:::(this |-> abstract);
 
     Map::(this.size |-> abstract);
@@ -20,8 +19,7 @@ class Map extends BidirectionalIterable;
 
     Map::(this.get_iterator |-> abstract);
 
-    class (Map.Iterator) extends (BidirectionalIterable.Iterator);
-    {
+    class (Map.Iterator) extends (BidirectionalIterable.Iterator) {
         (Set.Iterator)::(this.remove |-> abstract);
     };
 };

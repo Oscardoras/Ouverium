@@ -1,25 +1,25 @@
 import "Type.fl";
 
 
-class Time;
+class Time {
+    static Time::(
+        this.time |-> {
+            import("system").time()
+        },
+        (this.time, value) |-> {}
+    );
 
-static Time::(
-    this.time |-> {
-        import("system").time()
-    },
-    (this.time, value) |-> {}
-);
+    static Time::(
+        this.system |-> {
+            import("system").clock_system()
+        },
+        (this.system, value) |-> {}
+    );
 
-static Time::(
-    this.system |-> {
-        import("system").clock_system()
-    },
-    (this.system, value) |-> {}
-);
-
-static Time::(
-    his.steady |-> {
-        import("system").clock_steady()
-    },
-    (this.steady, value) |-> {}
-);
+    static Time::(
+        his.steady |-> {
+            import("system").clock_steady()
+        },
+        (this.steady, value) |-> {}
+    );
+};

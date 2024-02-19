@@ -14,22 +14,16 @@
 
 extends;
 
-class : type |-> {
-    class type extends ()
-};
-
-class : (type, extends, Tuple parents) |-> {
+class : (type, body()) |-> { class type extends [] (body()) };
+class : (type, extends, Tuple parents, body()) |-> {
     foreach(parents, p |-> {
         Array.add(p._children, type);
     });
 
     if (!(type ~ Function)) {
         type : this \ (this ~ type) |-> { this };
-        type : () |-> {
-            this :~ type;
-            this
-        };
     };
+    body();
 
     type
 };

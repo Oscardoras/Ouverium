@@ -3,8 +3,7 @@ import "containers/Map.fl";
 import "containers/ArrayList.fl";
 
 
-class ArrayMap extends Map;
-{
+class ArrayMap extends Map {
     ArrayMap : () |-> {
         this :~ ArrayMap;
 
@@ -33,12 +32,12 @@ class ArrayMap extends Map;
                         it.next();
                         if (!it.is_valid()) {
                             found := true;
-                            (this._array.add_back(key, ()))[1]
+                            this._array.add_back(key, 1).back
                         }
                     }
                 }
             } else {
-                (this._array.add_back(key, ()))[1]
+                this._array.add_back(key, 1).back
             }
         }
     ));
@@ -104,8 +103,7 @@ class ArrayMap extends Map;
         }
     ));
 
-    class (ArrayMap.Iterator) extends (Map.Iterator);
-    {
+    class (ArrayMap.Iterator) extends (Map.Iterator) {
         ArrayMap.Iterator : (ArrayList.Iterator it) |-> {
             this :~ ArrayMap.Iterator;
 

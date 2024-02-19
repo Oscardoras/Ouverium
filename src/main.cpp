@@ -82,7 +82,9 @@ int interactive_mode(GUIApp& gui_app, std::string const& path) {
 
                         try {
                             auto r = Interpreter::execute(context, expression);
-                            call_function(context, context.expression, context["print"], r);
+                            auto str = Interpreter::string_from(context, r);
+                            if (!str.empty() && str != "()")
+                                std::cout << str << std::endl;
                         } catch (Interpreter::Exception const& ex) {
                             ex.print_stack_trace(context);
                         }

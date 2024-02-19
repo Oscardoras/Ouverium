@@ -2,43 +2,43 @@ import "Type.fl";
 import "String.fl";
 
 
-class UI.Window;
+class UI.Window {
+    (UI.Window)::(this.add_event |-> (
+        callback |-> {
+            import("system").ui_add_event(this, callback)
+        }
+    ));
 
-(UI.Window)::(this.add_event |-> (
-    callback |-> {
-        import("system").ui_add_event(this, callback)
-    }
-));
+    (UI.Window)::(this.set_position |-> (
+        (x, y) |-> {
+            import("system").ui_set_position(this, x, y)
+        }
+    ));
 
-(UI.Window)::(this.set_position |-> (
-    (x, y) |-> {
-        import("system").ui_set_position(this, x, y)
-    }
-));
-
-(UI.Window)::(this.set_size |-> (
-    (x, y) |-> {
-        import("system").ui_set_size(this, x, y)
-    }
-));
-
-
-class (UI.Frame) extends (UI.Window);
-
-UI.Frame : (String title) |-> {
-    (import("system").ui_new_frame(title)) :~ (UI.Frame)
+    (UI.Window)::(this.set_size |-> (
+        (x, y) |-> {
+            import("system").ui_set_size(this, x, y)
+        }
+    ));
 };
 
 
-class (UI.Panel) extends (UI.Window,);
-
-UI.Panel : (parent) |-> {
-    (import("system").ui_new_panel(parent)) :~ (UI.Panel)
+class (UI.Frame) extends (UI.Window) {
+    UI.Frame : (String title) |-> {
+        (import("system").ui_new_frame(title)) :~ (UI.Frame)
+    };
 };
 
 
-class (UI.Button) extends (UI.Window,);
+class (UI.Panel) extends (UI.Window) {
+    UI.Panel : (parent) |-> {
+        (import("system").ui_new_panel(parent)) :~ (UI.Panel)
+    };
+};
 
-UI.Button : (parent) |-> {
-    (import("system").ui_new_button(parent)) :~ (UI.Button)
+
+class (UI.Button) extends (UI.Window,) {
+    UI.Button : (parent) |-> {
+        (import("system").ui_new_button(parent)) :~ (UI.Button)
+    };
 };

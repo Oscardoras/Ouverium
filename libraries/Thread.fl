@@ -2,106 +2,106 @@ import "Type.fl";
 import "containers/Iterable.fl";
 
 
-class Thread;
+class Thread {
+    (~) : (thread, Thread) |-> {
+        import("system").thread_is(thread)
+    };
 
-(~) : (thread, Thread) |-> {
-    import("system").thread_is(thread)
+    Thread : (function()) |-> {
+        import("system").thread_create(function)
+    };
+
+    Thread::(this.join |-> (
+        () |-> {
+            import("system").thread_join(this);
+        }
+    ));
+
+    Thread::(this.detach |-> (
+        () |-> {
+            import("system").thread_detach(this);
+        }
+    ));
+
+    Thread::(
+        this.id |-> (
+            import("system").thread_get_id(this)
+        ),
+        (this.id, value) |-> {}
+    );
+
+    static Thread::(
+        this.current_id |-> {
+            import("system").thread_current_id()
+        },
+        (this.current_id, value) |-> {}
+    );
+
+    Thread.sleep : time |-> {
+        import("system").thread_sleep(time);
+    };
+
+    static Thread::(
+        this.hardware_concurrency |-> {
+            import("system").thread_hardware_concurrency()
+        },
+        (this.hardware_concurrency, value) |-> {}
+    );
 };
 
-Thread : (function()) |-> {
-    import("system").thread_create(function)
+
+class Mutex {
+    (~) : (mutex, Mutex) |-> {
+        import("system").mutex_is(mutex)
+    };
+
+    Mutex : () |-> {
+        import("system").mutex_create()
+    };
+
+    Mutex::(this.lock |-> (
+        () |-> {
+            import("system").mutex_lock(this)
+        }
+    ));
+
+    Mutex::(this.try_lock |-> (
+        () |-> {
+            import("system").mutex_try_lock(this)
+        }
+    ));
+
+    Mutex::(this.unlock |-> (
+        () |-> {
+            import("system").mutex_unlock(this)
+        }
+    ));
 };
 
-Thread::(this.join |-> (
-    () |-> {
-        import("system").thread_join(this);
-    }
-));
 
-Thread::(this.detach |-> (
-    () |-> {
-        import("system").thread_detach(this);
-    }
-));
+class Future {
+    Future : this |-> {
+        this :~ Future;
 
-Thread::(
-    this.id |-> (
-        import("system").thread_get_id(this)
-    ),
-    (this.id, value) |-> {}
-);
-
-static Thread::(
-    this.current_id |-> {
-        import("system").thread_current_id()
-    },
-    (this.current_id, value) |-> {}
-);
-
-Thread.sleep : time |-> {
-    import("system").thread_sleep(time);
-};
-
-static Thread::(
-    this.hardware_concurrency |-> {
-        import("system").thread_hardware_concurrency()
-    },
-    (this.hardware_concurrency, value) |-> {}
-);
-
-
-class Mutex;
-
-(~) : (mutex, Mutex) |-> {
-    import("system").mutex_is(mutex)
-};
-
-Mutex : () |-> {
-    import("system").mutex_create()
-};
-
-Mutex::(this.lock |-> (
-    () |-> {
-        import("system").mutex_lock(this)
-    }
-));
-
-Mutex::(this.try_lock |-> (
-    () |-> {
-        import("system").mutex_try_lock(this)
-    }
-));
-
-Mutex::(this.unlock |-> (
-    () |-> {
-        import("system").mutex_unlock(this)
-    }
-));
-
-
-class Future;
-
-Future : this |-> {
-    this :~ Future;
-
-    this._mutex := Mutex();
-    this._mutex.lock();
-
-    this
-};
-
-Future::(this.wait |-> {
-    () |-> {
+        this._mutex := Mutex();
         this._mutex.lock();
-        this._mutex.unlock();
-    }
-});
 
-Future::(this.is_available |-> {
-    () |-> {
-        defined (this.value)
-    }
-});
+        this
+    };
+
+    Future::(this.wait |-> {
+        () |-> {
+            this._mutex.lock();
+            this._mutex.unlock();
+        }
+    });
+
+    Future::(this.is_available |-> {
+        () |-> {
+            defined (this.value)
+        }
+    });
+};
 
 
 async : (code()) |-> {

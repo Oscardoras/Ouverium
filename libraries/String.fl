@@ -2,82 +2,91 @@ import "Type.fl";
 import "containers/ArrayList.fl";
 
 
-Char : this \ (Array.length(this) == 1 & this[0] ~ Char) |-> {
-    this[0]
+{
+    Char : this \ (Array.length(this) == 1 & this[0] ~ Char) |-> {
+        this[0]
+    };
+
+    Char::(this.digit |-> {
+        Char "0" <= c & c <= Char "9"
+    });
+
+    Char::(this.alpha |-> {
+        Char "A" <= c & c <= Char "Z" | Char "a" <= c & c <= Char "z"
+    });
+
+    Char::(this.alphanum |-> {
+        Char.is_alpha(c) | Char.is_digit(c)
+    });
 };
 
-Char::(this.digit |-> {
-    Char "0" <= c & c <= Char "9"
-});
 
-Char::(this.alpha |-> {
-    Char "A" <= c & c <= Char "Z" | Char "a" <= c & c <= Char "z"
-});
+class String {
+    (~) : (str, String) |-> {
+        str ~ Array & forall(str, x |-> {
+            x ~ Char
+        })
+    };
 
-Char::(this.alphanum |-> {
-    Char.is_alpha(c) | Char.is_digit(c)
-});
+    String : () |-> {
+        ArrayList()
+    };
 
+    String : (Char c) |-> {
+        [c,]
+    };
 
-class String;
+    String::(
+        this.length |-> {
+            this.size
+        },
+        (this.length, value) |-> {}
+    );
 
-(~) : (str, String) |-> {
-    str ~ Array & forall(str, x |-> {
-        x ~ Char
-    })
-};
+    String::(this.substring |-> (
+        (Int begin) \ (begin >= 0 & begin < this.size) |-> {
+            str := String();
+            str.reserve(this.size - begin);
 
-String : () |-> {
-    ArrayList()
-};
-
-String : (Char c) |-> {
-    [c,]
-};
-
-String::(this.substring |-> (
-    (Int begin) \ (begin >= 0 & begin < this.size) |-> {
-        str := String();
-        str.reserve(this.size - begin);
-
-        for i from begin to (this.size) {
-            str.add_back(this[i])
-        };
-
-        str
-    } :
-    (Int begin, Int len) \ (begin >= 0 & len >= 0 & begin+len < this.size) |-> {
-        str := String();
-        str.reserve(len);
-
-        for i from 0 to len {
-            str.add_back(this[begin+i])
-        };
-
-        str
-    }
-));
-
-String::(this.index_of |-> (
-    (String substring) |-> {
-        index := -1;
-
-        i := 0;
-        while (index < 0 & i < this.size) {
-            j := 0;
-            while (j < substring.size & this[i+j] == substring[j]) {
-                ++j
+            for i from begin to (this.size) {
+                str.add_back(this[i])
             };
-            if (j == substring.size) {
-                index := i
-            } else {
-                ++i
-            }
-        };
 
-        index
-    }
-));
+            str
+        } :
+        (Int begin, Int len) \ (begin >= 0 & len >= 0 & begin+len < this.size) |-> {
+            str := String();
+            str.reserve(len);
+
+            for i from 0 to len {
+                str.add_back(this[begin+i])
+            };
+
+            str
+        }
+    ));
+
+    String::(this.index_of |-> (
+        (String substring) |-> {
+            index := -1;
+
+            i := 0;
+            while (index < 0 & i < this.size) {
+                j := 0;
+                while (j < substring.size & this[i+j] == substring[j]) {
+                    ++j
+                };
+                if (j == substring.size) {
+                    index := i
+                } else {
+                    ++i
+                }
+            };
+
+            index
+        }
+    ));
+};
 
 
 (@) : (String substr, String str) |-> {

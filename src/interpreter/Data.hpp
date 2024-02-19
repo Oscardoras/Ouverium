@@ -42,8 +42,6 @@ namespace Interpreter {
             return std::holds_alternative<T>(*this);
         }
 
-        friend std::ostream& operator<<(std::ostream& os, Data const& data);
-
     };
 
 }

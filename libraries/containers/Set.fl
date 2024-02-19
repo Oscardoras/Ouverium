@@ -2,8 +2,7 @@ import "Type.fl";
 import "containers/Iterable.fl";
 
 
-class Set extends BidirectionalIterable;
-{
+class Set extends BidirectionalIterable {
     Set::(this.size |-> abstract);
     Set::(
         this.empty |-> {
@@ -17,8 +16,7 @@ class Set extends BidirectionalIterable;
 
     Set::(this.get_iterator |-> abstract);
 
-    class (Set.Iterator) extends (BidirectionalIterable.Iterator);
-    {
+    class (Set.Iterator) extends (BidirectionalIterable.Iterator) {
         (Set.Iterator)::(this.remove |-> abstract);
     };
 };

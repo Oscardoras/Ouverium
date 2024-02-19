@@ -2,17 +2,10 @@ import "Type.fl";
 import "containers/Iterable.fl";
 
 
-class List extends BidirectionalIterable;
-{
+class List extends BidirectionalIterable {
     List:::(this |-> abstract);
 
     List::(this.size |-> abstract);
-    List::(
-        this.length |-> {
-            this.size
-        },
-        (this.length, value) |-> {}
-    );
     List::(
         this.empty |-> {
             this.size == 0
@@ -32,8 +25,7 @@ class List extends BidirectionalIterable;
 
     List::(this.get_iterator |-> abstract);
 
-    class (List.Iterator) extends (BidirectionalIterable.Iterator);
-    {
+    class (List.Iterator) extends (BidirectionalIterable.Iterator) {
         (List.Iterator)::(this.remove |-> abstract);
         (List.Iterator)::(this.insert |-> abstract);
     };

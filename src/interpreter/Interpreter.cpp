@@ -51,7 +51,7 @@ namespace Interpreter {
     void Exception::print_stack_trace(Context& context) const {
         if (!positions.empty()) {
             std::ostringstream oss;
-            oss << "An exception occured: " << reference.to_data(context);
+            oss << "An exception occured: " << Interpreter::string_from(context, reference.to_data(context));
             positions.front()->notify_error(oss.str());
             for (auto const& p : positions)
                 p->notify_position();
@@ -316,7 +316,12 @@ namespace Interpreter {
 
     std::string string_from(Context& context, Reference const& data) {
         std::ostringstream oss;
-        oss << call_function(context, context.expression, context.get_global()["string_from"], data).to_data(context);
+
+        auto d = call_function(context, context.expression, context.get_global()["string_from"], data).to_data(context);
+        try {
+            oss << d.get<Object*>()->to_string();
+        } catch (Data::BadAccess const&) {}
+
         return oss.str();
     }
 

@@ -2,70 +2,70 @@ import "Type.fl";
 import "String.fl";
 
 
-class File;
+class File {
+    (~) : (file, File) |-> {
+        try {
+            import("system").file_has(file);
+            true
+        } catch (e |-> {
+            false
+        })
+    };
 
-(~) : (file, File) |-> {
-    try {
-        import("system").file_has(file);
-        true
-    } catch (e |-> {
-        false
-    })
-};
+    File : (String path) |-> {
+        import("system").file_open(path)
+    };
 
-File : (String path) |-> {
-    import("system").file_open(path)
-};
+    File::(this.read |-> (
+        () |-> {
+            import("system").file_read(this)
+        }
+    ));
 
-File::(this.read |-> (
-    () |-> {
-        import("system").file_read(this)
-    }
-));
+    File::(this.has |-> (
+        () |-> {
+            import("system").file_has(this)
+        }
+    ));
 
-File::(this.has |-> (
-    () |-> {
-        import("system").file_has(this)
-    }
-));
+    File::(this.write |-> (
+        data |-> {
+            import("system").file_write(this, data)
+        }
+    ));
 
-File::(this.write |-> (
-    data |-> {
-        import("system").file_write(this, data)
-    }
-));
+    File::(this.flush |-> (
+        () |-> {
+            import("system").file_flush(this)
+        }
+    ));
 
-File::(this.flush |-> (
-    () |-> {
-        import("system").file_flush(this)
-    }
-));
+    static File::(
+        this.working_directory |-> {
+            import("system").file_get_working_directory()
+        },
+        (this.working_directory, value) |-> {
+            import("system").file_set_working_directory(value)
+        }
+    );
 
-static File::(
-    this.working_directory |-> {
-        import("system").file_get_working_directory()
-    },
-    (this.working_directory, value) |-> {
-        import("system").file_set_working_directory(value)
-    }
-);
+    File.exists : path |-> {
+        import("system").file_exists(path)
+    };
 
-File.exists : path |-> {
-    import("system").file_exists(path)
-};
+    File.is_directory : path |-> {
+        import("system").file_is_directory(path)
+    };
 
-File.is_directory : path |-> {
-    import("system").file_is_directory(path)
-};
+    File.create_directories : path |-> {
+        import("system").file_create_directories(path)
+    };
 
-File.create_directories : path |-> {
-    import("system").file_create_directories(path)
-};
+    File.copy : (from_path, to_path) |-> {
+        import("system").file_copy(from_path, to_path)
+    };
 
-File.copy : (from_path, to_path) |-> {
-    import("system").file_copy(from_path, to_path)
-};
-
-File.delete : path |-> {
-    import("system").file_delete(path)
+    File.delete : path |-> {
+        import("system").file_delete(path)
+    };
 };

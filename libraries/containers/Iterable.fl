@@ -1,8 +1,7 @@
 import "Type.fl";
 
 
-class Iterable;
-{
+class Iterable {
     Iterable::(this.iterator |-> abstract);
     Iterable::(this.foreach |-> (
         (Function function) |-> {
@@ -14,8 +13,7 @@ class Iterable;
         }
     ));
 
-    class (Iterable.Iterator);
-    {
+    class (Iterable.Iterator) {
         (Iterable.Iterator)::(this.is_valid |-> abstract);
         (Iterable.Iterator)::(this.get |-> abstract);
         (Iterable.Iterator)::(this.next |-> abstract);
@@ -23,13 +21,11 @@ class Iterable;
 };
 
 
-class BidirectionalIterable extends Iterable;
-{
+class BidirectionalIterable extends Iterable {
     BidirectionalIterable::(this.iterator_begin |-> abstract);
     BidirectionalIterable::(this.iterator_end |-> abstract);
 
-    class (BidirectionalIterable.Iterator) extends (Iterable.Iterator);
-    {
+    class (BidirectionalIterable.Iterator) extends (Iterable.Iterator) {
         (BidirectionalIterable.Iterator)::(this.previous |-> abstract);
     };
 };
@@ -58,8 +54,7 @@ class BidirectionalIterable extends Iterable;
 );
 
 
-class Range extends Iterable;
-{
+class Range extends Iterable {
     Range : (Int end) |-> {
         Range(0, end, 1)
     };
@@ -85,8 +80,7 @@ class Range extends Iterable;
         (this.iterator, value) |-> {}
     );
 
-    class (Range.Iterator) extends (Iterable.Iterator);
-    {
+    class (Range.Iterator) extends (Iterable.Iterator) {
         Range.Iterator : (range, index) |-> {
             this :~ Range.Iterator;
 
@@ -113,5 +107,5 @@ class Range extends Iterable;
                 this._index := this._index + this._range.step;
             }
         ));
-    }
+    };
 };

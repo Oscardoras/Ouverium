@@ -3,8 +3,7 @@ import "containers/List.fl";
 
 
 ArrayList := Array;
-class ArrayList extends List;
-{
+class ArrayList extends List {
     ArrayList : () |-> {
         Array.set_capacity(this, 1);
 
@@ -42,14 +41,18 @@ class ArrayList extends List;
         this.front |-> {
             this[0]
         },
-        (this.front, value) |-> {}
+        (this.front, value) |-> {
+            this[0] := value
+        }
     );
 
     ArrayList::(
         this.back |-> {
             this[this.size - 1]
         },
-        (this.back, value) |-> {}
+        (this.back, value) |-> {
+            this[this.size - 1] := value
+        }
     );
 
     ArrayList::(this.add_front |-> (
@@ -154,8 +157,7 @@ class ArrayList extends List;
         }
     ));
 
-    class (ArrayList.Iterator) extends (List.Iterator);
-    {
+    class (ArrayList.Iterator) extends (List.Iterator) {
         ArrayList.Iterator : (array, index) |-> {
             this :~ ArrayList.Iterator;
 

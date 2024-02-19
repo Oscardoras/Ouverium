@@ -81,8 +81,8 @@ namespace Interpreter::SystemFunctions {
                             while (i < tuple->objects.size()) {
                                 auto else_s = Interpreter::execute(parent, tuple->objects[i]).to_data(context);
                                 if (else_s == context["else"].to_data(context) && i + 1 < tuple->objects.size()) {
-                                    auto s = Interpreter::execute(parent, tuple->objects[i + 1]).to_data(context);
-                                    if (s == context["if"].to_data(context) && i + 3 < tuple->objects.size()) {
+                                    auto s = Interpreter::execute(parent, tuple->objects[i + 1]);
+                                    if (s.to_data(context) == context["if"].to_data(context) && i + 3 < tuple->objects.size()) {
                                         if (Interpreter::execute(parent, tuple->objects[i + 2]).to_data(context).get<bool>())
                                             return Interpreter::execute(parent, tuple->objects[i + 3]);
                                         else i += 4;
@@ -362,9 +362,43 @@ namespace Interpreter::SystemFunctions {
         Reference string_from(FunctionContext& context) {
             auto data = context["data"].to_data(context);
 
-            std::ostringstream oss;
-            oss << data;
-            return Data(context.new_object(oss.str()));
+            std::ostringstream os;
+
+            if (auto object = get_if<Object*>(&data)) {
+                if (object && *object) {
+                    try {
+                        if ((*object)->array.capacity() > 0)
+                            os << (*object)->to_string();
+                        else
+                            throw Data::BadAccess();
+                    } catch (Data::BadAccess const&) {
+                        bool prev = false;
+                        os << "(";
+                        for (auto const& [key, value] : (*object)->properties) if (value != Data{}) {
+                            if (prev)
+                                os << ", ";
+                            prev = true;
+                            os << key << ": " << Interpreter::string_from(context, value);
+                        }
+                        for (auto d : (*object)->array) {
+                            if (prev)
+                                os << ", ";
+                            prev = true;
+                            os << Interpreter::string_from(context, d);
+                        }
+                        os << ")";
+                    }
+                }
+            } else if (auto c = get_if<char>(&data))
+                os << *c;
+            else if (auto f = get_if<OV_FLOAT>(&data))
+                os << *f;
+            else if (auto i = get_if<OV_INT>(&data))
+                os << *i;
+            else if (auto b = get_if<bool>(&data))
+                os << (*b ? "true" : "false");
+
+            return Data(context.new_object(os.str()));
         }
 
         auto print_args = std::make_shared<Parser::Symbol>("data");
@@ -372,8 +406,7 @@ namespace Interpreter::SystemFunctions {
             auto data = context["data"];
 
             auto str = Interpreter::string_from(context, data);
-            if (!str.empty())
-                std::cout << str << std::endl;
+            std::cout << str << std::endl;
 
             return Reference();
         }

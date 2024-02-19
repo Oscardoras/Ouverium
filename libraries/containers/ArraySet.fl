@@ -3,8 +3,7 @@ import "containers/Set.fl";
 import "containers/ArrayList.fl";
 
 
-class ArraySet extends Set;
-{
+class ArraySet extends Set {
     ArraySet : () |-> {
         this :~ ArraySet;
 
@@ -95,8 +94,7 @@ class ArraySet extends Set;
         }
     ));
 
-    class (ArraySet.Iterator) extends (Set.Iterator);
-    {
+    class (ArraySet.Iterator) extends (Set.Iterator) {
         ArraySet.Iterator : (ArrayList.Iterator it) |-> {
             this :~ ArraySet.Iterator;
 
