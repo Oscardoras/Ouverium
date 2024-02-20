@@ -2,7 +2,7 @@ import "Type.fl";
 import "String.fl";
 
 
-class UI.Window {
+class (UI.Window) {
     (UI.Window)::(this.add_event |-> (
         callback |-> {
             import("system").ui_add_event(this, callback)
