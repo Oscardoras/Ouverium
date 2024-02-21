@@ -1,44 +1,15 @@
 import "Type.fl";
+import "Stream.fl";
 import "String.fl";
 
 
 class File {
-    (~) : (file, File) |-> {
-        try {
-            import("system").file_has(file);
-            true
-        } catch (e |-> {
-            false
-        })
-    };
-
     File : (String path) |-> {
-        import("system").file_open(path)
+        this := import("system").file_open(path);
+
+        this :~ File;
+        this
     };
-
-    File::(this.read |-> (
-        () |-> {
-            import("system").file_read(this)
-        }
-    ));
-
-    File::(this.has |-> (
-        () |-> {
-            import("system").file_has(this)
-        }
-    ));
-
-    File::(this.write |-> (
-        data |-> {
-            import("system").file_write(this, data)
-        }
-    ));
-
-    File::(this.flush |-> (
-        () |-> {
-            import("system").file_flush(this)
-        }
-    ));
 
     static File::(
         this.working_directory |-> {

@@ -1,0 +1,32 @@
+import "Type.fl";
+
+
+class Stream {
+    (~) : (stream, Stream) |-> {
+        import("system").stream_is(stream)
+    };
+
+    Stream::(this.read |-> (
+        () |-> {
+            import("system").stream_read(this)
+        }
+    ));
+
+    Stream::(this.has |-> (
+        () |-> {
+            import("system").stream_has(this)
+        }
+    ));
+
+    Stream::(this.write |-> (
+        data |-> {
+            import("system").stream_write(this, data)
+        }
+    ));
+
+    Stream::(this.flush |-> (
+        () |-> {
+            import("system").stream_flush(this)
+        }
+    ));
+};

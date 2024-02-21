@@ -8,12 +8,20 @@ namespace Interpreter::SystemFunctions {
 
     namespace System {
 
-        Reference read(FunctionContext& context);
-        Reference has(FunctionContext& context);
-        Reference write(FunctionContext& context);
-        Reference flush(FunctionContext& context);
-        Reference open(FunctionContext& context);
-        Reference working_directory(FunctionContext& context);
+        Reference stream_is(FunctionContext& context);
+        Reference stream_read(FunctionContext& context);
+        Reference stream_has(FunctionContext& context);
+        Reference stream_write(FunctionContext& context);
+        Reference stream_flush(FunctionContext& context);
+
+        Reference file_open(FunctionContext& context);
+        Reference file_get_working_directory(FunctionContext& context);
+        Reference file_set_working_directory(FunctionContext& context);
+        Reference file_exists(FunctionContext& context);
+        Reference file_is_directory(FunctionContext& context);
+        Reference file_create_directories(FunctionContext& context);
+        Reference file_copy(FunctionContext& context);
+        Reference file_delete(FunctionContext& context);
 
         Reference time(FunctionContext& context);
         Reference clock_system(FunctionContext& context);

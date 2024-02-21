@@ -1,120 +1,96 @@
-import "Type.fl"
-import "containers/ArrayList.fl"
+import "Type.fl";
+import "containers/ArrayList.fl";
 
 
-class Matrix;
+class Matrix {
+    Matrix.of : shape \ ((shape ~ Int & shape > 0) | (shape ~ Array & forall(shape, x |-> {
+        x ~ Int & x > 0
+    }))) |-> {
+        this :~ Matrix;
 
-Matrix.of : shape \ (shape ~ Int & shape > 0 | shape ~ Array & forall(shape, x |-> {
-    x ~ Int & x > 0
-})) |-> {
-    this :~ Matrix;
+        this._shape := if (shape ~ Int) [shape,] else shape;
 
-    this._shape := if (shape ~ Int) [shape,] else shape;
+        this._sizes := Array[];
+        product := if (this._shape.size > 0) 1 else 0;
+        this._shape.foreach(s |-> {
+            this._sizes.add_back(product);
+            product := product * s;
+        });
 
-    this._sizes := Array[];
-    product := if (this._shape.length > 0) 1 else 0;
-    this._shape.foreach(s |-> {
-        this._sizes.add_back(product);
-        product := product * s;
-    });
+        this._array := Array[];
+        this._array.resize(product, 0.);
 
-    this._array := Array[];
-    this._array.resize(array_size, 0.);
+        this
+    };
 
-    this
-};
+    Matrix::(
+        this.shape |-> {
+            $(this._shape)
+        },
+        (this.shape, value) |-> {}
+    );
 
-Matrix::?(this.shape |-> {
-    $(this._shape)
-});
+    Matrix::(
+        this.dimension |-> {
+            this._shape.size
+        },
+        (this.dimension, value) |-> {}
+    );
 
-Matrix::?(this.dimension |-> {
-    this._shape.length
-});
+    Matrix::(
+        this.size |-> {
+            this._array.size
+        },
+        (this.size, value) |-> {}
+    );
 
-Matrix::?(this.length |-> {
-    $(this._shape[0])
-});
+    Matrix::(
+        this.length |-> {
+            $(this._shape[0])
+        },
+        (this.length, value) |-> {}
+    );
 
-Matrix:::(this |-> (
-    (ind) |-> {
-        indexes := if (ind ~ Int) [indexes,] else ind;
+    Matrix:::(this |-> (
+        i |-> {
+            indexes := if (i ~ Int) [i,] else i;
 
-        index := 0;
-        for i from 0 to (indexes.length) {
-            index :+ indexes[i] * this._sizes[i];
+            index := 0;
+            for i from 0 to (indexes.size) {
+                index :+= indexes[i] * this._sizes[i];
+            };
+
+            this._array[index]
+        }
+    ));
+
+    Matrix.identity : (Int n) |-> {
+        matrix := Matrix.of(n, n);
+
+        for i from 0 to n {
+            matrix[i,i] := 1.;
         };
 
-        this._array[index]
-    }
-));
-
-Matrix.identity : (Int n) |-> {
-    matrix := Matrix.of(n, n);
-
-    for i from 0 to n {
-        matrix[i,i] := 1.;
+        matrix
     };
 
-    matrix
-};
+    Matrix.vectorize : function |-> {
+        (Matrix matrix) |-> {
+            new_matrix := Matrix.of(matrix.shape);
 
-Matrix.arange : (start, stop, s) {
-    matrix := Matrix.of(Int((stop - start) / s));
+            for i from 0 to (matrix._array.size) {
+                new_matrix._array[i] := function(matrix._array[i]);
+            };
 
-    i := 0;
-    val := start;
-    while (val < stop) {
-        matrix[i] := val;
-        ++i;
-        val :+ s;
+            new_matrix
+        }
     };
-
-    matrix
-};
-
-Matrix.linspace : (start, stop, Int num) {
-    matrix := Matrix.of(num);
-
-    for i from 0 to num {
-        matrix[i] := start + (stop - start) * i / num;
-    };
-
-    matrix
-};
-
-Matrix.vectorize : function |-> {
-    (Matrix matrix) |-> {
-        new_matrix := Matrix.of(matrix.shape);
-
-        for i from 0 to (matrix._array.length) {
-            new_matrix._array[i] := function(matrix._array[i]);
-        };
-
-        new_matrix
-    }
-};
-
-class Vector;
-
-(~) : (vector, Vector) |-> {
-    vector ~ Matrix && vector.dimension == 1
-}
-
-Vector.dot : (Vector a, Vector b) \ (a.length == b.length) |-> {
-    product := if (a.length > 0) { a[0] * b[0] } else 0.;
-
-    for i from 1 to (a.length) {
-        product :+ a[i] * b[i];
-    };
-
-    product
 };
 
 ($) : (Matrix matrix) |-> {
     new_matrix = Matrix.of(matrix.shape);
 
-    for i from 0 to (matrix._array.length) {
+    for i from 0 to (matrix._array.size) {
         new_matrix._array[i] = matrix._array[i];
     };
 
@@ -122,6 +98,48 @@ Vector.dot : (Vector a, Vector b) \ (a.length == b.length) |-> {
 };
 
 
-Matrix.Slice : (matrix, indexes) |-> {
+class Vector {
+    (~) : (vector, Vector) |-> {
+        vector ~ Matrix & vector.dimension == 1
+    };
 
+    Vector.arange : (start, stop, s) |-> {
+        matrix := Matrix.of(Int((stop - start) / s));
+
+        i := 0;
+        val := start;
+        while (val < stop) {
+            matrix[i] := val;
+            ++i;
+            val :+ s;
+        };
+
+        matrix
+    };
+
+    Vector.linspace : (start, stop, Int num) |-> {
+        matrix := Matrix.of(num);
+
+        s := (stop - start) / num
+        for i from 0 to num {
+            matrix[i] := start + s * i;
+        };
+
+        matrix
+    };
+
+    Vector.dot : (Vector a, Vector b) \ (a.size == b.size) |-> {
+        product := if (a.size > 0) 1. else 0.;
+
+        for i from 0 to (a.size) {
+            product :+ a[i] * b[i];
+        };
+
+        product
+    };
+
+
+    Matrix.Slice : (matrix, indexes) |-> {
+
+    };
 };

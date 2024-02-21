@@ -120,7 +120,7 @@ class ArrayList extends List {
                     Array.remove(this);
                 };
             } else if (size > this.size) {
-                Array.reserve(size);
+                Array.set_capacity(this, size);
                 for i from 0 to (size - this.size) {
                     Array.add(this, value);
                 };

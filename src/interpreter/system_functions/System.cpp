@@ -11,13 +11,21 @@ namespace Interpreter::SystemFunctions {
 
     namespace System {
 
-        auto file_path_args = std::make_shared<Parser::Symbol>("path");
-        auto file_args = std::make_shared<Parser::Symbol>("file");
+        auto stream_args = std::make_shared<Parser::Symbol>("stream");
 
-        Reference file_read(FunctionContext& context) {
+        Reference stream_is(FunctionContext& context) {
             try {
-                auto file = context["file"].to_data(context).get<Object*>();
-                auto& stream = dynamic_cast<std::istream&>(file->c_obj.get<std::ios>());
+                context["stream"].to_data(context).get<Object*>()->c_obj.get<std::ios>();
+
+                return Data(true);
+            } catch (std::exception const&) {
+                return Data(false);
+            }
+        }
+
+        Reference stream_read(FunctionContext& context) {
+            try {
+                auto& stream = dynamic_cast<std::istream&>(context["stream"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
 
                 std::string str;
                 getline(stream, str);
@@ -28,26 +36,25 @@ namespace Interpreter::SystemFunctions {
             }
         }
 
-        Reference file_has(FunctionContext& context) {
+        Reference stream_has(FunctionContext& context) {
             try {
-                auto file = context["file"].to_data(context).get<Object*>();
-                auto& stream = dynamic_cast<std::istream&>(file->c_obj.get<std::ios>());
+                auto& stream = dynamic_cast<std::istream&>(context["stream"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
+
                 return Data(static_cast<bool>(stream));
             } catch (std::exception const&) {
                 throw FunctionArgumentsError();
             }
         }
 
-        auto file_write_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+        auto stream_write_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
             {
-                std::make_shared<Parser::Symbol>("file"),
+                std::make_shared<Parser::Symbol>("stream"),
                 std::make_shared<Parser::Symbol>("data")
             }
         ));
-        Reference file_write(FunctionContext& context) {
+        Reference stream_write(FunctionContext& context) {
             try {
-                auto file = context["file"].to_data(context).get<Object*>();
-                auto& stream = dynamic_cast<std::ostream&>(file->c_obj.get<std::ios>());
+                auto& stream = dynamic_cast<std::ostream&>(context["stream"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
                 auto data = context["data"].to_data(context);
 
                 stream << Interpreter::string_from(context, data);
@@ -58,10 +65,9 @@ namespace Interpreter::SystemFunctions {
             }
         }
 
-        Reference file_flush(FunctionContext& context) {
+        Reference stream_flush(FunctionContext& context) {
             try {
-                auto file = context["file"].to_data(context).get<Object*>();
-                auto& stream = dynamic_cast<std::ostream&>(file->c_obj.get<std::ios>());
+                auto& stream = dynamic_cast<std::ostream&>(context["stream"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
 
                 stream.flush();
 
@@ -71,6 +77,7 @@ namespace Interpreter::SystemFunctions {
             }
         }
 
+        auto file_path_args = std::make_shared<Parser::Symbol>("path");
         Reference file_open(FunctionContext& context) {
             try {
                 auto path = context["path"].to_data(context).get<Object*>()->to_string();
@@ -411,10 +418,12 @@ namespace Interpreter::SystemFunctions {
         void init(GlobalContext& context) {
             auto& s = *context.get_global().system;
 
-            s["file_read"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_args, file_read });
-            s["file_has"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_args, file_has });
-            s["file_write"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_write_args, file_write });
-            s["file_flush"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_args, file_flush });
+            s["stream_is"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ stream_args, stream_is });
+            s["stream_read"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ stream_args, stream_read });
+            s["stream_has"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ stream_args, stream_has });
+            s["stream_write"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ stream_write_args, stream_write });
+            s["stream_flush"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ stream_args, stream_flush });
+
             s["file_open"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_path_args, file_open });
             s["file_get_working_directory"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ std::make_shared<Parser::Tuple>(), file_get_working_directory });
             s["file_set_working_directory"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_path_args, file_set_working_directory });
