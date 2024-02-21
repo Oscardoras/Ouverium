@@ -103,6 +103,16 @@ class Vector {
         vector ~ Matrix & vector.dimension == 1
     };
 
+    Vector : (Array array) |-> {
+        this := Matrix.of(array.size);
+
+        for i from 0 to (array.size) {
+            this[i] := array[i];
+        };
+
+        this
+    };
+
     Vector.arange : (start, stop, s) |-> {
         matrix := Matrix.of(Int((stop - start) / s));
 
@@ -111,7 +121,7 @@ class Vector {
         while (val < stop) {
             matrix[i] := val;
             ++i;
-            val :+ s;
+            val :+= s;
         };
 
         matrix
@@ -128,18 +138,13 @@ class Vector {
         matrix
     };
 
-    Vector.dot : (Vector a, Vector b) \ (a.size == b.size) |-> {
-        product := if (a.size > 0) 1. else 0.;
+    Vector.dot : (a, b) \ (a ~ Vector & b ~ Vector & a.size == b.size) |-> {
+        sum := 0.;
 
         for i from 0 to (a.size) {
-            product :+ a[i] * b[i];
+            sum :+= a[i] * b[i];
         };
 
-        product
-    };
-
-
-    Matrix.Slice : (matrix, indexes) |-> {
-
+        sum
     };
 };
