@@ -52,12 +52,12 @@ class Matrix {
     );
 
     Matrix:::(this |-> (
-        i |-> {
-            indexes := if (i ~ Int) [i,] else i;
+        indexes |-> {
+            ind := if (indexes ~ Int) [indexes,] else indexes;
 
             index := 0;
-            for i from 0 to (indexes.size) {
-                index :+= indexes[i] * this._sizes[i];
+            for i from 0 to (ind.size) {
+                index :+= ind[i] * this._sizes[i];
             };
 
             this._array[index]
@@ -130,10 +130,14 @@ class Vector {
     Vector.linspace : (start, stop, Int num) |-> {
         matrix := Matrix.of(num);
 
-        s := (stop - start) / num
-        for i from 0 to num {
-            matrix[i] := start + s * i;
-        };
+        if (num > 1) {
+            s := (stop - start) / (num-1);
+            for i from 0 to num {
+                matrix[i] := start + s * i;
+            };
+        } else {
+            matrix[0] := start;
+        }
 
         matrix
     };
