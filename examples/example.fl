@@ -4,12 +4,11 @@ if (1==1) (test := 4)
 else (test2 := 4) ;
 while (test >= 1) (test := test-1) ;
 
-euclide : (a,b) |-> {
-    (a1,b1) := (a,b);
-    while (b1 != 0) {
-        (a1,b1) := (b1, a1 % b1)
+euclide : (&a, &b) |-> {
+    while (b != 0) {
+        (a,b) := (b, a % b)
     };
-    a1
+    a
 };
 print(euclide(40, 48), "\n");
 
