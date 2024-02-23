@@ -14,7 +14,6 @@
 
 #include "parser/Standard.hpp"
 
-#include "Types.hpp"
 #include "GUIApp.hpp"
 
 
