@@ -3,9 +3,11 @@
 #include <filesystem>
 #include <fstream>
 #include <future>
+#include <memory>
 #include <sstream>
 
 #include <boost/dll.hpp>
+#include <vector>
 
 #include "compiler/SimpleAnalyzer.hpp"
 #include "compiler/c/Translator.hpp"
@@ -13,8 +15,6 @@
 #include "interpreter/Interpreter.hpp"
 
 #include "parser/Standard.hpp"
-
-#include "GUIApp.hpp"
 
 
 std::filesystem::path program_location = boost::filesystem::canonical(boost::dll::program_location()).parent_path().string();
@@ -50,22 +50,39 @@ bool get_line(std::string& line) {
 #endif
 
 
-int interactive_mode(GUIApp& gui_app, std::string const& path) {
-    Interpreter::GlobalContext context(nullptr);
-    auto symbols = context.get_symbols();
+class ExecutionMode {
+public:
+    virtual bool on_init() = 0;
+    virtual bool on_loop() = 0;
+    virtual int on_exit() = 0;
+    virtual ~ExecutionMode() = default;
+};
+
+class InteractiveMode : public ExecutionMode {
+
+    std::unique_ptr<Interpreter::GlobalContext> context;
+    std::set<std::string> symbols;
 
     size_t line_number = 0;
     std::string code;
     std::string line;
 
-    auto async_read = [&line]() {
-        return get_line(line);
-    };
+    std::function<bool()> async_read;
+    std::future<bool> f;
 
-    auto f = std::async(std::launch::async, async_read);
+public:
 
-    bool exit = false;
-    while (!exit) {
+    bool on_init() override {
+        context = std::make_unique<Interpreter::GlobalContext>(nullptr);
+        symbols = context->get_symbols();
+
+        async_read = [this] () { return get_line(line); };
+        f = std::async(std::launch::async, async_read);
+
+        return true;
+    }
+
+    bool on_loop() override {
         if (f.wait_for(std::chrono::milliseconds(10)) == std::future_status::ready) {
             if (f.get()) {
                 if (line.length() > 0) {
@@ -73,19 +90,19 @@ int interactive_mode(GUIApp& gui_app, std::string const& path) {
                     code += line + '\n';
 
                     try {
-                        auto expression = Parser::Standard(code, path).get_tree();
-                        context.expression = expression;
+                        auto expression = Parser::Standard(code, "stdin").get_tree();
+                        context->expression = expression;
 
                         auto new_symbols = expression->compute_symbols(symbols);
                         symbols.insert(new_symbols.begin(), new_symbols.end());
 
                         try {
-                            auto r = Interpreter::execute(context, expression);
-                            auto str = Interpreter::string_from(context, r);
+                            auto r = Interpreter::execute(*context, expression);
+                            auto str = Interpreter::string_from(*context, r);
                             if (!str.empty() && str != "()")
                                 std::cout << str << std::endl;
                         } catch (Interpreter::Exception const& ex) {
-                            ex.print_stack_trace(context);
+                            ex.print_stack_trace(*context);
                         }
 
                         code = "";
@@ -100,99 +117,195 @@ int interactive_mode(GUIApp& gui_app, std::string const& path) {
                 }
 
                 f = std::async(std::launch::async, async_read);
-            } else break;
+            } else return false;
+        }
+
+        return true;
+    }
+
+    int on_exit() override {
+        context = nullptr;
+
+        return EXIT_SUCCESS;
+    }
+
+};
+
+class FileMode : public ExecutionMode {
+
+    std::string path;
+
+    std::istream& src;
+    std::unique_ptr<Interpreter::GlobalContext> context;
+
+    Interpreter::Reference r;
+    bool error = false;
+
+public:
+
+    FileMode(std::string const& path, std::istream& src) :
+        path{ path }, src{ src } {}
+
+    bool on_init() override {
+        if (src) {
+            std::ostringstream oss;
+            oss << src.rdbuf();
+            std::string code = oss.str();
+
+            try {
+                auto expression = Parser::Standard(code, path).get_tree();
+
+                context = std::make_unique<Interpreter::GlobalContext>(expression);
+                context->sources[std::filesystem::canonical(".")] = expression;
+
+                try {
+                    std::set<std::string> symbols = context->get_symbols();
+                    expression->compute_symbols(symbols);
+
+                    r = Interpreter::execute(*context, expression);
+                    return true;
+                } catch (Interpreter::Exception const& ex) {
+                    ex.print_stack_trace(*context);
+                    error = true;
+                    return false;
+                }
+            } catch (Parser::Standard::IncompleteCode const&) {
+                std::cerr << "incomplete code, you must finish the last expression in file \"" << path << "\"" << std::endl;
+                error = true;
+                return false;
+            } catch (Parser::Standard::Exception const& e) {
+                std::cerr << e.what();
+                error = true;
+                return false;
+            }
         } else {
-            gui_app.yield();
+            std::cerr << "Error: unable to load the source file " << path << "." << std::endl;
+
+            return false;
         }
     }
 
-    return EXIT_SUCCESS;
-}
+    bool on_loop() override {
+        return true;
+    }
 
-int file_mode(GUIApp& gui_app, std::string const& path, std::istream& is) {
-    std::ostringstream oss;
-    oss << is.rdbuf();
-    std::string code = oss.str();
+    int on_exit() override {
+        auto ptr = std::move(context);
 
-    try {
-        auto expression = Parser::Standard(code, path).get_tree();
-
-        Interpreter::GlobalContext context(expression);
-        context.sources[std::filesystem::canonical(".")] = expression;
-
-        try {
-            std::set<std::string> symbols = context.get_symbols();
-            expression->compute_symbols(symbols);
-
-            auto r = Interpreter::execute(context, expression);
-            while (gui_app.yield());
-
+        if (error)
+            return EXIT_FAILURE;
+        else {
             try {
-                return static_cast<int>(r.to_data(context).get<OV_INT>());
+                return static_cast<int>(r.to_data(*context).get<OV_INT>());
             } catch (Interpreter::Data::BadAccess const&) {
                 return EXIT_SUCCESS;
             }
-        } catch (Interpreter::Exception const& ex) {
-            ex.print_stack_trace(context);
-            return EXIT_FAILURE;
         }
-    } catch (Parser::Standard::IncompleteCode const&) {
-        std::cerr << "incomplete code, you must finish the last expression in file \"" << path << "\"" << std::endl;
-        return EXIT_FAILURE;
-    } catch (Parser::Standard::Exception const& e) {
-        std::cerr << e.what();
-        return EXIT_FAILURE;
     }
-}
 
-void compile_mode(std::string const& path, std::istream& is, std::string const& out) {
-    std::ostringstream oss;
-    oss << is.rdbuf();
-    std::string code = oss.str();
+};
 
-    auto expression = Parser::Standard(code, path).get_tree();
-    std::set<std::string> symbols = Translator::CStandard::Translator::symbols;
-    expression->compute_symbols(symbols);
+class CompileMode : public ExecutionMode {
 
-    auto meta_data = Analyzer::simple_analize(expression);
-    auto translator = Translator::CStandard::Translator(expression, meta_data);
+    std::string path;
+    std::ifstream src;
+    std::string out;
 
-    translator.translate(out);
-    std::string cmd = "gcc -g -Wall -Wextra " + out + "/*.c -o " + out + "/executable -I " + (program_location / "include").string() + " -Wl,-rpath," + program_location.string() + " build/libcapi.so";
-    system(cmd.c_str());
-}
+public:
 
-int main(int argc, char** argv) {
-    auto gui_app = GUIApp(argc, argv);
+    CompileMode(std::string const& path, std::string const& out) :
+        path{ path }, src{ path }, out{ out } {}
 
-    std::srand(std::time(nullptr));
-
-    include_path.push_back((program_location.parent_path() / "libraries").string());
-
-    if (argc == 1)
-        if (is_interactive())
-            return interactive_mode(gui_app, "stdin");
-        else
-            return file_mode(gui_app, "stdin", std::cin);
-    else if (argc == 2) {
-        std::ifstream src(argv[1]);
-        if (src)
-            return file_mode(gui_app, argv[1], src);
-        else {
-            std::cerr << "Error: unable to load the source file " << argv[1] << "." << std::endl;
-            return EXIT_FAILURE;
-        }
-    } else if (argc == 3) {
-        std::ifstream src(argv[1]);
+    bool on_init() override {
         if (src) {
-            compile_mode(argv[1], src, argv[2]);
-            return EXIT_SUCCESS;
+            std::ostringstream oss;
+            oss << src.rdbuf();
+            std::string code = oss.str();
+
+            auto expression = Parser::Standard(code, path).get_tree();
+            std::set<std::string> symbols = Translator::CStandard::Translator::symbols;
+            expression->compute_symbols(symbols);
+
+            auto meta_data = Analyzer::simple_analize(expression);
+            auto translator = Translator::CStandard::Translator(expression, meta_data);
+
+            translator.translate(out);
+            std::string cmd = "gcc -g -Wall -Wextra " + out + "/*.c -o " + out + "/executable -I " + (program_location / "include").string() + " -Wl,-rpath," + program_location.string() + " build/libcapi.so";
+            system(cmd.c_str());
         } else {
-            std::cerr << "Error: unable to load the source file " << argv[1] << "." << std::endl;
+            std::cerr << "Error: unable to load the source file " << path << "." << std::endl;
+        }
+
+        return false;
+    }
+
+    bool on_loop() override {
+        return false;
+    }
+
+    int on_exit() override {
+        return static_cast<bool>(src);
+    }
+
+};
+
+
+
+#ifdef WXWIDGETS
+
+
+#include <wx/wx.h>
+#include <wx/evtloop.h>
+
+
+class App : public wxApp {
+public:
+
+    std::unique_ptr<ExecutionMode> mode;
+
+    bool OnInit() override {
+        std::srand(std::time(nullptr));
+
+        include_path.push_back((program_location.parent_path() / "libraries").string());
+
+
+        if (argc == 1) {
+            if (is_interactive())
+                mode = std::make_unique<InteractiveMode>();
+            else
+                mode = std::make_unique<FileMode>("stdin", std::cin);
+        } else if (argc == 2) {
+            std::ifstream src{ std::string(argv[1]) };
+            mode = std::make_unique<FileMode>(std::string(argv[1]), src);
+        } else if (argc == 3) {
+            mode = std::make_unique<CompileMode>(std::string(argv[1]), std::string(argv[2]));
+        } else {
+            std::cerr << "Usage: " << argv[0] << " [src] [out]" << std::endl;
             return EXIT_FAILURE;
         }
-    } else {
-        std::cerr << "Usage: " << argv[0] << " [src] [out]" << std::endl;
-        return EXIT_FAILURE;
+
+        if (mode->on_init()) {
+            Bind(wxEVT_IDLE, [this] (wxIdleEvent& e) {
+                mode->on_loop();
+                e.RequestMore();
+            });
+            return true;
+        } else
+            return false;
     }
-}
+
+    int OnExit() override {
+        return mode->on_exit();
+    }
+};
+
+wxIMPLEMENT_APP(App);
+
+
+#else
+
+
+
+
+
+#endif
