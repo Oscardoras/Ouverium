@@ -1,7 +1,15 @@
 import "Type.fl";
+import "containers/Map.fl";
+import "containers/Set.fl";
 
 
 class Event {
+    Event : () |-> {
+        this :~ Event;
+
+        this
+    };
+
     Event::(this |-> (
         args |-> {
             foreach(this._callbacks, callback |-> {
@@ -9,10 +17,48 @@ class Event {
             });
         }
     ));
+
+
+    table := Map[];
+
+    Event.add_listener : (key, Function callback) |-> {
+        if (!table.has(key)) {
+            table[key] := Set[];
+        };
+
+        table[key].insert(callback);
+    };
+
+    Event.remove_listener : (key, Function callback) |-> {
+        if (table.has(key)) {
+            table[key].remove(callback);
+        };
+    };
+
+    Event.invoke : (key, args) |-> {
+        if (table.has(key)) {
+            table[key].foreach(callback |-> {
+                callback(args);
+            });
+        };
+    };
 };
 
 
-(:+) : (event, callback) \ (event ~ Event & callback ~ Function) |-> {
-    Array.add(event._callbacks, callback);
+(:+=) : (event, callback) \ (event ~ Event & callback ~ Function) |-> {
+    if (!defined(event._callbacks)) {
+        event._callbacks := Set[];
+    };
+
+    event._callbacks.insert(callback);
+
+    event
+};
+
+(:-=) : (event, callback) \ (event ~ Event & callback ~ Function) |-> {
+    if (defined(event._callbacks)) {
+        event._callbacks.remove(callback);
+    };
+
     event
 };

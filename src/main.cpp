@@ -76,7 +76,7 @@ public:
         context = std::make_unique<Interpreter::GlobalContext>(nullptr);
         symbols = context->get_symbols();
 
-        async_read = [this] () { return get_line(line); };
+        async_read = [this]() { return get_line(line); };
         f = std::async(std::launch::async, async_read);
 
         return true;
@@ -285,7 +285,7 @@ public:
         }
 
         if (mode->on_init()) {
-            Bind(wxEVT_IDLE, [this] (wxIdleEvent& e) {
+            Bind(wxEVT_IDLE, [this](wxIdleEvent& e) {
                 mode->on_loop();
                 e.RequestMore();
             });
