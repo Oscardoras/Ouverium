@@ -12,6 +12,12 @@ class Stream {
         }
     ));
 
+    Stream::(this.async_read |-> (
+        (Function callback) |-> {
+            import("system").stream_async_read(this, callback)
+        }
+    ));
+
     Stream::(this.has |-> (
         () |-> {
             import("system").stream_has(this)

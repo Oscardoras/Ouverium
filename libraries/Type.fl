@@ -104,13 +104,15 @@ abstract;
         type._setters : property_setter;
         add_type(type);
     };
-
     (::) : (type, abstract) |-> {};
 
     (:::) : (type, functor_getter) |-> {
         type._functors : functor_getter;
         add_type(type);
     };
-
     (:::) : (type, abstract) |-> {};
 })();
+
+
+var : symbol \ (!defined symbol) symbol;
+let : symbol \ (!defined symbol) symbol;

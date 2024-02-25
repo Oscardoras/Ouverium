@@ -1,0 +1,15 @@
+import "Type.fl";
+import "Stream.fl";
+
+
+class Socket {
+    Socket : () |-> {
+        this :~ Socket;
+
+        this
+    };
+
+    class Acceptor {
+
+    };
+};

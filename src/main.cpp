@@ -76,7 +76,9 @@ public:
         context = std::make_unique<Interpreter::GlobalContext>(nullptr);
         symbols = context->get_symbols();
 
-        async_read = [this]() { return get_line(line); };
+        async_read = [this]() {
+            return get_line(line);
+        };
         f = std::async(std::launch::async, async_read);
 
         return true;
@@ -117,7 +119,12 @@ public:
                 }
 
                 f = std::async(std::launch::async, async_read);
-            } else return false;
+            } else {
+                f = std::async(std::launch::async, []() {
+                    return false;
+                });
+                return false;
+            }
         }
 
         return true;
@@ -286,8 +293,10 @@ public:
 
         if (mode->on_init()) {
             Bind(wxEVT_IDLE, [this](wxIdleEvent& e) {
-                mode->on_loop();
-                e.RequestMore();
+                if (mode->on_loop())
+                    e.RequestMore();
+                else
+                    wxTheApp->ExitMainLoop();
             });
             return true;
         } else
