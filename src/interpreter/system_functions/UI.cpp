@@ -170,7 +170,7 @@ namespace Interpreter::SystemFunctions {
 
     namespace UI {
 
-        void init(GlobalContext& context) {}
+        void init(GlobalContext&) {}
 
     }
 

@@ -21,7 +21,7 @@ endif()
 # Dependencies
 
 # Boost
-set(BOOST_INCLUDE_LIBRARIES dll)
+set(BOOST_INCLUDE_LIBRARIES asio dll)
 set(BOOST_ENABLE_CMAKE ON)
 FetchContent_Declare(
     Boost
@@ -81,7 +81,7 @@ FILE(GLOB_RECURSE ouverium_sources
 )
 add_executable(ouverium ${ouverium_sources})
 target_include_directories(ouverium PRIVATE include)
-target_link_libraries(ouverium PRIVATE Boost::dll)
+target_link_libraries(ouverium PRIVATE Boost::asio Boost::dll)
 target_link_libraries(ouverium PRIVATE ${Readline})
 target_link_libraries(ouverium PRIVATE ${wxWidgets})
 target_link_libraries(ouverium INTERFACE capi)

@@ -12,11 +12,11 @@ class Stream {
         }
     ));
 
-    Stream::(this.async_read |-> (
-        (Function callback) |-> {
-            import("system").stream_async_read(this, callback)
-        }
-    ));
+    # Stream::(this.async_read |-> (
+    #     (Function callback) |-> {
+    #         import("system").stream_async_read(this, callback)
+    #     }
+    # ));
 
     Stream::(this.has |-> (
         () |-> {
@@ -29,6 +29,12 @@ class Stream {
             import("system").stream_write(this, data)
         }
     ));
+
+    # Stream::(this.async_write |-> (
+    #     (data, Function callback) |-> {
+    #         import("system").stream_async_write(this, data, callback)
+    #     }
+    # ));
 
     Stream::(this.flush |-> (
         () |-> {

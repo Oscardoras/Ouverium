@@ -4,6 +4,8 @@
 #include <filesystem>
 #include <set>
 
+#include <boost/asio.hpp>
+
 #include "Object.hpp"
 
 
@@ -51,6 +53,7 @@ namespace Interpreter {
     public:
 
         std::map<std::filesystem::path, std::shared_ptr<Parser::Expression>> sources;
+        boost::asio::io_context ioc;
         Object* system;
         unsigned recursion_limit = 100;
 

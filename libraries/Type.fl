@@ -114,5 +114,5 @@ abstract;
 })();
 
 
-var : symbol \ (!defined symbol) symbol;
-let : symbol \ (!defined symbol) symbol;
+var : symbol \ (!defined symbol) |-> symbol;
+let : symbol \ (!defined symbol) |-> symbol;

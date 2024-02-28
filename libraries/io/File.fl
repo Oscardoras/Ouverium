@@ -1,6 +1,6 @@
 import "Type.fl";
-import "Stream.fl";
 import "String.fl";
+import "io/Stream.fl";
 
 
 class File {
@@ -10,6 +10,12 @@ class File {
         this :~ File;
         this
     };
+
+    File::(this.close |-> (
+        () |-> {
+            import("system").file_close(this)
+        }
+    ));
 
     static File::(
         this.working_directory |-> {

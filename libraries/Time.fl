@@ -17,7 +17,7 @@ class Time {
     );
 
     static Time::(
-        his.steady |-> {
+        this.steady |-> {
             import("system").clock_steady()
         },
         (this.steady, value) |-> {}

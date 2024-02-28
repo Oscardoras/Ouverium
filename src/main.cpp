@@ -1,13 +1,13 @@
 #include <cstdlib>
-#include <iostream>
 #include <filesystem>
 #include <fstream>
 #include <future>
+#include <iostream>
 #include <memory>
 #include <sstream>
+#include <vector>
 
 #include <boost/dll.hpp>
-#include <vector>
 
 #include "compiler/SimpleAnalyzer.hpp"
 #include "compiler/c/Translator.hpp"
@@ -85,7 +85,9 @@ public:
     }
 
     bool on_loop() override {
-        if (f.wait_for(std::chrono::milliseconds(10)) == std::future_status::ready) {
+        context->ioc.poll();
+
+        if (f.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
             if (f.get()) {
                 if (line.length() > 0) {
                     ++line_number;
@@ -123,7 +125,7 @@ public:
                 f = std::async(std::launch::async, []() {
                     return false;
                 });
-                return false;
+                return !context->ioc.stopped();
             }
         }
 
@@ -141,8 +143,9 @@ public:
 class FileMode : public ExecutionMode {
 
     std::string path;
+    bool valid;
+    std::string code;
 
-    std::istream& src;
     std::unique_ptr<Interpreter::GlobalContext> context;
 
     Interpreter::Reference r;
@@ -151,14 +154,16 @@ class FileMode : public ExecutionMode {
 public:
 
     FileMode(std::string const& path, std::istream& src) :
-        path{ path }, src{ src } {}
-
-    bool on_init() override {
-        if (src) {
+        path{ path }, valid{ src } {
+        if (valid) {
             std::ostringstream oss;
             oss << src.rdbuf();
-            std::string code = oss.str();
+            code = oss.str();
+        }
+    }
 
+    bool on_init() override {
+        if (valid) {
             try {
                 auto expression = Parser::Standard(code, path).get_tree();
 
@@ -187,13 +192,14 @@ public:
             }
         } else {
             std::cerr << "Error: unable to load the source file " << path << "." << std::endl;
-
             return false;
         }
     }
 
     bool on_loop() override {
-        return true;
+        context->ioc.poll();
+
+        return !context->ioc.stopped();
     }
 
     int on_exit() override {
@@ -251,7 +257,7 @@ public:
     }
 
     int on_exit() override {
-        return static_cast<bool>(src);
+        return src ? EXIT_SUCCESS : EXIT_FAILURE;
     }
 
 };
@@ -262,19 +268,17 @@ public:
 
 
 #include <wx/wx.h>
-#include <wx/evtloop.h>
 
 
 class App : public wxApp {
+
 public:
 
     std::unique_ptr<ExecutionMode> mode;
 
     bool OnInit() override {
         std::srand(std::time(nullptr));
-
         include_path.push_back((program_location.parent_path() / "libraries").string());
-
 
         if (argc == 1) {
             if (is_interactive())
@@ -288,14 +292,14 @@ public:
             mode = std::make_unique<CompileMode>(std::string(argv[1]), std::string(argv[2]));
         } else {
             std::cerr << "Usage: " << argv[0] << " [src] [out]" << std::endl;
-            return EXIT_FAILURE;
+            return false;
         }
 
         if (mode->on_init()) {
             Bind(wxEVT_IDLE, [this](wxIdleEvent& e) {
                 if (mode->on_loop())
                     e.RequestMore();
-                else
+                else if (!wxTheApp->GetTopWindow())
                     wxTheApp->ExitMainLoop();
             });
             return true;
@@ -304,7 +308,10 @@ public:
     }
 
     int OnExit() override {
-        return mode->on_exit();
+        if (mode)
+            return mode->on_exit();
+        else
+            return EXIT_FAILURE;
     }
 };
 
@@ -314,7 +321,36 @@ wxIMPLEMENT_APP(App);
 #else
 
 
+int main(int argc, char** argv) {
+    std::unique_ptr<ExecutionMode> mode;
 
+    std::srand(std::time(nullptr));
+    include_path.push_back((program_location.parent_path() / "libraries").string());
+
+    if (argc == 1) {
+        if (is_interactive())
+            mode = std::make_unique<InteractiveMode>();
+        else
+            mode = std::make_unique<FileMode>("stdin", std::cin);
+    } else if (argc == 2) {
+        std::ifstream src{ argv[1] };
+        mode = std::make_unique<FileMode>(argv[1], src);
+    } else if (argc == 3) {
+        mode = std::make_unique<CompileMode>(argv[1], argv[2]);
+    } else {
+        std::cerr << "Usage: " << argv[0] << " [src] [out]" << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    if (mode->on_init()) {
+        while (mode->on_loop());
+    }
+
+    if (mode)
+        return mode->on_exit();
+    else
+        return EXIT_FAILURE;
+}
 
 
 #endif
