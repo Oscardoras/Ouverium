@@ -71,10 +71,6 @@ namespace Interpreter {
             return 0;
         }
 
-        auto& get_function(std::string const& symbol) {
-            return (*this)[symbol].to_data(*this).get<Object*>()->functions;
-        }
-
         ~GlobalContext();
 
         friend Context;

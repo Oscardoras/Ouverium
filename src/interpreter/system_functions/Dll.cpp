@@ -388,11 +388,11 @@ namespace Interpreter::SystemFunctions {
 
 
         void init(GlobalContext& context) {
-            context.get_function("import").push_front(SystemFunction{ path_args, import });
+            insert(context, "import")->functions.push_front(SystemFunction{ path_args, import });
             //context.get_function("import").push_front(SystemFunction{ path_args, import_h });
 
             //context.get_function("getter").push_front(SystemFunction{ getter_args, getter_c });
-            context.get_function("import").push_front(SystemFunction{ path_args, import_system });
+            insert(context, "import")->functions.push_front(SystemFunction{ path_args, import_system });
         }
 
     }

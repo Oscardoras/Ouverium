@@ -173,7 +173,7 @@ namespace Interpreter::SystemFunctions {
         }
 
         void init(GlobalContext& context) {
-            auto array = context["Array"].to_data(context).get<Object*>();
+            auto array = insert(context, "Array");
             (*array)["length"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ length_args, length });
             (*array)["get_capacity"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ get_capacity_args, get_capacity });
             (*array)["set_capacity"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ set_capacity_args, set_capacity });
@@ -183,7 +183,7 @@ namespace Interpreter::SystemFunctions {
             (*array)["shift"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ shift_args, shift });
             (*array)["concat"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ concat_args, concat });
 
-            context.get_function("foreach").push_front(SystemFunction{ foreach_args, foreach });
+            insert(context, "foreach")->functions.push_front(SystemFunction{ foreach_args, foreach });
         }
 
     }
