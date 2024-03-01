@@ -11,22 +11,33 @@ namespace Interpreter {
 
     struct Context;
 
-    class CObj : public std::any {
+    class CObj {
+
+        std::any object;
+
     public:
-        using std::any::any;
-        using std::any::operator=;
+
+        template<typename T>
+        void set(std::reference_wrapper<T> t) {
+            object = t;
+        }
+
+        template<typename T>
+        void set(std::unique_ptr<T>&& t) {
+            object = std::shared_ptr<T>(std::move(t));
+        }
+
+        bool has_value() const {
+            return object.has_value();
+        }
 
         template<typename T>
         T& get() {
-            try {
-                return std::any_cast<T&>(*this);
-            } catch (std::bad_any_cast const&) {
-                try {
-                    return std::any_cast<std::reference_wrapper<T>>(*this).get();
-                } catch (std::bad_any_cast const&) {
-                    return *std::any_cast<std::shared_ptr<T>>(*this);
-                }
-            }
+            if (auto* t = std::any_cast<std::reference_wrapper<T>>(&object))
+                return t->get();
+            else if (auto* t = std::any_cast<std::shared_ptr<T>>(&object))
+                return **t;
+            else throw Data::BadAccess();
         }
     };
 

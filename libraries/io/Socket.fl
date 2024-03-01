@@ -3,52 +3,46 @@ import "String.fl";
 import "io/Stream.fl";
 
 
-class TCPSocket {
-    TCPSocket : (String address, String port) |-> {
+class Socket {
+    Socket : (String address, Int port) |-> {
         this := import("system").socket_open(address, port);
 
-        this :~ TCPSocket;
+        this :~ Socket;
         this
     };
 
-    TCPSocket::(this.async_read |-> (
+    Socket::(this.async_read |-> (
         (Function callback) |-> {
             import("system").socket_async_read(this, callback)
         }
     ));
 
-    TCPSocket::(this.close |-> (
+    Socket::(this.close |-> (
         () |-> {
             import("system").socket_close(this)
         }
     ));
 
     class Acceptor {
-        TCPSocket.Acceptor : (Int port) |-> {
+        Socket.Acceptor : (Int port) |-> {
             this := import("system").acceptor_open(port);
 
-            this :~ TCPSocket.Acceptor;
+            this :~ Socket.Acceptor;
             this
         };
 
-        (TCPSocket.Acceptor)::(this.accept |-> (
+        (Socket.Acceptor)::(this.accept |-> (
             () |-> {
-                import("system").acceptor_accept(this)
+                socket := import("system").acceptor_accept(this);
+                socket :~ Socket;
+                socket
             }
         ));
 
-        (TCPSocket.Acceptor)::(this.close |-> (
+        (Socket.Acceptor)::(this.close |-> (
             () |-> {
                 import("system").acceptor_close(this)
             }
         ));
-    };
-};
-
-class UDPSocket {
-    UDPSocket : () |-> {
-        this :~ UDPSocket;
-
-        this
     };
 };

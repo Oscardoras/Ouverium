@@ -12,58 +12,10 @@ namespace Interpreter::SystemFunctions {
 
     namespace System {
 
-        class StdInputStream : public InputStream {
-
-            std::reference_wrapper<std::istream> is;
-
-        public:
-
-            StdInputStream(std::istream& is) :
-                is{ is } {}
-
-            int read() override {
-                return is.get().get();
-            }
-
-            std::string scan() override {
-                std::string str;
-                getline(is.get(), str);
-                return str;
-            }
-
-            bool has() override {
-                return static_cast<bool>(is.get());
-            }
-
-        };
-
-        class StdOutputStream : public OutputStream {
-
-            std::reference_wrapper<std::ostream> os;
-
-        public:
-
-            StdOutputStream(std::ostream& os) :
-                os{ os } {}
-
-            void write(int b) override {
-                os.get().put(b);
-            }
-
-            void print(std::string const& str) override {
-                os.get() << str;
-            }
-
-            void flush() override {
-                os.get().flush();
-            }
-
-        };
-
         auto stream_is_args = std::make_shared<Parser::Symbol>("stream");
         Reference stream_is(FunctionContext& context) {
             try {
-                context["stream"].to_data(context).get<Object*>()->c_obj.get<Stream>();
+                context["stream"].to_data(context).get<Object*>()->c_obj.get<std::ios>();
 
                 return Data(true);
             } catch (std::exception const&) {
@@ -74,9 +26,9 @@ namespace Interpreter::SystemFunctions {
         auto stream_read_args = std::make_shared<Parser::Symbol>("stream");
         Reference stream_read(FunctionContext& context) {
             try {
-                auto& stream = dynamic_cast<InputStream&>(context["stream"].to_data(context).get<Object*>()->c_obj.get<Stream>());
+                auto& stream = dynamic_cast<std::istream&>(context["stream"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
 
-                return Data(stream.read());
+                return Data(stream.get());
             } catch (std::exception const&) {
                 throw FunctionArgumentsError();
             }
@@ -85,9 +37,12 @@ namespace Interpreter::SystemFunctions {
         auto stream_scan_args = std::make_shared<Parser::Symbol>("stream");
         Reference stream_scan(FunctionContext& context) {
             try {
-                auto& stream = dynamic_cast<InputStream&>(context["stream"].to_data(context).get<Object*>()->c_obj.get<Stream>());
+                auto& stream = dynamic_cast<std::istream&>(context["stream"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
 
-                return Data(context.new_object(stream.scan()));
+                std::string str;
+                std::getline(stream, str);
+
+                return Data(context.new_object(str));
             } catch (std::exception const&) {
                 throw FunctionArgumentsError();
             }
@@ -96,9 +51,9 @@ namespace Interpreter::SystemFunctions {
         auto stream_has_args = std::make_shared<Parser::Symbol>("stream");
         Reference stream_has(FunctionContext& context) {
             try {
-                auto& stream = dynamic_cast<InputStream&>(context["stream"].to_data(context).get<Object*>()->c_obj.get<Stream>());
+                auto& stream = dynamic_cast<std::istream&>(context["stream"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
 
-                return Data(stream.has());
+                return Data(static_cast<bool>(stream));
             } catch (std::exception const&) {
                 throw FunctionArgumentsError();
             }
@@ -112,10 +67,10 @@ namespace Interpreter::SystemFunctions {
         ));
         Reference stream_write(FunctionContext& context) {
             try {
-                auto& stream = dynamic_cast<OutputStream&>(context["stream"].to_data(context).get<Object*>()->c_obj.get<Stream>());
+                auto& stream = dynamic_cast<std::ostream&>(context["stream"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
                 auto byte = context["byte"].to_data(context).get<OV_INT>();
 
-                stream.write(byte);
+                stream.put(byte);
 
                 return Reference();
             } catch (std::exception const&) {
@@ -131,10 +86,10 @@ namespace Interpreter::SystemFunctions {
         ));
         Reference stream_print(FunctionContext& context) {
             try {
-                auto& stream = dynamic_cast<OutputStream&>(context["stream"].to_data(context).get<Object*>()->c_obj.get<Stream>());
+                auto& stream = dynamic_cast<std::ostream&>(context["stream"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
                 auto data = context["data"].to_data(context);
 
-                stream.print(Interpreter::string_from(context, data));
+                stream << Interpreter::string_from(context, data);
 
                 return Reference();
             } catch (std::exception const&) {
@@ -145,7 +100,7 @@ namespace Interpreter::SystemFunctions {
         auto stream_flush_args = std::make_shared<Parser::Symbol>("stream");
         Reference stream_flush(FunctionContext& context) {
             try {
-                auto& stream = dynamic_cast<OutputStream&>(context["stream"].to_data(context).get<Object*>()->c_obj.get<Stream>());
+                auto& stream = dynamic_cast<std::ostream&>(context["stream"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
 
                 stream.flush();
 
@@ -156,25 +111,13 @@ namespace Interpreter::SystemFunctions {
         }
 
 
-        class FileStream : private std::shared_ptr<std::fstream>, public StdInputStream, public StdOutputStream {
-        public:
-
-            FileStream(std::string const& path) :
-                std::shared_ptr<std::fstream>{ std::make_shared<std::fstream>(path) }, StdInputStream{ *this }, StdOutputStream{ *this } {}
-
-            void close() {
-                this->close();
-            }
-
-        };
-
         auto file_path_args = std::make_shared<Parser::Symbol>("path");
         Reference file_open(FunctionContext& context) {
             try {
                 auto path = context["path"].to_data(context).get<Object*>()->to_string();
 
                 auto object = context.new_object();
-                object->c_obj = static_cast<Stream>(FileStream(path));
+                object->c_obj.set<std::ios>(std::make_unique<std::fstream>(path));
 
                 return Data(object);
             } catch (std::exception const&) {
@@ -185,7 +128,7 @@ namespace Interpreter::SystemFunctions {
         auto file_close_args = std::make_shared<Parser::Symbol>("file");
         Reference file_close(FunctionContext& context) {
             try {
-                auto& stream = dynamic_cast<FileStream&>(context["file"].to_data(context).get<Object*>()->c_obj.get<Stream>());
+                auto& stream = dynamic_cast<std::fstream&>(context["file"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
 
                 stream.close();
 
@@ -278,20 +221,44 @@ namespace Interpreter::SystemFunctions {
                 auto port = context["port"].to_data(context).get<Object*>()->to_string();
 
                 auto object = context.new_object();
-                object->c_obj = std::static_pointer_cast<std::ios>(std::make_shared<boost::asio::ip::tcp::iostream>(address, port));
+                object->c_obj.set<std::ios>(std::make_unique<boost::asio::ip::tcp::iostream>(address, port));
 
                 return Data(object);
-            } catch (std::exception const&) {
+            } catch (std::exception const& e) {
+                std::cerr << e.what() << std::endl;
                 throw FunctionArgumentsError();
             }
         }
 
+        // auto socket_async_read_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+        //     {
+        //         std::make_shared<Parser::Symbol>("socket"),
+        //         std::make_shared<Parser::Symbol>("callback")
+        //     }
+        // ));
+        // Reference socket_async_read(FunctionContext& context) {
+        //     try {
+        //         auto& socket = dynamic_cast<SocketStream&>(context["socket"].to_data(context).get<Object*>()->c_obj.get<Stream>());
+        //         auto callback = context["callback"].to_data(context).get<Object*>();
+
+        //         auto& sock = static_cast<boost::asio::ip::tcp::socket&>(socket->socket());
+        //         auto buff = std::make_shared<std::array<char, 256>>();
+        //         sock.async_receive(boost::asio::buffer(*buff), [buff](const boost::system::error_code&, std::size_t) {
+        //             std::cout << "Yes!" << std::endl;
+        //         });
+
+        //         return Reference();
+        //     } catch (std::exception const&) {
+        //         throw FunctionArgumentsError();
+        //     }
+        // }
+
         auto socket_close_args = std::make_shared<Parser::Symbol>("socket");
         Reference socket_close(FunctionContext& context) {
             try {
-                auto& stream = dynamic_cast<boost::asio::ip::tcp::iostream&>(context["socket"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
+                auto& socket = dynamic_cast<boost::asio::ip::tcp::iostream&>(context["socket"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
 
-                stream.close();
+                socket.close();
 
                 return Reference();
             } catch (std::exception const&) {
@@ -305,7 +272,10 @@ namespace Interpreter::SystemFunctions {
                 auto port = context["port"].to_data(context).get<OV_INT>();
 
                 auto object = context.new_object();
-                object->c_obj = std::make_shared<boost::asio::ip::tcp::acceptor>(context.get_global().ioc, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port));
+                object->c_obj.set(std::make_unique<boost::asio::ip::tcp::acceptor>(
+                    context.get_global().ioc,
+                    boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)
+                ));
 
                 return Data(object);
             } catch (std::exception const&) {
@@ -318,10 +288,10 @@ namespace Interpreter::SystemFunctions {
             try {
                 auto& acceptor = context["acceptor"].to_data(context).get<Object*>()->c_obj.get<boost::asio::ip::tcp::acceptor>();
 
-                auto stream = std::make_shared<boost::asio::ip::tcp::iostream>();
-                auto object = context.new_object();
-                object->c_obj = std::static_pointer_cast<std::ios>(stream);
+                auto stream = std::make_unique<boost::asio::ip::tcp::iostream>();
                 acceptor.accept(stream->socket());
+                auto object = context.new_object();
+                object->c_obj.set<std::ios>(std::move(stream));
 
                 return Data(object);
             } catch (std::exception const&) {
@@ -383,13 +353,13 @@ namespace Interpreter::SystemFunctions {
                 auto expression = context.expression;
 
                 auto obj = context.new_object();
-                obj->c_obj = std::make_shared<Thread>([&global, expression, function]() {
+                obj->c_obj.set(std::make_unique<Thread>([&global, expression, function]() {
                     try {
                         Interpreter::call_function(global, expression, Data(function), std::make_shared<Parser::Tuple>());
                     } catch (Interpreter::Exception const& ex) {
                         ex.print_stack_trace(global);
                     }
-                });
+                }));
                 return Data(obj);
             } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
@@ -482,7 +452,7 @@ namespace Interpreter::SystemFunctions {
         Reference mutex_create(FunctionContext& context) {
             try {
                 auto obj = context.new_object();
-                obj->c_obj = std::make_shared<std::mutex>();
+                obj->c_obj.set(std::make_unique<std::mutex>());
                 return Data(obj);
             } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
@@ -529,7 +499,7 @@ namespace Interpreter::SystemFunctions {
 
                 if (!obj->weak_ref) {
                     auto reference = context.new_object();
-                    reference->c_obj = WeakReference{ obj };
+                    reference->c_obj.set(std::make_unique<WeakReference>(obj));
                     obj->weak_ref = reference;
                 }
 
@@ -581,6 +551,7 @@ namespace Interpreter::SystemFunctions {
             s["file_delete"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_path_args, file_delete });
 
             s["socket_open"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ socket_open_args, socket_open });
+            // s["socket_async_read"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ socket_async_read_args, socket_async_read });
             s["socket_close"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ socket_close_args, socket_close });
             s["acceptor_open"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ acceptor_open_args, acceptor_open });
             s["acceptor_accept"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ acceptor_accept_args, acceptor_accept });
@@ -613,15 +584,15 @@ namespace Interpreter::SystemFunctions {
             auto system = context["System"].to_data(context).get<Object*>();
 
             auto in = context.new_object();
-            in->c_obj = static_cast<Stream>(StdInputStream(std::cin));
+            in->c_obj.set(std::reference_wrapper<std::ios>(std::cin));
             system->properties["in"] = in;
 
             auto out = context.new_object();
-            out->c_obj = static_cast<Stream>(StdOutputStream(std::cout));
+            out->c_obj.set(std::reference_wrapper<std::ios>(std::cout));
             system->properties["out"] = out;
 
             auto err = context.new_object();
-            err->c_obj = static_cast<Stream>(StdOutputStream(std::cerr));
+            err->c_obj.set(std::reference_wrapper<std::ios>(std::cerr));
             system->properties["err"] = err;
         }
 

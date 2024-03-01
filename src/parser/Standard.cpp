@@ -18,7 +18,7 @@ namespace Parser {
     }
 
     void Standard::TextPosition::notify_position() const {
-        std::cerr << "\tin file \"" << path << "\" at line " << line << ", column " << column << std::endl;
+        std::cerr << "\tin file " << path << ":" << line << ":" << column << std::endl;
     }
 
     Standard::Word::Word(std::string const& word, TextPosition const& position) :

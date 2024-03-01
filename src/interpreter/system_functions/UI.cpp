@@ -23,7 +23,7 @@ namespace Interpreter::SystemFunctions {
                 frame->Show(true);
 
                 auto obj = context.new_object();
-                obj->c_obj = static_cast<wxObject*>(frame);
+                obj->c_obj.set(std::make_unique<wxObject*>(frame));
                 return Data(obj);
             } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
@@ -38,7 +38,7 @@ namespace Interpreter::SystemFunctions {
                 auto panel = new wxPanel(parent, wxID_ANY);
 
                 auto obj = context.new_object();
-                obj->c_obj = static_cast<wxObject*>(panel);
+                obj->c_obj.set(std::make_unique<wxObject*>(panel));
                 return Data(obj);
             } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
@@ -55,7 +55,7 @@ namespace Interpreter::SystemFunctions {
                 auto button = new wxButton(parent, wxID_ANY);
 
                 auto obj = context.new_object();
-                obj->c_obj = static_cast<wxObject*>(button);
+                obj->c_obj.set(std::make_unique<wxObject*>(button));
                 return Data(obj);
             } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();

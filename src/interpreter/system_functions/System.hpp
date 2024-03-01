@@ -8,31 +8,6 @@ namespace Interpreter::SystemFunctions {
 
     namespace System {
 
-        class Stream {
-        public:
-
-            virtual ~Stream() = default;
-
-        };
-
-        class InputStream : public virtual Stream {
-        public:
-
-            virtual int read() = 0;
-            virtual std::string scan() = 0;
-            virtual bool has() = 0;
-
-        };
-
-        class OutputStream : public virtual Stream {
-        public:
-
-            virtual void write(int) = 0;
-            virtual void print(std::string const&) = 0;
-            virtual void flush() = 0;
-
-        };
-
         Reference stream_is(FunctionContext& context);
         Reference stream_read(FunctionContext& context);
         Reference stream_scan(FunctionContext& context);
