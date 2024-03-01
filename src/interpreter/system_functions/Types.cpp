@@ -111,13 +111,13 @@ namespace Interpreter::SystemFunctions {
         }
 
         void init(GlobalContext& context) {
-            context.get_function("Char").push_front(SystemFunction{ constructor_args, char_constructor });
-            context.get_function("Float").push_front(SystemFunction{ constructor_args, float_constructor });
-            context.get_function("Int").push_front(SystemFunction{ constructor_args, int_constructor });
-            context.get_function("Bool").push_front(SystemFunction{ constructor_args, bool_constructor });
-            context.get_function("Array").push_front(SystemFunction{ constructor_args, array_constructor });
-            context.get_function("Tuple").push_front(SystemFunction{ tuple_constructor_args, tuple_constructor });
-            context.get_function("Function").push_front(SystemFunction{ constructor_args, function_constructor });
+            insert(context, "Char")->functions.push_front(SystemFunction{ constructor_args, char_constructor });
+            insert(context, "Float")->functions.push_front(SystemFunction{ constructor_args, float_constructor });
+            insert(context, "Int")->functions.push_front(SystemFunction{ constructor_args, int_constructor });
+            insert(context, "Bool")->functions.push_front(SystemFunction{ constructor_args, bool_constructor });
+            insert(context, "Array")->functions.push_front(SystemFunction{ constructor_args, array_constructor });
+            insert(context, "Tuple")->functions.push_front(SystemFunction{ tuple_constructor_args, tuple_constructor });
+            insert(context, "Function")->functions.push_front(SystemFunction{ constructor_args, function_constructor });
 
             Function f = SystemFunction{ is_type_args, is_type };
             f.extern_symbols.emplace("Char", context["Char"]);
@@ -126,7 +126,7 @@ namespace Interpreter::SystemFunctions {
             f.extern_symbols.emplace("Bool", context["Bool"]);
             f.extern_symbols.emplace("Array", context["Array"]);
             f.extern_symbols.emplace("Function", context["Function"]);
-            context.get_function("~").push_front(f);
+            insert(context, "~")->functions.push_front(f);
         }
 
     }

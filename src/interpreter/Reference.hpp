@@ -54,7 +54,6 @@ namespace Interpreter {
 
     protected:
 
-        Data get_data(Context& context) const;
         friend Data compute(Context&, Reference const&, Data const&);
 
     public:

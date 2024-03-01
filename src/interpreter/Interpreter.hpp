@@ -29,6 +29,16 @@ namespace Interpreter {
     Reference set(Context& context, Reference const& var, Reference const& data);
     std::string string_from(Context& context, Reference const& data);
 
+
+    inline Object* insert(GlobalContext& context, std::string const& symbol) {
+        auto& data = context[symbol].get_raw();
+
+        if (data == Data{})
+            data = Data(context.new_object());
+
+        return data.get<Object*>();
+    }
+
 }
 
 #endif

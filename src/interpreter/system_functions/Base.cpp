@@ -9,7 +9,11 @@ namespace Interpreter::SystemFunctions {
 
         auto getter_args = std::make_shared<Parser::Symbol>("var");
         Reference getter(FunctionContext& context) {
-            return context["var"].get_raw() = Data(context.new_object());
+            auto data = context["var"].get_raw();
+            if (data != Data{})
+                return data;
+            else
+                throw FunctionArgumentsError();
         }
 
         Reference defined(FunctionContext& context) {
@@ -419,68 +423,67 @@ namespace Interpreter::SystemFunctions {
             return Data(context.new_object(str));
         }
 
+
         void init(GlobalContext& context) {
-            auto object = context.new_object();
-            object->functions.push_front(SystemFunction{ getter_args, getter });
-            context.add_symbol("getter", context.new_reference(Data(object)));
+            insert(context, "getter")->functions.push_front(SystemFunction{ getter_args, getter });
 
-            context.get_function("defined").push_front(SystemFunction{ getter_args, defined });
+            insert(context, "defined")->functions.push_front(SystemFunction{ getter_args, defined });
 
-            context.get_function("setter").push_front(SystemFunction{ setter_args, setter });
+            insert(context, "setter")->functions.push_front(SystemFunction{ setter_args, setter });
             set(context, context[":="], context["setter"]);
 
 
-            context["NotAFunction"].to_data(context);
-            context["IncorrectFunctionArguments"].to_data(context);
-            context["ParserException"].to_data(context);
-            context["RecursionLimitExceeded"].to_data(context);
+            insert(context, "NotAFunction");
+            insert(context, "IncorrectFunctionArguments");
+            insert(context, "ParserException");
+            insert(context, "RecursionLimitExceeded");
 
 
-            context.get_function(";").push_front(SystemFunction{ separator_args, separator });
+            insert(context, ";")->functions.push_front(SystemFunction{ separator_args, separator });
 
-            context["if"].to_data(context);
-            context["else"].to_data(context);
+            insert(context, "if");
+            insert(context, "else");
             Function if_s = SystemFunction{ if_statement_args, if_statement };
             if_s.extern_symbols.emplace("if", context["if"]);
             if_s.extern_symbols.emplace("else", context["else"]);
-            context.get_function("if").push_front(if_s);
+            insert(context, "if")->functions.push_front(if_s);
 
-            context.get_function("while").push_front(SystemFunction{ while_statement_args, while_statement });
+            insert(context, "while")->functions.push_front(SystemFunction{ while_statement_args, while_statement });
 
-            context["from"].to_data(context);
-            context["to"].to_data(context);
+            insert(context, "from");
+            insert(context, "to");
             Function for_s = SystemFunction{ for_statement_args, for_statement };
             for_s.extern_symbols.emplace("from", context["from"]);
             for_s.extern_symbols.emplace("to", context["to"]);
-            context.get_function("for").push_front(for_s);
+            insert(context, "for")->functions.push_front(for_s);
 
-            context["step"].to_data(context);
+            insert(context, "step");
             Function for_step_s = SystemFunction{ for_step_statement_args, for_step_statement };
             for_step_s.extern_symbols.emplace("from", context["from"]);
             for_step_s.extern_symbols.emplace("to", context["to"]);
             for_step_s.extern_symbols.emplace("step", context["step"]);
-            context.get_function("for").push_front(for_step_s);
+            insert(context, "for")->functions.push_front(for_step_s);
 
-            context["catch"].to_data(context);
+            insert(context, "catch");
             Function try_s = SystemFunction{ try_statement_args, try_statement };
             try_s.extern_symbols.emplace("catch", context["catch"]);
-            context.get_function("try").push_front(try_s);
-            context.get_function("throw").push_front(SystemFunction{ throw_statement_args, throw_statement });
+            insert(context, "try")->functions.push_front(try_s);
+            insert(context, "throw")->functions.push_front(SystemFunction{ throw_statement_args, throw_statement });
 
-            context.get_function("$").push_front(SystemFunction{ copy_args, copy });
-            context.get_function("$==").push_front(SystemFunction{ copy_args, copy_pointer });
+            insert(context, "$")->functions.push_front(SystemFunction{ copy_args, copy });
+            insert(context, "$==")->functions.push_front(SystemFunction{ copy_args, copy_pointer });
 
-            context.get_function("=").push_front(SystemFunction{ define_args, define });
-            context.get_function(":").push_front(SystemFunction{ function_definition_args, function_definition });
+            insert(context, "=")->functions.push_front(SystemFunction{ define_args, define });
+            insert(context, ":")->functions.push_front(SystemFunction{ function_definition_args, function_definition });
 
-            context.get_function("==").push_front(SystemFunction{ equals_args, equals });
-            context.get_function("!=").push_front(SystemFunction{ equals_args, not_equals });
-            context.get_function("===").push_front(SystemFunction{ equals_args, check_pointers });
-            context.get_function("!==").push_front(SystemFunction{ equals_args, not_check_pointers });
+            insert(context, "==")->functions.push_front(SystemFunction{ equals_args, equals });
+            insert(context, "!=")->functions.push_front(SystemFunction{ equals_args, not_equals });
+            insert(context, "===")->functions.push_front(SystemFunction{ equals_args, check_pointers });
+            insert(context, "!==")->functions.push_front(SystemFunction{ equals_args, not_check_pointers });
 
-            context.get_function("string_from").push_front(SystemFunction{ string_from_args, string_from });
-            context.get_function("print").push_front(SystemFunction{ print_args, print });
-            context.get_function("scan").push_front(SystemFunction{ scan_args, scan });
+            insert(context, "string_from")->functions.push_front(SystemFunction{ string_from_args, string_from });
+            insert(context, "print")->functions.push_front(SystemFunction{ print_args, print });
+            insert(context, "scan")->functions.push_front(SystemFunction{ scan_args, scan });
         }
 
     }
