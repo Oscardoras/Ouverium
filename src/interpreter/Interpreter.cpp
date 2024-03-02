@@ -127,7 +127,7 @@ namespace Interpreter {
                         auto object = reference->to_data(function_context).get<Object*>();
                         if (object->array.size() == p_tuple->objects.size()) {
                             for (size_t i = 0; i < p_tuple->objects.size(); ++i)
-                                set_arguments(context, function_context, computed, p_tuple->objects[i], ArrayReference{ *object, i });
+                                set_arguments(context, function_context, computed, p_tuple->objects[i], ArrayReference{ Data(object), i });
                         } else throw Interpreter::FunctionArgumentsError();
                     } catch (Data::BadAccess const&) {
                         throw Interpreter::FunctionArgumentsError();
@@ -210,7 +210,7 @@ namespace Interpreter {
 
             if (auto property_reference = std::get_if<PropertyReference>(&reference)) {
                 if (p_property->name == property_reference->name || p_property->name == ".") {
-                    set_arguments(context, function_context, computed, p_property->object, Reference(Data(&property_reference->parent.get())));
+                    set_arguments(context, function_context, computed, p_property->object, Reference(property_reference->parent));
                 } else throw Interpreter::FunctionArgumentsError();
             } else throw Interpreter::FunctionArgumentsError();
         } else throw Interpreter::FunctionArgumentsError();
@@ -282,12 +282,7 @@ namespace Interpreter {
             return Data(object);
         } else if (auto property = std::dynamic_pointer_cast<Parser::Property>(expression)) {
             auto data = execute(context, property->object).to_data(context);
-            try {
-                auto object = data.get<Object*>();
-                return (*object)[property->name];
-            } catch (Data::BadAccess const&) {
-                return Data{};
-            }
+            return PropertyReference{ data, property->name };
         } else if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(expression)) {
             auto data = get_symbol(symbol->name);
             if (auto b = std::get_if<bool>(&data)) {

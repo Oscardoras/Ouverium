@@ -530,70 +530,70 @@ namespace Interpreter::SystemFunctions {
 
 
         void init(GlobalContext& context) {
-            auto& s = *context.get_global().system;
+            // auto& s = *context.get_global().system;
 
-            s["stream_is"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ stream_is_args, stream_is });
-            s["stream_read"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ stream_read_args, stream_read });
-            s["stream_scan"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ stream_scan_args, stream_scan });
-            s["stream_has"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ stream_has_args, stream_has });
-            s["stream_write"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ stream_write_args, stream_write });
-            s["stream_print"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ stream_print_args, stream_print });
-            s["stream_flush"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ stream_flush_args, stream_flush });
+            // s["stream_is"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ stream_is_args, stream_is });
+            // s["stream_read"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ stream_read_args, stream_read });
+            // s["stream_scan"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ stream_scan_args, stream_scan });
+            // s["stream_has"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ stream_has_args, stream_has });
+            // s["stream_write"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ stream_write_args, stream_write });
+            // s["stream_print"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ stream_print_args, stream_print });
+            // s["stream_flush"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ stream_flush_args, stream_flush });
 
-            s["file_open"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_path_args, file_open });
-            s["file_close"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_close_args, file_close });
-            s["file_get_working_directory"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ std::make_shared<Parser::Tuple>(), file_get_working_directory });
-            s["file_set_working_directory"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_path_args, file_set_working_directory });
-            s["file_exists"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_path_args, file_exists });
-            s["file_is_directory"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_path_args, file_is_directory });
-            s["file_create_directories"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_path_args, file_create_directories });
-            s["file_copy"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_copy_args, file_copy });
-            s["file_delete"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_path_args, file_delete });
+            // s["file_open"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_path_args, file_open });
+            // s["file_close"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_close_args, file_close });
+            // s["file_get_working_directory"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ std::make_shared<Parser::Tuple>(), file_get_working_directory });
+            // s["file_set_working_directory"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_path_args, file_set_working_directory });
+            // s["file_exists"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_path_args, file_exists });
+            // s["file_is_directory"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_path_args, file_is_directory });
+            // s["file_create_directories"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_path_args, file_create_directories });
+            // s["file_copy"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_copy_args, file_copy });
+            // s["file_delete"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ file_path_args, file_delete });
 
-            s["socket_open"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ socket_open_args, socket_open });
-            // s["socket_async_read"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ socket_async_read_args, socket_async_read });
-            s["socket_close"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ socket_close_args, socket_close });
-            s["acceptor_open"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ acceptor_open_args, acceptor_open });
-            s["acceptor_accept"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ acceptor_accept_args, acceptor_accept });
-            s["acceptor_close"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ acceptor_close_args, acceptor_close });
+            // s["socket_open"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ socket_open_args, socket_open });
+            // // s["socket_async_read"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ socket_async_read_args, socket_async_read });
+            // s["socket_close"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ socket_close_args, socket_close });
+            // s["acceptor_open"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ acceptor_open_args, acceptor_open });
+            // s["acceptor_accept"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ acceptor_accept_args, acceptor_accept });
+            // s["acceptor_close"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ acceptor_close_args, acceptor_close });
 
-            s["time"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ time_args, time });
-            s["clock_system"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ clock_system_args, clock_system });
-            s["clock_steady"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ clock_steady_args, clock_steady });
+            // s["time"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ time_args, time });
+            // s["clock_system"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ clock_system_args, clock_system });
+            // s["clock_steady"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ clock_steady_args, clock_steady });
 
-            s["thread_is"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ thread_is_args, thread_is });
-            s["thread_create"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ thread_create_args, thread_create });
-            s["thread_join"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ thread_join_args, thread_join });
-            s["thread_detach"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ thread_detach_args, thread_detach });
-            s["thread_get_id"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ thread_get_id_args, thread_get_id });
-            s["thread_current_id"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ thread_current_id_args, thread_current_id });
-            s["thread_sleep"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ thread_sleep_args, thread_sleep });
-            s["thread_hardware_concurrency"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ thread_hardware_concurrency_args, thread_hardware_concurrency });
+            // s["thread_is"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ thread_is_args, thread_is });
+            // s["thread_create"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ thread_create_args, thread_create });
+            // s["thread_join"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ thread_join_args, thread_join });
+            // s["thread_detach"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ thread_detach_args, thread_detach });
+            // s["thread_get_id"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ thread_get_id_args, thread_get_id });
+            // s["thread_current_id"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ thread_current_id_args, thread_current_id });
+            // s["thread_sleep"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ thread_sleep_args, thread_sleep });
+            // s["thread_hardware_concurrency"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ thread_hardware_concurrency_args, thread_hardware_concurrency });
 
-            s["mutex_is"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ mutex_is_args, mutex_is });
-            s["mutex_create"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ mutex_create_args, mutex_create });
-            s["mutex_lock"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ mutex_lock_args, mutex_lock });
-            s["mutex_try_lock"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ mutex_try_lock_args, mutex_try_lock });
-            s["mutex_unlock"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ mutex_unlock_args, mutex_unlock });
+            // s["mutex_is"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ mutex_is_args, mutex_is });
+            // s["mutex_create"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ mutex_create_args, mutex_create });
+            // s["mutex_lock"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ mutex_lock_args, mutex_lock });
+            // s["mutex_try_lock"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ mutex_try_lock_args, mutex_try_lock });
+            // s["mutex_unlock"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ mutex_unlock_args, mutex_unlock });
 
-            s["weak_reference"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ weak_reference_args, weak_reference });
-            s["weak_reference_get"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ weak_reference_get_args, weak_reference_get });
-            s["GC_collect"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ GC_collect_args, GC_collect });
+            // s["weak_reference"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ weak_reference_args, weak_reference });
+            // s["weak_reference_get"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ weak_reference_get_args, weak_reference_get });
+            // s["GC_collect"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ GC_collect_args, GC_collect });
 
 
-            auto system = context["System"].to_data(context).get<Object*>();
+            // auto system = context["System"].to_data(context).get<Object*>();
 
-            auto in = context.new_object();
-            in->c_obj.set(std::reference_wrapper<std::ios>(std::cin));
-            system->properties["in"] = in;
+            // auto in = context.new_object();
+            // in->c_obj.set(std::reference_wrapper<std::ios>(std::cin));
+            // system->properties["in"] = in;
 
-            auto out = context.new_object();
-            out->c_obj.set(std::reference_wrapper<std::ios>(std::cout));
-            system->properties["out"] = out;
+            // auto out = context.new_object();
+            // out->c_obj.set(std::reference_wrapper<std::ios>(std::cout));
+            // system->properties["out"] = out;
 
-            auto err = context.new_object();
-            err->c_obj.set(std::reference_wrapper<std::ios>(std::cerr));
-            system->properties["err"] = err;
+            // auto err = context.new_object();
+            // err->c_obj.set(std::reference_wrapper<std::ios>(std::cerr));
+            // system->properties["err"] = err;
         }
 
     }

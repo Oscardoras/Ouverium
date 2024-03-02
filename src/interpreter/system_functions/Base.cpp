@@ -7,9 +7,27 @@ namespace Interpreter::SystemFunctions {
 
     namespace Base {
 
+        Data get_raw(IndirectReference const& indirect_reference) {
+            if (auto symbol_reference = std::get_if<SymbolReference>(&indirect_reference)) {
+                return symbol_reference->get();
+            } else if (auto property_reference = std::get_if<PropertyReference>(&indirect_reference)) {
+                auto parent = property_reference->parent;
+                if (auto obj = get_if<Object*>(&parent))
+                    return (*obj)->properties[property_reference->name];
+            } else if (auto array_reference = std::get_if<ArrayReference>(&indirect_reference)) {
+                auto array = array_reference->array;
+                if (auto obj = get_if<Object*>(&array))
+                    return (*obj)->array[array_reference->i];
+            }
+
+            return Data{};
+        }
+
         auto getter_args = std::make_shared<Parser::Symbol>("var");
         Reference getter(FunctionContext& context) {
-            auto data = context["var"].get_raw();
+            auto indirect_reference = context["var"];
+
+            Data data = get_raw(indirect_reference);
             if (data != Data{})
                 return data;
             else
@@ -17,15 +35,23 @@ namespace Interpreter::SystemFunctions {
         }
 
         Reference defined(FunctionContext& context) {
-            return context["var"].get_raw() != Data{};
+            auto indirect_reference = context["var"];
+
+            return get_raw(indirect_reference) != Data{};
         }
 
         Reference assignation(Context& context, Reference const& var, Data const& d) {
             if (std::get_if<Data>(&var)) return d;
             else if (auto symbol_reference = std::get_if<SymbolReference>(&var)) symbol_reference->get() = d;
-            else if (auto property_reference = std::get_if<PropertyReference>(&var)) static_cast<Data&>(*property_reference) = d;
-            else if (auto array_reference = std::get_if<ArrayReference>(&var)) static_cast<Data&>(*array_reference) = d;
-            else if (auto tuple_reference = std::get_if<TupleReference>(&var)) {
+            else if (auto property_reference = std::get_if<PropertyReference>(&var)) {
+                auto parent = property_reference->parent;
+                if (auto obj = get_if<Object*>(&parent))
+                    (*obj)->properties[property_reference->name] = d;
+            } else if (auto array_reference = std::get_if<ArrayReference>(&var)) {
+                auto array = array_reference->array;
+                if (auto obj = get_if<Object*>(&array))
+                    (*obj)->array[array_reference->i] = d;
+            } else if (auto tuple_reference = std::get_if<TupleReference>(&var)) {
                 try {
                     auto object = d.get<Object*>();
                     if (tuple_reference->size() == object->array.size()) {
@@ -276,9 +302,7 @@ namespace Interpreter::SystemFunctions {
 
                     return false;
                 } else {
-                    return std::visit([](auto const& arg) -> Data const& {
-                        return arg;
-                    }, reference.to_indirect_reference(context)) != Data{};
+                    return get_raw(reference.to_indirect_reference(context)) != Data{};
                 }
             };
 

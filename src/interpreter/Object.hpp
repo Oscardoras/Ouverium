@@ -59,8 +59,6 @@ namespace Interpreter {
                 array.push_back(Data(c));
         }
 
-        IndirectReference operator[](std::string const& name);
-
         std::string to_string() const;
 
         void destruct(Context& context);
