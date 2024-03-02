@@ -3,10 +3,6 @@
 
 namespace Interpreter {
 
-    IndirectReference Object::operator[](std::string const& name) {
-        return PropertyReference{ *this, name };
-    }
-
     std::string Object::to_string() const {
         std::string str;
 
@@ -26,7 +22,7 @@ namespace Interpreter {
 
         try {
             if (this->properties.contains("destructor"))
-                call_function(context.get_global(), context.get_global().expression, (*this)["destructor"], std::make_shared<Parser::Tuple>());
+                call_function(context.get_global(), context.get_global().expression, PropertyReference{ Data(this), "destructor" }, std::make_shared<Parser::Tuple>());
         } catch (Interpreter::Exception const&) {}
     }
 

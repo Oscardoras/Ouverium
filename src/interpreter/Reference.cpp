@@ -9,21 +9,10 @@ namespace Interpreter {
                 return symbol->get();
         }
 
-        auto ref = call_function(context, context.expression, context.get_global()["getter"], reference);
-        auto d = std::get_if<Data>(&ref);
-
-        if (d && *d != Data{})
+        if (auto d = std::get_if<Data>(&reference))
             return *d;
         else
-            return ref.to_data(context);
-    }
-
-    PropertyReference::operator Data& () const {
-        return parent.get().properties[name];
-    }
-
-    ArrayReference::operator Data& () const {
-        return array.get().array[i];
+            return call_function(context, context.expression, context.get_global()["getter"], reference).to_data(context);
     }
 
     Data IndirectReference::to_data(Context& context) const {

@@ -57,7 +57,7 @@ namespace Interpreter::SystemFunctions {
                 auto i = context["i"].to_data(context).get<OV_INT>();
 
                 if (i >= 0 && i < (OV_INT) array->array.size())
-                    return ArrayReference{ *array, (size_t) i };
+                    return ArrayReference{ Data(array), static_cast<size_t>(i) };
                 else throw FunctionArgumentsError();
             } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
@@ -76,7 +76,7 @@ namespace Interpreter::SystemFunctions {
                 auto element = context["element"].to_data(context);
 
                 array->array.push_back(element);
-                return ArrayReference{ *array, array->array.size() - 1 };
+                return ArrayReference{ Data(array), array->array.size() - 1 };
             } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
             }
@@ -163,7 +163,7 @@ namespace Interpreter::SystemFunctions {
                     auto obj = array.to_data(context).get<Object*>();
                     size_t size = obj->array.size();
                     for (size_t i = 0; i < size; ++i)
-                        Interpreter::call_function(context.get_parent(), context.expression, context["function"], ArrayReference{ *obj , i });
+                        Interpreter::call_function(context.get_parent(), context.expression, context["function"], ArrayReference{ Data(obj) , i });
                 }
 
                 return Data{};
@@ -174,14 +174,14 @@ namespace Interpreter::SystemFunctions {
 
         void init(GlobalContext& context) {
             auto array = insert(context, "Array");
-            (*array)["length"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ length_args, length });
-            (*array)["get_capacity"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ get_capacity_args, get_capacity });
-            (*array)["set_capacity"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ set_capacity_args, set_capacity });
-            (*array)["get"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ get_args, get });
-            (*array)["add"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ add_args, add });
-            (*array)["remove"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ remove_args, remove });
-            (*array)["shift"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ shift_args, shift });
-            (*array)["concat"].to_data(context).get<Object*>()->functions.push_front(SystemFunction{ concat_args, concat });
+            insert(context, array, "length")->functions.push_front(SystemFunction{ length_args, length });
+            insert(context, array, "get_capacity")->functions.push_front(SystemFunction{ get_capacity_args, get_capacity });
+            insert(context, array, "set_capacity")->functions.push_front(SystemFunction{ set_capacity_args, set_capacity });
+            insert(context, array, "get")->functions.push_front(SystemFunction{ get_args, get });
+            insert(context, array, "add")->functions.push_front(SystemFunction{ add_args, add });
+            insert(context, array, "remove")->functions.push_front(SystemFunction{ remove_args, remove });
+            insert(context, array, "shift")->functions.push_front(SystemFunction{ shift_args, shift });
+            insert(context, array, "concat")->functions.push_front(SystemFunction{ concat_args, concat });
 
             insert(context, "foreach")->functions.push_front(SystemFunction{ foreach_args, foreach });
         }

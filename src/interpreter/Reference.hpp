@@ -15,16 +15,12 @@ namespace Interpreter {
     using TupleReference = std::vector<Reference>;
     using SymbolReference = std::reference_wrapper<Data>;
     struct PropertyReference {
-        std::reference_wrapper<Object> parent;
+        Data parent;
         std::string name;
-
-        operator Data& () const;
     };
     struct ArrayReference {
-        std::reference_wrapper<Object> array;
+        Data array;
         size_t i;
-
-        operator Data& () const;
     };
 
     class IndirectReference : public std::variant<SymbolReference, PropertyReference, ArrayReference> {
@@ -34,18 +30,6 @@ namespace Interpreter {
         using std::variant<SymbolReference, PropertyReference, ArrayReference>::variant;
 
         Data to_data(Context& context) const;
-
-        Data const& get_raw() const {
-            return std::visit([](auto const& arg) -> Data const& {
-                return arg;
-            }, *this);
-        }
-
-        Data& get_raw() {
-            return std::visit([](auto& arg) -> Data& {
-                return arg;
-            }, *this);
-        }
 
     };
 
@@ -70,11 +54,11 @@ namespace Interpreter {
     }
 
     inline auto operator==(PropertyReference const& a, PropertyReference const& b) {
-        return &a.parent.get() == &b.parent.get() && a.name == b.name;
+        return a.parent == b.parent && a.name == b.name;
     }
 
     inline auto operator==(ArrayReference const& a, ArrayReference const& b) {
-        return &a.array.get() == &b.array.get() && a.i == b.i;
+        return a.array == b.array && a.i == b.i;
     }
 
 }

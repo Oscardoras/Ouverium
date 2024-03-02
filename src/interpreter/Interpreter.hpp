@@ -31,7 +31,16 @@ namespace Interpreter {
 
 
     inline Object* insert(GlobalContext& context, std::string const& symbol) {
-        auto& data = context[symbol].get_raw();
+        auto& data = std::get<SymbolReference>(context[symbol]).get();
+
+        if (data == Data{})
+            data = Data(context.new_object());
+
+        return data.get<Object*>();
+    }
+
+    inline Object* insert(GlobalContext& context, Object* obj, std::string const& property) {
+        auto& data = obj->properties[property];
 
         if (data == Data{})
             data = Data(context.new_object());
