@@ -30,7 +30,7 @@ namespace Parser {
         /**
          * The position of the expression in the source.
         */
-        std::shared_ptr<Position> position;
+        std::string position;
 
         /**
          * The list of the symbols used in the expression.
@@ -54,7 +54,7 @@ namespace Parser {
          * Gets a string of the expression to print it as a tree.
          * @return the expression as a string.
         */
-        virtual std::string to_string(unsigned int n = 0) const = 0;
+        virtual std::string to_string(unsigned n = 0) const = 0;
 
         virtual ~Expression() = default;
 

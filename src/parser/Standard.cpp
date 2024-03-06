@@ -10,25 +10,14 @@ namespace Parser {
     Standard::Standard(std::string const& code, std::string const& path) :
         code(code), path(path) {}
 
-    Standard::TextPosition::TextPosition(std::string const& path, unsigned int line, unsigned int column) :
-        path(path), line(line), column(column) {}
-
-    void Standard::TextPosition::notify_error(std::string const& message) const {
-        std::cerr << message << std::endl;
-    }
-
-    void Standard::TextPosition::notify_position() const {
-        std::cerr << "\tin file " << path << ":" << line << ":" << column << std::endl;
-    }
-
-    Standard::Word::Word(std::string const& word, TextPosition const& position) :
+    Standard::Word::Word(std::string const& word, std::string const& position) :
         std::string(word), position(position) {}
 
     Standard::Exception::Exception(std::vector<ParsingError> const& errors) {
         std::ostringstream oss;
 
         for (auto& e : errors)
-            oss << e.message << " in file \"" << e.position.path << "\" at line " << e.position.line << ", column " << e.position.column << "." << std::endl;
+            oss << e.message << " in " << e.position << std::endl;
 
         message = oss.str();
     }
@@ -89,7 +78,7 @@ namespace Parser {
 
         size_t line = 1;
         size_t column = 1;
-        TextPosition position(path, line, column);
+        std::string position = "file " + path + ":" + std::to_string(line) + ":" + std::to_string(column);
 
         size_t i;
         for (i = 0; i < code.size(); ++i) {
@@ -143,7 +132,7 @@ namespace Parser {
                 ++line;
                 column = 1;
             } else ++column;
-            position = TextPosition(path, line, column);
+            position = "file " + path + ":" + std::to_string(line) + ":" + std::to_string(column);
         }
         if (b < i && !is_comment) words.push_back(Word(code.substr(b, i - b), position));
 
@@ -235,7 +224,7 @@ namespace Parser {
                                     *(it - 1) = function_call;
                                     it = expressions.erase(it);
                                     it = expressions.erase(it);
-                                } else errors.push_back(Standard::ParsingError("operator " + symbol->name + " must be placed between two expressions", *std::static_pointer_cast<Standard::TextPosition>(symbol->position)));
+                                } else errors.push_back(Standard::ParsingError("operator " + symbol->name + " must be placed between two expressions", symbol->position));
                             } else ++it;
                         } else ++it;
                     }
@@ -262,7 +251,7 @@ namespace Parser {
                 return expression;
             }
             escaped.push_back(expression);
-            expression->position = std::make_shared<Standard::TextPosition>(words[i - 1].position);
+            expression->position = words[i - 1].position;
         } else if (words.at(i) == "[") {
             ++i;
             expression = get_expression(errors, words, i, escaped, false, false, false, true);
@@ -276,7 +265,7 @@ namespace Parser {
                 return expression;
             }
             escaped.push_back(expression);
-            expression->position = std::make_shared<Standard::TextPosition>(words[i - 1].position);
+            expression->position = words[i - 1].position;
         } else if (words.at(i) == "{") {
             ++i;
             expression = get_expression(errors, words, i, escaped, false, false, false, true);
@@ -290,10 +279,10 @@ namespace Parser {
                 return expression;
             }
             escaped.push_back(expression);
-            expression->position = std::make_shared<Standard::TextPosition>(words[i - 1].position);
+            expression->position = words[i - 1].position;
         } else {
             auto symbol = std::make_shared<Symbol>();
-            symbol->position = std::make_shared<Standard::TextPosition>(words.at(i).position);
+            symbol->position = words.at(i).position;
             symbol->name = words.at(i);
             expression = symbol;
             if (is_system(words.at(i)))
@@ -317,7 +306,7 @@ namespace Parser {
 
                 if (!in_function) {
                     auto property = std::make_shared<Property>();
-                    property->position = std::make_shared<Standard::TextPosition>(words.at(i).position);
+                    property->position = words.at(i).position;
                     property->object = expression;
                     ++i;
                     property->name = words.at(i);
@@ -331,7 +320,7 @@ namespace Parser {
             if (words.at(i) == ",") {
                 if (!in_tuple && priority) {
                     auto tuple = std::make_shared<Tuple>();
-                    tuple->position = std::make_shared<Standard::TextPosition>(words.at(i).position);
+                    tuple->position = words.at(i).position;
                     tuple->objects.push_back(expressions_to_expression(errors, expressions, expression, is_function, escaped));
                     while (words.at(i) == ",") {
                         ++i;
@@ -351,7 +340,7 @@ namespace Parser {
                     if (words.at(i) == "|->") {
                         ++i;
                         auto function_definition = std::make_shared<FunctionDefinition>();
-                        function_definition->position = std::make_shared<Standard::TextPosition>(words[i - 1].position);
+                        function_definition->position = words[i - 1].position;
                         function_definition->parameters = expression;
                         function_definition->filter = filter;
                         function_definition->body = get_expression(errors, words, i, escaped, in_tuple, in_function, in_operator, false);
@@ -367,7 +356,7 @@ namespace Parser {
                 if (priority) {
                     ++i;
                     auto function_definition = std::make_shared<FunctionDefinition>();
-                    function_definition->position = std::make_shared<Standard::TextPosition>(words[i - 1].position);
+                    function_definition->position = words[i - 1].position;
                     function_definition->parameters = expression;
                     function_definition->filter = nullptr;
                     function_definition->body = get_expression(errors, words, i, escaped, in_tuple, in_function, in_operator, false);
@@ -398,7 +387,7 @@ namespace Parser {
                         }
                         expressions.push_back(expression);
                         auto symbol = std::make_shared<Symbol>();
-                        symbol->position = std::make_shared<Standard::TextPosition>(words.at(i).position);
+                        symbol->position = words.at(i).position;
                         symbol->name = words.at(i);
                         expressions.push_back(symbol);
                         ++i;

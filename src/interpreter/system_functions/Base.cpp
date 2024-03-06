@@ -7,7 +7,9 @@ namespace Interpreter::SystemFunctions {
 
     namespace Base {
 
-        Data get_raw(IndirectReference const& indirect_reference) {
+        Data& get_raw(IndirectReference const& indirect_reference) {
+            static Data empty_data;
+
             if (auto symbol_reference = std::get_if<SymbolReference>(&indirect_reference)) {
                 return symbol_reference->get();
             } else if (auto property_reference = std::get_if<PropertyReference>(&indirect_reference)) {
@@ -20,14 +22,14 @@ namespace Interpreter::SystemFunctions {
                     return (*obj)->array[array_reference->i];
             }
 
-            return Data{};
+            return empty_data = Data{};
         }
 
         auto getter_args = std::make_shared<Parser::Symbol>("var");
         Reference getter(FunctionContext& context) {
-            auto indirect_reference = context["var"];
+            auto var = context["var"];
 
-            Data data = get_raw(indirect_reference);
+            Data data = get_raw(var);
             if (data != Data{})
                 return data;
             else
@@ -35,9 +37,9 @@ namespace Interpreter::SystemFunctions {
         }
 
         Reference defined(FunctionContext& context) {
-            auto indirect_reference = context["var"];
+            auto var = context["var"];
 
-            return get_raw(indirect_reference) != Data{};
+            return Data(get_raw(var) != Data{});
         }
 
         Reference assignation(Context& context, Reference const& var, Data const& d) {
@@ -109,10 +111,10 @@ namespace Interpreter::SystemFunctions {
                         else {
                             size_t i = 2;
                             while (i < tuple->objects.size()) {
-                                auto else_s = Interpreter::execute(parent, tuple->objects[i]).to_data(context);
-                                if (else_s == context["else"].to_data(context) && i + 1 < tuple->objects.size()) {
+                                auto else_s = Interpreter::execute(parent, tuple->objects[i]);
+                                if (else_s.to_indirect_reference(context) == context["else"] && i + 1 < tuple->objects.size()) {
                                     auto s = Interpreter::execute(parent, tuple->objects[i + 1]);
-                                    if (s.to_data(context) == context["if"].to_data(context) && i + 3 < tuple->objects.size()) {
+                                    if (s.to_indirect_reference(context) == context["if"] && i + 3 < tuple->objects.size()) {
                                         if (Interpreter::execute(parent, tuple->objects[i + 2]).to_data(context).get<bool>())
                                             return Interpreter::execute(parent, tuple->objects[i + 3]);
                                         else i += 4;
@@ -320,11 +322,16 @@ namespace Interpreter::SystemFunctions {
         ));
         Reference function_definition(FunctionContext& context) {
             try {
-                auto var = context["var"].to_data(context).get<Object*>();
+                auto var = context["var"];
                 auto functions = context["data"].to_data(context).get<Object*>()->functions;
 
+                auto& data = get_raw(var);
+                if (data == Data{})
+                    data = context.new_object();
+                auto obj = var.to_data(context).get<Object*>();
+
                 for (auto it = functions.rbegin(); it != functions.rend(); it++)
-                    var->functions.push_front(*it);
+                    obj->functions.push_front(*it);
 
                 return context["var"];
             } catch (Data::BadAccess const&) {
@@ -449,65 +456,65 @@ namespace Interpreter::SystemFunctions {
 
 
         void init(GlobalContext& context) {
-            insert(context, "getter")->functions.push_front(SystemFunction{ getter_args, getter });
+            get_object(context, context["getter"])->functions.push_front(SystemFunction{ getter_args, getter });
 
-            insert(context, "defined")->functions.push_front(SystemFunction{ getter_args, defined });
+            get_object(context, context["defined"])->functions.push_front(SystemFunction{ getter_args, defined });
 
-            insert(context, "setter")->functions.push_front(SystemFunction{ setter_args, setter });
+            get_object(context, context["setter"])->functions.push_front(SystemFunction{ setter_args, setter });
             set(context, context[":="], context["setter"]);
 
 
-            insert(context, "NotAFunction");
-            insert(context, "IncorrectFunctionArguments");
-            insert(context, "ParserException");
-            insert(context, "RecursionLimitExceeded");
+            get_object(context, context["NotAFunction"]);
+            get_object(context, context["IncorrectFunctionArguments"]);
+            get_object(context, context["ParserException"]);
+            get_object(context, context["RecursionLimitExceeded"]);
 
 
-            insert(context, ";")->functions.push_front(SystemFunction{ separator_args, separator });
+            get_object(context, context[";"])->functions.push_front(SystemFunction{ separator_args, separator });
 
-            insert(context, "if");
-            insert(context, "else");
+            get_object(context, context["if"]);
+            get_object(context, context["else"]);
             Function if_s = SystemFunction{ if_statement_args, if_statement };
             if_s.extern_symbols.emplace("if", context["if"]);
             if_s.extern_symbols.emplace("else", context["else"]);
-            insert(context, "if")->functions.push_front(if_s);
+            get_object(context, context["if"])->functions.push_front(if_s);
 
-            insert(context, "while")->functions.push_front(SystemFunction{ while_statement_args, while_statement });
+            get_object(context, context["while"])->functions.push_front(SystemFunction{ while_statement_args, while_statement });
 
-            insert(context, "from");
-            insert(context, "to");
+            get_object(context, context["from"]);
+            get_object(context, context["to"]);
             Function for_s = SystemFunction{ for_statement_args, for_statement };
             for_s.extern_symbols.emplace("from", context["from"]);
             for_s.extern_symbols.emplace("to", context["to"]);
-            insert(context, "for")->functions.push_front(for_s);
+            get_object(context, context["for"])->functions.push_front(for_s);
 
-            insert(context, "step");
+            get_object(context, context["step"]);
             Function for_step_s = SystemFunction{ for_step_statement_args, for_step_statement };
             for_step_s.extern_symbols.emplace("from", context["from"]);
             for_step_s.extern_symbols.emplace("to", context["to"]);
             for_step_s.extern_symbols.emplace("step", context["step"]);
-            insert(context, "for")->functions.push_front(for_step_s);
+            get_object(context, context["for"])->functions.push_front(for_step_s);
 
-            insert(context, "catch");
+            get_object(context, context["catch"]);
             Function try_s = SystemFunction{ try_statement_args, try_statement };
             try_s.extern_symbols.emplace("catch", context["catch"]);
-            insert(context, "try")->functions.push_front(try_s);
-            insert(context, "throw")->functions.push_front(SystemFunction{ throw_statement_args, throw_statement });
+            get_object(context, context["try"])->functions.push_front(try_s);
+            get_object(context, context["throw"])->functions.push_front(SystemFunction{ throw_statement_args, throw_statement });
 
-            insert(context, "$")->functions.push_front(SystemFunction{ copy_args, copy });
-            insert(context, "$==")->functions.push_front(SystemFunction{ copy_args, copy_pointer });
+            get_object(context, context["$"])->functions.push_front(SystemFunction{ copy_args, copy });
+            get_object(context, context["$=="])->functions.push_front(SystemFunction{ copy_args, copy_pointer });
 
-            insert(context, "=")->functions.push_front(SystemFunction{ define_args, define });
-            insert(context, ":")->functions.push_front(SystemFunction{ function_definition_args, function_definition });
+            get_object(context, context["="])->functions.push_front(SystemFunction{ define_args, define });
+            get_object(context, context[":"])->functions.push_front(SystemFunction{ function_definition_args, function_definition });
 
-            insert(context, "==")->functions.push_front(SystemFunction{ equals_args, equals });
-            insert(context, "!=")->functions.push_front(SystemFunction{ equals_args, not_equals });
-            insert(context, "===")->functions.push_front(SystemFunction{ equals_args, check_pointers });
-            insert(context, "!==")->functions.push_front(SystemFunction{ equals_args, not_check_pointers });
+            get_object(context, context["=="])->functions.push_front(SystemFunction{ equals_args, equals });
+            get_object(context, context["!="])->functions.push_front(SystemFunction{ equals_args, not_equals });
+            get_object(context, context["==="])->functions.push_front(SystemFunction{ equals_args, check_pointers });
+            get_object(context, context["!=="])->functions.push_front(SystemFunction{ equals_args, not_check_pointers });
 
-            insert(context, "string_from")->functions.push_front(SystemFunction{ string_from_args, string_from });
-            insert(context, "print")->functions.push_front(SystemFunction{ print_args, print });
-            insert(context, "scan")->functions.push_front(SystemFunction{ scan_args, scan });
+            get_object(context, context["string_from"])->functions.push_front(SystemFunction{ string_from_args, string_from });
+            get_object(context, context["print"])->functions.push_front(SystemFunction{ print_args, print });
+            get_object(context, context["scan"])->functions.push_front(SystemFunction{ scan_args, scan });
         }
 
     }

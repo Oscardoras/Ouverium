@@ -102,9 +102,10 @@ public:
 
                         try {
                             auto r = Interpreter::execute(*context, expression);
-                            auto str = Interpreter::string_from(*context, r);
-                            if (!str.empty() && str != "()")
+                            try {
+                                auto str = Interpreter::string_from(*context, r);
                                 std::cout << str << std::endl;
+                            } catch (Interpreter::Exception const&) {}
                         } catch (Interpreter::Exception const& ex) {
                             ex.print_stack_trace(*context);
                         }
