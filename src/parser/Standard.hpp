@@ -1,7 +1,7 @@
 #ifndef __PARSER_STANDARD_HPP__
 #define __PARSER_STANDARD_HPP__
 
-#include "Parser.hpp"
+#include "Expressions.hpp"
 
 
 namespace Parser {
@@ -12,31 +12,19 @@ namespace Parser {
 
         Standard(std::string const& code, std::string const& path);
 
-        struct TextPosition : public Position {
-            std::string path;
-            unsigned int line;
-            unsigned int column;
-            std::string stack_trace;
-
-            TextPosition(std::string const& path, unsigned int line, unsigned int column);
-
-            virtual void notify_error(std::string const& message) const override;
-            virtual void notify_position() const override;
-        };
-
         struct Word : public std::string {
-            TextPosition position;
+            std::string position;
 
-            Word(std::string const& word, TextPosition const& position);
+            Word(std::string const& word, std::string const& position);
         };
 
         std::vector<Word> get_words() const;
 
         struct ParsingError {
             std::string message;
-            TextPosition position;
+            std::string position;
 
-            ParsingError(std::string const& message, TextPosition const& position) :
+            ParsingError(std::string const& message, std::string const& position) :
                 message(message), position(position) {}
         };
 
@@ -48,7 +36,7 @@ namespace Parser {
 
             Exception(std::vector<ParsingError> const& errors = {});
 
-            virtual const char* what() const noexcept override;
+            const char* what() const noexcept override;
 
         };
 

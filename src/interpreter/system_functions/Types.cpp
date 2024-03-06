@@ -61,7 +61,7 @@ namespace Interpreter::SystemFunctions {
             std::make_shared<Parser::Tuple>()
         );
         Reference tuple_constructor(FunctionContext& context) {
-            auto tuple = Interpreter::call_function(context.get_parent(), context.expression, context["tuple"], std::make_shared<Parser::Tuple>());
+            auto tuple = Interpreter::call_function(context.get_parent(), std::make_shared<SystemExpression>("Internal Tuple"), context["tuple"], std::make_shared<Parser::Tuple>());
 
             if (std::holds_alternative<TupleReference>(tuple))
                 return tuple;
@@ -111,13 +111,13 @@ namespace Interpreter::SystemFunctions {
         }
 
         void init(GlobalContext& context) {
-            insert(context, "Char")->functions.push_front(SystemFunction{ constructor_args, char_constructor });
-            insert(context, "Float")->functions.push_front(SystemFunction{ constructor_args, float_constructor });
-            insert(context, "Int")->functions.push_front(SystemFunction{ constructor_args, int_constructor });
-            insert(context, "Bool")->functions.push_front(SystemFunction{ constructor_args, bool_constructor });
-            insert(context, "Array")->functions.push_front(SystemFunction{ constructor_args, array_constructor });
-            insert(context, "Tuple")->functions.push_front(SystemFunction{ tuple_constructor_args, tuple_constructor });
-            insert(context, "Function")->functions.push_front(SystemFunction{ constructor_args, function_constructor });
+            get_object(context, context["Char"])->functions.push_front(SystemFunction{ constructor_args, char_constructor });
+            get_object(context, context["Float"])->functions.push_front(SystemFunction{ constructor_args, float_constructor });
+            get_object(context, context["Int"])->functions.push_front(SystemFunction{ constructor_args, int_constructor });
+            get_object(context, context["Bool"])->functions.push_front(SystemFunction{ constructor_args, bool_constructor });
+            get_object(context, context["Array"])->functions.push_front(SystemFunction{ constructor_args, array_constructor });
+            get_object(context, context["Tuple"])->functions.push_front(SystemFunction{ tuple_constructor_args, tuple_constructor });
+            get_object(context, context["Function"])->functions.push_front(SystemFunction{ constructor_args, function_constructor });
 
             Function f = SystemFunction{ is_type_args, is_type };
             f.extern_symbols.emplace("Char", context["Char"]);
@@ -126,7 +126,7 @@ namespace Interpreter::SystemFunctions {
             f.extern_symbols.emplace("Bool", context["Bool"]);
             f.extern_symbols.emplace("Array", context["Array"]);
             f.extern_symbols.emplace("Function", context["Function"]);
-            insert(context, "~")->functions.push_front(f);
+            get_object(context, context["~"])->functions.push_front(f);
         }
 
     }

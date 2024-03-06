@@ -1,5 +1,5 @@
 (:~) : (object, type) |-> {
-    Array.add(object._types, type);
+    Array.add(default (object._types), type);
     object
 };
 
@@ -12,25 +12,27 @@
 } : (~));
 
 
-extends;
-
-class : (type, body()) |-> { class type extends [] (body()) };
-class : (type, extends, Tuple parents, body()) |-> {
+extends : (type, Tuple parents) |-> {
     foreach(parents, p |-> {
-        Array.add(p._children, type);
+        Array.add(default (p._children), type);
     });
-
-    if (!(type ~ Function)) {
-        type : this \ (this ~ type) |-> { this };
-    };
-    body();
 
     type
 };
 
+class : (type, body()) |-> { class type extends [] (body()) };
+class : (type, extends, Tuple parents, body()) \ (!defined type) |-> {
+    type := ();
+
+    type : this \ (this ~ type) |-> { this };
+    body();
+
+    extends type parents
+};
+
 
 static : type |-> {
-    type._static
+    default (type._static)
 };
 
 abstract;
@@ -43,7 +45,7 @@ abstract;
 (:::);
 
 (() |-> {
-    types := ();
+    types := [];
 
     default_setter : setter;
 
@@ -53,16 +55,16 @@ abstract;
             default_setter(found, false);
         });
         foreach(types, type |-> {
-            if (type._filter(x)) {
-                getters : type._methods;
-                getters : type._getters;
-            } else if (type._functor_filter(x)) {
-                getters : type._functors;
+            if (defined (type._filter) & type._filter(x)) {
+                getters : default (type._methods);
+                getters : default (type._getters);
+            } else if (defined (type._functor_filter) & type._functor_filter(x)) {
+                getters : default (type._functors);
             };
         });
 
         default_setter(r, getters(x));
-        found
+        false
     } |-> {
         r
     };
@@ -73,8 +75,8 @@ abstract;
             default_setter(found, false);
         });
         foreach(types, type |-> {
-            if (type._filter(x)) {
-                setters : type._setters;
+            if (defined (type._filter) & type._filter(x)) {
+                setters : default (type._setters);
             };
         });
 
@@ -114,5 +116,14 @@ abstract;
 })();
 
 
+default : symbol |-> {
+    default symbol ()
+};
+default : (symbol, default_value) |-> {
+    if (!defined symbol) {
+        symbol := default_value;
+    };
+    symbol
+};
 var : symbol \ (!defined symbol) |-> symbol;
 let : symbol \ (!defined symbol) |-> symbol;

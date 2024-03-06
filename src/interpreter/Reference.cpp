@@ -9,7 +9,7 @@ namespace Interpreter {
                 return symbol->get();
         }
 
-        if (auto d = std::get_if<Data>(&reference))
+        if (auto d = std::get_if<Data>(&reference); d && *d != Data{})
             return *d;
         else
             return call_function(context, context.expression, context.get_global()["getter"], reference).to_data(context);

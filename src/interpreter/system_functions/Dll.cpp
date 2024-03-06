@@ -21,12 +21,13 @@ namespace Interpreter::SystemFunctions {
             try {
                 auto str = context["path"].to_data(context).get<Object*>()->to_string();
 
-                if (auto position = std::dynamic_pointer_cast<Parser::Standard::TextPosition>(context.expression->position)) {
+                auto position = context.expression->position.substr(0, context.expression->position.find(':'));
+                if (position.length() > 0) {
                     try {
                         auto path = std::filesystem::path(str);
 
                         if (!path.is_absolute())
-                            path = std::filesystem::path(position->path) / path;
+                            path = std::filesystem::path(position) / path;
                         return std::filesystem::canonical(path);
                     } catch (std::exception const&) {
                         for (auto const& i : include_path) {
@@ -93,9 +94,9 @@ namespace Interpreter::SystemFunctions {
 
                         return Interpreter::execute(global, expression);
                     } catch (Parser::Standard::IncompleteCode const&) {
-                        throw Exception(context, "incomplete code, you must finish the last expression in file \"" + path.string() + "\"", context.get_global()["ParserException"].to_data(context), context.expression);
+                        throw Exception(context, "incomplete code, you must finish the last expression in file \"" + path.string() + "\"", context.expression);
                     } catch (Parser::Standard::Exception const& e) {
-                        throw Exception(context, e.what(), context.get_global()["ParserException"].to_data(context), context.expression);
+                        throw Exception(context, e.what(), context.expression);
                     }
                 } else {
                     auto expression = it->second;
@@ -388,11 +389,12 @@ namespace Interpreter::SystemFunctions {
 
 
         void init(GlobalContext& context) {
-            insert(context, "import")->functions.push_front(SystemFunction{ path_args, import });
-            //context.get_function("import").push_front(SystemFunction{ path_args, import_h });
+            get_object(context, context["import"])->functions.push_front(SystemFunction{ path_args, import });
 
+            //context.get_function("import").push_front(SystemFunction{ path_args, import_h });
             //context.get_function("getter").push_front(SystemFunction{ getter_args, getter_c });
-            insert(context, "import")->functions.push_front(SystemFunction{ path_args, import_system });
+
+            get_object(context, context["import"])->functions.push_front(SystemFunction{ path_args, import_system });
         }
 
     }

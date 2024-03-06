@@ -6,7 +6,7 @@
 #include <string>
 #include <variant>
 
-#include "../parser/Parser.hpp"
+#include "../parser/Expressions.hpp"
 
 
 namespace Analyzer {

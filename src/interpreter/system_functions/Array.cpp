@@ -154,16 +154,16 @@ namespace Interpreter::SystemFunctions {
         ));
         Reference foreach(FunctionContext& context) {
             try {
-                auto array = Interpreter::call_function(context.get_parent(), context.expression, context["array"], std::make_shared<Parser::Tuple>());
+                auto array = Interpreter::call_function(context.get_parent(), std::make_shared<SystemExpression>("Internal foreach"), context["array"], std::make_shared<Parser::Tuple>());
 
                 if (auto tuple = std::get_if<TupleReference>(&array)) {
                     for (auto const& r : *tuple)
-                        Interpreter::call_function(context.get_parent(), context.expression, context["function"], r);
+                        Interpreter::call_function(context.get_parent(), std::make_shared<SystemExpression>("Internal foreach"), context["function"], r);
                 } else {
                     auto obj = array.to_data(context).get<Object*>();
                     size_t size = obj->array.size();
                     for (size_t i = 0; i < size; ++i)
-                        Interpreter::call_function(context.get_parent(), context.expression, context["function"], ArrayReference{ Data(obj) , i });
+                        Interpreter::call_function(context.get_parent(), std::make_shared<SystemExpression>("Internal foreach"), context["function"], ArrayReference{ Data(obj) , i });
                 }
 
                 return Data{};
@@ -173,17 +173,17 @@ namespace Interpreter::SystemFunctions {
         }
 
         void init(GlobalContext& context) {
-            auto array = insert(context, "Array");
-            insert(context, array, "length")->functions.push_front(SystemFunction{ length_args, length });
-            insert(context, array, "get_capacity")->functions.push_front(SystemFunction{ get_capacity_args, get_capacity });
-            insert(context, array, "set_capacity")->functions.push_front(SystemFunction{ set_capacity_args, set_capacity });
-            insert(context, array, "get")->functions.push_front(SystemFunction{ get_args, get });
-            insert(context, array, "add")->functions.push_front(SystemFunction{ add_args, add });
-            insert(context, array, "remove")->functions.push_front(SystemFunction{ remove_args, remove });
-            insert(context, array, "shift")->functions.push_front(SystemFunction{ shift_args, shift });
-            insert(context, array, "concat")->functions.push_front(SystemFunction{ concat_args, concat });
+            auto array = get_object(context, context["Array"]);
+            get_object(context, array->properties["length"])->functions.push_front(SystemFunction{ length_args, length });
+            get_object(context, array->properties["get_capacity"])->functions.push_front(SystemFunction{ get_capacity_args, get_capacity });
+            get_object(context, array->properties["set_capacity"])->functions.push_front(SystemFunction{ set_capacity_args, set_capacity });
+            get_object(context, array->properties["get"])->functions.push_front(SystemFunction{ get_args, get });
+            get_object(context, array->properties["add"])->functions.push_front(SystemFunction{ add_args, add });
+            get_object(context, array->properties["remove"])->functions.push_front(SystemFunction{ remove_args, remove });
+            get_object(context, array->properties["shift"])->functions.push_front(SystemFunction{ shift_args, shift });
+            get_object(context, array->properties["concat"])->functions.push_front(SystemFunction{ concat_args, concat });
 
-            insert(context, "foreach")->functions.push_front(SystemFunction{ foreach_args, foreach });
+            get_object(context, context["foreach"])->functions.push_front(SystemFunction{ foreach_args, foreach });
         }
 
     }

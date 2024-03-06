@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "Interpreter.hpp"
 
 #include "system_functions/Array.hpp"
@@ -26,35 +28,32 @@ namespace Interpreter {
 
     Exception::Exception(Context& context, Reference const& reference, std::shared_ptr<Parser::Expression> expression) :
         reference(reference) {
-        if (expression->position != nullptr) {
+        //if (expression->position != nullptr) {
             positions.push_back(expression->position);
             Context* old_c = nullptr;
             Context* c = &context;
             while (c != old_c) {
-                if (c->expression->position != nullptr)
+                if (!dynamic_cast<GlobalContext*>(c) && c->expression->position != "")
                     positions.push_back(c->expression->position);
                 old_c = c;
                 c = &c->get_parent();
             }
-        }
+        //}
     }
 
-    Exception::Exception(Context& context, std::string const& message, Data const& type, std::shared_ptr<Parser::Expression> expression) :
-        Exception(context, [&context, &message, &type]() {
-        auto object = context.new_object(Object(message));
-        auto types = context.new_object();
-        types->array.push_back(type);
-        object->properties["_types"] = types;
-        return Data(object);
-    }(), expression) {}
+    Exception::Exception(Context& context, std::string const& message, std::shared_ptr<Parser::Expression> expression) :
+        Exception(context, Data(context.new_object(Object(message))), expression) {}
 
     void Exception::print_stack_trace(Context& context) const {
         if (!positions.empty()) {
-            std::ostringstream oss;
-            oss << "An exception occured: " << Interpreter::string_from(context, reference.to_data(context));
-            positions.front()->notify_error(oss.str());
+            std::cerr << "An exception occured: ";
+            try {
+                std::cerr << reference.to_data(context).get<Object*>()->to_string();
+            } catch (Exception const&) {
+            } catch (Data::BadAccess const&) {}
+            std::cerr << std::endl;
             for (auto const& p : positions)
-                p->notify_position();
+                std::cerr << "\tin " << p << std::endl;
         }
     }
 
@@ -218,7 +217,7 @@ namespace Interpreter {
 
     Reference call_function(Context& context, std::shared_ptr<Parser::Expression> expression, Reference const& func, Arguments const& arguments) {
         if (context.get_recurion_level() >= context.get_global().recursion_limit)
-            throw Exception(context, "recursion limit exceeded", context.get_global()["RecursionLimitExceeded"].to_data(context), expression);
+            throw Exception(context, "recursion limit exceeded", expression);
 
         std::list<Function> functions;
         try {
@@ -261,9 +260,9 @@ namespace Interpreter {
         }
 
         if (functions.empty())
-            throw Exception(context, "not a function", context.get_global()["NotAFunction"].to_data(context), expression);
+            throw Exception(context, "not a function", expression);
         else
-            throw Exception(context, "incorrect function arguments", context.get_global()["IncorrectFunctionArguments"].to_data(context), expression);
+            throw Exception(context, "incorrect function arguments", expression);
     }
 
     Reference execute(Context& context, std::shared_ptr<Parser::Expression> expression) {
@@ -312,7 +311,7 @@ namespace Interpreter {
     std::string string_from(Context& context, Reference const& data) {
         std::ostringstream oss;
 
-        auto d = call_function(context, context.expression, context.get_global()["string_from"], data).to_data(context);
+        auto d = call_function(context, std::make_shared<SystemExpression>("Internal string_from"), context.get_global()["string_from"], data).to_data(context);
         try {
             oss << d.get<Object*>()->to_string();
         } catch (Data::BadAccess const&) {}

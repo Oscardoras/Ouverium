@@ -147,15 +147,15 @@ namespace Interpreter::SystemFunctions {
         void init(GlobalContext& context) {
             auto s = context.get_global().system;
 
-            insert(context, s, "ui_new_frame")->functions.push_front(SystemFunction{ ui_new_frame_args, ui_new_frame });
+            get_object(context, s->properties["ui_new_frame"])->functions.push_front(SystemFunction{ ui_new_frame_args, ui_new_frame });
 
-            insert(context, s, "ui_new_panel")->functions.push_front(SystemFunction{ ui_new_panel_args, ui_new_panel });
-            insert(context, s, "ui_new_button")->functions.push_front(SystemFunction{ ui_new_button_args, ui_new_button });
+            get_object(context, s->properties["ui_new_panel"])->functions.push_front(SystemFunction{ ui_new_panel_args, ui_new_panel });
+            get_object(context, s->properties["ui_new_button"])->functions.push_front(SystemFunction{ ui_new_button_args, ui_new_button });
 
-            insert(context, s, "ui_add_event")->functions.push_front(SystemFunction{ ui_add_event_args, EventHandler(wxEVT_BUTTON) });
+            get_object(context, s->properties["ui_add_event"])->functions.push_front(SystemFunction{ ui_add_event_args, EventHandler(wxEVT_BUTTON) });
 
-            insert(context, s, "ui_set_position")->functions.push_front(SystemFunction{ ui_set_position_args, ui_set_position });
-            insert(context, s, "ui_set_size")->functions.push_front(SystemFunction{ ui_set_size_args, ui_set_size });
+            get_object(context, s->properties["ui_set_position"])->functions.push_front(SystemFunction{ ui_set_position_args, ui_set_position });
+            get_object(context, s->properties["ui_set_size"])->functions.push_front(SystemFunction{ ui_set_size_args, ui_set_size });
         }
 
     }
