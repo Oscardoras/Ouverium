@@ -10,7 +10,7 @@ namespace Interpreter::SystemFunctions {
             try {
                 auto array = context["array"].to_data(context).get<Object*>();
 
-                return Reference(Data((OV_INT) array->array.size()));
+                return Data((OV_INT) array->array.size());
             } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
             }

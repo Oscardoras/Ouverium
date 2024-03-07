@@ -9,6 +9,7 @@ namespace Interpreter::SystemFunctions {
     namespace Base {
 
         Reference getter(FunctionContext& context);
+        Reference function_getter(FunctionContext& context);
         Reference setter(FunctionContext& context);
 
 
@@ -32,6 +33,7 @@ namespace Interpreter::SystemFunctions {
         Reference define(FunctionContext& context);
 
         Reference function_definition(FunctionContext& context);
+        Reference function_add(FunctionContext& context);
 
         bool eq(Data a, Data b);
 

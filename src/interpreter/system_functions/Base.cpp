@@ -35,6 +35,10 @@ namespace Interpreter::SystemFunctions {
             else
                 throw FunctionArgumentsError();
         }
+        auto function_getter_args = std::make_shared<Parser::Symbol>("function");
+        Reference function_getter(FunctionContext& context) {
+            return context["function"];
+        }
 
         Reference defined(FunctionContext& context) {
             auto var = context["var"];
@@ -316,24 +320,49 @@ namespace Interpreter::SystemFunctions {
 
         auto function_definition_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
             {
-                std::make_shared<Parser::Symbol>("var"),
-                std::make_shared<Parser::Symbol>("data")
+                std::make_shared<Parser::Symbol>("object"),
+                std::make_shared<Parser::Symbol>("functions")
             }
         ));
         Reference function_definition(FunctionContext& context) {
             try {
-                auto var = context["var"];
-                auto functions = context["data"].to_data(context).get<Object*>()->functions;
+                auto object = context["object"];
+                auto functions = context["functions"].to_data(context).get<Object*>()->functions;
 
-                auto& data = get_raw(var);
+                auto& data = get_raw(object);
                 if (data == Data{})
                     data = context.new_object();
-                auto obj = var.to_data(context).get<Object*>();
+                auto obj = object.to_data(context).get<Object*>();
 
                 for (auto it = functions.rbegin(); it != functions.rend(); it++)
                     obj->functions.push_front(*it);
 
-                return context["var"];
+                return object;
+            } catch (Data::BadAccess const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        auto function_add_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+            {
+                std::make_shared<Parser::Symbol>("object"),
+                std::make_shared<Parser::Symbol>("functions")
+            }
+        ));
+        Reference function_add(FunctionContext& context) {
+            try {
+                auto object = context["object"];
+                auto functions = context["functions"].to_data(context).get<Object*>()->functions;
+
+                auto& data = get_raw(object);
+                if (data == Data{})
+                    data = context.new_object();
+                auto obj = object.to_data(context).get<Object*>();
+
+                for (auto it = functions.begin(); it != functions.end(); it++)
+                    obj->functions.push_back(*it);
+
+                return object;
             } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
             }
@@ -457,6 +486,7 @@ namespace Interpreter::SystemFunctions {
 
         void init(GlobalContext& context) {
             get_object(context, context["getter"])->functions.push_front(SystemFunction{ getter_args, getter });
+            get_object(context, context["function_getter"])->functions.push_front(SystemFunction{ function_getter_args, function_getter });
 
             get_object(context, context["defined"])->functions.push_front(SystemFunction{ getter_args, defined });
 
@@ -506,6 +536,7 @@ namespace Interpreter::SystemFunctions {
 
             get_object(context, context["="])->functions.push_front(SystemFunction{ define_args, define });
             get_object(context, context[":"])->functions.push_front(SystemFunction{ function_definition_args, function_definition });
+            get_object(context, context["|"])->functions.push_front(SystemFunction{ function_add_args, function_add });
 
             get_object(context, context["=="])->functions.push_front(SystemFunction{ equals_args, equals });
             get_object(context, context["!="])->functions.push_front(SystemFunction{ equals_args, not_equals });
