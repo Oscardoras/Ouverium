@@ -89,5 +89,10 @@ target_link_libraries(ouverium INTERFACE capi)
 
 # Installation
 
-file(CREATE_LINK ../libraries libraries SYMBOLIC)
-file(CREATE_LINK ../include include SYMBOLIC)
+if(UNIX)
+    file(CREATE_LINK ../libraries libraries SYMBOLIC)
+    file(CREATE_LINK ../include include SYMBOLIC)
+else()
+    file(COPY libraries DESTINATION .)
+    file(COPY include DESTINATION .)
+endif()
