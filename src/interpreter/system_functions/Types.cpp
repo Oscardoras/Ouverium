@@ -65,9 +65,8 @@ namespace Interpreter::SystemFunctions {
 
             if (std::holds_alternative<TupleReference>(tuple))
                 return tuple;
-            else {
+            else
                 return TupleReference{ tuple };
-            }
         }
 
         Reference function_constructor(FunctionContext& context) {

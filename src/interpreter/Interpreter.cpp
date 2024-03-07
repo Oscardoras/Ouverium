@@ -28,17 +28,15 @@ namespace Interpreter {
 
     Exception::Exception(Context& context, Reference const& reference, std::shared_ptr<Parser::Expression> expression) :
         reference(reference) {
-        //if (expression->position != nullptr) {
-            positions.push_back(expression->position);
-            Context* old_c = nullptr;
-            Context* c = &context;
-            while (c != old_c) {
-                if (!dynamic_cast<GlobalContext*>(c) && c->expression->position != "")
-                    positions.push_back(c->expression->position);
-                old_c = c;
-                c = &c->get_parent();
-            }
-        //}
+        positions.push_back(expression->position);
+        Context* old_c = nullptr;
+        Context* c = &context;
+        while (c != old_c) {
+            if (!dynamic_cast<GlobalContext*>(c) && c->expression->position != "")
+                positions.push_back(c->expression->position);
+            old_c = c;
+            c = &c->get_parent();
+        }
     }
 
     Exception::Exception(Context& context, std::string const& message, std::shared_ptr<Parser::Expression> expression) :
@@ -224,10 +222,11 @@ namespace Interpreter {
             functions = func.to_data(context).get<Object*>()->functions;
         } catch (Data::BadAccess const&) {}
 
-        try {
-            if (functions.empty())
-                functions = call_function(context, context.expression, context.get_global()["getter"], func).to_data(context).get<Object*>()->functions;
-        } catch (Data::BadAccess const&) {}
+        if (functions.empty()) {
+            try {
+                functions = call_function(context, context.expression, context.get_global()["function_getter"], func).to_data(context).get<Object*>()->functions;
+            } catch (Data::BadAccess const&) {}
+        }
 
         Computed computed;
 

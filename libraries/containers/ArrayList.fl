@@ -3,8 +3,11 @@ import "containers/List.fl";
 
 
 ArrayList := Array;
-class ArrayList extends List {
+extends ArrayList List;
+{
     ArrayList : () |-> {
+        this := ();
+
         Array.set_capacity(this, 1);
 
         this

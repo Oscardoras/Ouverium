@@ -1,3 +1,11 @@
+default : symbol |-> {
+    if (!defined symbol) {
+        symbol := ();
+    };
+    symbol
+};
+
+
 (:~) : (object, type) |-> {
     Array.add(default (object._types), type);
     object
@@ -49,31 +57,45 @@ abstract;
 
     default_setter : setter;
 
-    getter : x \ {
+    function_getter : x \ {
         default_setter(found, true);
-        default_setter(getters, y |-> {
+        getters : y |-> {
             default_setter(found, false);
-        });
+        };
         foreach(types, type |-> {
-            if (defined (type._filter) & type._filter(x)) {
-                getters : default (type._methods);
-                getters : default (type._getters);
-            } else if (defined (type._functor_filter) & type._functor_filter(x)) {
+            if (defined (type._functor_filter) & type._functor_filter(x)) {
                 getters : default (type._functors);
             };
         });
 
         default_setter(r, getters(x));
-        false
+        found
+    } |-> {
+        r
+    };
+    getter | x \ {
+        default_setter(found, true);
+        getters : y |-> {
+            default_setter(found, false);
+        };
+        foreach(types, type |-> {
+            if (defined (type._filter) & type._filter(x)) {
+                getters : default (type._methods);
+                getters : default (type._getters);
+            };
+        });
+
+        default_setter(r, getters(x));
+        found
     } |-> {
         r
     };
 
     setter : (x, value) \ {
         default_setter(found, true);
-        default_setter(setters,  y |-> {
+        setters : (var, val) |-> {
             default_setter(found, false);
-        });
+        };
         foreach(types, type |-> {
             if (defined (type._filter) & type._filter(x)) {
                 setters : default (type._setters);
@@ -91,7 +113,7 @@ abstract;
             x === type
         })) {
             type._filter : (a |-> false) : ((this. .) \ (this ~ type) |-> true);
-            type._functor_filter : (a |-> false) : (this \ (defined this & this ~ type) |-> true);
+            type._functor_filter : (a |-> false) : (this \ (this ~ type) |-> true);
             Array.add(types, type);
         };
     };
@@ -116,14 +138,5 @@ abstract;
 })();
 
 
-default : symbol |-> {
-    default symbol ()
-};
-default : (symbol, default_value) |-> {
-    if (!defined symbol) {
-        symbol := default_value;
-    };
-    symbol
-};
 var : symbol \ (!defined symbol) |-> symbol;
 let : symbol \ (!defined symbol) |-> symbol;

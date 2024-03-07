@@ -13,6 +13,7 @@ namespace Interpreter::SystemFunctions {
         Reference int_constructor(FunctionContext& context);
         Reference bool_constructor(FunctionContext& context);
         Reference array_constructor(FunctionContext& context);
+        Reference tuple_constructor(FunctionContext& context);
         Reference function_constructor(FunctionContext& context);
 
 
