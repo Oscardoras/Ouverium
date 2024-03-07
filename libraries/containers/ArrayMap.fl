@@ -5,6 +5,7 @@ import "containers/ArrayList.fl";
 
 class ArrayMap extends Map {
     ArrayMap : () |-> {
+        this := ();
         this :~ ArrayMap;
 
         this._array := Array[];

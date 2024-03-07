@@ -32,10 +32,14 @@ class : (type, body()) |-> { class type extends [] (body()) };
 class : (type, extends, Tuple parents, body()) \ (!defined type) |-> {
     type := ();
 
+    foreach(parents, p |-> {
+        Array.add(default (p._children), type);
+    });
+
     type : this \ (this ~ type) |-> { this };
     body();
 
-    extends type parents
+    type
 };
 
 

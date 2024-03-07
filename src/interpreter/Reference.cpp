@@ -12,7 +12,7 @@ namespace Interpreter {
         if (auto d = std::get_if<Data>(&reference); d && *d != Data{})
             return *d;
         else
-            return call_function(context, context.expression, context.get_global()["getter"], reference).to_data(context);
+            return call_function(context, std::make_shared<SystemExpression>("Getter"), context.get_global()["getter"], reference).to_data(context);
     }
 
     Data IndirectReference::to_data(Context& context) const {

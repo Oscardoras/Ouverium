@@ -5,6 +5,7 @@ import "containers/ArrayList.fl";
 
 class ArraySet extends Set {
     ArraySet : () |-> {
+        this := ();
         this :~ ArraySet;
 
         this._array := Array[];
