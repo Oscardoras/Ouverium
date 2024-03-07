@@ -12,6 +12,7 @@ class Range extends Iterable {
     };
 
     Range : (Int begin, Int end, Int s) |-> {
+        this := ();
         this :~ Range;
 
         this.begin := begin;
@@ -30,6 +31,7 @@ class Range extends Iterable {
 
     class (Range.Iterator) extends (Iterable.Iterator) {
         Range.Iterator : (range, index) |-> {
+            this := ();
             this :~ Range.Iterator;
 
             this._range := range;

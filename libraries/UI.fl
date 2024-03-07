@@ -2,6 +2,9 @@ import "Type.fl";
 import "String.fl";
 
 
+UI := ();
+
+
 class (UI.Window) {
     (UI.Window)::(this.add_event |-> (
         callback |-> {

@@ -81,7 +81,7 @@ namespace Interpreter::SystemFunctions {
             }
         ));
         Reference setter(FunctionContext& context) {
-            auto var = Interpreter::call_function(context.get_parent(), context.expression, context["var"], std::make_shared<Parser::Tuple>());
+            auto var = Interpreter::call_function(context.get_parent(), std::make_shared<SystemExpression>("Internal setter"), context["var"], std::make_shared<Parser::Tuple>());
             auto data = context["data"].to_data(context);
 
             return assignation(context, var, data);
@@ -188,7 +188,7 @@ namespace Interpreter::SystemFunctions {
 
                 for (OV_INT i = begin; i < end; ++i) {
                     Interpreter::set(context, variable, Data(i));
-                    Interpreter::call_function(context.get_parent(), context.expression, block, std::make_shared<Parser::Tuple>());
+                    Interpreter::call_function(context.get_parent(), std::make_shared<SystemExpression>("Internal fo"), block, std::make_shared<Parser::Tuple>());
                 }
                 return Reference();
             } catch (Data::BadAccess const&) {
@@ -253,10 +253,10 @@ namespace Interpreter::SystemFunctions {
             auto catch_function = context["catch_function"];
 
             try {
-                return Interpreter::call_function(context.get_parent(), context.expression, try_block, std::make_shared<Parser::Tuple>());
+                return Interpreter::call_function(context.get_parent(), std::make_shared<SystemExpression>("Internal try"), try_block, std::make_shared<Parser::Tuple>());
             } catch (Exception const& ex) {
                 try {
-                    return Interpreter::call_function(context.get_parent(), context.expression, catch_function, ex.reference);
+                    return Interpreter::call_function(context.get_parent(), std::make_shared<SystemExpression>("Internal try"), catch_function, ex.reference);
                 } catch (Interpreter::Exception const&) {
                     throw ex;
                 }
@@ -297,7 +297,7 @@ namespace Interpreter::SystemFunctions {
             }
         ));
         Reference define(FunctionContext& context) {
-            auto var = Interpreter::call_function(context.get_parent(), context.expression, context["var"], std::make_shared<Parser::Tuple>());
+            auto var = Interpreter::call_function(context.get_parent(), std::make_shared<SystemExpression>("Internal define"), context["var"], std::make_shared<Parser::Tuple>());
             auto data = context["data"].to_data(context);
 
             std::function<bool(Reference const&)> iterate = [&iterate, &context](Reference const& reference) -> bool {

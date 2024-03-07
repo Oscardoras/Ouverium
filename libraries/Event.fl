@@ -5,6 +5,7 @@ import "containers/Set.fl";
 
 class Event {
     Event : () |-> {
+        this := ();
         this :~ Event;
 
         this

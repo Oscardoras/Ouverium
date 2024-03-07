@@ -224,7 +224,7 @@ namespace Interpreter {
 
         if (functions.empty()) {
             try {
-                functions = call_function(context, context.expression, context.get_global()["function_getter"], func).to_data(context).get<Object*>()->functions;
+                functions = call_function(context, std::make_shared<SystemExpression>("Function Getter"), context.get_global()["function_getter"], func).to_data(context).get<Object*>()->functions;
             } catch (Data::BadAccess const&) {}
         }
 
@@ -304,7 +304,7 @@ namespace Interpreter {
 
 
     Reference set(Context& context, Reference const& var, Reference const& data) {
-        return call_function(context, context.expression, context.get_global()["setter"], TupleReference{ var, data });
+        return call_function(context, std::make_shared<SystemExpression>("Setter"), context.get_global()["setter"], TupleReference{ var, data });
     }
 
     std::string string_from(Context& context, Reference const& data) {

@@ -81,6 +81,7 @@ class Mutex {
 
 class Future {
     Future : this |-> {
+        this := ();
         this :~ Future;
 
         this._mutex := Mutex();
