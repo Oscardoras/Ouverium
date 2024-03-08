@@ -21,7 +21,7 @@ namespace Interpreter::SystemFunctions {
             try {
                 auto str = context["path"].to_data(context).get<Object*>()->to_string();
 
-                auto position = context.expression->position.substr(0, context.expression->position.find(':'));
+                auto position = context.caller ? context.caller->position.substr(0, context.caller->position.find(':')) : "";
                 if (position.length() > 0) {
                     try {
                         auto path = std::filesystem::path(str);
@@ -69,34 +69,39 @@ namespace Interpreter::SystemFunctions {
 
             if (std::set<std::string>{".fl", ".ov", ".ouv"}.contains(path.extension().string())) {
                 auto& global = context.get_global();
-                auto root = context.expression->get_root();
+                auto root = context.caller->get_root();
 
                 auto it = global.sources.find(path);
                 if (it == global.sources.end()) {
                     std::ostringstream oss;
-                    oss << std::ifstream(path).rdbuf();
-                    std::string code = oss.str();
+                    std::ifstream src(path);
+                    if (src) {
+                        oss << src.rdbuf();
+                        std::string code = oss.str();
 
-                    try {
-                        auto expression = Parser::Standard(code, path.string()).get_tree();
-                        global.sources[path] = expression;
+                        try {
+                            auto expression = Parser::Standard(code, path.string()).get_tree();
+                            global.sources[path] = expression;
 
-                        {
-                            auto symbols = GlobalContext(nullptr).get_symbols();
-                            expression->compute_symbols(symbols);
+                            {
+                                auto symbols = GlobalContext(nullptr).get_symbols();
+                                expression->compute_symbols(symbols);
+                            }
+
+                            {
+                                auto symbols = root->symbols;
+                                symbols.insert(expression->symbols.begin(), expression->symbols.end());
+                                root->compute_symbols(symbols);
+                            }
+
+                            return Interpreter::execute(global, expression);
+                        } catch (Parser::Standard::IncompleteCode const&) {
+                            throw Exception(context, context.caller, "incomplete code, you must finish the last expression in file \"" + path.string() + "\".");
+                        } catch (Parser::Standard::Exception const& e) {
+                            throw Exception(context, context.caller, e.what());
                         }
-
-                        {
-                            auto symbols = root->symbols;
-                            symbols.insert(expression->symbols.begin(), expression->symbols.end());
-                            root->compute_symbols(symbols);
-                        }
-
-                        return Interpreter::execute(global, expression);
-                    } catch (Parser::Standard::IncompleteCode const&) {
-                        throw Exception(context, "incomplete code, you must finish the last expression in file \"" + path.string() + "\"", context.expression);
-                    } catch (Parser::Standard::Exception const& e) {
-                        throw Exception(context, e.what(), context.expression);
+                    } else {
+                        throw Exception(context, context.caller, "Error: unable to load the source file \"" + path.string() + "\".");
                     }
                 } else {
                     auto expression = it->second;

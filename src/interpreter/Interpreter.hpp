@@ -11,10 +11,10 @@ namespace Interpreter {
     public:
 
         Reference reference;
-        std::vector<std::string> positions;
+        std::vector<Parser::Position> positions;
 
-        Exception(Context& context, Reference const& reference, std::shared_ptr<Parser::Expression> expression);
-        Exception(Context& context, std::string const& message, std::shared_ptr<Parser::Expression> expression);
+        Exception(Context& context, std::shared_ptr<Parser::Expression> thrower, Reference const& reference);
+        Exception(Context& context, std::shared_ptr<Parser::Expression> thrower, std::string const& message);
 
         void print_stack_trace(Context& context) const;
 
@@ -23,28 +23,12 @@ namespace Interpreter {
 
     using Arguments = std::variant<std::shared_ptr<Parser::Expression>, Reference>;
 
-    Reference call_function(Context& context, std::shared_ptr<Parser::Expression> expression, Reference const& func, Arguments const& arguments);
+    Reference call_function(Context& context, std::shared_ptr<Parser::Expression> caller, Reference const& func, Arguments const& arguments);
     Reference execute(Context& context, std::shared_ptr<Parser::Expression> expression);
 
     Reference set(Context& context, Reference const& var, Reference const& data);
     std::string string_from(Context& context, Reference const& data);
 
-
-    class SystemExpression : public Parser::Expression {
-    public:
-        SystemExpression(std::string const& position) {
-            Parser::Expression::position = position;
-        }
-        std::set<std::string> get_symbols() const override {
-            return {};
-        }
-        std::set<std::string> compute_symbols(std::set<std::string>&) override {
-            return {};
-        }
-        std::string to_string(unsigned = 0) const override {
-            return {};
-        }
-    };
 
     inline Object* get_object(GlobalContext& context, IndirectReference const& reference) {
         if (auto symbol_reference = std::get_if<SymbolReference>(&reference)) {

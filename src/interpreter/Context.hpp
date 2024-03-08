@@ -21,10 +21,10 @@ namespace Interpreter {
 
     public:
 
-        std::shared_ptr<Parser::Expression> expression;
+        std::shared_ptr<Parser::Expression> caller;
 
-        Context(std::shared_ptr<Parser::Expression> expression) :
-            expression(expression) {}
+        Context(std::shared_ptr<Parser::Expression> caller) :
+            caller(caller) {}
 
         virtual Context& get_parent() = 0;
         virtual GlobalContext& get_global() = 0;
@@ -36,7 +36,8 @@ namespace Interpreter {
 
         std::set<std::string> get_symbols() const;
         bool has_symbol(std::string const& symbol) const;
-        void add_symbol(std::string const& symbol, Reference const& reference);
+        void add_symbol(std::string const& symbol, IndirectReference const& indirect_reference);
+        void add_symbol(std::string const& symbol, Data const& data);
         IndirectReference operator[](std::string const& symbol);
         auto begin() const { return symbols.begin(); }
         auto end() const { return symbols.end(); }
@@ -86,8 +87,8 @@ namespace Interpreter {
 
     public:
 
-        FunctionContext(Context& parent, std::shared_ptr<Parser::Expression> expression) :
-            Context(expression), parent(parent), recursion_level(parent.get_recurion_level() + 1) {}
+        FunctionContext(Context& parent, std::shared_ptr<Parser::Expression> caller) :
+            Context(caller), parent(parent), recursion_level(parent.get_recurion_level() + 1) {}
 
         virtual GlobalContext& get_global() override {
             return parent.get_global();

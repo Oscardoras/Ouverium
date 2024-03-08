@@ -40,7 +40,7 @@ namespace Interpreter::SystemFunctions {
                 auto b = context["b"];
 
                 if (a)
-                    return Data(Interpreter::call_function(context.get_parent(), std::make_shared<SystemExpression>("Internal and"), b, std::make_shared<Parser::Tuple>()).to_data(context).get<bool>());
+                    return Data(Interpreter::call_function(context.get_parent(), nullptr, b, std::make_shared<Parser::Tuple>()).to_data(context).get<bool>());
                 else
                     return Reference(Data(false));
             } catch (Data::BadAccess const&) {
@@ -54,7 +54,7 @@ namespace Interpreter::SystemFunctions {
                 auto b = context["b"];
 
                 if (!a)
-                    return Data(Interpreter::call_function(context.get_parent(), std::make_shared<SystemExpression>("Internal or"), b, std::make_shared<Parser::Tuple>()).to_data(context).get<bool>());
+                    return Data(Interpreter::call_function(context.get_parent(), nullptr, b, std::make_shared<Parser::Tuple>()).to_data(context).get<bool>());
                 else
                     return Reference(Data(true));
             } catch (Data::BadAccess const&) {
@@ -341,21 +341,21 @@ namespace Interpreter::SystemFunctions {
         ));
         Reference forall(FunctionContext& context) {
             try {
-                auto array = Interpreter::call_function(context.get_parent(), std::make_shared<SystemExpression>("Internal forall"), context["array"], std::make_shared<Parser::Tuple>());
+                auto array = Interpreter::call_function(context.get_parent(), nullptr, context["array"], std::make_shared<Parser::Tuple>());
                 auto functions = context["function"];
 
                 bool value = true;
 
                 if (auto tuple = std::get_if<TupleReference>(&array)) {
                     for (auto const& r : *tuple) {
-                        if (!Interpreter::call_function(context.get_parent(), std::make_shared<SystemExpression>("Internal forall"), functions, r).to_data(context).get<bool>()) {
+                        if (!Interpreter::call_function(context.get_parent(), nullptr, functions, r).to_data(context).get<bool>()) {
                             value = false;
                             break;
                         }
                     }
                 } else {
                     for (auto const& d : array.to_data(context).get<Object*>()->array) {
-                        if (!Interpreter::call_function(context.get_parent(), std::make_shared<SystemExpression>("Internal forall"), functions, d).to_data(context).get<bool>()) {
+                        if (!Interpreter::call_function(context.get_parent(), nullptr, functions, d).to_data(context).get<bool>()) {
                             value = false;
                             break;
                         }
@@ -370,21 +370,21 @@ namespace Interpreter::SystemFunctions {
 
         Reference exists(FunctionContext& context) {
             try {
-                auto array = Interpreter::call_function(context.get_parent(), std::make_shared<SystemExpression>("Internal exists"), context["array"], std::make_shared<Parser::Tuple>());
+                auto array = Interpreter::call_function(context.get_parent(), nullptr, context["array"], std::make_shared<Parser::Tuple>());
                 auto functions = context["function"];
 
                 bool value = false;
 
                 if (auto tuple = std::get_if<TupleReference>(&array)) {
                     for (auto const& r : *tuple) {
-                        if (Interpreter::call_function(context.get_parent(), std::make_shared<SystemExpression>("Internal exists"), functions, r).to_data(context).get<bool>()) {
+                        if (Interpreter::call_function(context.get_parent(), nullptr, functions, r).to_data(context).get<bool>()) {
                             value = true;
                             break;
                         }
                     }
                 } else {
                     for (auto const& d : array.to_data(context).get<Object*>()->array) {
-                        if (Interpreter::call_function(context.get_parent(), std::make_shared<SystemExpression>("Internal exists"), functions, d).to_data(context).get<bool>()) {
+                        if (Interpreter::call_function(context.get_parent(), nullptr, functions, d).to_data(context).get<bool>()) {
                             value = true;
                             break;
                         }

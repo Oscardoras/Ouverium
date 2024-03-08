@@ -61,7 +61,7 @@ namespace Interpreter::SystemFunctions {
             std::make_shared<Parser::Tuple>()
         );
         Reference tuple_constructor(FunctionContext& context) {
-            auto tuple = Interpreter::call_function(context.get_parent(), std::make_shared<SystemExpression>("Internal Tuple"), context["tuple"], std::make_shared<Parser::Tuple>());
+            auto tuple = Interpreter::call_function(context.get_parent(), nullptr, context["tuple"], std::make_shared<Parser::Tuple>());
 
             if (std::holds_alternative<TupleReference>(tuple))
                 return tuple;

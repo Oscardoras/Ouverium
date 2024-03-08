@@ -15,7 +15,7 @@ namespace Parser {
         struct Word : public std::string {
             std::string position;
 
-            Word(std::string const& word, std::string const& position);
+            Word(std::string const& word, Parser::Position const& position);
         };
 
         std::vector<Word> get_words() const;
@@ -24,7 +24,7 @@ namespace Parser {
             std::string message;
             std::string position;
 
-            ParsingError(std::string const& message, std::string const& position) :
+            ParsingError(std::string const& message, Parser::Position const& position) :
                 message(message), position(position) {}
         };
 

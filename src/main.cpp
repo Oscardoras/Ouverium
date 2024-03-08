@@ -95,7 +95,7 @@ public:
 
                     try {
                         auto expression = Parser::Standard(code, "stdin").get_tree();
-                        context->expression = expression;
+                        context->caller = expression;
 
                         auto new_symbols = expression->compute_symbols(symbols);
                         symbols.insert(new_symbols.begin(), new_symbols.end());
@@ -183,7 +183,7 @@ public:
                     return false;
                 }
             } catch (Parser::Standard::IncompleteCode const&) {
-                std::cerr << "incomplete code, you must finish the last expression in file \"" << path << "\"" << std::endl;
+                std::cerr << "incomplete code, you must finish the last expression in file \"" << path << "\"." << std::endl;
                 error = true;
                 return false;
             } catch (Parser::Standard::Exception const& e) {
@@ -192,7 +192,7 @@ public:
                 return false;
             }
         } else {
-            std::cerr << "Error: unable to load the source file " << path << "." << std::endl;
+            std::cerr << "unable to load the source file \"" << path << "\"." << std::endl;
             return false;
         }
     }
@@ -213,6 +213,8 @@ public:
                 return static_cast<int>(r.to_data(*context).get<OV_INT>());
             } catch (Interpreter::Data::BadAccess const&) {
                 return EXIT_SUCCESS;
+            } catch (Interpreter::Exception const&) {
+                return EXIT_FAILURE;
             }
         }
     }
