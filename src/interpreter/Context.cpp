@@ -86,8 +86,12 @@ namespace Interpreter {
         return symbols.find(symbol) != symbols.end();
     }
 
-    void Context::add_symbol(std::string const& symbol, Reference const& reference) {
-        symbols.emplace(symbol, reference.to_indirect_reference(*this));
+    void Context::add_symbol(std::string const& symbol, IndirectReference const& indirect_reference) {
+        symbols.emplace(symbol, indirect_reference);
+    }
+
+    void Context::add_symbol(std::string const& symbol, Data const& data) {
+        symbols.emplace(symbol, new_reference(data));
     }
 
     IndirectReference Context::operator[](std::string const& symbol) {

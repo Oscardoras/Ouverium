@@ -22,7 +22,7 @@ namespace Interpreter {
 
         try {
             if (this->properties.contains("destructor"))
-                call_function(context.get_global(), context.get_global().expression, PropertyReference{ Data(this), "destructor" }, std::make_shared<Parser::Tuple>());
+                call_function(context.get_global(), nullptr, PropertyReference{ Data(this), "destructor" }, std::make_shared<Parser::Tuple>());
         } catch (Interpreter::Exception const&) {}
     }
 

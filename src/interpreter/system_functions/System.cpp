@@ -350,12 +350,12 @@ namespace Interpreter::SystemFunctions {
                 auto function = context["function"].to_data(context).get<Object*>();
 
                 auto& global = context.get_global();
-                auto expression = context.expression;
+                auto caller = context.caller;
 
                 auto obj = context.new_object();
-                obj->c_obj.set(std::make_unique<Thread>([&global, expression, function]() {
+                obj->c_obj.set(std::make_unique<Thread>([&global, caller, function]() {
                     try {
-                        Interpreter::call_function(global, expression, Data(function), std::make_shared<Parser::Tuple>());
+                        Interpreter::call_function(global, caller, Data(function), std::make_shared<Parser::Tuple>());
                     } catch (Interpreter::Exception const& ex) {
                         ex.print_stack_trace(global);
                     }

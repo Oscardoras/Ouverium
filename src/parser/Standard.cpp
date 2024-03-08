@@ -10,7 +10,7 @@ namespace Parser {
     Standard::Standard(std::string const& code, std::string const& path) :
         code(code), path(path) {}
 
-    Standard::Word::Word(std::string const& word, std::string const& position) :
+    Standard::Word::Word(std::string const& word, Parser::Position const& position) :
         std::string(word), position(position) {}
 
     Standard::Exception::Exception(std::vector<ParsingError> const& errors) {

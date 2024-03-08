@@ -6,6 +6,8 @@
 
 #include "Data.hpp"
 
+#include "../parser/Expressions.hpp"
+
 
 namespace Interpreter {
 
@@ -29,23 +31,19 @@ namespace Interpreter {
 
         using std::variant<SymbolReference, PropertyReference, ArrayReference>::variant;
 
-        Data to_data(Context& context) const;
+        Data to_data(Context& context, std::shared_ptr<Parser::Expression> caller = nullptr) const;
 
     };
 
     class Reference : public std::variant<Data, TupleReference, SymbolReference, PropertyReference, ArrayReference> {
-
-    protected:
-
-        friend Data compute(Context&, Reference const&, Data const&);
 
     public:
 
         using std::variant<Data, TupleReference, SymbolReference, PropertyReference, ArrayReference>::variant;
         Reference(IndirectReference const& indirect_reference);
 
-        Data to_data(Context& context) const;
-        IndirectReference to_indirect_reference(Context& context) const;
+        Data to_data(Context& context, std::shared_ptr<Parser::Expression> caller = nullptr) const;
+        IndirectReference to_indirect_reference(Context& context, std::shared_ptr<Parser::Expression> caller = nullptr) const;
 
     };
 

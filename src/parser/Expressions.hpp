@@ -9,7 +9,7 @@
 
 namespace Parser {
 
-    class Position;
+    using Position = std::string;
 
     /**
      * Represents an expression of the language, must be inherited.
@@ -30,7 +30,7 @@ namespace Parser {
         /**
          * The position of the expression in the source.
         */
-        std::string position;
+        Position position;
 
         /**
          * The list of the symbols used in the expression.
