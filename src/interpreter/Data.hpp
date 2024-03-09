@@ -4,6 +4,7 @@
 #include <any>
 #include <exception>
 #include <ostream>
+#include <typeindex>
 
 #include "../Types.hpp"
 
@@ -15,6 +16,20 @@ namespace Interpreter {
     class Data : protected std::any {
 
     public:
+
+        using Comparators = std::map<std::pair<std::type_index, std::type_index>, std::function<bool(std::any const&, std::any const&)>>;
+        using Comparator = std::pair<std::pair<std::type_index, std::type_index>, std::function<bool(std::any const&, std::any const&)>>;
+
+        static Comparators comparators;
+
+        template<typename T, typename U>
+        static inline Comparator SimpleComparator = {
+            {std::type_index(typeid(T)), std::type_index(typeid(U))},
+            [](std::any const& a, std::any const& b) {
+                return std::any_cast<T>(a) == std::any_cast<U>(b);
+            }
+        };
+
 
         Data() = default;
         explicit Data(Object* object) : std::any(object) {}
@@ -49,7 +64,16 @@ namespace Interpreter {
             return *this;
         }
 
-        friend bool operator==(Data const& a, Data const& b);
+        friend bool operator==(Data const& a, Data const& b) {
+            if (!static_cast<std::any const&>(a).has_value() && !static_cast<std::any const&>(b).has_value())
+                return true;
+
+            auto it = Data::comparators.find({ std::type_index(static_cast<std::any const&>(a).type()), std::type_index(static_cast<std::any const&>(b).type()) });
+            if (it != Data::comparators.end()) {
+                return it->second(a, b);
+            } else
+                return false;
+        }
         friend bool operator!=(Data const& a, Data const& b) {
             return !(a == b);
         }
