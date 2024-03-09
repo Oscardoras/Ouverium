@@ -9,7 +9,7 @@
 
 namespace Interpreter {
 
-    struct Context;
+    class Context;
 
     class CObj {
 
@@ -49,7 +49,6 @@ namespace Interpreter {
         CObj c_obj;
 
         bool referenced = false;
-        Object* weak_ref = nullptr;
 
         Object() = default;
 
@@ -63,10 +62,6 @@ namespace Interpreter {
 
         void destruct(Context& context);
 
-    };
-
-    struct WeakReference {
-        Object* obj;
     };
 
 }

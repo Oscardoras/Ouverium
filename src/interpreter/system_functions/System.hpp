@@ -88,7 +88,6 @@ namespace Interpreter::SystemFunctions {
         Reference mutex_try_lock(FunctionContext& context);
         Reference mutex_unlock(FunctionContext& context);
 
-        Reference weak_reference(FunctionContext& context);
         Reference GC_collect(FunctionContext& context);
 
 
