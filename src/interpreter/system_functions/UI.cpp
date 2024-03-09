@@ -84,7 +84,7 @@ namespace Interpreter::SystemFunctions {
                     auto& global = context.get_global();
 
                     window->Bind(type, [&global, callback](Args&) {
-                        Interpreter::call_function(global, nullptr, callback, Data{});
+                        Interpreter::call_function(global, nullptr, Data(callback), Data{});
                     });
 
                     return Data{};
