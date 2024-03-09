@@ -492,36 +492,6 @@ namespace Interpreter::SystemFunctions {
         }
 
 
-        auto weak_reference_args = std::make_shared<Parser::Symbol>("object");
-        Reference weak_reference(FunctionContext& context) {
-            try {
-                auto obj = context["object"].to_data(context).get<Object*>();
-
-                if (!obj->weak_ref) {
-                    auto reference = context.new_object();
-                    reference->c_obj.set(std::make_unique<WeakReference>(obj));
-                    obj->weak_ref = reference;
-                }
-
-                return Data(obj->weak_ref);
-            } catch (Data::BadAccess const&) {
-                throw FunctionArgumentsError();
-            }
-        }
-
-        auto weak_reference_get_args = std::make_shared<Parser::Symbol>("reference");
-        Reference weak_reference_get(FunctionContext& context) {
-            try {
-                auto reference = context["reference"].to_data(context).get<Object*>();
-
-                auto weak_reference = reference->c_obj.get<WeakReference>();
-
-                return Data(weak_reference.obj);
-            } catch (std::exception const&) {
-                throw FunctionArgumentsError();
-            }
-        }
-
         auto GC_collect_args = std::make_shared<Parser::Tuple>();
         Reference GC_collect(FunctionContext& context) {
             context.GC_collect();
@@ -576,8 +546,6 @@ namespace Interpreter::SystemFunctions {
             get_object(context, s->properties["mutex_try_lock"])->functions.push_front(SystemFunction{ mutex_try_lock_args, mutex_try_lock });
             get_object(context, s->properties["mutex_unlock"])->functions.push_front(SystemFunction{ mutex_unlock_args, mutex_unlock });
 
-            get_object(context, s->properties["weak_reference"])->functions.push_front(SystemFunction{ weak_reference_args, weak_reference });
-            get_object(context, s->properties["weak_reference_get"])->functions.push_front(SystemFunction{ weak_reference_get_args, weak_reference_get });
             get_object(context, s->properties["GC_collect"])->functions.push_front(SystemFunction{ GC_collect_args, GC_collect });
 
 
