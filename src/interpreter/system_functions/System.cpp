@@ -28,7 +28,7 @@ namespace Interpreter::SystemFunctions {
             try {
                 auto& stream = dynamic_cast<std::istream&>(context["stream"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
 
-                return Data(stream.get());
+                return Data(static_cast<OV_INT>(stream.get()));
             } catch (std::exception const&) {
                 throw FunctionArgumentsError();
             }
