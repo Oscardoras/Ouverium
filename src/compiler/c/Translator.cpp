@@ -2,10 +2,11 @@
 #include <fstream>
 #include <functional>
 #include <iostream>
-#include <hash_string.h>
 #include <map>
 #include <set>
 #include <stdexcept>
+
+#include <ouverium/hash_string.h>
 
 #include "Translator.hpp"
 

@@ -3,7 +3,7 @@
 
 #include <boost/dll.hpp>
 
-#include <data.hpp>
+#include <ouverium/data.hpp>
 
 #include "Dll.hpp"
 

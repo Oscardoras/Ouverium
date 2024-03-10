@@ -1,5 +1,6 @@
-#include <hash_string.h>
 #include <set>
+
+#include <ouverium/hash_string.h>
 
 #include "Translator.hpp"
 

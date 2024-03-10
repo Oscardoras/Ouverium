@@ -17,7 +17,7 @@
 #include "parser/Standard.hpp"
 
 
-std::filesystem::path program_location = boost::filesystem::canonical(boost::dll::program_location()).parent_path().string();
+std::filesystem::path program_location = boost::filesystem::canonical(boost::dll::program_location()).parent_path().parent_path().string();
 std::vector<std::string> include_path;
 
 #ifdef READLINE
@@ -325,7 +325,7 @@ int main(int argc, char** argv) {
     std::unique_ptr<ExecutionMode> mode;
 
     std::srand(std::time(nullptr));
-    include_path.push_back((program_location.parent_path() / "libraries").string());
+    include_path.push_back((program_location / "libraries").string());
 
     if (argc == 1) {
         if (is_interactive())

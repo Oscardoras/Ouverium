@@ -1,8 +1,9 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include "hash_string.h"
-#include "include.h"
+#include <ouverium/hash_string.h>
+#include <ouverium/include.h>
+
 #include "gc.h"
 
 

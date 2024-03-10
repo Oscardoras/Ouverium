@@ -3,6 +3,7 @@ project(Ouverium LANGUAGES C CXX)
 
 include(CheckIPOSupported)
 include(FetchContent)
+include(CPack)
 
 
 # Configuration
@@ -30,20 +31,23 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Boost)
 
 #WxWidgets
-find_package(wxWidgets COMPONENTS core base)
-if(wxWidgets_FOUND)
-    include(${wxWidgets_USE_FILE})
+if(NOT DEFINED OUVERIUM_NO_GUI)
+    find_package(wxWidgets COMPONENTS core base)
+    if(wxWidgets_FOUND)
+        include(${wxWidgets_USE_FILE})
+        set(wxWidgets ${wxWidgets_LIBRARIES})
+    else()
+        set(wxBUILD_SHARED OFF)
+        FetchContent_Declare(
+            wxWidgets
+            URL https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.4/wxWidgets-3.2.4.7z
+        )
+        FetchContent_MakeAvailable(wxWidgets)
+        set(wxWidgets wx::core wx::base)
+    endif()
     add_compile_definitions(WXWIDGETS)
-    set(wxWidgets ${wxWidgets_LIBRARIES})
 else()
-    set(wxBUILD_SHARED OFF)
-    FetchContent_Declare(
-        wxWidgets
-        URL https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.4/wxWidgets-3.2.4.7z
-    )
-    FetchContent_MakeAvailable(wxWidgets)
-    add_compile_definitions(WXWIDGETS)
-    set(wxWidgets wx::core wx::base)
+    set(wxWidgets "")
 endif()
 
 # Readline
@@ -89,10 +93,10 @@ target_link_libraries(ouverium INTERFACE capi)
 
 # Installation
 
-if(UNIX)
-    file(CREATE_LINK ../libraries libraries SYMBOLIC)
-    file(CREATE_LINK ../include include SYMBOLIC)
-else()
-    file(COPY libraries DESTINATION .)
-    file(COPY include DESTINATION .)
-endif()
+install(TARGETS ouverium capi)
+install(DIRECTORY libraries DESTINATION .)
+install(DIRECTORY include DESTINATION .)
+
+set(CPACK_PACKAGE_NAME "Ouverium")
+set(CPACK_PACKAGE_VENDOR "Oscar Buon")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Programming language")

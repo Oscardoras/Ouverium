@@ -1,7 +1,7 @@
 #ifndef __GC_H__
 #define __GC_H__
 
-#include "include.h"
+#include <ouverium/include.h>
 
 
 #ifdef __cplusplus
