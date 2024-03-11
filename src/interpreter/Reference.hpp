@@ -10,7 +10,6 @@
 namespace Interpreter {
 
     class Context;
-    class Object;
     class Reference;
 
     using TupleReference = std::vector<Reference>;

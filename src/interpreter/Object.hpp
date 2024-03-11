@@ -9,7 +9,7 @@
 
 namespace Interpreter {
 
-    struct Context;
+    class Context;
 
     class CObj {
 

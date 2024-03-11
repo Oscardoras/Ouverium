@@ -80,7 +80,7 @@ namespace Interpreter {
                 return operator[](*expression) = Interpreter::execute(context, *expression);
             else if (auto reference = std::get_if<Reference>(&arguments))
                 return *reference;
-            else return *((Reference*) nullptr);
+            else return Reference();
         }
 
     };

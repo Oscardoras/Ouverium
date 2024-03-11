@@ -10,7 +10,7 @@
 
 namespace Interpreter {
 
-    class Object;
+    struct Object;
 
     class Data : protected std::variant<Object*, char, OV_FLOAT, OV_INT, bool> {
 
