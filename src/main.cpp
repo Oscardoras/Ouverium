@@ -267,7 +267,7 @@ public:
 
 
 
-#ifdef WXWIDGETS
+#ifdef OUVERIUM_WXWIDGETS
 
 
 #include <wx/wx.h>

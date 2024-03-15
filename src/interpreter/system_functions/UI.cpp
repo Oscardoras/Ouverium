@@ -1,7 +1,7 @@
 #include "UI.hpp"
 
 
-#ifdef WXWIDGETS
+#ifdef OUVERIUM_WXWIDGETS
 
 
 #include <iostream>

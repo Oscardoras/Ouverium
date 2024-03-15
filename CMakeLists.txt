@@ -8,12 +8,6 @@ include(CPack)
 
 # Configuration
 
-set(CMAKE_C_EXTENSIONS OFF)
-set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
 if(CMAKE_BUILD_TYPE MATCHES Debug)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
@@ -49,7 +43,7 @@ if(NOT DEFINED OUVERIUM_NO_GUI)
         FetchContent_MakeAvailable(wxWidgets)
         set(wxWidgets wx::core wx::base)
     endif()
-    add_compile_definitions(WXWIDGETS)
+    add_compile_definitions(OUVERIUM_WXWIDGETS)
 else()
     set(wxWidgets "")
 endif()
@@ -76,7 +70,7 @@ FILE(GLOB_RECURSE capi_sources
 )
 add_library(capi SHARED ${capi_sources})
 target_include_directories(capi PUBLIC include)
-set_property(TARGET capi PROPERTY C_STANDARD 99)
+target_compile_features(capi PRIVATE c_std_99)
 
 # Ouverium
 FILE(GLOB_RECURSE ouverium_sources
@@ -89,6 +83,7 @@ FILE(GLOB_RECURSE ouverium_sources
 )
 add_executable(ouverium ${ouverium_sources})
 target_include_directories(ouverium PRIVATE include)
+target_compile_features(ouverium PRIVATE cxx_std_20)
 if (WIN32)
     target_link_libraries(ouverium PRIVATE -lws2_32)
 endif()
