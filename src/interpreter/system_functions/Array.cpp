@@ -172,6 +172,38 @@ namespace Interpreter::SystemFunctions {
             }
         }
 
+        auto function_extract_args = std::make_shared<Parser::Symbol>("function");
+        Reference function_extract(FunctionContext& context) {
+            try {
+                auto const& functions = context["function"].to_data(context).get<Object*>()->functions;
+
+                auto object = context.new_object();
+                object->array.reserve(std::min(static_cast<std::size_t>(1), functions.size()));
+                for (auto const& f : functions) {
+                    auto obj = context.new_object();
+                    obj->functions.push_front(f);
+                    object->array.push_back(Data(obj));
+                }
+
+                return Data(object);
+            } catch (Data::BadAccess const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        auto function_clear_args = std::make_shared<Parser::Symbol>("function");
+        Reference function_clear(FunctionContext& context) {
+            try {
+                auto function = context["function"].to_data(context).get<Object*>();
+
+                function->functions.clear();
+
+                return context["function"];
+            } catch (Data::BadAccess const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
         void init(GlobalContext& context) {
             auto array = get_object(context, context["Array"]);
             get_object(context, array->properties["length"])->functions.push_front(SystemFunction{ length_args, length });
@@ -184,6 +216,10 @@ namespace Interpreter::SystemFunctions {
             get_object(context, array->properties["concat"])->functions.push_front(SystemFunction{ concat_args, concat });
 
             get_object(context, context["foreach"])->functions.push_front(SystemFunction{ foreach_args, foreach });
+
+            auto function = get_object(context, context["Function"]);
+            get_object(context, function->properties["extract"])->functions.push_front(SystemFunction{ function_extract_args, function_extract });
+            get_object(context, function->properties["clear"])->functions.push_front(SystemFunction{ function_clear_args, function_clear });
         }
 
     }

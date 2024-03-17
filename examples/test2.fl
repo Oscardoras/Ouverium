@@ -1,9 +1,0 @@
-f : () |-> {
-    variable := 2;
-    (g : (x) |-> {
-        print(x);
-    })($variable);
-    g
-};
-
-(f())(3)

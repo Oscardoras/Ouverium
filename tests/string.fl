@@ -1,0 +1,8 @@
+import "Test.fl";
+import "String.fl";
+
+
+concat := "abc" + "def";
+
+
+ASSERT_EQ(concat.size, 6);

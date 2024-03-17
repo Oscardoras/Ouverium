@@ -134,8 +134,6 @@ public:
     }
 
     int on_exit() override {
-        context = nullptr;
-
         return EXIT_SUCCESS;
     }
 
@@ -204,8 +202,6 @@ public:
     }
 
     int on_exit() override {
-        auto ptr = std::move(context);
-
         if (error)
             return EXIT_FAILURE;
         else {
@@ -281,7 +277,7 @@ public:
 
     bool OnInit() override {
         std::srand(std::time(nullptr));
-        include_path.push_back((program_location.parent_path() / "libraries").string());
+        include_path.push_back((program_location / "libraries").string());
 
         if (argc == 1) {
             if (is_interactive())

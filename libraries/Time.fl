@@ -22,4 +22,13 @@ class Time {
         },
         (this.steady, value) |-> {}
     );
+
+    static Time::(this.benchmark |-> (
+        (f()) |-> {
+            t1 := Time.steady;
+            f();
+            t2 := Time.steady;
+            t2-t1
+        }
+    ));
 };

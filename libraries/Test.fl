@@ -1,0 +1,26 @@
+ASSERT : (Bool value) \ value |-> {};
+
+ASSERT_EQ : ($a, $b) |-> {
+    if (a != b) {
+        throw (string_from(a, b));
+    };
+};
+
+TEST : (Bool value) |-> {
+    if (!value) {
+        import("system").print(System.err, "Test failed");
+    };
+};
+
+TEST_EQ : ($a, $b) |-> {
+    if (a != b) {
+        import("system").print(System.err, string_from("Test failed", a, b));
+    };
+};
+
+BENCHMARK : (f()) |-> {
+    t1 := import("system").clock_steady();
+    f();
+    t2 := import("system").clock_steady();
+    import("system").print(System.err, ("Benchmark: ", t2-t1));
+};

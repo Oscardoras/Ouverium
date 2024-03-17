@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.21)
-project(Ouverium LANGUAGES C CXX)
+project(Ouverium VERSION 0.1.0 LANGUAGES C CXX)
 
 include(CheckIPOSupported)
 include(FetchContent)
+include(CTest)
 include(CPack)
 
 
@@ -91,6 +92,13 @@ target_link_libraries(ouverium PRIVATE Boost::asio Boost::dll)
 target_link_libraries(ouverium PRIVATE ${Readline})
 target_link_libraries(ouverium PRIVATE ${wxWidgets})
 target_link_libraries(ouverium INTERFACE capi)
+
+
+# Testing
+
+enable_testing()
+add_test(NAME ouverium_test_hello_world COMMAND $<TARGET_FILE:ouverium> ${CMAKE_SOURCE_DIR}/tests/hello_world.fl)
+add_test(NAME ouverium_test_string COMMAND $<TARGET_FILE:ouverium> ${CMAKE_SOURCE_DIR}/tests/string.fl)
 
 
 # Installation
