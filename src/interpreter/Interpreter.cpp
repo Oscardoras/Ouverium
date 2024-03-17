@@ -2,29 +2,8 @@
 
 #include "Interpreter.hpp"
 
-#include "system_functions/Array.hpp"
-#include "system_functions/Base.hpp"
-#include "system_functions/Dll.hpp"
-#include "system_functions/Math.hpp"
-#include "system_functions/System.hpp"
-#include "system_functions/Types.hpp"
-#include "system_functions/UI.hpp"
-
 
 namespace Interpreter {
-
-    GlobalContext::GlobalContext(std::shared_ptr<Parser::Expression> expression) :
-        Context(expression) {
-        system = new_object();
-        SystemFunctions::Base::init(*this);
-        SystemFunctions::Dll::init(*this);
-        SystemFunctions::Array::init(*this);
-        SystemFunctions::Math::init(*this);
-        SystemFunctions::System::init(*this);
-        SystemFunctions::Types::init(*this);
-        SystemFunctions::UI::init(*this);
-    }
-
 
     Exception::Exception(Context& context, std::shared_ptr<Parser::Expression> thrower, Reference const& reference) :
         reference(reference) {

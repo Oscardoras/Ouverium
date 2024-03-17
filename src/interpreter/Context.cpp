@@ -103,6 +103,12 @@ namespace Interpreter {
     }
 
 
+    GlobalContext::GlobalContext(std::shared_ptr<Parser::Expression> expression) :
+        Context(expression) {
+        system = new_object();
+        SystemFunctions::init(*this);
+    }
+
     GlobalContext::~GlobalContext() {
         for (auto& object : objects)
             object.destruct(*this);

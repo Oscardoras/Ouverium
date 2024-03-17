@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include <limits>
 
-#include "Math.hpp"
+#include "../Interpreter.hpp"
 
 
 namespace Interpreter::SystemFunctions {

@@ -1,4 +1,4 @@
-#include "Array.hpp"
+#include "../Interpreter.hpp"
 
 
 namespace Interpreter::SystemFunctions {

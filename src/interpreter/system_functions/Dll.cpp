@@ -5,7 +5,7 @@
 
 #include <ouverium/data.hpp>
 
-#include "Dll.hpp"
+#include "../Interpreter.hpp"
 
 #include "../../parser/Standard.hpp"
 

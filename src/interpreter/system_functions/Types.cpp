@@ -1,4 +1,4 @@
-#include "Types.hpp"
+#include "../Interpreter.hpp"
 
 
 namespace Interpreter::SystemFunctions {

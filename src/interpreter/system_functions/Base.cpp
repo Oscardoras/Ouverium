@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "Base.hpp"
+#include "../Interpreter.hpp"
 
 
 namespace Interpreter::SystemFunctions {

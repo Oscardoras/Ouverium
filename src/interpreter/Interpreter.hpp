@@ -6,6 +6,12 @@
 
 namespace Interpreter {
 
+    namespace SystemFunctions {
+
+        void init(GlobalContext& context);
+
+    }
+
     class Exception {
 
     public:

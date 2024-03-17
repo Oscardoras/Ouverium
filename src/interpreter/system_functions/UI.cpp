@@ -1,4 +1,4 @@
-#include "UI.hpp"
+#include "../Interpreter.hpp"
 
 
 #ifdef OUVERIUM_WXWIDGETS

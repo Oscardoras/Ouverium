@@ -5,7 +5,7 @@
 
 #include <boost/asio.hpp>
 
-#include "System.hpp"
+#include "../Interpreter.hpp"
 
 
 namespace Interpreter::SystemFunctions {
@@ -330,6 +330,43 @@ namespace Interpreter::SystemFunctions {
             return Data(static_cast<OV_FLOAT>(d.count()));
         }
 
+
+        class Thread : protected std::thread {
+        protected:
+
+            bool joined_detached = false;
+
+        public:
+            using std::thread::thread;
+
+            void join() {
+                if (!joined_detached) {
+                    std::thread::join();
+                    joined_detached = true;
+                } else {
+                    throw FunctionArgumentsError();
+                }
+            }
+
+            void detach() {
+                if (!joined_detached) {
+                    std::thread::detach();
+                    joined_detached = true;
+                } else {
+                    throw FunctionArgumentsError();
+                }
+            }
+
+            OV_INT get_id() const {
+                return static_cast<OV_INT>(std::hash<std::thread::id>{}(std::thread::get_id()));
+            }
+
+            ~Thread() {
+                if (!joined_detached) {
+                    std::thread::detach();
+                }
+            }
+        };
 
         auto thread_is_args = std::make_shared<Parser::Symbol>("thread");
         Reference thread_is(FunctionContext& context) {
