@@ -11,9 +11,34 @@ class Socket {
         this
     };
 
-    Socket::(this.async_read |-> (
+    Socket.async_open : (String address, Int port, Function callback) |-> {
+        import("system").socket_async_open(address, port, socket |-> {
+            socket :~ Socket;
+            callback(socket);
+        })
+    };
+
+    Socket::(this.receive |-> (
+        () |-> {
+            import("system").socket_receive(this)
+        }
+    ));
+
+    Socket::(this.async_receive |-> (
         (Function callback) |-> {
-            import("system").socket_async_read(this, callback)
+            import("system").socket_async_receive(this, callback)
+        }
+    ));
+
+    Socket::(this.send |-> (
+        (data) |-> {
+            import("system").socket_send(this, data)
+        }
+    ));
+
+    Socket::(this.async_send |-> (
+        (data, Function callback) |-> {
+            import("system").socket_async_send(this, data, callback)
         }
     ));
 
@@ -36,6 +61,15 @@ class Socket {
                 socket := import("system").acceptor_accept(this);
                 socket :~ Socket;
                 socket
+            }
+        ));
+
+        (Socket.Acceptor)::(this.async_accept |-> (
+            (Function callback) |-> {
+                import("system").acceptor_async_accept(this, socket |-> {
+                    socket :~ Socket;
+                    callback(socket);
+                })
             }
         ));
 

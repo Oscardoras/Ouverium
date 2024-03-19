@@ -53,9 +53,11 @@ namespace Interpreter {
 
     public:
 
-        std::map<std::filesystem::path, std::shared_ptr<Parser::Expression>> sources;
         boost::asio::io_context ioc;
+        std::list<Object*> callbacks;
         Object* system;
+
+        std::map<std::filesystem::path, std::shared_ptr<Parser::Expression>> sources;
         unsigned recursion_limit = 100;
 
         GlobalContext(std::shared_ptr<Parser::Expression> expression);
