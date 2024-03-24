@@ -78,6 +78,28 @@ namespace Interpreter::SystemFunctions {
                 throw FunctionArgumentsError();
         }
 
+
+        Reference float_parse(FunctionContext& context) {
+            try {
+                auto a = context["a"].to_data(context).get<Object*>()->to_string();
+
+                return Data(static_cast<OV_FLOAT>(std::stod(a)));
+            } catch (Data::BadAccess const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        Reference int_parse(FunctionContext& context) {
+            try {
+                auto a = context["a"].to_data(context).get<Object*>()->to_string();
+
+                return Data(static_cast<OV_INT>(std::stoi(a)));
+            } catch (Data::BadAccess const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+
         bool check_type(Context& context, Data data, Data type) {
             if (type == context["Char"].to_data(context)) return data.is<char>();
             else if (type == context["Float"].to_data(context)) return data.is<OV_FLOAT>();
@@ -117,6 +139,9 @@ namespace Interpreter::SystemFunctions {
             get_object(context, context["Array"])->functions.push_front(SystemFunction{ constructor_args, array_constructor });
             get_object(context, context["Tuple"])->functions.push_front(SystemFunction{ tuple_constructor_args, tuple_constructor });
             get_object(context, context["Function"])->functions.push_front(SystemFunction{ constructor_args, function_constructor });
+
+            get_object(context, get_object(context, context["Float"])->properties["parse"])->functions.push_front(SystemFunction{ constructor_args, float_parse });
+            get_object(context, get_object(context, context["Int"])->properties["parse"])->functions.push_front(SystemFunction{ constructor_args, int_parse });
 
             Function f = SystemFunction{ is_type_args, is_type };
             f.extern_symbols.emplace("Char", context["Char"]);

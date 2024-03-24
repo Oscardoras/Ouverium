@@ -6,39 +6,77 @@ class Stream {
         import("system").stream_is(stream)
     };
 
-    Stream::(this.read |-> (
-        () |-> {
-            import("system").stream_read(this)
-        }
-    ));
-
-    Stream::(this.scan |-> (
-        () |-> {
-            import("system").stream_scan(this)
-        }
-    ));
-
     Stream::(this.has |-> (
         () |-> {
             import("system").stream_has(this)
         }
     ));
+};
 
-    Stream::(this.write |-> (
-        byte \ (byte ~ Int) |-> {
+class IStream {
+    (~) : (stream, IStream) |-> {
+        import("system").istream_is(stream)
+    };
+
+    IStream::(this.read |-> (
+        () |-> {
+            import("system").stream_read(this)
+        }
+    ));
+
+    IStream::(this.read |-> (
+        (Int size) |-> {
+            import("system").stream_read(this, size)
+        }
+    ));
+
+    IStream::(
+        this.available |-> {
+            import("system").stream_get_available(this)
+        },
+        (this.available, value) |-> {}
+    );
+
+    IStream::(this.scan |-> (
+        () |-> {
+            import("system").stream_scan(this)
+        }
+    ));
+};
+
+class OStream {
+    (~) : (stream, OStream) |-> {
+        import("system").ostream_is(stream)
+    };
+
+    OStream::(this.write |-> (
+        byte \ (byte ~ Char) |-> {
             import("system").stream_write(this, byte)
         }
     ));
 
-    Stream::(this.print |-> (
-        data |-> {
-            import("system").stream_print(this, data)
+    OStream::(this.write |-> (
+        bytes \ (bytes ~ Array & forall(bytes, b |-> { b ~ Char })) |-> {
+            import("system").stream_write(this, bytes)
         }
     ));
 
-    Stream::(this.flush |-> (
+    OStream::(this.flush |-> (
         () |-> {
             import("system").stream_flush(this)
         }
     ));
+
+    OStream::(this.print |-> (
+        data |-> {
+            import("system").stream_print(this, data)
+        }
+    ));
 };
+
+class IOStream extends [IStream, OStream] {};
+
+
+(default System).in := import("system").in;
+(default System).out := import("system").out;
+(default System).err := import("system").err;

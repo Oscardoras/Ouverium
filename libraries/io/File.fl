@@ -4,11 +4,12 @@ import "io/Stream.fl";
 
 
 class File {
-    File : (String path) |-> {
-        this := import("system").file_open(path);
+    (~) : (file, File) |-> {
+        import("system").file_is(file)
+    };
 
-        this :~ File;
-        this
+    File : (String path) |-> {
+        import("system").file_open(path)
     };
 
     File::(this.close |-> (
@@ -22,7 +23,8 @@ class File {
             import("system").file_get_working_directory()
         },
         (this.working_directory, value) |-> {
-            import("system").file_set_working_directory(value)
+            import("system").file_set_working_directory(value);
+            import("system").file_get_working_directory()
         }
     );
 

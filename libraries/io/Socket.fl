@@ -4,43 +4,23 @@ import "io/Stream.fl";
 
 
 class Socket {
+    (~) : (socket, Socket) |-> {
+        import("system").socket_is(socket)
+    };
+
     Socket : (String address, Int port) |-> {
-        this := import("system").socket_open(address, port);
-
-        this :~ Socket;
-        this
+        import("system").socket_open(address, port)
     };
 
-    Socket.async_open : (String address, Int port, Function callback) |-> {
-        import("system").socket_async_open(address, port, socket |-> {
-            socket :~ Socket;
-            callback(socket);
-        })
-    };
-
-    Socket::(this.receive |-> (
-        () |-> {
-            import("system").socket_receive(this)
+    Socket::(
+        this.blocking |-> {
+            import("system").socket_get_blocking(this)
+        },
+        (this.blocking, value) |-> {
+            import("system").socket_set_blocking(this, value);
+            import("system").socket_get_blocking(this)
         }
-    ));
-
-    Socket::(this.async_receive |-> (
-        (Function callback) |-> {
-            import("system").socket_async_receive(this, callback)
-        }
-    ));
-
-    Socket::(this.send |-> (
-        (data) |-> {
-            import("system").socket_send(this, data)
-        }
-    ));
-
-    Socket::(this.async_send |-> (
-        (data, Function callback) |-> {
-            import("system").socket_async_send(this, data, callback)
-        }
-    ));
+    );
 
     Socket::(this.close |-> (
         () |-> {
@@ -48,28 +28,28 @@ class Socket {
         }
     ));
 
-    class Acceptor {
-        Socket.Acceptor : (Int port) |-> {
-            this := import("system").acceptor_open(port);
-
-            this :~ Socket.Acceptor;
-            this
+    class (Socket.Acceptor) {
+        (~) : (acceptor, Type) \ (Type === Socket.Acceptor) |-> {
+            import("system").acceptor_is(acceptor)
         };
+
+        Socket.Acceptor : (Int port) |-> {
+            import("system").acceptor_open(port)
+        };
+
+        (Socket.Acceptor)::(
+            this.blocking |-> {
+                import("system").acceptor_get_blocking(this)
+            },
+            (this.blocking, value) |-> {
+                import("system").acceptor_set_blocking(this, value);
+                import("system").acceptor_get_blocking(this)
+            }
+        );
 
         (Socket.Acceptor)::(this.accept |-> (
             () |-> {
-                socket := import("system").acceptor_accept(this);
-                socket :~ Socket;
-                socket
-            }
-        ));
-
-        (Socket.Acceptor)::(this.async_accept |-> (
-            (Function callback) |-> {
-                import("system").acceptor_async_accept(this, socket |-> {
-                    socket :~ Socket;
-                    callback(socket);
-                })
+                import("system").acceptor_accept(this)
             }
         ));
 

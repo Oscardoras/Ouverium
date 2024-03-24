@@ -23,12 +23,70 @@ namespace Interpreter::SystemFunctions {
             }
         }
 
-        auto stream_read_args = std::make_shared<Parser::Symbol>("stream");
-        Reference stream_read(FunctionContext& context) {
+        auto stream_has_args = std::make_shared<Parser::Symbol>("stream");
+        Reference stream_has(FunctionContext& context) {
+            try {
+                auto& stream = context["stream"].to_data(context).get<Object*>()->c_obj.get<std::ios>();
+
+                return Data(static_cast<bool>(stream));
+            } catch (std::exception const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        auto istream_is_args = std::make_shared<Parser::Symbol>("stream");
+        Reference istream_is(FunctionContext& context) {
+            try {
+                dynamic_cast<std::istream&>(context["stream"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
+
+                return Data(true);
+            } catch (std::exception const&) {
+                return Data(false);
+            }
+        }
+
+        auto stream_read1_args = std::make_shared<Parser::Symbol>("stream");
+        Reference stream_read1(FunctionContext& context) {
             try {
                 auto& stream = dynamic_cast<std::istream&>(context["stream"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
 
-                return Data(static_cast<OV_INT>(stream.get()));
+                return Data(static_cast<char>(stream.get()));
+            } catch (std::exception const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        auto stream_read2_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+            {
+                std::make_shared<Parser::Symbol>("stream"),
+                std::make_shared<Parser::Symbol>("size")
+            }
+        ));
+        Reference stream_read2(FunctionContext& context) {
+            try {
+                auto& stream = dynamic_cast<std::istream&>(context["stream"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
+                auto size = static_cast<size_t>(context["size"].to_data(context).get<OV_INT>());
+
+                std::vector<char> buffer(size);
+                stream.read(buffer.data(), size);
+
+                auto object = context.new_object();
+                object->array.reserve(size);
+                for (size_t i = 0; i < size; ++i)
+                    object->array.push_back(Data(buffer[i]));
+
+                return Data(object);
+            } catch (std::exception const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        auto stream_get_available_args = std::make_shared<Parser::Symbol>("stream");
+        Reference stream_get_available(FunctionContext& context) {
+            try {
+                auto& stream = dynamic_cast<std::istream&>(context["stream"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
+
+                return Data(static_cast<OV_INT>(stream.rdbuf()->in_avail()));
             } catch (std::exception const&) {
                 throw FunctionArgumentsError();
             }
@@ -48,29 +106,64 @@ namespace Interpreter::SystemFunctions {
             }
         }
 
-        auto stream_has_args = std::make_shared<Parser::Symbol>("stream");
-        Reference stream_has(FunctionContext& context) {
+        auto ostream_is_args = std::make_shared<Parser::Symbol>("stream");
+        Reference ostream_is(FunctionContext& context) {
             try {
-                auto& stream = dynamic_cast<std::istream&>(context["stream"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
+                dynamic_cast<std::ostream&>(context["stream"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
 
-                return Data(static_cast<bool>(stream));
+                return Data(true);
             } catch (std::exception const&) {
-                throw FunctionArgumentsError();
+                return Data(false);
             }
         }
 
-        auto stream_write_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+        auto stream_write1_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
             {
                 std::make_shared<Parser::Symbol>("stream"),
                 std::make_shared<Parser::Symbol>("byte")
             }
         ));
-        Reference stream_write(FunctionContext& context) {
+        Reference stream_write1(FunctionContext& context) {
             try {
                 auto& stream = dynamic_cast<std::ostream&>(context["stream"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
-                auto byte = context["byte"].to_data(context).get<OV_INT>();
+                auto byte = context["byte"].to_data(context).get<char>();
 
                 stream.put(byte);
+
+                return Reference();
+            } catch (std::exception const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        auto stream_write2_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+            {
+                std::make_shared<Parser::Symbol>("stream"),
+                std::make_shared<Parser::Symbol>("bytes")
+            }
+        ));
+        Reference stream_write2(FunctionContext& context) {
+            try {
+                auto& stream = dynamic_cast<std::ostream&>(context["stream"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
+                auto bytes = context["bytes"].to_data(context).get<Object*>();
+
+                std::vector<char> buffer(bytes->array.size());
+                for (size_t i = 0; i < buffer.size(); ++i)
+                    buffer[i] = bytes->array[i].get<char>();
+                stream.write(buffer.data(), buffer.size());
+
+                return Reference();
+            } catch (std::exception const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        auto stream_flush_args = std::make_shared<Parser::Symbol>("stream");
+        Reference stream_flush(FunctionContext& context) {
+            try {
+                auto& stream = dynamic_cast<std::ostream&>(context["stream"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
+
+                stream.flush();
 
                 return Reference();
             } catch (std::exception const&) {
@@ -97,19 +190,17 @@ namespace Interpreter::SystemFunctions {
             }
         }
 
-        auto stream_flush_args = std::make_shared<Parser::Symbol>("stream");
-        Reference stream_flush(FunctionContext& context) {
+
+        auto file_is_args = std::make_shared<Parser::Symbol>("file");
+        Reference file_is(FunctionContext& context) {
             try {
-                auto& stream = dynamic_cast<std::ostream&>(context["stream"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
+                dynamic_cast<std::fstream&>(context["file"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
 
-                stream.flush();
-
-                return Reference();
+                return Data(true);
             } catch (std::exception const&) {
-                throw FunctionArgumentsError();
+                return Data(false);
             }
         }
-
 
         auto file_path_args = std::make_shared<Parser::Symbol>("path");
         Reference file_open(FunctionContext& context) {
@@ -209,29 +300,16 @@ namespace Interpreter::SystemFunctions {
         }
 
 
-        class Socket : public boost::asio::ip::tcp::socket, public std::streambuf {
+        auto socket_is_args = std::make_shared<Parser::Symbol>("socket");
+        Reference socket_is(FunctionContext& context) {
+            try {
+                dynamic_cast<boost::asio::ip::tcp::iostream&>(context["socket"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
 
-        public:
-
-            using boost::asio::ip::tcp::socket::socket;
-
-        protected:
-
-            boost::asio::streambuf buffer;
-
-            int_type underflow() override {
-                int_type ch;
-                read_some(boost::asio::buffer(&ch, sizeof(int_type)));
-                return ch;
+                return Data(true);
+            } catch (std::exception const&) {
+                return Data(false);
             }
-
-            int_type overflow(int_type ch) override {
-                if (ch != traits_type::eof())
-                    boost::asio::write(*this, boost::asio::buffer(&ch, sizeof(int_type)));
-                return ch;
-            }
-
-        };
+        }
 
         auto socket_open_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
             {
@@ -240,18 +318,12 @@ namespace Interpreter::SystemFunctions {
             }
         ));
         Reference socket_open(FunctionContext& context) {
-            boost::asio::ip::tcp::iostream ios;
             try {
                 auto address = context["address"].to_data(context).get<Object*>()->to_string();
-                auto port = context["port"].to_data(context).get<Object*>()->to_string();
-
-                auto& global = context.get_global();
-                boost::asio::ip::tcp::resolver resolver(global.ioc);
-                auto socket = std::make_unique<Socket>(global.ioc);
-                boost::asio::connect(*socket, resolver.resolve(address, port));
+                auto port = context["port"].to_data(context).get<OV_INT>();
 
                 auto object = context.new_object();
-                object->c_obj.set(std::move(socket));
+                object->c_obj.set<std::ios>(std::make_unique<boost::asio::ip::tcp::iostream>(address, std::to_string(port)));
 
                 return Data(object);
             } catch (std::exception const&) {
@@ -259,143 +331,29 @@ namespace Interpreter::SystemFunctions {
             }
         }
 
-        auto socket_async_open_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
-            {
-                std::make_shared<Parser::Symbol>("address"),
-                std::make_shared<Parser::Symbol>("port"),
-                std::make_shared<Parser::Symbol>("callback")
-            }
-        ));
-        Reference socket_async_open(FunctionContext& context) {
+        auto socket_get_blocking_args = std::make_shared<Parser::Symbol>("socket");
+        Reference socket_get_blocking(FunctionContext& context) {
             try {
-                auto address = context["address"].to_data(context).get<Object*>()->to_string();
-                auto port = context["port"].to_data(context).get<Object*>()->to_string();
-                auto callback = context["callback"].to_data(context).get<Object*>();
+                auto& stream = dynamic_cast<boost::asio::ip::tcp::iostream&>(context["socket"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
 
-                auto& global = context.get_global();
-                global.callbacks.push_front(callback);
-                auto it = global.callbacks.begin();
-
-                boost::asio::ip::tcp::resolver resolver(global.ioc);
-                resolver.async_resolve(address, port, [&global, it](const boost::system::error_code&, boost::asio::ip::tcp::resolver::iterator endpoints) {
-                    auto socket = std::make_unique<Socket>(global.ioc);
-                    socket->async_connect(endpoints->endpoint(), [&global, it, socket = std::move(socket)](const boost::system::error_code&) mutable {
-                        auto object = global.new_object();
-                        object->c_obj.set(std::move(socket));
-
-                        auto callback = *it;
-                        global.callbacks.erase(it);
-                        Interpreter::call_function(global, nullptr, Data(callback), Data(object));
-                    });
-                });
-
-                return Reference();
+                return Data(!stream.socket().non_blocking());
             } catch (std::exception const&) {
                 throw FunctionArgumentsError();
             }
         }
 
-        auto socket_receive_args = std::make_shared<Parser::Symbol>("socket");
-        Reference socket_receive(FunctionContext& context) {
-            try {
-                auto& socket = context["socket"].to_data(context).get<Object*>()->c_obj.get<Socket>();
-
-                boost::asio::streambuf buffer;
-                std::size_t bytes_transferred = boost::asio::read(socket, buffer);
-
-                auto object = context.new_object();
-                object->array.reserve(bytes_transferred);
-                auto data = boost::asio::buffer_cast<const BYTE*>(buffer.data());
-                for (std::size_t i = 0; i < bytes_transferred; ++i)
-                    object->array.push_back(Data(static_cast<OV_INT>(data[i])));
-
-                return Data(object);
-            } catch (std::exception const&) {
-                throw FunctionArgumentsError();
-            }
-        }
-
-        auto socket_async_receive_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+        auto socket_set_blocking_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
             {
                 std::make_shared<Parser::Symbol>("socket"),
-                std::make_shared<Parser::Symbol>("callback")
+                std::make_shared<Parser::Symbol>("value")
             }
         ));
-        Reference socket_async_receive(FunctionContext& context) {
+        Reference socket_set_blocking(FunctionContext& context) {
             try {
-                auto& socket = context["socket"].to_data(context).get<Object*>()->c_obj.get<Socket>();
-                auto callback = context["callback"].to_data(context).get<Object*>();
+                auto& stream = dynamic_cast<boost::asio::ip::tcp::iostream&>(context["socket"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
+                auto value = context["value"].to_data(context).get<bool>();
 
-                auto& global = context.get_global();
-                global.callbacks.push_front(callback);
-                auto it = global.callbacks.begin();
-
-                auto buffer = std::make_shared<boost::asio::streambuf>();
-                boost::asio::async_read(socket, *buffer, [&global, buffer, it](const boost::system::error_code&, std::size_t bytes_transferred) {
-                    auto object = global.new_object();
-                    object->array.reserve(bytes_transferred);
-                    auto data = boost::asio::buffer_cast<const BYTE*>(buffer->data());
-                    for (std::size_t i = 0; i < bytes_transferred; ++i)
-                        object->array.push_back(Data(static_cast<OV_INT>(data[i])));
-
-                    auto callback = *it;
-                    global.callbacks.erase(it);
-                    Interpreter::call_function(global, nullptr, Data(callback), Data(object));
-                });
-
-                return Reference();
-            } catch (std::exception const&) {
-                throw FunctionArgumentsError();
-            }
-        }
-
-        auto socket_send_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
-            {
-                std::make_shared<Parser::Symbol>("socket"),
-                std::make_shared<Parser::Symbol>("data")
-            }
-        ));
-        Reference socket_send(FunctionContext& context) {
-            try {
-                auto& socket = context["socket"].to_data(context).get<Object*>()->c_obj.get<Socket>();
-                auto data = context["data"].to_data(context).get<Object*>();
-
-                std::vector<BYTE> buffer(data->array.size());
-                for (std::size_t i = 0; i < data->array.size(); ++i)
-                    buffer[i] = data->array[i].get<OV_INT>();
-                boost::asio::write(socket, boost::asio::buffer(buffer));
-
-                return Reference();
-            } catch (std::exception const&) {
-                throw FunctionArgumentsError();
-            }
-        }
-
-        auto socket_async_send_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
-            {
-                std::make_shared<Parser::Symbol>("socket"),
-                std::make_shared<Parser::Symbol>("data"),
-                std::make_shared<Parser::Symbol>("callback")
-            }
-        ));
-        Reference socket_async_send(FunctionContext& context) {
-            try {
-                auto& socket = context["socket"].to_data(context).get<Object*>()->c_obj.get<Socket>();
-                auto data = context["data"].to_data(context).get<Object*>();
-                auto callback = context["callback"].to_data(context).get<Object*>();
-
-                auto& global = context.get_global();
-                global.callbacks.push_front(callback);
-                auto it = global.callbacks.begin();
-
-                std::vector<BYTE> buffer(data->array.size());
-                for (std::size_t i = 0; i < data->array.size(); ++i)
-                    buffer[i] = data->array[i].get<OV_INT>();
-                boost::asio::async_write(socket, boost::asio::buffer(buffer), [&global, it](const boost::system::error_code&, std::size_t) {
-                    auto callback = *it;
-                    global.callbacks.erase(it);
-                    Interpreter::call_function(global, nullptr, Data(callback), Reference());
-                });
+                stream.socket().non_blocking(!value);
 
                 return Reference();
             } catch (std::exception const&) {
@@ -406,13 +364,25 @@ namespace Interpreter::SystemFunctions {
         auto socket_close_args = std::make_shared<Parser::Symbol>("socket");
         Reference socket_close(FunctionContext& context) {
             try {
-                auto& socket = context["socket"].to_data(context).get<Object*>()->c_obj.get<Socket>();
+                auto& stream = dynamic_cast<boost::asio::ip::tcp::iostream&>(context["socket"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
 
-                socket.close();
+                stream.close();
 
                 return Reference();
             } catch (std::exception const&) {
                 throw FunctionArgumentsError();
+            }
+        }
+
+
+        auto acceptor_is_args = std::make_shared<Parser::Symbol>("acceptor");
+        Reference acceptor_is(FunctionContext& context) {
+            try {
+                context["acceptor"].to_data(context).get<Object*>()->c_obj.get<boost::asio::ip::tcp::acceptor>();
+
+                return Data(true);
+            } catch (std::exception const&) {
+                return Data(false);
             }
         }
 
@@ -422,12 +392,43 @@ namespace Interpreter::SystemFunctions {
                 auto port = context["port"].to_data(context).get<OV_INT>();
 
                 auto object = context.new_object();
+                boost::asio::io_context ioc;
                 object->c_obj.set(std::make_unique<boost::asio::ip::tcp::acceptor>(
-                    context.get_global().ioc,
+                    ioc,
                     boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)
                 ));
 
                 return Data(object);
+            } catch (std::exception const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        auto acceptor_get_blocking_args = std::make_shared<Parser::Symbol>("acceptor");
+        Reference acceptor_get_blocking(FunctionContext& context) {
+            try {
+                auto& acceptor = context["acceptor"].to_data(context).get<Object*>()->c_obj.get<boost::asio::ip::tcp::acceptor>();
+
+                return Data(!acceptor.non_blocking());
+            } catch (std::exception const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        auto acceptor_set_blocking_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+            {
+                std::make_shared<Parser::Symbol>("acceptor"),
+                std::make_shared<Parser::Symbol>("value")
+            }
+        ));
+        Reference acceptor_set_blocking(FunctionContext& context) {
+            try {
+                auto& acceptor = context["acceptor"].to_data(context).get<Object*>()->c_obj.get<boost::asio::ip::tcp::acceptor>();
+                auto value = context["value"].to_data(context).get<bool>();
+
+                acceptor.non_blocking(!value);
+
+                return Reference();
             } catch (std::exception const&) {
                 throw FunctionArgumentsError();
             }
@@ -438,43 +439,15 @@ namespace Interpreter::SystemFunctions {
             try {
                 auto& acceptor = context["acceptor"].to_data(context).get<Object*>()->c_obj.get<boost::asio::ip::tcp::acceptor>();
 
-                auto socket = std::make_unique<Socket>(context.get_global().ioc);
-                acceptor.accept(*socket);
-                auto object = context.new_object();
-                object->c_obj.set<Socket>(std::move(socket));
+                auto stream = std::make_unique<boost::asio::ip::tcp::iostream>();
+                boost::system::error_code ec;
+                acceptor.accept(stream->socket(), ec);
 
-                return Data(object);
-            } catch (std::exception const&) {
-                throw FunctionArgumentsError();
-            }
-        }
-
-        auto acceptor_async_accept_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
-            {
-                std::make_shared<Parser::Symbol>("acceptor"),
-                std::make_shared<Parser::Symbol>("callback")
-            }
-        ));
-        Reference acceptor_async_accept(FunctionContext& context) {
-            try {
-                auto& acceptor = context["acceptor"].to_data(context).get<Object*>()->c_obj.get<boost::asio::ip::tcp::acceptor>();
-                auto callback = context["callback"].to_data(context).get<Object*>();
-
-                auto& global = context.get_global();
-                global.callbacks.push_front(callback);
-                auto it = global.callbacks.begin();
-
-                auto socket = std::make_unique<Socket>(context.get_global().ioc);
-                acceptor.async_accept(*socket, [&global, it, socket = std::move(socket)](const boost::system::error_code&) mutable {
-                    auto object = global.new_object();
-                    object->c_obj.set<Socket>(std::move(socket));
-
-                    auto callback = *it;
-                    global.callbacks.erase(it);
-                    Interpreter::call_function(global, nullptr, Data(callback), Data(object));
-                });
-
-                return Reference();
+                if (!ec) {
+                    auto object = context.new_object();
+                    object->c_obj.set<std::ios>(std::move(stream));
+                    return Data(object);
+                } else return Reference();
             } catch (std::exception const&) {
                 throw FunctionArgumentsError();
             }
@@ -721,13 +694,19 @@ namespace Interpreter::SystemFunctions {
             auto s = context.get_global().system;
 
             get_object(context, s->properties["stream_is"])->functions.push_front(SystemFunction{ stream_is_args, stream_is });
-            get_object(context, s->properties["stream_read"])->functions.push_front(SystemFunction{ stream_read_args, stream_read });
-            get_object(context, s->properties["stream_scan"])->functions.push_front(SystemFunction{ stream_scan_args, stream_scan });
             get_object(context, s->properties["stream_has"])->functions.push_front(SystemFunction{ stream_has_args, stream_has });
-            get_object(context, s->properties["stream_write"])->functions.push_front(SystemFunction{ stream_write_args, stream_write });
-            get_object(context, s->properties["stream_print"])->functions.push_front(SystemFunction{ stream_print_args, stream_print });
+            get_object(context, s->properties["istream_is"])->functions.push_front(SystemFunction{ istream_is_args, istream_is });
+            get_object(context, s->properties["stream_read"])->functions.push_front(SystemFunction{ stream_read1_args, stream_read1 });
+            get_object(context, s->properties["stream_read"])->functions.push_front(SystemFunction{ stream_read2_args, stream_read2 });
+            get_object(context, s->properties["stream_get_available"])->functions.push_front(SystemFunction{ stream_get_available_args, stream_get_available });
+            get_object(context, s->properties["stream_scan"])->functions.push_front(SystemFunction{ stream_scan_args, stream_scan });
+            get_object(context, s->properties["ostream_is"])->functions.push_front(SystemFunction{ ostream_is_args, ostream_is });
+            get_object(context, s->properties["stream_write"])->functions.push_front(SystemFunction{ stream_write1_args, stream_write1 });
+            get_object(context, s->properties["stream_write"])->functions.push_front(SystemFunction{ stream_write2_args, stream_write2 });
             get_object(context, s->properties["stream_flush"])->functions.push_front(SystemFunction{ stream_flush_args, stream_flush });
+            get_object(context, s->properties["stream_print"])->functions.push_front(SystemFunction{ stream_print_args, stream_print });
 
+            get_object(context, s->properties["file_is"])->functions.push_front(SystemFunction{ file_is_args, file_is });
             get_object(context, s->properties["file_open"])->functions.push_front(SystemFunction{ file_path_args, file_open });
             get_object(context, s->properties["file_close"])->functions.push_front(SystemFunction{ file_close_args, file_close });
             get_object(context, s->properties["file_get_working_directory"])->functions.push_front(SystemFunction{ std::make_shared<Parser::Tuple>(), file_get_working_directory });
@@ -738,16 +717,17 @@ namespace Interpreter::SystemFunctions {
             get_object(context, s->properties["file_copy"])->functions.push_front(SystemFunction{ file_copy_args, file_copy });
             get_object(context, s->properties["file_delete"])->functions.push_front(SystemFunction{ file_path_args, file_delete });
 
+            get_object(context, s->properties["socket_is"])->functions.push_front(SystemFunction{ socket_is_args, socket_is });
+            get_object(context, s->properties["socket_get_blocking"])->functions.push_front(SystemFunction{ socket_get_blocking_args, socket_get_blocking });
+            get_object(context, s->properties["socket_set_blocking"])->functions.push_front(SystemFunction{ socket_set_blocking_args, socket_set_blocking });
             get_object(context, s->properties["socket_open"])->functions.push_front(SystemFunction{ socket_open_args, socket_open });
-            get_object(context, s->properties["socket_async_open"])->functions.push_front(SystemFunction{ socket_async_open_args, socket_async_open });
-            get_object(context, s->properties["socket_receive"])->functions.push_front(SystemFunction{ socket_receive_args, socket_receive });
-            get_object(context, s->properties["socket_async_receive"])->functions.push_front(SystemFunction{ socket_async_receive_args, socket_async_receive });
-            get_object(context, s->properties["socket_send"])->functions.push_front(SystemFunction{ socket_send_args, socket_send });
-            get_object(context, s->properties["socket_async_send"])->functions.push_front(SystemFunction{ socket_async_send_args, socket_async_send });
             get_object(context, s->properties["socket_close"])->functions.push_front(SystemFunction{ socket_close_args, socket_close });
+
+            get_object(context, s->properties["acceptor_is"])->functions.push_front(SystemFunction{ acceptor_is_args, acceptor_is });
+            get_object(context, s->properties["acceptor_get_blocking"])->functions.push_front(SystemFunction{ acceptor_get_blocking_args, acceptor_get_blocking });
+            get_object(context, s->properties["acceptor_set_blocking"])->functions.push_front(SystemFunction{ acceptor_set_blocking_args, acceptor_set_blocking });
             get_object(context, s->properties["acceptor_open"])->functions.push_front(SystemFunction{ acceptor_open_args, acceptor_open });
             get_object(context, s->properties["acceptor_accept"])->functions.push_front(SystemFunction{ acceptor_accept_args, acceptor_accept });
-            get_object(context, s->properties["acceptor_async_accept"])->functions.push_front(SystemFunction{ acceptor_async_accept_args, acceptor_async_accept });
             get_object(context, s->properties["acceptor_close"])->functions.push_front(SystemFunction{ acceptor_close_args, acceptor_close });
 
             get_object(context, s->properties["time"])->functions.push_front(SystemFunction{ time_args, time });
@@ -771,11 +751,9 @@ namespace Interpreter::SystemFunctions {
 
             get_object(context, s->properties["GC_collect"])->functions.push_front(SystemFunction{ GC_collect_args, GC_collect });
 
-
-            auto system = get_object(context, context["System"]);
-            get_object(context, system->properties["in"])->c_obj.set(std::reference_wrapper<std::ios>(std::cin));
-            get_object(context, system->properties["out"])->c_obj.set(std::reference_wrapper<std::ios>(std::cout));
-            get_object(context, system->properties["err"])->c_obj.set(std::reference_wrapper<std::ios>(std::cerr));
+            get_object(context, s->properties["in"])->c_obj.set(std::reference_wrapper<std::ios>(std::cin));
+            get_object(context, s->properties["out"])->c_obj.set(std::reference_wrapper<std::ios>(std::cout));
+            get_object(context, s->properties["err"])->c_obj.set(std::reference_wrapper<std::ios>(std::cerr));
         }
 
     }

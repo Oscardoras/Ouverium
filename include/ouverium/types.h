@@ -5,7 +5,7 @@
 #include <stddef.h>
 
 
-#define BYTE uint8_t
+#define BYTE unsigned char
 
 #if (SIZE_MAX == UINT64_MAX)
 #define OV_INT int64_t
