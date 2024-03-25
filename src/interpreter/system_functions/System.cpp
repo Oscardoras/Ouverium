@@ -300,10 +300,15 @@ namespace Interpreter::SystemFunctions {
         }
 
 
-        auto socket_is_args = std::make_shared<Parser::Symbol>("socket");
-        Reference socket_is(FunctionContext& context) {
+        boost::asio::io_context ioc;
+
+
+        using TCPSocket = boost::asio::ip::tcp::socket;
+
+        auto TCPsocket_is_args = std::make_shared<Parser::Symbol>("socket");
+        Reference TCPsocket_is(FunctionContext& context) {
             try {
-                dynamic_cast<boost::asio::ip::tcp::iostream&>(context["socket"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
+                context["socket"].to_data(context).get<Object*>()->c_obj.get<TCPSocket>();
 
                 return Data(true);
             } catch (std::exception const&) {
@@ -311,74 +316,145 @@ namespace Interpreter::SystemFunctions {
             }
         }
 
-        auto socket_open_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+        auto TCPsocket_open_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
             {
                 std::make_shared<Parser::Symbol>("address"),
                 std::make_shared<Parser::Symbol>("port")
             }
         ));
-        Reference socket_open(FunctionContext& context) {
+        Reference TCPsocket_open(FunctionContext& context) {
             try {
                 auto address = context["address"].to_data(context).get<Object*>()->to_string();
                 auto port = context["port"].to_data(context).get<OV_INT>();
 
-                auto object = context.new_object();
-                object->c_obj.set<std::ios>(std::make_unique<boost::asio::ip::tcp::iostream>(address, std::to_string(port)));
+                boost::system::error_code ec;
+                auto socket = std::make_unique<TCPSocket>(ioc);
+                socket->connect(boost::asio::ip::tcp::endpoint(boost::asio::ip::address::from_string(address), port), ec);
 
-                return Data(object);
+                if (!ec) {
+                    auto object = context.new_object();
+                    object->c_obj.set(std::move(socket));
+                    return Data(object);
+                } else
+                    return Data(static_cast<OV_INT>(ec.value()));
             } catch (std::exception const&) {
                 throw FunctionArgumentsError();
             }
         }
 
-        auto socket_get_blocking_args = std::make_shared<Parser::Symbol>("socket");
-        Reference socket_get_blocking(FunctionContext& context) {
+        auto TCPsocket_receive_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+            {
+                std::make_shared<Parser::Symbol>("socket"),
+                std::make_shared<Parser::Symbol>("size")
+            }
+        ));
+        Reference TCPsocket_receive(FunctionContext& context) {
             try {
-                auto& stream = dynamic_cast<boost::asio::ip::tcp::iostream&>(context["socket"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
+                auto& socket = context["socket"].to_data(context).get<Object*>()->c_obj.get<TCPSocket>();
+                auto size = context["size"].to_data(context).get<OV_INT>();
 
-                return Data(!stream.socket().non_blocking());
+                boost::system::error_code ec;
+                std::vector<char> buffer(size);
+                auto received = socket.receive(boost::asio::buffer(buffer), {}, ec);
+
+                if (!ec) {
+                    auto object = context.new_object();
+                    object->array.reserve(received);
+                    for (size_t i = 0; i < received; ++i)
+                        object->array.push_back(Data(buffer[i]));
+                    return Data(object);
+                } else
+                    return Data(static_cast<OV_INT>(ec.value()));
             } catch (std::exception const&) {
                 throw FunctionArgumentsError();
             }
         }
 
-        auto socket_set_blocking_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+        auto TCPsocket_send_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+            {
+                std::make_shared<Parser::Symbol>("socket"),
+                std::make_shared<Parser::Symbol>("data")
+            }
+        ));
+        Reference TCPsocket_send(FunctionContext& context) {
+            try {
+                auto& socket = context["socket"].to_data(context).get<Object*>()->c_obj.get<TCPSocket>();
+                auto data = context["data"].to_data(context).get<Object*>();
+
+                std::vector<char> buffer(data->array.size());
+                for (std::size_t i = 0; i < data->array.size(); ++i)
+                    buffer[i] = data->array[i].get<char>();
+
+                boost::system::error_code ec;
+                socket.send(boost::asio::buffer(buffer), {}, ec);
+
+                if (!ec)
+                    return Reference();
+                else
+                    return Data(static_cast<OV_INT>(ec.value()));
+            } catch (std::exception const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        auto TCPsocket_get_blocking_args = std::make_shared<Parser::Symbol>("socket");
+        Reference TCPsocket_get_blocking(FunctionContext& context) {
+            try {
+                auto& socket = context["socket"].to_data(context).get<Object*>()->c_obj.get<TCPSocket>();
+
+                return Data(!socket.non_blocking());
+            } catch (std::exception const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        auto TCPsocket_set_blocking_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
             {
                 std::make_shared<Parser::Symbol>("socket"),
                 std::make_shared<Parser::Symbol>("value")
             }
         ));
-        Reference socket_set_blocking(FunctionContext& context) {
+        Reference TCPsocket_set_blocking(FunctionContext& context) {
             try {
-                auto& stream = dynamic_cast<boost::asio::ip::tcp::iostream&>(context["socket"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
+                auto& socket = context["socket"].to_data(context).get<Object*>()->c_obj.get<TCPSocket>();
                 auto value = context["value"].to_data(context).get<bool>();
 
-                stream.socket().non_blocking(!value);
+                boost::system::error_code ec;
+                socket.non_blocking(!value, ec);
 
-                return Reference();
+                if (!ec)
+                    return Reference();
+                else
+                    return Data(static_cast<OV_INT>(ec.value()));
             } catch (std::exception const&) {
                 throw FunctionArgumentsError();
             }
         }
 
-        auto socket_close_args = std::make_shared<Parser::Symbol>("socket");
-        Reference socket_close(FunctionContext& context) {
+        auto TCPsocket_close_args = std::make_shared<Parser::Symbol>("socket");
+        Reference TCPsocket_close(FunctionContext& context) {
             try {
-                auto& stream = dynamic_cast<boost::asio::ip::tcp::iostream&>(context["socket"].to_data(context).get<Object*>()->c_obj.get<std::ios>());
+                auto& socket = context["socket"].to_data(context).get<Object*>()->c_obj.get<TCPSocket>();
 
-                stream.close();
+                boost::system::error_code ec;
+                socket.close(ec);
 
-                return Reference();
+                if (!ec)
+                    return Reference();
+                else
+                    return Data(static_cast<OV_INT>(ec.value()));
             } catch (std::exception const&) {
                 throw FunctionArgumentsError();
             }
         }
 
 
-        auto acceptor_is_args = std::make_shared<Parser::Symbol>("acceptor");
-        Reference acceptor_is(FunctionContext& context) {
+        using TCPAcceptor = boost::asio::ip::tcp::acceptor;
+
+        auto TCPacceptor_is_args = std::make_shared<Parser::Symbol>("acceptor");
+        Reference TCPacceptor_is(FunctionContext& context) {
             try {
-                context["acceptor"].to_data(context).get<Object*>()->c_obj.get<boost::asio::ip::tcp::acceptor>();
+                context["acceptor"].to_data(context).get<Object*>()->c_obj.get<TCPAcceptor>();
 
                 return Data(true);
             } catch (std::exception const&) {
@@ -386,28 +462,55 @@ namespace Interpreter::SystemFunctions {
             }
         }
 
-        auto acceptor_open_args = std::make_shared<Parser::Symbol>("port");
-        Reference acceptor_open(FunctionContext& context) {
+        auto TCPacceptor_open_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+            {
+                std::make_shared<Parser::Symbol>("address"),
+                std::make_shared<Parser::Symbol>("port")
+            }
+        ));
+        Reference TCPacceptor_open(FunctionContext& context) {
             try {
+                auto address = context["address"].to_data(context).get<Object*>()->to_string();
                 auto port = context["port"].to_data(context).get<OV_INT>();
 
-                auto object = context.new_object();
-                boost::asio::io_context ioc;
-                object->c_obj.set(std::make_unique<boost::asio::ip::tcp::acceptor>(
-                    ioc,
-                    boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)
-                ));
+                boost::system::error_code ec;
+                auto acceptor = std::make_unique<TCPAcceptor>(ioc, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port));
 
-                return Data(object);
+                if (!ec) {
+                    auto object = context.new_object();
+                    object->c_obj.set(std::move(acceptor));
+                    return Data(object);
+                } else
+                    return Data(static_cast<OV_INT>(ec.value()));
             } catch (std::exception const&) {
                 throw FunctionArgumentsError();
             }
         }
 
-        auto acceptor_get_blocking_args = std::make_shared<Parser::Symbol>("acceptor");
-        Reference acceptor_get_blocking(FunctionContext& context) {
+        auto TCPacceptor_accept_args = std::make_shared<Parser::Symbol>("acceptor");
+        Reference TCPacceptor_accept(FunctionContext& context) {
             try {
-                auto& acceptor = context["acceptor"].to_data(context).get<Object*>()->c_obj.get<boost::asio::ip::tcp::acceptor>();
+                auto& acceptor = context["acceptor"].to_data(context).get<Object*>()->c_obj.get<TCPAcceptor>();
+
+                auto socket = std::make_unique<TCPSocket>(ioc);
+                boost::system::error_code ec;
+                acceptor.accept(*socket, ec);
+
+                if (!ec) {
+                    auto object = context.new_object();
+                    object->c_obj.set(std::move(socket));
+                    return Data(object);
+                } else
+                    return Data(static_cast<OV_INT>(ec.value()));
+            } catch (std::exception const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        auto TCPacceptor_get_blocking_args = std::make_shared<Parser::Symbol>("acceptor");
+        Reference TCPacceptor_get_blocking(FunctionContext& context) {
+            try {
+                auto& acceptor = context["acceptor"].to_data(context).get<Object*>()->c_obj.get<TCPAcceptor>();
 
                 return Data(!acceptor.non_blocking());
             } catch (std::exception const&) {
@@ -415,52 +518,41 @@ namespace Interpreter::SystemFunctions {
             }
         }
 
-        auto acceptor_set_blocking_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+        auto TCPacceptor_set_blocking_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
             {
                 std::make_shared<Parser::Symbol>("acceptor"),
                 std::make_shared<Parser::Symbol>("value")
             }
         ));
-        Reference acceptor_set_blocking(FunctionContext& context) {
+        Reference TCPacceptor_set_blocking(FunctionContext& context) {
             try {
-                auto& acceptor = context["acceptor"].to_data(context).get<Object*>()->c_obj.get<boost::asio::ip::tcp::acceptor>();
+                auto& acceptor = context["acceptor"].to_data(context).get<Object*>()->c_obj.get<TCPAcceptor>();
                 auto value = context["value"].to_data(context).get<bool>();
 
-                acceptor.non_blocking(!value);
-
-                return Reference();
-            } catch (std::exception const&) {
-                throw FunctionArgumentsError();
-            }
-        }
-
-        auto acceptor_accept_args = std::make_shared<Parser::Symbol>("acceptor");
-        Reference acceptor_accept(FunctionContext& context) {
-            try {
-                auto& acceptor = context["acceptor"].to_data(context).get<Object*>()->c_obj.get<boost::asio::ip::tcp::acceptor>();
-
-                auto stream = std::make_unique<boost::asio::ip::tcp::iostream>();
                 boost::system::error_code ec;
-                acceptor.accept(stream->socket(), ec);
+                acceptor.non_blocking(!value, ec);
 
-                if (!ec) {
-                    auto object = context.new_object();
-                    object->c_obj.set<std::ios>(std::move(stream));
-                    return Data(object);
-                } else return Reference();
+                if (!ec)
+                    return Reference();
+                else
+                    return Data(static_cast<OV_INT>(ec.value()));
             } catch (std::exception const&) {
                 throw FunctionArgumentsError();
             }
         }
 
-        auto acceptor_close_args = std::make_shared<Parser::Symbol>("acceptor");
-        Reference acceptor_close(FunctionContext& context) {
+        auto TCPacceptor_close_args = std::make_shared<Parser::Symbol>("acceptor");
+        Reference TCPacceptor_close(FunctionContext& context) {
             try {
-                auto& acceptor = context["acceptor"].to_data(context).get<Object*>()->c_obj.get<boost::asio::ip::tcp::acceptor>();
+                auto& acceptor = context["acceptor"].to_data(context).get<Object*>()->c_obj.get<TCPAcceptor>();
 
-                acceptor.close();
+                boost::system::error_code ec;
+                acceptor.close(ec);
 
-                return Reference();
+                if (!ec)
+                    return Reference();
+                else
+                    return Data(static_cast<OV_INT>(ec.value()));
             } catch (std::exception const&) {
                 throw FunctionArgumentsError();
             }
@@ -717,18 +809,20 @@ namespace Interpreter::SystemFunctions {
             get_object(context, s->properties["file_copy"])->functions.push_front(SystemFunction{ file_copy_args, file_copy });
             get_object(context, s->properties["file_delete"])->functions.push_front(SystemFunction{ file_path_args, file_delete });
 
-            get_object(context, s->properties["socket_is"])->functions.push_front(SystemFunction{ socket_is_args, socket_is });
-            get_object(context, s->properties["socket_get_blocking"])->functions.push_front(SystemFunction{ socket_get_blocking_args, socket_get_blocking });
-            get_object(context, s->properties["socket_set_blocking"])->functions.push_front(SystemFunction{ socket_set_blocking_args, socket_set_blocking });
-            get_object(context, s->properties["socket_open"])->functions.push_front(SystemFunction{ socket_open_args, socket_open });
-            get_object(context, s->properties["socket_close"])->functions.push_front(SystemFunction{ socket_close_args, socket_close });
+            get_object(context, s->properties["TCPsocket_is"])->functions.push_front(SystemFunction{ TCPsocket_is_args, TCPsocket_is });
+            get_object(context, s->properties["TCPsocket_open"])->functions.push_front(SystemFunction{ TCPsocket_open_args, TCPsocket_open });
+            get_object(context, s->properties["TCPsocket_receive"])->functions.push_front(SystemFunction{ TCPsocket_receive_args, TCPsocket_receive });
+            get_object(context, s->properties["TCPsocket_send"])->functions.push_front(SystemFunction{ TCPsocket_send_args, TCPsocket_send });
+            get_object(context, s->properties["TCPsocket_get_blocking"])->functions.push_front(SystemFunction{ TCPsocket_get_blocking_args, TCPsocket_get_blocking });
+            get_object(context, s->properties["TCPsocket_set_blocking"])->functions.push_front(SystemFunction{ TCPsocket_set_blocking_args, TCPsocket_set_blocking });
+            get_object(context, s->properties["TCPsocket_close"])->functions.push_front(SystemFunction{ TCPsocket_close_args, TCPsocket_close });
 
-            get_object(context, s->properties["acceptor_is"])->functions.push_front(SystemFunction{ acceptor_is_args, acceptor_is });
-            get_object(context, s->properties["acceptor_get_blocking"])->functions.push_front(SystemFunction{ acceptor_get_blocking_args, acceptor_get_blocking });
-            get_object(context, s->properties["acceptor_set_blocking"])->functions.push_front(SystemFunction{ acceptor_set_blocking_args, acceptor_set_blocking });
-            get_object(context, s->properties["acceptor_open"])->functions.push_front(SystemFunction{ acceptor_open_args, acceptor_open });
-            get_object(context, s->properties["acceptor_accept"])->functions.push_front(SystemFunction{ acceptor_accept_args, acceptor_accept });
-            get_object(context, s->properties["acceptor_close"])->functions.push_front(SystemFunction{ acceptor_close_args, acceptor_close });
+            get_object(context, s->properties["TCPacceptor_is"])->functions.push_front(SystemFunction{ TCPacceptor_is_args, TCPacceptor_is });
+            get_object(context, s->properties["TCPacceptor_open"])->functions.push_front(SystemFunction{ TCPacceptor_open_args, TCPacceptor_open });
+            get_object(context, s->properties["TCPacceptor_accept"])->functions.push_front(SystemFunction{ TCPacceptor_accept_args, TCPacceptor_accept });
+            get_object(context, s->properties["TCPacceptor_get_blocking"])->functions.push_front(SystemFunction{ TCPacceptor_get_blocking_args, TCPacceptor_get_blocking });
+            get_object(context, s->properties["TCPacceptor_set_blocking"])->functions.push_front(SystemFunction{ TCPacceptor_set_blocking_args, TCPacceptor_set_blocking });
+            get_object(context, s->properties["TCPacceptor_close"])->functions.push_front(SystemFunction{ TCPacceptor_close_args, TCPacceptor_close });
 
             get_object(context, s->properties["time"])->functions.push_front(SystemFunction{ time_args, time });
             get_object(context, s->properties["clock_system"])->functions.push_front(SystemFunction{ clock_system_args, clock_system });

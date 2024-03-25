@@ -85,8 +85,6 @@ public:
     }
 
     bool on_loop() override {
-        context->ioc.poll();
-
         if (f.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
             if (f.get()) {
                 if (line.length() > 0) {
@@ -126,7 +124,7 @@ public:
                 f = std::async(std::launch::async, []() {
                     return false;
                 });
-                return !context->ioc.stopped();
+                return false;
             }
         }
 
@@ -196,9 +194,7 @@ public:
     }
 
     bool on_loop() override {
-        context->ioc.poll();
-
-        return !context->ioc.stopped();
+        return false;
     }
 
     int on_exit() override {

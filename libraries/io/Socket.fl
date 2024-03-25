@@ -3,59 +3,71 @@ import "String.fl";
 import "io/Stream.fl";
 
 
-class Socket {
-    (~) : (socket, Socket) |-> {
-        import("system").socket_is(socket)
+class TCPSocket {
+    (~) : (socket, TCPSocket) |-> {
+        import("system").TCPsocket_is(socket)
     };
 
-    Socket : (String address, Int port) |-> {
-        import("system").socket_open(address, port)
+    TCPSocket : (String address, Int port) |-> {
+        import("system").TCPsocket_open(address, port)
     };
 
-    Socket::(
-        this.blocking |-> {
-            import("system").socket_get_blocking(this)
-        },
-        (this.blocking, value) |-> {
-            import("system").socket_set_blocking(this, value);
-            import("system").socket_get_blocking(this)
-        }
-    );
-
-    Socket::(this.close |-> (
-        () |-> {
-            import("system").socket_close(this)
+    TCPSocket::(this.receive |-> (
+        (Int size) |-> {
+            import("system").TCPsocket_receive(this, size)
         }
     ));
 
-    class (Socket.Acceptor) {
-        (~) : (acceptor, Type) \ (Type === Socket.Acceptor) |-> {
-            import("system").acceptor_is(acceptor)
+    TCPSocket::(this.send |-> (
+        bytes \ (bytes ~ Array & forall(bytes, b |-> { b ~ Char })) |-> {
+            import("system").TCPsocket_send(this, bytes)
+        }
+    ));
+
+    TCPSocket::(
+        this.blocking |-> {
+            import("system").TCPsocket_get_blocking(this)
+        },
+        (this.blocking, value) |-> {
+            import("system").TCPsocket_set_blocking(this, value);
+            import("system").TCPsocket_get_blocking(this)
+        }
+    );
+
+    TCPSocket::(this.close |-> (
+        () |-> {
+            import("system").TCPsocket_close(this)
+        }
+    ));
+
+    class (TCPSocket.Acceptor) {
+        (~) : (acceptor, Type) \ (Type === TCPSocket.Acceptor) |-> {
+            import("system").TCPacceptor_is(acceptor)
         };
 
-        Socket.Acceptor : (Int port) |-> {
-            import("system").acceptor_open(port)
+        TCPSocket.Acceptor : (String address, Int port) |-> {
+            import("system").TCPacceptor_open(address, port)
         };
 
-        (Socket.Acceptor)::(
+        (TCPSocket.Acceptor)::(
             this.blocking |-> {
-                import("system").acceptor_get_blocking(this)
+                import("system").TCPacceptor_get_blocking(this)
             },
             (this.blocking, value) |-> {
-                import("system").acceptor_set_blocking(this, value);
-                import("system").acceptor_get_blocking(this)
+                import("system").TCPacceptor_set_blocking(this, value);
+                import("system").TCPacceptor_get_blocking(this)
             }
         );
 
-        (Socket.Acceptor)::(this.accept |-> (
+        (TCPSocket.Acceptor)::(this.accept |-> (
             () |-> {
-                import("system").acceptor_accept(this)
+                import("system").TCPacceptor_accept(this)
             }
         ));
 
-        (Socket.Acceptor)::(this.close |-> (
+        (TCPSocket.Acceptor)::(this.close |-> (
             () |-> {
-                import("system").acceptor_close(this)
+                import("system").TCPacceptor_close(this)
             }
         ));
     };

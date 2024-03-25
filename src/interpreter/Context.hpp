@@ -53,8 +53,6 @@ namespace Interpreter {
 
     public:
 
-        boost::asio::io_context ioc;
-        std::list<Object*> callbacks;
         Object* system;
 
         std::map<std::filesystem::path, std::shared_ptr<Parser::Expression>> sources;
