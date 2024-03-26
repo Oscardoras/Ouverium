@@ -1,0 +1,46 @@
+import "Type.fl";
+import "String.fl";
+import "io/Stream.fl";
+
+
+class UDPSocket {
+    (~) : (socket, UDPSocket) |-> {
+        import("system").UDPsocket_is(socket)
+    };
+
+    UDPSocket : () |-> {
+        import("system").UDPsocket_open(4)
+    };
+
+    UDPSocket : (String address, Int port) |-> {
+        import("system").UDPsocket_bind(address, port)
+    };
+
+    UDPSocket::(this.receive_from |-> (
+        (Int size) |-> {
+            import("system").UDPsocket_receive_from(this, size)
+        }
+    ));
+
+    UDPSocket::(this.send_to |-> (
+        (bytes, (String address, Int port)) \ (bytes ~ Array & forall(bytes, b |-> { b ~ Char })) |-> {
+            import("system").UDPsocket_send_to(this, bytes, (address, port))
+        }
+    ));
+
+    UDPSocket::(
+        this.blocking |-> {
+            import("system").UDPsocket_get_blocking(this)
+        },
+        (this.blocking, value) |-> {
+            import("system").UDPsocket_set_blocking(this, value);
+            import("system").UDPsocket_get_blocking(this)
+        }
+    );
+
+    UDPSocket::(this.close |-> (
+        () |-> {
+            import("system").UDPsocket_close(this)
+        }
+    ));
+};

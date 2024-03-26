@@ -9,7 +9,7 @@ class TCPSocket {
     };
 
     TCPSocket : (String address, Int port) |-> {
-        import("system").TCPsocket_open(address, port)
+        import("system").TCPsocket_connect(address, port)
     };
 
     TCPSocket::(this.receive |-> (
@@ -46,7 +46,7 @@ class TCPSocket {
         };
 
         TCPSocket.Acceptor : (String address, Int port) |-> {
-            import("system").TCPacceptor_open(address, port)
+            import("system").TCPacceptor_bind(address, port)
         };
 
         (TCPSocket.Acceptor)::(

@@ -316,19 +316,19 @@ namespace Interpreter::SystemFunctions {
             }
         }
 
-        auto TCPsocket_open_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+        auto TCPsocket_connect_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
             {
                 std::make_shared<Parser::Symbol>("address"),
                 std::make_shared<Parser::Symbol>("port")
             }
         ));
-        Reference TCPsocket_open(FunctionContext& context) {
+        Reference TCPsocket_connect(FunctionContext& context) {
             try {
                 auto address = context["address"].to_data(context).get<Object*>()->to_string();
                 auto port = context["port"].to_data(context).get<OV_INT>();
 
-                boost::system::error_code ec;
                 auto socket = std::make_unique<TCPSocket>(ioc);
+                boost::system::error_code ec;
                 socket->connect(boost::asio::ip::tcp::endpoint(boost::asio::ip::address::from_string(address), port), ec);
 
                 if (!ec) {
@@ -462,19 +462,23 @@ namespace Interpreter::SystemFunctions {
             }
         }
 
-        auto TCPacceptor_open_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+        auto TCPacceptor_bind_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
             {
                 std::make_shared<Parser::Symbol>("address"),
                 std::make_shared<Parser::Symbol>("port")
             }
         ));
-        Reference TCPacceptor_open(FunctionContext& context) {
+        Reference TCPacceptor_bind(FunctionContext& context) {
             try {
                 auto address = context["address"].to_data(context).get<Object*>()->to_string();
                 auto port = context["port"].to_data(context).get<OV_INT>();
 
+                auto acceptor = std::make_unique<TCPAcceptor>(ioc);
                 boost::system::error_code ec;
-                auto acceptor = std::make_unique<TCPAcceptor>(ioc, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port));
+                boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::tcp::v4(), port);
+                acceptor->open(endpoint.protocol(), ec);
+                acceptor->bind(endpoint, ec);
+                acceptor->listen();
 
                 if (!ec) {
                     auto object = context.new_object();
@@ -548,6 +552,191 @@ namespace Interpreter::SystemFunctions {
 
                 boost::system::error_code ec;
                 acceptor.close(ec);
+
+                if (!ec)
+                    return Reference();
+                else
+                    return Data(static_cast<OV_INT>(ec.value()));
+            } catch (std::exception const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        using UDPSocket = boost::asio::ip::udp::socket;
+
+        auto UDPsocket_is_args = std::make_shared<Parser::Symbol>("socket");
+        Reference UDPsocket_is(FunctionContext& context) {
+            try {
+                context["socket"].to_data(context).get<Object*>()->c_obj.get<UDPSocket>();
+
+                return Data(true);
+            } catch (std::exception const&) {
+                return Data(false);
+            }
+        }
+
+        auto UDPsocket_open_args = std::make_shared<Parser::Symbol>("protocol");
+        Reference UDPsocket_open(FunctionContext& context) {
+            try {
+                auto protocol = context["protocol"].to_data(context).get<OV_INT>();
+
+                auto socket = std::make_unique<UDPSocket>(ioc);
+                boost::system::error_code ec;
+                if (protocol == 4)
+                    socket->open(boost::asio::ip::udp::v4(), ec);
+                else if (protocol == 6)
+                    socket->open(boost::asio::ip::udp::v6(), ec);
+                else
+                    throw FunctionArgumentsError();
+
+                if (!ec) {
+                    auto object = context.new_object();
+                    object->c_obj.set(std::move(socket));
+                    return Data(object);
+                } else
+                    return Data(static_cast<OV_INT>(ec.value()));
+            } catch (std::exception const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        auto UDPsocket_bind_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+            {
+                std::make_shared<Parser::Symbol>("address"),
+                std::make_shared<Parser::Symbol>("port")
+            }
+        ));
+        Reference UDPsocket_bind(FunctionContext& context) {
+            try {
+                auto address = context["address"].to_data(context).get<Object*>()->to_string();
+                auto port = context["port"].to_data(context).get<OV_INT>();
+
+                auto socket = std::make_unique<UDPSocket>(ioc);
+                boost::system::error_code ec;
+                boost::asio::ip::udp::endpoint endpoint(boost::asio::ip::address::from_string(address), port);
+                socket->open(endpoint.protocol(), ec);
+                socket->bind(endpoint, ec);
+
+                if (!ec) {
+                    auto object = context.new_object();
+                    object->c_obj.set(std::move(socket));
+                    return Data(object);
+                } else
+                    return Data(static_cast<OV_INT>(ec.value()));
+            } catch (std::exception const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        auto UDPsocket_receive_from_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+            {
+                std::make_shared<Parser::Symbol>("socket"),
+                std::make_shared<Parser::Symbol>("size")
+            }
+        ));
+        Reference UDPsocket_receive_from(FunctionContext& context) {
+            try {
+                auto& socket = context["socket"].to_data(context).get<Object*>()->c_obj.get<UDPSocket>();
+                auto size = context["size"].to_data(context).get<OV_INT>();
+
+                boost::system::error_code ec;
+                std::vector<char> buffer(size);
+                boost::asio::ip::udp::endpoint endpoint;
+                auto received = socket.receive_from(boost::asio::buffer(buffer), endpoint, {}, ec);
+
+                if (!ec) {
+                    auto object = context.new_object();
+                    object->array.reserve(received);
+                    for (size_t i = 0; i < received; ++i)
+                        object->array.push_back(Data(buffer[i]));
+                    return TupleReference{
+                        TupleReference{Data(context.new_object(Object(endpoint.address().to_string()))), Data(static_cast<OV_INT>(endpoint.port()))},
+                        Data(object)
+                    };
+                } else
+                    return Data(static_cast<OV_INT>(ec.value()));
+            } catch (std::exception const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        auto UDPsocket_send_to_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+            {
+                std::make_shared<Parser::Symbol>("socket"),
+                std::make_shared<Parser::Symbol>("data"),
+                std::make_shared<Parser::Tuple>(Parser::Tuple(
+                    {
+                        std::make_shared<Parser::Symbol>("address"),
+                        std::make_shared<Parser::Symbol>("port")
+                    }
+                ))
+            }
+        ));
+        Reference UDPsocket_send_to(FunctionContext& context) {
+            try {
+                auto& socket = context["socket"].to_data(context).get<Object*>()->c_obj.get<UDPSocket>();
+                auto data = context["data"].to_data(context).get<Object*>();
+                auto address = context["address"].to_data(context).get<Object*>()->to_string();
+                auto port = context["port"].to_data(context).get<OV_INT>();
+
+                std::vector<char> buffer(data->array.size());
+                for (std::size_t i = 0; i < data->array.size(); ++i)
+                    buffer[i] = data->array[i].get<char>();
+
+                boost::system::error_code ec;
+                boost::asio::ip::udp::endpoint endpoint(boost::asio::ip::address::from_string(address), port);
+                socket.send_to(boost::asio::buffer(buffer), endpoint, {}, ec);
+
+                if (!ec)
+                    return Reference();
+                else
+                    return Data(static_cast<OV_INT>(ec.value()));
+            } catch (std::exception const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        auto UDPsocket_get_blocking_args = std::make_shared<Parser::Symbol>("socket");
+        Reference UDPsocket_get_blocking(FunctionContext& context) {
+            try {
+                auto& socket = context["socket"].to_data(context).get<Object*>()->c_obj.get<UDPSocket>();
+
+                return Data(!socket.non_blocking());
+            } catch (std::exception const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        auto UDPsocket_set_blocking_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+            {
+                std::make_shared<Parser::Symbol>("socket"),
+                std::make_shared<Parser::Symbol>("value")
+            }
+        ));
+        Reference UDPsocket_set_blocking(FunctionContext& context) {
+            try {
+                auto& socket = context["socket"].to_data(context).get<Object*>()->c_obj.get<UDPSocket>();
+                auto value = context["value"].to_data(context).get<bool>();
+
+                boost::system::error_code ec;
+                socket.non_blocking(!value, ec);
+
+                if (!ec)
+                    return Reference();
+                else
+                    return Data(static_cast<OV_INT>(ec.value()));
+            } catch (std::exception const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        auto UDPsocket_close_args = std::make_shared<Parser::Symbol>("socket");
+        Reference UDPsocket_close(FunctionContext& context) {
+            try {
+                auto& socket = context["socket"].to_data(context).get<Object*>()->c_obj.get<UDPSocket>();
+
+                boost::system::error_code ec;
+                socket.close(ec);
 
                 if (!ec)
                     return Reference();
@@ -810,7 +999,7 @@ namespace Interpreter::SystemFunctions {
             get_object(context, s->properties["file_delete"])->functions.push_front(SystemFunction{ file_path_args, file_delete });
 
             get_object(context, s->properties["TCPsocket_is"])->functions.push_front(SystemFunction{ TCPsocket_is_args, TCPsocket_is });
-            get_object(context, s->properties["TCPsocket_open"])->functions.push_front(SystemFunction{ TCPsocket_open_args, TCPsocket_open });
+            get_object(context, s->properties["TCPsocket_connect"])->functions.push_front(SystemFunction{ TCPsocket_connect_args, TCPsocket_connect });
             get_object(context, s->properties["TCPsocket_receive"])->functions.push_front(SystemFunction{ TCPsocket_receive_args, TCPsocket_receive });
             get_object(context, s->properties["TCPsocket_send"])->functions.push_front(SystemFunction{ TCPsocket_send_args, TCPsocket_send });
             get_object(context, s->properties["TCPsocket_get_blocking"])->functions.push_front(SystemFunction{ TCPsocket_get_blocking_args, TCPsocket_get_blocking });
@@ -818,11 +1007,20 @@ namespace Interpreter::SystemFunctions {
             get_object(context, s->properties["TCPsocket_close"])->functions.push_front(SystemFunction{ TCPsocket_close_args, TCPsocket_close });
 
             get_object(context, s->properties["TCPacceptor_is"])->functions.push_front(SystemFunction{ TCPacceptor_is_args, TCPacceptor_is });
-            get_object(context, s->properties["TCPacceptor_open"])->functions.push_front(SystemFunction{ TCPacceptor_open_args, TCPacceptor_open });
+            get_object(context, s->properties["TCPacceptor_bind"])->functions.push_front(SystemFunction{ TCPacceptor_bind_args, TCPacceptor_bind });
             get_object(context, s->properties["TCPacceptor_accept"])->functions.push_front(SystemFunction{ TCPacceptor_accept_args, TCPacceptor_accept });
             get_object(context, s->properties["TCPacceptor_get_blocking"])->functions.push_front(SystemFunction{ TCPacceptor_get_blocking_args, TCPacceptor_get_blocking });
             get_object(context, s->properties["TCPacceptor_set_blocking"])->functions.push_front(SystemFunction{ TCPacceptor_set_blocking_args, TCPacceptor_set_blocking });
             get_object(context, s->properties["TCPacceptor_close"])->functions.push_front(SystemFunction{ TCPacceptor_close_args, TCPacceptor_close });
+
+            get_object(context, s->properties["UDPsocket_is"])->functions.push_front(SystemFunction{ UDPsocket_is_args, UDPsocket_is });
+            get_object(context, s->properties["UDPsocket_bind"])->functions.push_front(SystemFunction{ UDPsocket_bind_args, UDPsocket_bind });
+            get_object(context, s->properties["UDPsocket_open"])->functions.push_front(SystemFunction{ UDPsocket_open_args, UDPsocket_open });
+            get_object(context, s->properties["UDPsocket_receive_from"])->functions.push_front(SystemFunction{ UDPsocket_receive_from_args, UDPsocket_receive_from });
+            get_object(context, s->properties["UDPsocket_send_to"])->functions.push_front(SystemFunction{ UDPsocket_send_to_args, UDPsocket_send_to });
+            get_object(context, s->properties["UDPsocket_get_blocking"])->functions.push_front(SystemFunction{ UDPsocket_get_blocking_args, UDPsocket_get_blocking });
+            get_object(context, s->properties["UDPsocket_set_blocking"])->functions.push_front(SystemFunction{ UDPsocket_set_blocking_args, UDPsocket_set_blocking });
+            get_object(context, s->properties["UDPsocket_close"])->functions.push_front(SystemFunction{ UDPsocket_close_args, UDPsocket_close });
 
             get_object(context, s->properties["time"])->functions.push_front(SystemFunction{ time_args, time });
             get_object(context, s->properties["clock_system"])->functions.push_front(SystemFunction{ clock_system_args, clock_system });
