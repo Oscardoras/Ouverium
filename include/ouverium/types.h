@@ -5,20 +5,20 @@
 #include <stddef.h>
 
 
-#define BYTE unsigned char
+typedef unsigned char BYTE;
 
 #if (SIZE_MAX == UINT64_MAX)
-#define OV_INT int64_t
-#define OV_FLOAT double
+typedef int64_t OV_INT;
+typedef double OV_FLOAT;
 #elif (SIZE_MAX == UINT32_MAX)
-#define OV_INT int32_t
-#define OV_FLOAT float
+typedef int32_t OV_INT;
+typedef float OV_FLOAT;
 #elif (SIZE_MAX == UINT16_MAX)
-#define OV_INT int16_t
-#define OV_FLOAT float
+typedef int16_t OV_INT;
+typedef float OV_FLOAT;
 #else
-#define OV_INT int
-#define OV_FLOAT float
+typedef int OV_INT;
+typedef float OV_FLOAT;
 #endif
 
 
