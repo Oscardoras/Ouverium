@@ -1,6 +1,54 @@
 import "Type.fl";
+import "containers/List.fl";
 
 
-class Thread {
+class AsyncExecutor {
+    AsyncExecutor : () {
+        this := ();
+        this :~ Future;
 
+        this._functions := Array[];
+        this._should_stop := false;
+
+        this
+    };
+
+    AsyncExecutor::(this.add |-> (
+        (Function function) |-> {
+            this._functions.add_back(function);
+        }
+    ));
+
+    AsyncExecutor::(this.stop |-> (
+        () |-> {
+            this._should_stop := true;
+        }
+    ));
+
+    AsyncExecutor::(this.stop |-> (
+        (Bool stop) |-> {
+            this._should_stop := stop;
+        }
+    ));
+
+    AsyncExecutor::(this.poll |-> (
+        () |-> {
+            it := this._functions.iterator;
+            while (it.is_valid()) {
+                if (f()) {
+                    it.next();
+                } else {
+                    it.remove();
+                };
+            };
+        }
+    ));
+
+    AsyncExecutor::(this.run |-> (
+        () |-> {
+            while (!this._functions.empty && !this._should_stop) {
+                this.poll();
+            };
+        }
+    ));
 };
