@@ -35,9 +35,9 @@ std::variant<std::nullptr_t, bool, OV_INT, OV_FLOAT, std::string> get_symbol(std
     if (name == "false") return false;
     try {
         if (name.find('.') < name.size())
-            return std::stod(name);
+            return static_cast<OV_FLOAT>(std::stod(name));
         else
-            return std::stol(name);
+            return static_cast<OV_INT>(std::stol(name));
     } catch (std::invalid_argument const& ex1) {
         return nullptr;
     }

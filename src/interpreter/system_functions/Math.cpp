@@ -398,16 +398,16 @@ namespace Interpreter::SystemFunctions {
         }
 
         Reference random_0(FunctionContext&) {
-            return Data(std::rand() / (OV_FLOAT) (RAND_MAX + 1u));
+            return Data(static_cast<OV_INT>(std::rand() / (OV_FLOAT) (RAND_MAX + 1u)));
         }
 
         Reference random_1(FunctionContext& context) {
             auto b = context["b"].to_data(context);
 
             if (auto b_int = get_if<OV_INT>(&b))
-                return Data(std::rand() / ((RAND_MAX + 1u) / *b_int));
+                return Data(static_cast<OV_INT>(std::rand() / ((RAND_MAX + 1u) / *b_int)));
             else if (auto b_float = get_if<OV_FLOAT>(&b))
-                return Data(std::rand() / ((RAND_MAX + 1u) / *b_float));
+                return Data(static_cast<OV_INT>(std::rand() / ((RAND_MAX + 1u) / *b_float)));
             throw FunctionArgumentsError();
         }
 
@@ -417,14 +417,14 @@ namespace Interpreter::SystemFunctions {
 
             if (auto a_int = get_if<OV_INT>(&a)) {
                 if (auto b_int = get_if<OV_INT>(&b))
-                    return Data(std::rand() / ((RAND_MAX + 1u) / (*b_int - *a_int)) + *a_int);
+                    return Data(static_cast<OV_INT>(std::rand() / ((RAND_MAX + 1u) / (*b_int - *a_int)) + *a_int));
                 else if (auto b_float = get_if<OV_FLOAT>(&b))
-                    return Data(std::rand() / ((RAND_MAX + 1u) / (*b_float - *a_int)) + *a_int);
+                    return Data(static_cast<OV_INT>(std::rand() / ((RAND_MAX + 1u) / (*b_float - *a_int)) + *a_int));
             } else if (auto a_float = get_if<OV_FLOAT>(&a)) {
                 if (auto b_int = get_if<OV_INT>(&b))
-                    return Data(std::rand() / ((RAND_MAX + 1u) / (*b_int - *a_int)) + *a_int);
+                    return Data(static_cast<OV_INT>(std::rand() / ((RAND_MAX + 1u) / (*b_int - *a_int)) + *a_int));
                 else if (auto b_float = get_if<OV_FLOAT>(&b))
-                    return Data(std::rand() / ((RAND_MAX + 1u) / (*b_float - *a_float)) + *a_float);
+                    return Data(static_cast<OV_INT>(std::rand() / ((RAND_MAX + 1u) / (*b_float - *a_float)) + *a_float));
             }
             throw FunctionArgumentsError();
         }
