@@ -128,6 +128,13 @@ public:
             }
         }
 
+        auto async = context->system->properties["async"];
+        try {
+            Interpreter::try_call_function(*context, nullptr, async, std::make_shared<Parser::Tuple>());
+        } catch (Interpreter::Exception const& ex) {
+            ex.print_stack_trace(*context);
+        }
+
         return true;
     }
 

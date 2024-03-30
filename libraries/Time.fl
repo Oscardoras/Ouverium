@@ -1,4 +1,5 @@
 import "Type.fl";
+import "Async.fl";
 
 
 class Time {
@@ -29,6 +30,74 @@ class Time {
             f();
             t2 := Time.steady;
             t2-t1
+        }
+    ));
+};
+
+
+class DelayedTask {
+    DelayedTask : (f(), Float delay, AsyncExecutor exec) |-> {
+        this := ();
+        this :~ DelayedTask;
+        this._execution_time := Time.steady + delay;
+        this._cancelled := false;
+
+        exec.add(() |-> {
+            if (!this._cancelled) {
+                if (this._execution_time <= Time.steady) {
+                    f();
+                    false
+                } else {
+                    true
+                }
+            } else {
+                false
+            }
+        });
+
+        this
+    };
+
+    DelayedTask : (f(), Float delay) |-> {
+        DelayedTask(f(), delay, AsyncExecutor.main)
+    };
+
+    DelayedTask::(this.cancel |-> (
+        () |-> {
+            this._cancelled := true;
+        }
+    ));
+};
+
+class RepeatedTask {
+    RepeatedTask : (f(), Float delay, AsyncExecutor exec) |-> {
+        this := ();
+        this :~ RepeatedTask;
+        this._last_execution := Time.steady;
+        this._cancelled := false;
+
+        exec.add(() |-> {
+            if (!this._cancelled) {
+                while (next_time := this._last_execution + delay; next_time <= Time.steady) {
+                    f();
+                    this._last_execution := next_time;
+                };
+                true
+            } else {
+                false
+            }
+        });
+
+        this
+    };
+
+    RepeatedTask : (f(), Float delay) |-> {
+        RepeatedTask(f(), delay, AsyncExecutor.main)
+    };
+
+    RepeatedTask::(this.cancel |-> (
+        () |-> {
+            this._cancelled := true;
         }
     ));
 };

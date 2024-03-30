@@ -6,6 +6,7 @@ class Matrix {
     Matrix.of : shape \ ((shape ~ Int & shape > 0) | (shape ~ Array & forall(shape, x |-> {
         x ~ Int & x > 0
     }))) |-> {
+        this := ();
         this :~ Matrix;
 
         this._shape := if (shape ~ Int) [shape,] else shape;

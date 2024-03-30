@@ -3,9 +3,9 @@ import "containers/List.fl";
 
 
 class AsyncExecutor {
-    AsyncExecutor : () {
+    AsyncExecutor : () |-> {
         this := ();
-        this :~ Future;
+        this :~ AsyncExecutor;
 
         this._functions := Array[];
         this._should_stop := false;
@@ -35,6 +35,7 @@ class AsyncExecutor {
         () |-> {
             it := this._functions.iterator;
             while (it.is_valid()) {
+                f := it.get();
                 if (f()) {
                     it.next();
                 } else {
@@ -46,9 +47,16 @@ class AsyncExecutor {
 
     AsyncExecutor::(this.run |-> (
         () |-> {
-            while (!this._functions.empty && !this._should_stop) {
+            while (!this._functions.empty & !this._should_stop) {
                 this.poll();
             };
         }
     ));
+
+
+    AsyncExecutor.main := AsyncExecutor();
+
+    import("system").async : () |-> {
+        AsyncExecutor.main.poll();
+    };
 };

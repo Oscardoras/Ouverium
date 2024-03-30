@@ -162,6 +162,7 @@ extends ArrayList List;
 
     class (ArrayList.Iterator) extends (List.Iterator) {
         ArrayList.Iterator : (array, index) |-> {
+            this := ();
             this :~ ArrayList.Iterator;
 
             this._array := array;

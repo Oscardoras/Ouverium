@@ -974,6 +974,8 @@ namespace Interpreter::SystemFunctions {
         void init(GlobalContext& context) {
             auto s = context.get_global().system;
 
+            get_object(context, s->properties["async"]);
+
             get_object(context, s->properties["stream_is"])->functions.push_front(SystemFunction{ stream_is_args, stream_is });
             get_object(context, s->properties["stream_has"])->functions.push_front(SystemFunction{ stream_has_args, stream_has });
             get_object(context, s->properties["istream_is"])->functions.push_front(SystemFunction{ istream_is_args, istream_is });

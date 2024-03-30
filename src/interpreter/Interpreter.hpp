@@ -29,6 +29,7 @@ namespace Interpreter {
 
     using Arguments = std::variant<std::shared_ptr<Parser::Expression>, Reference>;
 
+    std::variant<Reference, Exception> try_call_function(Context& context, std::shared_ptr<Parser::Expression> caller, Reference const& func, Arguments const& arguments);
     Reference call_function(Context& context, std::shared_ptr<Parser::Expression> caller, Reference const& func, Arguments const& arguments);
     Reference execute(Context& context, std::shared_ptr<Parser::Expression> expression);
 

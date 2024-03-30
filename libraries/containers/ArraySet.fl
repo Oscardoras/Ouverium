@@ -97,6 +97,7 @@ class ArraySet extends Set {
 
     class (ArraySet.Iterator) extends (Set.Iterator) {
         ArraySet.Iterator : (ArrayList.Iterator it) |-> {
+            this := ();
             this :~ ArraySet.Iterator;
 
             this._it := it;

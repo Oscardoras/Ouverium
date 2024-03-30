@@ -255,11 +255,12 @@ namespace Interpreter::SystemFunctions {
             try {
                 return Interpreter::call_function(context.get_parent(), nullptr, try_block, std::make_shared<Parser::Tuple>());
             } catch (Exception const& ex) {
-                try {
-                    return Interpreter::call_function(context.get_parent(), nullptr, catch_function, ex.reference);
-                } catch (Interpreter::Exception const&) {
+                auto r = Interpreter::try_call_function(context.get_parent(), nullptr, catch_function, ex.reference);
+
+                if (auto reference = std::get_if<Reference>(&r))
+                    return *reference;
+                else
                     throw ex;
-                }
             }
         }
 

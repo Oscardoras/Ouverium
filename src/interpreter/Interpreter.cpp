@@ -101,7 +101,7 @@ namespace Interpreter {
                 } else {
                     try {
                         auto object = reference->to_data(function_context, parameters).get<Object*>();
-                        if (object->array.size() == p_tuple->objects.size()) {
+                        if (object->array.capacity() > 0 && object->array.size() == p_tuple->objects.size()) {
                             for (size_t i = 0; i < p_tuple->objects.size(); ++i)
                                 set_arguments(context, function_context, computed, p_tuple->objects[i], ArrayReference{ Data(object), i });
                         } else throw Interpreter::FunctionArgumentsError();
@@ -192,7 +192,7 @@ namespace Interpreter {
         } else throw Interpreter::FunctionArgumentsError();
     }
 
-    Reference call_function(Context& context, std::shared_ptr<Parser::Expression> caller, Reference const& func, Arguments const& arguments) {
+    std::variant<Reference, Exception> try_call_function(Context& context, std::shared_ptr<Parser::Expression> caller, Reference const& func, Arguments const& arguments) {
         if (context.get_recurion_level() >= context.get_global().recursion_limit)
             throw Exception(context, caller, "recursion limit exceeded");
 
@@ -238,9 +238,18 @@ namespace Interpreter {
         }
 
         if (functions.empty())
-            throw Exception(context, caller, "not a function");
+            return Exception(context, caller, "not a function");
         else
-            throw Exception(context, caller, "incorrect function arguments");
+            return Exception(context, caller, "incorrect function arguments");
+    }
+
+    Reference call_function(Context& context, std::shared_ptr<Parser::Expression> caller, Reference const& func, Arguments const& arguments) {
+        auto r = try_call_function(context, caller, func, arguments);
+
+        if (auto reference = std::get_if<Reference>(&r))
+            return *reference;
+        else
+            throw std::get<Exception>(r);
     }
 
     Reference execute(Context& context, std::shared_ptr<Parser::Expression> expression) {

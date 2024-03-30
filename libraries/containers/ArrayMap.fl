@@ -106,6 +106,7 @@ class ArrayMap extends Map {
 
     class (ArrayMap.Iterator) extends (Map.Iterator) {
         ArrayMap.Iterator : (ArrayList.Iterator it) |-> {
+            this := ();
             this :~ ArrayMap.Iterator;
 
             this._it := it;
