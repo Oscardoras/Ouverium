@@ -966,7 +966,7 @@ namespace Interpreter::SystemFunctions {
 
         auto GC_collect_args = std::make_shared<Parser::Tuple>();
         Reference GC_collect(FunctionContext& context) {
-            context.GC_collect();
+            context.get_global().GC_collect();
             return Reference();
         }
 

@@ -1,6 +1,7 @@
 import "Type.fl";
 import "String.fl";
 import "io/Stream.fl";
+import "Async.fl";
 
 
 class UDPSocket {
@@ -19,6 +20,26 @@ class UDPSocket {
     UDPSocket::(this.receive_from |-> (
         (Int size) |-> {
             import("system").UDPsocket_receive_from(this, size)
+        }
+    ));
+
+    UDPSocket::(this.async_receive_from |-> (
+        (Int size, Function callback, AsyncExecutor exec) |-> {
+            exec.add(() |-> {
+                r := import("system").UDPsocket_receive_from(this, size);
+                if (r != 11) {
+                    callback(r);
+                    false
+                } else {
+                    true
+                }
+            });
+        }
+    ));
+
+    UDPSocket::(this.async_receive_from |-> (
+        (Int size, Function callback) |-> {
+            this.async_receive_from(size, callback, AsyncExecutor.main)
         }
     ));
 

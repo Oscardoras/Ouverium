@@ -9,7 +9,11 @@ namespace Interpreter {
     static std::mutex new_reference_mutex;
 
     Object* Context::new_object(Object const& object) {
-        auto& objects = get_global().objects;
+        auto& global = get_global();
+        auto& objects = global.objects;
+        // if (objects.size() >= 2 * global.last_size) {
+        //     global.GC_collect();
+        // }
         std::lock_guard guard(new_object_mutex);
         objects.push_back(std::move(object));
         return &objects.back();
@@ -20,59 +24,6 @@ namespace Interpreter {
         std::lock_guard guard(new_reference_mutex);
         references.push_back(data);
         return references.back();
-    }
-
-    void Context::GC_collect() {
-        // std::vector<Data> grey;
-
-        // Context* context = this;
-        // Context* old = nullptr;
-        // while (context != old) {
-        //     for (auto const& [_, ref] : *context) {
-        //         grey.push_back(std::visit([](auto const& arg) -> Data& {
-        //             return arg;
-        //         }, ref));
-        //     }
-
-        //     old = context;
-        //     context = &context->get_parent();
-        // }
-
-        // while (!grey.empty()) {
-        //     Data const& data = grey.back();
-        //     grey.pop_back();
-
-        //     if (auto obj = get_if<Object*>(&data); obj && *obj) {
-        //         Object* object = *obj;
-
-        //         if (!object->referenced) {
-        //             object->referenced = true;
-
-        //             for (auto const& [_, d] : object->properties)
-        //                 grey.push_back(d);
-        //             for (auto const& d : object->array)
-        //                 grey.push_back(d);
-        //             for (auto const& f : object->functions) {
-        //                 for (auto const& [_, capture] : f.extern_symbols) {
-        //                     grey.push_back(std::visit([](auto const& arg) -> Data& {
-        //                         return arg;
-        //                     }, capture));
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
-
-        // GlobalContext& global = get_global();
-        // for (auto it = global.objects.begin(); it != global.objects.end();) {
-        //     if (!it->referenced) {
-        //         it->destruct(*this);
-        //         global.objects.erase(it++);
-        //     } else {
-        //         it->referenced = false;
-        //         ++it;
-        //     }
-        // }
     }
 
     std::set<std::string> Context::get_symbols() const {
@@ -105,13 +56,69 @@ namespace Interpreter {
 
     GlobalContext::GlobalContext(std::shared_ptr<Parser::Expression> expression) :
         Context(expression) {
+        contexts.insert(this);
         system = new_object();
         SystemFunctions::init(*this);
     }
 
-    GlobalContext::~GlobalContext() {
-        for (auto& object : objects)
-            object.destruct(*this);
+    void GlobalContext::GC_collect() {
+        std::vector<Data> grey;
+        std::set<Data*> symbol_references;
+        auto add_grey = [&grey, &symbol_references](Interpreter::IndirectReference const& ref) {
+            if (auto symbol_reference = std::get_if<SymbolReference>(&ref)) {
+                grey.push_back(symbol_reference->get());
+                symbol_references.insert(&symbol_reference->get());
+            } else if (auto property_reference = std::get_if<PropertyReference>(&ref)) {
+                grey.push_back(property_reference->parent);
+            } else if (auto array_reference = std::get_if<ArrayReference>(&ref)) {
+                grey.push_back(array_reference->array);
+            }
+        };
+
+        grey.push_back(Data(system));
+        for (Context* context : contexts)
+            for (auto const& [_, ref] : *context)
+                add_grey(ref);
+
+        while (!grey.empty()) {
+            Data data = grey.back();
+            grey.pop_back();
+
+            if (auto obj = get_if<Object*>(&data); obj) {
+                Object* object = *obj;
+
+                if (!object->referenced) {
+                    object->referenced = true;
+
+                    for (auto const& [sqfq, d] : object->properties)
+                        grey.push_back(d);
+                    for (auto const& d : object->array)
+                        grey.push_back(d);
+                    for (auto const& f : object->functions)
+                        for (auto const& [_, capture] : f.extern_symbols)
+                            add_grey(capture);
+                }
+            }
+
+        }
+
+        for (auto it = objects.begin(); it != objects.end();) {
+            if (!it->referenced) {
+                it = objects.erase(it);
+            } else {
+                it->referenced = false;
+                ++it;
+            }
+        }
+        for (auto it = references.begin(); it != references.end();) {
+            if (!symbol_references.contains(&(*it))) {
+                it = references.erase(it);
+            } else {
+                ++it;
+            }
+        }
+
+        last_size = objects.size();
     }
 
 }

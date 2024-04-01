@@ -60,8 +60,6 @@ namespace Interpreter {
 
         std::string to_string() const;
 
-        void destruct(Context& context);
-
     };
 
 }

@@ -11,7 +11,9 @@
 
 namespace Interpreter {
 
+    class Context;
     class GlobalContext;
+    class FunctionContext;
 
     class Context {
 
@@ -32,7 +34,6 @@ namespace Interpreter {
 
         Object* new_object(Object const& object = {});
         Data& new_reference(Data const& data = {});
-        void GC_collect();
 
         std::set<std::string> get_symbols() const;
         bool has_symbol(std::string const& symbol) const;
@@ -42,6 +43,8 @@ namespace Interpreter {
         auto begin() const { return symbols.begin(); }
         auto end() const { return symbols.end(); }
 
+        virtual ~Context() = default;
+
     };
 
     class GlobalContext : public Context {
@@ -49,7 +52,9 @@ namespace Interpreter {
     protected:
 
         std::list<Object> objects;
+        unsigned long last_size = 1024;
         std::list<Data> references;
+        std::set<Context*> contexts;
 
     public:
 
@@ -72,9 +77,10 @@ namespace Interpreter {
             return 0;
         }
 
-        ~GlobalContext();
+        void GC_collect();
 
         friend Context;
+        friend FunctionContext;
 
     };
 
@@ -88,7 +94,9 @@ namespace Interpreter {
     public:
 
         FunctionContext(Context& parent, std::shared_ptr<Parser::Expression> caller) :
-            Context(caller), parent(parent), recursion_level(parent.get_recurion_level() + 1) {}
+            Context(caller), parent(parent), recursion_level(parent.get_recurion_level() + 1) {
+            get_global().contexts.insert(this);
+        }
 
         virtual GlobalContext& get_global() override {
             return parent.get_global();
@@ -100,6 +108,10 @@ namespace Interpreter {
 
         virtual unsigned get_recurion_level() override {
             return recursion_level;
+        }
+
+        ~FunctionContext() {
+            get_global().contexts.erase(this);
         }
 
     };

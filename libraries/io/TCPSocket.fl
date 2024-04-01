@@ -18,6 +18,26 @@ class TCPSocket {
         }
     ));
 
+    TCPSocket::(this.async_receive |-> (
+        (Int size, Function callback, AsyncExecutor exec) |-> {
+            exec.add(() |-> {
+                r := import("system").TCPsocket_receive(this, size);
+                if (r != 11) {
+                    callback(r);
+                    false
+                } else {
+                    true
+                }
+            });
+        }
+    ));
+
+    TCPSocket::(this.async_receive |-> (
+        (Int size, Function callback) |-> {
+            this.async_receive(size, callback, AsyncExecutor.main)
+        }
+    ));
+
     TCPSocket::(this.send |-> (
         bytes \ (bytes ~ Array & forall(bytes, b |-> { b ~ Char })) |-> {
             import("system").TCPsocket_send(this, bytes)
