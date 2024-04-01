@@ -17,13 +17,13 @@ namespace Interpreter::SystemFunctions {
         auto ui_new_frame_args = std::make_shared<Parser::Symbol>("title");
         Reference ui_new_frame(FunctionContext& context) {
             try {
-                auto str = context["title"].to_data(context).get<Object*>()->to_string();
+                auto str = context["title"].to_data(context).get<ObjectPtr>()->to_string();
 
                 auto frame = new wxFrame(nullptr, wxID_ANY, str);
                 frame->Show(true);
 
                 auto obj = context.new_object();
-                obj->c_obj.set(std::make_unique<wxObject*>(frame));
+                obj->c_obj.set(std::make_unique<wxObjectPtr>(frame));
                 return Data(obj);
             } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
@@ -33,12 +33,12 @@ namespace Interpreter::SystemFunctions {
         auto ui_new_panel_args = std::make_shared<Parser::Symbol>("parent");
         Reference ui_new_panel(FunctionContext& context) {
             try {
-                auto parent = dynamic_cast<wxWindow*>(context["parent"].to_data(context).get<Object*>()->c_obj.get<wxObject*>());
+                auto parent = dynamic_cast<wxWindow*>(context["parent"].to_data(context).get<ObjectPtr>()->c_obj.get<wxObjectPtr>());
 
                 auto panel = new wxPanel(parent, wxID_ANY);
 
                 auto obj = context.new_object();
-                obj->c_obj.set(std::make_unique<wxObject*>(panel));
+                obj->c_obj.set(std::make_unique<wxObjectPtr>(panel));
                 return Data(obj);
             } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
@@ -50,12 +50,12 @@ namespace Interpreter::SystemFunctions {
         auto ui_new_button_args = std::make_shared<Parser::Symbol>("parent");
         Reference ui_new_button(FunctionContext& context) {
             try {
-                auto parent = dynamic_cast<wxWindow*>(context["parent"].to_data(context).get<Object*>()->c_obj.get<wxObject*>());
+                auto parent = dynamic_cast<wxWindow*>(context["parent"].to_data(context).get<ObjectPtr>()->c_obj.get<wxObjectPtr>());
 
                 auto button = new wxButton(parent, wxID_ANY);
 
                 auto obj = context.new_object();
-                obj->c_obj.set(std::make_unique<wxObject*>(button));
+                obj->c_obj.set(std::make_unique<wxObjectPtr>(button));
                 return Data(obj);
             } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
@@ -78,8 +78,8 @@ namespace Interpreter::SystemFunctions {
 
             Reference operator()(FunctionContext& context) {
                 try {
-                    auto window = dynamic_cast<wxWindow*>(context["window"].to_data(context).get<Object*>()->c_obj.get<wxObject*>());
-                    auto callback = context["callback"].to_data(context).get<Object*>();
+                    auto window = dynamic_cast<wxWindow*>(context["window"].to_data(context).get<ObjectPtr>()->c_obj.get<wxObjectPtr>());
+                    auto callback = context["callback"].to_data(context).get<ObjectPtr>();
 
                     auto& global = context.get_global();
 
@@ -105,7 +105,7 @@ namespace Interpreter::SystemFunctions {
         ));
         Reference ui_set_position(FunctionContext& context) {
             try {
-                auto window = dynamic_cast<wxWindow*>(context["window"].to_data(context).get<Object*>()->c_obj.get<wxObject*>());
+                auto window = dynamic_cast<wxWindow*>(context["window"].to_data(context).get<ObjectPtr>()->c_obj.get<wxObjectPtr>());
                 auto x = context["x"].to_data(context).get<OV_INT>();
                 auto y = context["y"].to_data(context).get<OV_INT>();
 
@@ -128,7 +128,7 @@ namespace Interpreter::SystemFunctions {
         ));
         Reference ui_set_size(FunctionContext& context) {
             try {
-                auto window = dynamic_cast<wxWindow*>(context["window"].to_data(context).get<Object*>()->c_obj.get<wxObject*>());
+                auto window = dynamic_cast<wxWindow*>(context["window"].to_data(context).get<ObjectPtr>()->c_obj.get<wxObjectPtr>());
                 auto x = context["x"].to_data(context).get<OV_INT>();
                 auto y = context["y"].to_data(context).get<OV_INT>();
 

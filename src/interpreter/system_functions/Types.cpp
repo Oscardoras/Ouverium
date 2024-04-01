@@ -50,7 +50,7 @@ namespace Interpreter::SystemFunctions {
         Reference array_constructor(FunctionContext& context) {
             auto a = context["a"].to_data(context);
 
-            if (auto obj = get_if<Object*>(&a); obj && (*obj)->array.capacity() > 0)
+            if (auto obj = get_if<ObjectPtr>(&a); obj && (*obj)->array.capacity() > 0)
                 return a;
             else
                 throw FunctionArgumentsError();
@@ -72,7 +72,7 @@ namespace Interpreter::SystemFunctions {
         Reference function_constructor(FunctionContext& context) {
             auto a = context["a"].to_data(context);
 
-            if (auto obj = get_if<Object*>(&a); obj && !(*obj)->functions.empty())
+            if (auto obj = get_if<ObjectPtr>(&a); obj && !(*obj)->functions.empty())
                 return a;
             else
                 throw FunctionArgumentsError();
@@ -81,7 +81,7 @@ namespace Interpreter::SystemFunctions {
 
         Reference float_parse(FunctionContext& context) {
             try {
-                auto a = context["a"].to_data(context).get<Object*>()->to_string();
+                auto a = context["a"].to_data(context).get<ObjectPtr>()->to_string();
 
                 return Data(static_cast<OV_FLOAT>(std::stod(a)));
             } catch (Data::BadAccess const&) {
@@ -91,7 +91,7 @@ namespace Interpreter::SystemFunctions {
 
         Reference int_parse(FunctionContext& context) {
             try {
-                auto a = context["a"].to_data(context).get<Object*>()->to_string();
+                auto a = context["a"].to_data(context).get<ObjectPtr>()->to_string();
 
                 return Data(static_cast<OV_INT>(std::stoi(a)));
             } catch (Data::BadAccess const&) {
@@ -106,12 +106,12 @@ namespace Interpreter::SystemFunctions {
             else if (type == context["Int"].to_data(context)) return data.is<OV_INT>();
             else if (type == context["Bool"].to_data(context)) return data.is<bool>();
             else if (type == context["Array"].to_data(context)) {
-                if (auto obj = get_if<Object*>(&data))
+                if (auto obj = get_if<ObjectPtr>(&data))
                     return (*obj)->array.capacity() > 0;
                 else
                     return false;
             } else if (type == context["Function"].to_data(context)) {
-                if (auto obj = get_if<Object*>(&data))
+                if (auto obj = get_if<ObjectPtr>(&data))
                     return !(*obj)->functions.empty();
                 else
                     return false;

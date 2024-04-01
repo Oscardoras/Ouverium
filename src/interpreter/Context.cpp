@@ -8,7 +8,7 @@ namespace Interpreter {
     static std::mutex new_object_mutex;
     static std::mutex new_reference_mutex;
 
-    Object* Context::new_object(Object const& object) {
+    ObjectPtr Context::new_object(Object const& object) {
         auto& global = get_global();
         auto& objects = global.objects;
         // if (objects.size() >= 2 * global.last_size) {
@@ -84,8 +84,8 @@ namespace Interpreter {
             Data data = grey.back();
             grey.pop_back();
 
-            if (auto obj = get_if<Object*>(&data); obj) {
-                Object* object = *obj;
+            if (auto obj = get_if<ObjectPtr>(&data); obj) {
+                ObjectPtr object = *obj;
 
                 if (!object->referenced) {
                     object->referenced = true;
@@ -119,6 +119,15 @@ namespace Interpreter {
         }
 
         last_size = objects.size();
+    }
+
+    FunctionContext::FunctionContext(Context& parent, std::shared_ptr<Parser::Expression> caller) :
+        Context(caller), parent(parent), recursion_level(parent.get_recurion_level() + 1) {
+        get_global().contexts.insert(this);
+    }
+
+    FunctionContext::~FunctionContext() {
+        get_global().contexts.erase(this);
     }
 
 }

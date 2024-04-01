@@ -13,6 +13,8 @@ namespace Interpreter {
 
     struct Object;
 
+    using ObjectPtr = Object*;
+
     class Data : protected std::any {
 
     public:
@@ -32,14 +34,14 @@ namespace Interpreter {
 
 
         Data() = default;
-        explicit Data(Object* object) : std::any(object) {}
+        explicit Data(ObjectPtr object) : std::any(object) {}
         explicit Data(char c) : std::any(c) {}
         explicit Data(OV_FLOAT f) : std::any(f) {}
         explicit Data(OV_INT i) : std::any(i) {}
         explicit Data(bool b) : std::any(b) {}
         explicit Data(std::any const& any) : std::any(any) {}
 
-        Data& operator=(Object* object) {
+        Data& operator=(ObjectPtr object) {
             static_cast<std::any&>(*this) = object;
             return *this;
         }
@@ -64,19 +66,8 @@ namespace Interpreter {
             return *this;
         }
 
-        friend bool operator==(Data const& a, Data const& b) {
-            if (!static_cast<std::any const&>(a).has_value() && !static_cast<std::any const&>(b).has_value())
-                return true;
-
-            auto it = Data::comparators.find({ std::type_index(static_cast<std::any const&>(a).type()), std::type_index(static_cast<std::any const&>(b).type()) });
-            if (it != Data::comparators.end()) {
-                return it->second(a, b);
-            } else
-                return false;
-        }
-        friend bool operator!=(Data const& a, Data const& b) {
-            return !(a == b);
-        }
+        friend bool operator==(Data const& a, Data const& b);
+        friend bool operator!=(Data const& a, Data const& b);
 
         class BadAccess : public std::exception {};
 

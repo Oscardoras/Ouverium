@@ -32,7 +32,7 @@ namespace Interpreter {
         virtual GlobalContext& get_global() = 0;
         virtual unsigned get_recurion_level() = 0;
 
-        Object* new_object(Object const& object = {});
+        ObjectPtr new_object(Object const& object = {});
         Data& new_reference(Data const& data = {});
 
         std::set<std::string> get_symbols() const;
@@ -58,7 +58,7 @@ namespace Interpreter {
 
     public:
 
-        Object* system;
+        ObjectPtr system;
 
         std::map<std::filesystem::path, std::shared_ptr<Parser::Expression>> sources;
         unsigned recursion_limit = 100;
@@ -93,10 +93,7 @@ namespace Interpreter {
 
     public:
 
-        FunctionContext(Context& parent, std::shared_ptr<Parser::Expression> caller) :
-            Context(caller), parent(parent), recursion_level(parent.get_recurion_level() + 1) {
-            get_global().contexts.insert(this);
-        }
+        FunctionContext(Context& parent, std::shared_ptr<Parser::Expression> caller);
 
         virtual GlobalContext& get_global() override {
             return parent.get_global();
@@ -110,9 +107,7 @@ namespace Interpreter {
             return recursion_level;
         }
 
-        ~FunctionContext() {
-            get_global().contexts.erase(this);
-        }
+        ~FunctionContext();
 
     };
 

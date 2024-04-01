@@ -354,7 +354,7 @@ namespace Interpreter::SystemFunctions {
                         }
                     }
                 } else {
-                    for (auto const& d : array.to_data(context).get<Object*>()->array) {
+                    for (auto const& d : array.to_data(context).get<ObjectPtr>()->array) {
                         if (!Interpreter::call_function(context.get_parent(), nullptr, functions, d).to_data(context).get<bool>()) {
                             value = false;
                             break;
@@ -383,7 +383,7 @@ namespace Interpreter::SystemFunctions {
                         }
                     }
                 } else {
-                    for (auto const& d : array.to_data(context).get<Object*>()->array) {
+                    for (auto const& d : array.to_data(context).get<ObjectPtr>()->array) {
                         if (Interpreter::call_function(context.get_parent(), nullptr, functions, d).to_data(context).get<bool>()) {
                             value = true;
                             break;

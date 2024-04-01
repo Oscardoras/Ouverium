@@ -25,7 +25,7 @@ namespace Interpreter {
         if (!positions.empty()) {
             std::cerr << "An exception occured: ";
             try {
-                std::cerr << reference.to_data(context).get<Object*>()->to_string();
+                std::cerr << reference.to_data(context).get<ObjectPtr>()->to_string();
             } catch (Exception const&) {
             } catch (Data::BadAccess const&) {}
             std::cerr << std::endl;
@@ -100,7 +100,7 @@ namespace Interpreter {
                     } else throw Interpreter::FunctionArgumentsError();
                 } else {
                     try {
-                        auto object = reference->to_data(function_context, parameters).get<Object*>();
+                        auto object = reference->to_data(function_context, parameters).get<ObjectPtr>();
                         if (object->array.capacity() > 0 && object->array.size() == p_tuple->objects.size()) {
                             for (size_t i = 0; i < p_tuple->objects.size(); ++i)
                                 set_arguments(context, function_context, computed, p_tuple->objects[i], ArrayReference{ Data(object), i });
@@ -112,7 +112,7 @@ namespace Interpreter {
             }
         } else if (auto p_function = std::dynamic_pointer_cast<Parser::FunctionCall>(parameters)) {
             if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(p_function->function); symbol && !function_context.has_symbol(symbol->name)) {
-                Object* object = context.new_object();
+                ObjectPtr object = context.new_object();
                 auto function_definition = std::make_shared<Parser::FunctionDefinition>();
                 function_definition->parameters = p_function->arguments;
 
@@ -198,12 +198,12 @@ namespace Interpreter {
 
         std::list<Function> functions;
         try {
-            functions = func.to_data(context, caller).get<Object*>()->functions;
+            functions = func.to_data(context, caller).get<ObjectPtr>()->functions;
         } catch (Data::BadAccess const&) {}
 
         if (functions.empty()) {
             try {
-                functions = call_function(context, caller, context.get_global()["function_getter"], func).to_data(context).get<Object*>()->functions;
+                functions = call_function(context, caller, context.get_global()["function_getter"], func).to_data(context).get<ObjectPtr>()->functions;
             } catch (Data::BadAccess const&) {}
         }
 
@@ -300,7 +300,7 @@ namespace Interpreter {
 
         auto d = call_function(context, nullptr, context.get_global()["string_from"], data).to_data(context, nullptr);
         try {
-            oss << d.get<Object*>()->to_string();
+            oss << d.get<ObjectPtr>()->to_string();
         } catch (Data::BadAccess const&) {}
 
         return oss.str();

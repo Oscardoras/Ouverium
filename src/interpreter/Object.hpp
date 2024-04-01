@@ -51,12 +51,7 @@ namespace Interpreter {
         bool referenced = false;
 
         Object() = default;
-
-        Object(std::string const& str) {
-            array.reserve(str.size());
-            for (auto c : str)
-                array.push_back(Data(c));
-        }
+        Object(std::string const& str);
 
         std::string to_string() const;
 

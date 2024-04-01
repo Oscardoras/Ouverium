@@ -19,7 +19,7 @@ namespace Interpreter::SystemFunctions {
 
         std::filesystem::path get_canonical_path(FunctionContext& context) {
             try {
-                auto str = context["path"].to_data(context).get<Object*>()->to_string();
+                auto str = context["path"].to_data(context).get<ObjectPtr>()->to_string();
 
                 auto position = context.caller ? context.caller->position.substr(0, context.caller->position.find(':')) : "";
                 if (position.length() > 0) {
@@ -52,7 +52,7 @@ namespace Interpreter::SystemFunctions {
 
         Reference import_system(FunctionContext& context) {
             try {
-                if (context["path"].to_data(context).get<Object*>()->to_string() != "system")
+                if (context["path"].to_data(context).get<ObjectPtr>()->to_string() != "system")
                     throw Interpreter::FunctionArgumentsError();
 
                 return Data(context.get_global().system);
@@ -167,7 +167,7 @@ namespace Interpreter::SystemFunctions {
                         return { CType::Function::Type::Float, *f };
                     } else if (auto b = get_if<bool>(&data)) {
                         return { CType::Function::Type::Bool, *b };
-                    } else if (auto object = get_if<Object*>(&data)) {
+                    } else if (auto object = get_if<ObjectPtr>(&data)) {
                         if ((*object)->array.capacity() > 0) {
                             try {
                                 return { CType::Function::Type::String, (*object)->to_string() };
@@ -211,9 +211,9 @@ namespace Interpreter::SystemFunctions {
                     std::make_shared<Parser::Tuple>()
                 );
                 Reference c_function(FunctionContext& context) {
-                    auto self = context["this"].to_data(context).get<Object*>();
+                    auto self = context["this"].to_data(context).get<ObjectPtr>();
 
-                    auto args = std::get<CustomFunction>(context["function"].to_data(context).get<Object*>()->functions.front())->body;
+                    auto args = std::get<CustomFunction>(context["function"].to_data(context).get<ObjectPtr>()->functions.front())->body;
                     auto& parent = context.get_parent();
 
                     std::vector<Data> data;
@@ -330,7 +330,7 @@ namespace Interpreter::SystemFunctions {
                         throw FunctionArgumentsError(); // TODO
                     } else {
                         try {
-                            if (!ref.to_data(context).get<Object*>()->c_obj.has_value())
+                            if (!ref.to_data(context).get<ObjectPtr>()->c_obj.has_value())
                                 throw FunctionArgumentsError();
                         } catch (Data::BadAccess const&) {
                             throw FunctionArgumentsError();
@@ -378,7 +378,7 @@ namespace Interpreter::SystemFunctions {
                                 auto& type_info = library.get<std::type_info>(symbol + "_type");
 
                                 try {
-                                    auto object = global[symbol].to_data(context).get<Object*>();
+                                    auto object = global[symbol].to_data(context).get<ObjectPtr>();
                                     object->c_obj = CSymbol{ std::move(library), c_types[&type_info], symbol, path };
 
                                     symbols.insert(symbol);

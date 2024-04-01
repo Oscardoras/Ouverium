@@ -14,11 +14,11 @@ namespace Interpreter::SystemFunctions {
                 return symbol_reference->get();
             } else if (auto property_reference = std::get_if<PropertyReference>(&indirect_reference)) {
                 auto parent = property_reference->parent;
-                if (auto obj = get_if<Object*>(&parent))
+                if (auto obj = get_if<ObjectPtr>(&parent))
                     return (*obj)->properties[property_reference->name];
             } else if (auto array_reference = std::get_if<ArrayReference>(&indirect_reference)) {
                 auto array = array_reference->array;
-                if (auto obj = get_if<Object*>(&array))
+                if (auto obj = get_if<ObjectPtr>(&array))
                     return (*obj)->array[array_reference->i];
             }
 
@@ -51,15 +51,15 @@ namespace Interpreter::SystemFunctions {
             else if (auto symbol_reference = std::get_if<SymbolReference>(&var)) symbol_reference->get() = d;
             else if (auto property_reference = std::get_if<PropertyReference>(&var)) {
                 auto parent = property_reference->parent;
-                if (auto obj = get_if<Object*>(&parent))
+                if (auto obj = get_if<ObjectPtr>(&parent))
                     (*obj)->properties[property_reference->name] = d;
             } else if (auto array_reference = std::get_if<ArrayReference>(&var)) {
                 auto array = array_reference->array;
-                if (auto obj = get_if<Object*>(&array))
+                if (auto obj = get_if<ObjectPtr>(&array))
                     (*obj)->array[array_reference->i] = d;
             } else if (auto tuple_reference = std::get_if<TupleReference>(&var)) {
                 try {
-                    auto object = d.get<Object*>();
+                    auto object = d.get<ObjectPtr>();
                     if (tuple_reference->size() == object->array.size()) {
                         for (size_t i = 0; i < tuple_reference->size(); ++i)
                             assignation(context, (*tuple_reference)[i], object->array[i]);
@@ -104,7 +104,7 @@ namespace Interpreter::SystemFunctions {
         );
         Reference if_statement(FunctionContext& context) {
             try {
-                auto function = std::get<CustomFunction>(context["function"].to_data(context).get<Object*>()->functions.front())->body;
+                auto function = std::get<CustomFunction>(context["function"].to_data(context).get<ObjectPtr>()->functions.front())->body;
 
                 if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(function)) {
                     if (tuple->objects.size() >= 2) {
@@ -278,7 +278,7 @@ namespace Interpreter::SystemFunctions {
             auto data = context["data"].to_data(context);
 
             try {
-                return Data(context.new_object(*data.get<Object*>()));
+                return Data(context.new_object(*data.get<ObjectPtr>()));
             } catch (Data::BadAccess const&) {
                 return data;
             }
@@ -328,12 +328,12 @@ namespace Interpreter::SystemFunctions {
         Reference function_definition(FunctionContext& context) {
             try {
                 auto object = context["object"];
-                auto functions = context["functions"].to_data(context).get<Object*>()->functions;
+                auto functions = context["functions"].to_data(context).get<ObjectPtr>()->functions;
 
                 auto& data = get_raw(object);
                 if (data == Data{})
                     data = context.new_object();
-                auto obj = object.to_data(context).get<Object*>();
+                auto obj = object.to_data(context).get<ObjectPtr>();
 
                 for (auto it = functions.rbegin(); it != functions.rend(); it++)
                     obj->functions.push_front(*it);
@@ -353,12 +353,12 @@ namespace Interpreter::SystemFunctions {
         Reference function_add(FunctionContext& context) {
             try {
                 auto object = context["object"];
-                auto functions = context["functions"].to_data(context).get<Object*>()->functions;
+                auto functions = context["functions"].to_data(context).get<ObjectPtr>()->functions;
 
                 auto& data = get_raw(object);
                 if (data == Data{})
                     data = context.new_object();
-                auto obj = object.to_data(context).get<Object*>();
+                auto obj = object.to_data(context).get<ObjectPtr>();
 
                 for (auto it = functions.begin(); it != functions.end(); it++)
                     obj->functions.push_back(*it);
@@ -370,8 +370,8 @@ namespace Interpreter::SystemFunctions {
         }
 
         bool eq(Data a, Data b) {
-            if (auto a_object = get_if<Object*>(&a)) {
-                if (auto b_object = get_if<Object*>(&b))
+            if (auto a_object = get_if<ObjectPtr>(&a)) {
+                if (auto b_object = get_if<ObjectPtr>(&b))
                     return (*a_object)->properties == (*b_object)->properties && (*a_object)->array == (*b_object)->array;
                 else return false;
             } else if (auto a_char = get_if<char>(&a)) {
@@ -429,7 +429,7 @@ namespace Interpreter::SystemFunctions {
 
             std::ostringstream os;
 
-            if (auto object = get_if<Object*>(&data)) {
+            if (auto object = get_if<ObjectPtr>(&data)) {
                 if (object && *object) {
                     try {
                         if ((*object)->array.capacity() > 0)
