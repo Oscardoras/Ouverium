@@ -1,27 +1,23 @@
-#include <mutex>
-
 #include "Interpreter.hpp"
 
 
 namespace Interpreter {
 
-    static std::mutex new_object_mutex;
-    static std::mutex new_reference_mutex;
-
     ObjectPtr Context::new_object(Object const& object) {
         auto& global = get_global();
         auto& objects = global.objects;
-        // if (objects.size() >= 2 * global.last_size) {
-        //     global.GC_collect();
-        // }
-        std::lock_guard guard(new_object_mutex);
-        objects.push_back(std::move(object));
-        return &objects.back();
+        if (objects.size() >= 2 * global.last_size) {
+            global.GC_collect();
+        }
+        std::lock_guard guard(global.mutex);
+        objects.push_back({ std::move(object), false });
+        return --objects.end();
     }
 
     Data& Context::new_reference(Data const& data) {
-        auto& references = get_global().references;
-        std::lock_guard guard(new_reference_mutex);
+        auto& global = get_global();
+        auto& references = global.references;
+        std::lock_guard guard(global.mutex);
         references.push_back(data);
         return references.back();
     }
@@ -55,13 +51,14 @@ namespace Interpreter {
 
 
     GlobalContext::GlobalContext(std::shared_ptr<Parser::Expression> expression) :
-        Context(expression) {
+        Context(expression), system{ new_object() } {
         contexts.insert(this);
-        system = new_object();
         SystemFunctions::init(*this);
     }
 
     void GlobalContext::GC_collect() {
+        std::lock_guard guard(mutex);
+
         std::vector<Data> grey;
         std::set<Data*> symbol_references;
         auto add_grey = [&grey, &symbol_references](Interpreter::IndirectReference const& ref) {
@@ -87,8 +84,8 @@ namespace Interpreter {
             if (auto obj = get_if<ObjectPtr>(&data); obj) {
                 ObjectPtr object = *obj;
 
-                if (!object->referenced) {
-                    object->referenced = true;
+                if (!object.it->second) {
+                    object.it->second = true;
 
                     for (auto const& [sqfq, d] : object->properties)
                         grey.push_back(d);
@@ -103,10 +100,10 @@ namespace Interpreter {
         }
 
         for (auto it = objects.begin(); it != objects.end();) {
-            if (!it->referenced) {
+            if (!it->second) {
                 it = objects.erase(it);
             } else {
-                it->referenced = false;
+                it->second = false;
                 ++it;
             }
         }
@@ -123,11 +120,15 @@ namespace Interpreter {
 
     FunctionContext::FunctionContext(Context& parent, std::shared_ptr<Parser::Expression> caller) :
         Context(caller), parent(parent), recursion_level(parent.get_recurion_level() + 1) {
-        get_global().contexts.insert(this);
+        auto& global = get_global();
+        std::lock_guard guard(global.mutex);
+        global.contexts.insert(this);
     }
 
     FunctionContext::~FunctionContext() {
-        get_global().contexts.erase(this);
+        auto& global = get_global();
+        std::lock_guard guard(global.mutex);
+        global.contexts.erase(this);
     }
 
 }

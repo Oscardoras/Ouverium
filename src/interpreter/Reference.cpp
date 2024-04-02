@@ -1,13 +1,15 @@
 #include "Interpreter.hpp"
 
 
+template<class... Ts>
+struct overloaded : Ts... { using Ts::operator()...; };
+
 namespace Interpreter {
 
     Data compute(Context& context, std::shared_ptr<Parser::Expression> caller, Reference const& reference) {
-        if (auto symbol = std::get_if<SymbolReference>(&reference)) {
+        if (auto symbol = std::get_if<SymbolReference>(&reference))
             if (*symbol == std::get<SymbolReference>(context.get_global()["getter"]))
                 return symbol->get();
-        }
 
         if (auto d = std::get_if<Data>(&reference); d && *d != Data{})
             return *d;
@@ -20,12 +22,9 @@ namespace Interpreter {
     }
 
     Reference::Reference(IndirectReference const& indirect_reference) {
-        if (auto symbol_reference = std::get_if<SymbolReference>(&indirect_reference))
-            *this = *symbol_reference;
-        else if (auto property_reference = std::get_if<PropertyReference>(&indirect_reference))
-            *this = *property_reference;
-        else if (auto array_reference = std::get_if<ArrayReference>(&indirect_reference))
-            *this = *array_reference;
+        std::visit([this](auto const& ref) {
+            *this = ref;
+        }, indirect_reference);
     }
 
     Data Reference::to_data(Context& context, std::shared_ptr<Parser::Expression> caller) const {
@@ -33,21 +32,29 @@ namespace Interpreter {
     }
 
     IndirectReference Reference::to_indirect_reference(Context& context, std::shared_ptr<Parser::Expression> caller) const {
-        if (auto data = std::get_if<Data>(this))
-            return context.new_reference(*data);
-        else if (auto symbol_reference = std::get_if<SymbolReference>(this))
-            return *symbol_reference;
-        else if (auto property_reference = std::get_if<PropertyReference>(this))
-            return *property_reference;
-        else if (auto array_reference = std::get_if<ArrayReference>(this))
-            return *array_reference;
-        else if (auto tuple_reference = std::get_if<TupleReference>(this)) {
-            auto object = context.new_object();
-            object->array.reserve(tuple_reference->size());
-            for (auto d : *tuple_reference)
-                object->array.push_back(d.to_data(context, caller));
-            return context.new_reference(Data(object));
-        } else return context.new_reference();
+        return std::visit(
+            overloaded{
+                [&context](Data const& data) -> IndirectReference {
+                    return context.new_reference(data);
+                },
+                [&context](SymbolReference const& symbol_reference) -> IndirectReference {
+                    return symbol_reference;
+                },
+                [&context](PropertyReference const& property_reference) -> IndirectReference {
+                    return property_reference;
+                },
+                [&context](ArrayReference const& array_reference) -> IndirectReference {
+                    return array_reference;
+                },
+                [&context, &caller](TupleReference const& tuple_reference) -> IndirectReference {
+                    auto object = context.new_object();
+                    object->array.reserve(tuple_reference.size());
+                    for (auto d : tuple_reference)
+                        object->array.push_back(d.to_data(context, caller));
+                    return context.new_reference(Data(object));
+                }
+            }
+        , *this);
     }
-    
+
 }

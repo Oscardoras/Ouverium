@@ -3,6 +3,18 @@
 
 namespace Interpreter {
 
+    Object& ObjectPtr::operator* () const {
+        return it->first;
+    }
+
+    Object* ObjectPtr::operator->() const {
+        return &it->first;
+    }
+    bool operator==(ObjectPtr const& a, ObjectPtr const& b) {
+        return &(*a) == &(*b);
+    }
+
+
     Data::Comparators Data::comparators = {
         Data::SimpleComparator<ObjectPtr, ObjectPtr>,
         Data::SimpleComparator<char, char>,
@@ -21,7 +33,7 @@ namespace Interpreter {
         } else
             return false;
     }
-    
+
     bool operator!=(Data const& a, Data const& b) {
         return !(a == b);
     }

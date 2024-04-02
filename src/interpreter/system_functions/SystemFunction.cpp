@@ -1,6 +1,9 @@
 #include "../Interpreter.hpp"
 
 
+template<class... Ts>
+struct overloaded : Ts... { using Ts::operator()...; };
+
 namespace Interpreter::SystemFunctions {
 
     namespace Array {
@@ -38,22 +41,28 @@ namespace Interpreter::SystemFunctions {
 
 
     ObjectPtr get_object(GlobalContext& context, IndirectReference const& reference) {
-        if (auto symbol_reference = std::get_if<SymbolReference>(&reference)) {
-            auto& data = symbol_reference->get();
-            if (data == Data{})
-                data = context.new_object();
-            return data.get<ObjectPtr>();
-        } else if (auto property_reference = std::get_if<PropertyReference>(&reference)) {
-            auto& data = property_reference->parent.get<ObjectPtr>()->properties[property_reference->name];
-            if (data == Data{})
-                data = context.new_object();
-            return data.get<ObjectPtr>();
-        } else if (auto array_reference = std::get_if<ArrayReference>(&reference)) {
-            auto& data = array_reference->array.get<ObjectPtr>()->array[array_reference->i];
-            if (data == Data{})
-                data = context.new_object();
-            return data.get<ObjectPtr>();
-        } else return nullptr;
+        return std::visit(
+            overloaded{
+                [&context](SymbolReference const& symbol_reference) {
+                    auto& data = symbol_reference.get();
+                    if (data == Data{})
+                        data = context.new_object();
+                    return data.get<ObjectPtr>();
+                },
+                [&context](PropertyReference const& property_reference) {
+                    auto& data = property_reference.parent.get<ObjectPtr>()->properties[property_reference.name];
+                    if (data == Data{})
+                        data = context.new_object();
+                    return data.get<ObjectPtr>();
+                },
+                [&context](ArrayReference const& array_reference) {
+                    auto& data = array_reference.array.get<ObjectPtr>()->array[array_reference.i];
+                    if (data == Data{})
+                        data = context.new_object();
+                    return data.get<ObjectPtr>();
+                }
+            }
+        , reference);
     }
 
     ObjectPtr get_object(GlobalContext& context, Data& data) {

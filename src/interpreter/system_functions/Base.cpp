@@ -430,29 +430,27 @@ namespace Interpreter::SystemFunctions {
             std::ostringstream os;
 
             if (auto object = get_if<ObjectPtr>(&data)) {
-                if (object && *object) {
-                    try {
-                        if ((*object)->array.capacity() > 0)
-                            os << (*object)->to_string();
-                        else
-                            throw Data::BadAccess();
-                    } catch (Data::BadAccess const&) {
-                        bool prev = false;
-                        os << "(";
-                        for (auto const& [key, value] : (*object)->properties) if (value != Data{}) {
-                            if (prev)
-                                os << ", ";
-                            prev = true;
-                            os << key << ": " << Interpreter::string_from(context, value);
-                        }
-                        for (auto d : (*object)->array) {
-                            if (prev)
-                                os << ", ";
-                            prev = true;
-                            os << Interpreter::string_from(context, d);
-                        }
-                        os << ")";
+                try {
+                    if ((*object)->array.capacity() > 0)
+                        os << (*object)->to_string();
+                    else
+                        throw Data::BadAccess();
+                } catch (Data::BadAccess const&) {
+                    bool prev = false;
+                    os << "(";
+                    for (auto const& [key, value] : (*object)->properties) if (value != Data{}) {
+                        if (prev)
+                            os << ", ";
+                        prev = true;
+                        os << key << ": " << Interpreter::string_from(context, value);
                     }
+                    for (auto d : (*object)->array) {
+                        if (prev)
+                            os << ", ";
+                        prev = true;
+                        os << Interpreter::string_from(context, d);
+                    }
+                    os << ")";
                 }
             } else if (auto c = get_if<char>(&data))
                 os << *c;

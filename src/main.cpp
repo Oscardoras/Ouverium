@@ -131,8 +131,6 @@ public:
         auto async = context->system->properties["async"];
         try {
             Interpreter::try_call_function(*context, nullptr, async, std::make_shared<Parser::Tuple>());
-
-            context->GC_collect();
         } catch (Interpreter::Exception const& ex) {
             ex.print_stack_trace(*context);
         }

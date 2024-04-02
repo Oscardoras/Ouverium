@@ -2,6 +2,7 @@
 #define __INTERPRETER_CONTEXT_HPP__
 
 #include <filesystem>
+#include <mutex>
 #include <set>
 
 #include <boost/asio.hpp>
@@ -51,7 +52,8 @@ namespace Interpreter {
 
     protected:
 
-        std::list<Object> objects;
+        std::mutex mutex;
+        std::list<ObjectPtr::type> objects;
         unsigned long last_size = 1024;
         std::list<Data> references;
         std::set<Context*> contexts;

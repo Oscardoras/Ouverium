@@ -13,7 +13,22 @@ namespace Interpreter {
 
     struct Object;
 
-    using ObjectPtr = Object*;
+    class ObjectPtr {
+
+    public:
+
+        using type = std::pair<Object, bool>;
+
+        std::list<type>::iterator it;
+
+        ObjectPtr(std::list<type>::iterator it) : it{ it } {}
+
+        Object& operator*() const;
+        Object* operator->() const;
+        friend bool operator==(ObjectPtr const& a, ObjectPtr const& b);
+        friend bool operator!=(ObjectPtr const& a, ObjectPtr const& b) { return !(a == b); }
+
+    };
 
     class Data : protected std::any {
 

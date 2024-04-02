@@ -48,8 +48,6 @@ namespace Interpreter {
         std::vector<Data> array;
         CObj c_obj;
 
-        bool referenced = false;
-
         Object() = default;
         Object(std::string const& str);
 
