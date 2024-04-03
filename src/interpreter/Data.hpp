@@ -3,7 +3,6 @@
 
 #include <any>
 #include <exception>
-#include <ostream>
 #include <typeindex>
 
 #include "../Types.hpp"
@@ -22,6 +21,11 @@ namespace Interpreter {
         std::list<type>::iterator it;
 
         ObjectPtr(std::list<type>::iterator it) : it{ it } {}
+
+        ObjectPtr(ObjectPtr const& ptr);
+        ObjectPtr& operator=(ObjectPtr const& ptr);
+
+        void affect() const;
 
         Object& operator*() const;
         Object* operator->() const;

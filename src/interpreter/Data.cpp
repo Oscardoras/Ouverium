@@ -3,6 +3,19 @@
 
 namespace Interpreter {
 
+    ObjectPtr::ObjectPtr(ObjectPtr const& ptr) {
+        ptr.affect();
+        
+        it = ptr.it;
+    }
+
+    ObjectPtr& ObjectPtr::operator=(ObjectPtr const& ptr) {
+        ptr.affect();
+
+        it = ptr.it;
+        return *this;
+    }
+
     Object& ObjectPtr::operator* () const {
         return it->first;
     }
