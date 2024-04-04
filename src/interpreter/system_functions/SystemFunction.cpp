@@ -40,34 +40,34 @@ namespace Interpreter::SystemFunctions {
     }
 
 
-    ObjectPtr get_object(GlobalContext& context, IndirectReference const& reference) {
+    ObjectPtr get_object(IndirectReference const& reference) {
         return std::visit(
             overloaded{
-                [&context](SymbolReference const& symbol_reference) {
-                    auto& data = symbol_reference.get();
+                [](SymbolReference const& symbol_reference) {
+                    auto& data = symbol_reference.it->first;
                     if (data == Data{})
-                        data = context.new_object();
+                        data = GC::new_object();
                     return data.get<ObjectPtr>();
                 },
-                [&context](PropertyReference const& property_reference) {
+                [](PropertyReference const& property_reference) {
                     auto& data = property_reference.parent.get<ObjectPtr>()->properties[property_reference.name];
                     if (data == Data{})
-                        data = context.new_object();
+                        data = GC::new_object();
                     return data.get<ObjectPtr>();
                 },
-                [&context](ArrayReference const& array_reference) {
+                [](ArrayReference const& array_reference) {
                     auto& data = array_reference.array.get<ObjectPtr>()->array[array_reference.i];
                     if (data == Data{})
-                        data = context.new_object();
+                        data = GC::new_object();
                     return data.get<ObjectPtr>();
                 }
             }
         , reference);
     }
 
-    ObjectPtr get_object(GlobalContext& context, Data& data) {
+    ObjectPtr get_object(Data& data) {
         if (data == Data{})
-            data = context.new_object();
+            data = GC::new_object();
         return data.get<ObjectPtr>();
     }
 

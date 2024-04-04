@@ -132,16 +132,16 @@ namespace Interpreter::SystemFunctions {
         }
 
         void init(GlobalContext& context) {
-            get_object(context, context["Char"])->functions.push_front(SystemFunction{ constructor_args, char_constructor });
-            get_object(context, context["Float"])->functions.push_front(SystemFunction{ constructor_args, float_constructor });
-            get_object(context, context["Int"])->functions.push_front(SystemFunction{ constructor_args, int_constructor });
-            get_object(context, context["Bool"])->functions.push_front(SystemFunction{ constructor_args, bool_constructor });
-            get_object(context, context["Array"])->functions.push_front(SystemFunction{ constructor_args, array_constructor });
-            get_object(context, context["Tuple"])->functions.push_front(SystemFunction{ tuple_constructor_args, tuple_constructor });
-            get_object(context, context["Function"])->functions.push_front(SystemFunction{ constructor_args, function_constructor });
+            get_object(context["Char"])->functions.push_front(SystemFunction{ constructor_args, char_constructor });
+            get_object(context["Float"])->functions.push_front(SystemFunction{ constructor_args, float_constructor });
+            get_object(context["Int"])->functions.push_front(SystemFunction{ constructor_args, int_constructor });
+            get_object(context["Bool"])->functions.push_front(SystemFunction{ constructor_args, bool_constructor });
+            get_object(context["Array"])->functions.push_front(SystemFunction{ constructor_args, array_constructor });
+            get_object(context["Tuple"])->functions.push_front(SystemFunction{ tuple_constructor_args, tuple_constructor });
+            get_object(context["Function"])->functions.push_front(SystemFunction{ constructor_args, function_constructor });
 
-            get_object(context, get_object(context, context["Float"])->properties["parse"])->functions.push_front(SystemFunction{ constructor_args, float_parse });
-            get_object(context, get_object(context, context["Int"])->properties["parse"])->functions.push_front(SystemFunction{ constructor_args, int_parse });
+            get_object(get_object(context["Float"])->properties["parse"])->functions.push_front(SystemFunction{ constructor_args, float_parse });
+            get_object(get_object(context["Int"])->properties["parse"])->functions.push_front(SystemFunction{ constructor_args, int_parse });
 
             Function f = SystemFunction{ is_type_args, is_type };
             f.extern_symbols.emplace("Char", context["Char"]);
@@ -150,7 +150,7 @@ namespace Interpreter::SystemFunctions {
             f.extern_symbols.emplace("Bool", context["Bool"]);
             f.extern_symbols.emplace("Array", context["Array"]);
             f.extern_symbols.emplace("Function", context["Function"]);
-            get_object(context, context["~"])->functions.push_front(f);
+            get_object(context["~"])->functions.push_front(f);
         }
 
     }

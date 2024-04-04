@@ -9,7 +9,7 @@ namespace Interpreter {
     Data compute(Context& context, std::shared_ptr<Parser::Expression> caller, Reference const& reference) {
         if (auto symbol = std::get_if<SymbolReference>(&reference))
             if (*symbol == std::get<SymbolReference>(context.get_global()["getter"]))
-                return symbol->get();
+                return symbol->it->first;
 
         if (auto d = std::get_if<Data>(&reference); d && *d != Data{})
             return *d;
@@ -34,24 +34,24 @@ namespace Interpreter {
     IndirectReference Reference::to_indirect_reference(Context& context, std::shared_ptr<Parser::Expression> caller) const {
         return std::visit(
             overloaded{
-                [&context](Data const& data) -> IndirectReference {
-                    return context.new_reference(data);
+                [](Data const& data) -> IndirectReference {
+                    return GC::new_reference(data);
                 },
-                [&context](SymbolReference const& symbol_reference) -> IndirectReference {
+                [](SymbolReference const& symbol_reference) -> IndirectReference {
                     return symbol_reference;
                 },
-                [&context](PropertyReference const& property_reference) -> IndirectReference {
+                [](PropertyReference const& property_reference) -> IndirectReference {
                     return property_reference;
                 },
-                [&context](ArrayReference const& array_reference) -> IndirectReference {
+                [](ArrayReference const& array_reference) -> IndirectReference {
                     return array_reference;
                 },
                 [&context, &caller](TupleReference const& tuple_reference) -> IndirectReference {
-                    auto object = context.new_object();
+                    auto object = GC::new_object();
                     object->array.reserve(tuple_reference.size());
                     for (auto d : tuple_reference)
                         object->array.push_back(d.to_data(context, caller));
-                    return context.new_reference(Data(object));
+                    return GC::new_reference(Data(object));
                 }
             }
         , *this);

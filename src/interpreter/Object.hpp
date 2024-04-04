@@ -1,9 +1,6 @@
 #ifndef __INTERPRETER_OBJECT_HPP__
 #define __INTERPRETER_OBJECT_HPP__
 
-#include <any>
-#include <list>
-
 #include "Function.hpp"
 
 

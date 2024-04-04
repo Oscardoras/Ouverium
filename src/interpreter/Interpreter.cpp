@@ -19,7 +19,7 @@ namespace Interpreter {
     }
 
     Exception::Exception(Context& context, std::shared_ptr<Parser::Expression> thrower, std::string const& message) :
-        Exception(context, thrower, Data(context.new_object(Object(message)))) {}
+        Exception(context, thrower, Data(GC::new_object(Object(message)))) {}
 
     void Exception::print_stack_trace(Context& context) const {
         if (!positions.empty()) {
@@ -112,7 +112,7 @@ namespace Interpreter {
             }
         } else if (auto p_function = std::dynamic_pointer_cast<Parser::FunctionCall>(parameters)) {
             if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(p_function->function); symbol && !function_context.has_symbol(symbol->name)) {
-                ObjectPtr object = context.new_object();
+                ObjectPtr object = GC::new_object();
                 auto function_definition = std::make_shared<Parser::FunctionDefinition>();
                 function_definition->parameters = p_function->arguments;
 
@@ -258,7 +258,7 @@ namespace Interpreter {
 
             return call_function(context, function_call, reference, function_call->arguments);
         } else if (auto function_definition = std::dynamic_pointer_cast<Parser::FunctionDefinition>(expression)) {
-            auto object = context.new_object();
+            auto object = GC::new_object();
             object->functions.push_front(CustomFunction{ function_definition });
             auto& f = object->functions.back();
 
@@ -278,7 +278,7 @@ namespace Interpreter {
             } else if (auto d = std::get_if<OV_FLOAT>(&data)) {
                 return Data(*d);
             } else if (auto str = std::get_if<std::string>(&data)) {
-                return Data(context.new_object(*str));
+                return Data(GC::new_object(*str));
             } else {
                 return context[symbol->name];
             }

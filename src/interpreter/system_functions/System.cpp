@@ -70,7 +70,7 @@ namespace Interpreter::SystemFunctions {
                 std::vector<char> buffer(size);
                 stream.read(buffer.data(), size);
 
-                auto object = context.new_object();
+                auto object = GC::new_object();
                 object->array.reserve(size);
                 for (size_t i = 0; i < size; ++i)
                     object->array.push_back(Data(buffer[i]));
@@ -100,7 +100,7 @@ namespace Interpreter::SystemFunctions {
                 std::string str;
                 std::getline(stream, str);
 
-                return Data(context.new_object(str));
+                return Data(GC::new_object(str));
             } catch (std::exception const&) {
                 throw FunctionArgumentsError();
             }
@@ -207,7 +207,7 @@ namespace Interpreter::SystemFunctions {
             try {
                 auto path = context["path"].to_data(context).get<ObjectPtr>()->to_string();
 
-                auto object = context.new_object();
+                auto object = GC::new_object();
                 object->c_obj.set<std::ios>(std::make_unique<std::fstream>(path));
 
                 return Data(object);
@@ -229,8 +229,8 @@ namespace Interpreter::SystemFunctions {
             }
         }
 
-        Reference file_get_working_directory(FunctionContext& context) {
-            return Data(context.new_object(std::filesystem::current_path().string()));
+        Reference file_get_working_directory(FunctionContext&) {
+            return Data(GC::new_object(std::filesystem::current_path().string()));
         }
 
         Reference file_set_working_directory(FunctionContext& context) {
@@ -332,7 +332,7 @@ namespace Interpreter::SystemFunctions {
                 socket->connect(boost::asio::ip::tcp::endpoint(boost::asio::ip::address::from_string(address), port), ec);
 
                 if (!ec) {
-                    auto object = context.new_object();
+                    auto object = GC::new_object();
                     object->c_obj.set(std::move(socket));
                     return Data(object);
                 } else
@@ -358,7 +358,7 @@ namespace Interpreter::SystemFunctions {
                 auto received = socket.receive(boost::asio::buffer(buffer), {}, ec);
 
                 if (!ec) {
-                    auto object = context.new_object();
+                    auto object = GC::new_object();
                     object->array.reserve(received);
                     for (size_t i = 0; i < received; ++i)
                         object->array.push_back(Data(buffer[i]));
@@ -382,7 +382,7 @@ namespace Interpreter::SystemFunctions {
                 auto data = context["data"].to_data(context).get<ObjectPtr>();
 
                 std::vector<char> buffer(data->array.size());
-                for (std::size_t i = 0; i < data->array.size(); ++i)
+                for (size_t i = 0; i < data->array.size(); ++i)
                     buffer[i] = data->array[i].get<char>();
 
                 boost::system::error_code ec;
@@ -481,7 +481,7 @@ namespace Interpreter::SystemFunctions {
                 acceptor->listen();
 
                 if (!ec) {
-                    auto object = context.new_object();
+                    auto object = GC::new_object();
                     object->c_obj.set(std::move(acceptor));
                     return Data(object);
                 } else
@@ -501,7 +501,7 @@ namespace Interpreter::SystemFunctions {
                 acceptor.accept(*socket, ec);
 
                 if (!ec) {
-                    auto object = context.new_object();
+                    auto object = GC::new_object();
                     object->c_obj.set(std::move(socket));
                     return Data(object);
                 } else
@@ -590,7 +590,7 @@ namespace Interpreter::SystemFunctions {
                     throw FunctionArgumentsError();
 
                 if (!ec) {
-                    auto object = context.new_object();
+                    auto object = GC::new_object();
                     object->c_obj.set(std::move(socket));
                     return Data(object);
                 } else
@@ -618,7 +618,7 @@ namespace Interpreter::SystemFunctions {
                 socket->bind(endpoint, ec);
 
                 if (!ec) {
-                    auto object = context.new_object();
+                    auto object = GC::new_object();
                     object->c_obj.set(std::move(socket));
                     return Data(object);
                 } else
@@ -645,12 +645,12 @@ namespace Interpreter::SystemFunctions {
                 auto received = socket.receive_from(boost::asio::buffer(buffer), endpoint, {}, ec);
 
                 if (!ec) {
-                    auto object = context.new_object();
+                    auto object = GC::new_object();
                     object->array.reserve(received);
                     for (size_t i = 0; i < received; ++i)
                         object->array.push_back(Data(buffer[i]));
                     return TupleReference{
-                        TupleReference{Data(context.new_object(Object(endpoint.address().to_string()))), Data(static_cast<OV_INT>(endpoint.port()))},
+                        TupleReference{Data(GC::new_object(Object(endpoint.address().to_string()))), Data(static_cast<OV_INT>(endpoint.port()))},
                         Data(object)
                     };
                 } else
@@ -680,7 +680,7 @@ namespace Interpreter::SystemFunctions {
                 auto port = context["port"].to_data(context).get<OV_INT>();
 
                 std::vector<char> buffer(data->array.size());
-                for (std::size_t i = 0; i < data->array.size(); ++i)
+                for (size_t i = 0; i < data->array.size(); ++i)
                     buffer[i] = data->array[i].get<char>();
 
                 boost::system::error_code ec;
@@ -824,7 +824,7 @@ namespace Interpreter::SystemFunctions {
                 auto& global = context.get_global();
                 auto caller = context.caller;
 
-                auto obj = context.new_object();
+                auto obj = GC::new_object();
                 obj->c_obj.set(std::make_unique<Thread>([&global, caller, function]() {
                     try {
                         Interpreter::call_function(global, caller, Data(function), std::make_shared<Parser::Tuple>());
@@ -921,9 +921,9 @@ namespace Interpreter::SystemFunctions {
         }
 
         auto mutex_create_args = std::make_shared<Parser::Tuple>();
-        Reference mutex_create(FunctionContext& context) {
+        Reference mutex_create(FunctionContext&) {
             try {
-                auto obj = context.new_object();
+                auto obj = GC::new_object();
                 obj->c_obj.set(std::make_unique<std::mutex>());
                 return Data(obj);
             } catch (Data::BadAccess const&) {
@@ -965,89 +965,89 @@ namespace Interpreter::SystemFunctions {
 
 
         auto GC_collect_args = std::make_shared<Parser::Tuple>();
-        Reference GC_collect(FunctionContext& context) {
-            context.get_global().GC_collect();
+        Reference GC_collect(FunctionContext&) {
+            GC::collect();
             return Reference();
         }
 
 
         void init(GlobalContext& context) {
-            auto s = context.get_global().system;
+            auto s = get_object(context.get_global().system);
 
-            get_object(context, s->properties["async"]);
+            get_object(s->properties["async"]);
 
-            get_object(context, s->properties["stream_is"])->functions.push_front(SystemFunction{ stream_is_args, stream_is });
-            get_object(context, s->properties["stream_has"])->functions.push_front(SystemFunction{ stream_has_args, stream_has });
-            get_object(context, s->properties["istream_is"])->functions.push_front(SystemFunction{ istream_is_args, istream_is });
-            get_object(context, s->properties["stream_read"])->functions.push_front(SystemFunction{ stream_read1_args, stream_read1 });
-            get_object(context, s->properties["stream_read"])->functions.push_front(SystemFunction{ stream_read2_args, stream_read2 });
-            get_object(context, s->properties["stream_get_available"])->functions.push_front(SystemFunction{ stream_get_available_args, stream_get_available });
-            get_object(context, s->properties["stream_scan"])->functions.push_front(SystemFunction{ stream_scan_args, stream_scan });
-            get_object(context, s->properties["ostream_is"])->functions.push_front(SystemFunction{ ostream_is_args, ostream_is });
-            get_object(context, s->properties["stream_write"])->functions.push_front(SystemFunction{ stream_write1_args, stream_write1 });
-            get_object(context, s->properties["stream_write"])->functions.push_front(SystemFunction{ stream_write2_args, stream_write2 });
-            get_object(context, s->properties["stream_flush"])->functions.push_front(SystemFunction{ stream_flush_args, stream_flush });
-            get_object(context, s->properties["stream_print"])->functions.push_front(SystemFunction{ stream_print_args, stream_print });
+            get_object(s->properties["stream_is"])->functions.push_front(SystemFunction{ stream_is_args, stream_is });
+            get_object(s->properties["stream_has"])->functions.push_front(SystemFunction{ stream_has_args, stream_has });
+            get_object(s->properties["istream_is"])->functions.push_front(SystemFunction{ istream_is_args, istream_is });
+            get_object(s->properties["stream_read"])->functions.push_front(SystemFunction{ stream_read1_args, stream_read1 });
+            get_object(s->properties["stream_read"])->functions.push_front(SystemFunction{ stream_read2_args, stream_read2 });
+            get_object(s->properties["stream_get_available"])->functions.push_front(SystemFunction{ stream_get_available_args, stream_get_available });
+            get_object(s->properties["stream_scan"])->functions.push_front(SystemFunction{ stream_scan_args, stream_scan });
+            get_object(s->properties["ostream_is"])->functions.push_front(SystemFunction{ ostream_is_args, ostream_is });
+            get_object(s->properties["stream_write"])->functions.push_front(SystemFunction{ stream_write1_args, stream_write1 });
+            get_object(s->properties["stream_write"])->functions.push_front(SystemFunction{ stream_write2_args, stream_write2 });
+            get_object(s->properties["stream_flush"])->functions.push_front(SystemFunction{ stream_flush_args, stream_flush });
+            get_object(s->properties["stream_print"])->functions.push_front(SystemFunction{ stream_print_args, stream_print });
 
-            get_object(context, s->properties["file_is"])->functions.push_front(SystemFunction{ file_is_args, file_is });
-            get_object(context, s->properties["file_open"])->functions.push_front(SystemFunction{ file_path_args, file_open });
-            get_object(context, s->properties["file_close"])->functions.push_front(SystemFunction{ file_close_args, file_close });
-            get_object(context, s->properties["file_get_working_directory"])->functions.push_front(SystemFunction{ std::make_shared<Parser::Tuple>(), file_get_working_directory });
-            get_object(context, s->properties["file_set_working_directory"])->functions.push_front(SystemFunction{ file_path_args, file_set_working_directory });
-            get_object(context, s->properties["file_exists"])->functions.push_front(SystemFunction{ file_path_args, file_exists });
-            get_object(context, s->properties["file_is_directory"])->functions.push_front(SystemFunction{ file_path_args, file_is_directory });
-            get_object(context, s->properties["file_create_directories"])->functions.push_front(SystemFunction{ file_path_args, file_create_directories });
-            get_object(context, s->properties["file_copy"])->functions.push_front(SystemFunction{ file_copy_args, file_copy });
-            get_object(context, s->properties["file_delete"])->functions.push_front(SystemFunction{ file_path_args, file_delete });
+            get_object(s->properties["file_is"])->functions.push_front(SystemFunction{ file_is_args, file_is });
+            get_object(s->properties["file_open"])->functions.push_front(SystemFunction{ file_path_args, file_open });
+            get_object(s->properties["file_close"])->functions.push_front(SystemFunction{ file_close_args, file_close });
+            get_object(s->properties["file_get_working_directory"])->functions.push_front(SystemFunction{ std::make_shared<Parser::Tuple>(), file_get_working_directory });
+            get_object(s->properties["file_set_working_directory"])->functions.push_front(SystemFunction{ file_path_args, file_set_working_directory });
+            get_object(s->properties["file_exists"])->functions.push_front(SystemFunction{ file_path_args, file_exists });
+            get_object(s->properties["file_is_directory"])->functions.push_front(SystemFunction{ file_path_args, file_is_directory });
+            get_object(s->properties["file_create_directories"])->functions.push_front(SystemFunction{ file_path_args, file_create_directories });
+            get_object(s->properties["file_copy"])->functions.push_front(SystemFunction{ file_copy_args, file_copy });
+            get_object(s->properties["file_delete"])->functions.push_front(SystemFunction{ file_path_args, file_delete });
 
-            get_object(context, s->properties["TCPsocket_is"])->functions.push_front(SystemFunction{ TCPsocket_is_args, TCPsocket_is });
-            get_object(context, s->properties["TCPsocket_connect"])->functions.push_front(SystemFunction{ TCPsocket_connect_args, TCPsocket_connect });
-            get_object(context, s->properties["TCPsocket_receive"])->functions.push_front(SystemFunction{ TCPsocket_receive_args, TCPsocket_receive });
-            get_object(context, s->properties["TCPsocket_send"])->functions.push_front(SystemFunction{ TCPsocket_send_args, TCPsocket_send });
-            get_object(context, s->properties["TCPsocket_get_blocking"])->functions.push_front(SystemFunction{ TCPsocket_get_blocking_args, TCPsocket_get_blocking });
-            get_object(context, s->properties["TCPsocket_set_blocking"])->functions.push_front(SystemFunction{ TCPsocket_set_blocking_args, TCPsocket_set_blocking });
-            get_object(context, s->properties["TCPsocket_close"])->functions.push_front(SystemFunction{ TCPsocket_close_args, TCPsocket_close });
+            get_object(s->properties["TCPsocket_is"])->functions.push_front(SystemFunction{ TCPsocket_is_args, TCPsocket_is });
+            get_object(s->properties["TCPsocket_connect"])->functions.push_front(SystemFunction{ TCPsocket_connect_args, TCPsocket_connect });
+            get_object(s->properties["TCPsocket_receive"])->functions.push_front(SystemFunction{ TCPsocket_receive_args, TCPsocket_receive });
+            get_object(s->properties["TCPsocket_send"])->functions.push_front(SystemFunction{ TCPsocket_send_args, TCPsocket_send });
+            get_object(s->properties["TCPsocket_get_blocking"])->functions.push_front(SystemFunction{ TCPsocket_get_blocking_args, TCPsocket_get_blocking });
+            get_object(s->properties["TCPsocket_set_blocking"])->functions.push_front(SystemFunction{ TCPsocket_set_blocking_args, TCPsocket_set_blocking });
+            get_object(s->properties["TCPsocket_close"])->functions.push_front(SystemFunction{ TCPsocket_close_args, TCPsocket_close });
 
-            get_object(context, s->properties["TCPacceptor_is"])->functions.push_front(SystemFunction{ TCPacceptor_is_args, TCPacceptor_is });
-            get_object(context, s->properties["TCPacceptor_bind"])->functions.push_front(SystemFunction{ TCPacceptor_bind_args, TCPacceptor_bind });
-            get_object(context, s->properties["TCPacceptor_accept"])->functions.push_front(SystemFunction{ TCPacceptor_accept_args, TCPacceptor_accept });
-            get_object(context, s->properties["TCPacceptor_get_blocking"])->functions.push_front(SystemFunction{ TCPacceptor_get_blocking_args, TCPacceptor_get_blocking });
-            get_object(context, s->properties["TCPacceptor_set_blocking"])->functions.push_front(SystemFunction{ TCPacceptor_set_blocking_args, TCPacceptor_set_blocking });
-            get_object(context, s->properties["TCPacceptor_close"])->functions.push_front(SystemFunction{ TCPacceptor_close_args, TCPacceptor_close });
+            get_object(s->properties["TCPacceptor_is"])->functions.push_front(SystemFunction{ TCPacceptor_is_args, TCPacceptor_is });
+            get_object(s->properties["TCPacceptor_bind"])->functions.push_front(SystemFunction{ TCPacceptor_bind_args, TCPacceptor_bind });
+            get_object(s->properties["TCPacceptor_accept"])->functions.push_front(SystemFunction{ TCPacceptor_accept_args, TCPacceptor_accept });
+            get_object(s->properties["TCPacceptor_get_blocking"])->functions.push_front(SystemFunction{ TCPacceptor_get_blocking_args, TCPacceptor_get_blocking });
+            get_object(s->properties["TCPacceptor_set_blocking"])->functions.push_front(SystemFunction{ TCPacceptor_set_blocking_args, TCPacceptor_set_blocking });
+            get_object(s->properties["TCPacceptor_close"])->functions.push_front(SystemFunction{ TCPacceptor_close_args, TCPacceptor_close });
 
-            get_object(context, s->properties["UDPsocket_is"])->functions.push_front(SystemFunction{ UDPsocket_is_args, UDPsocket_is });
-            get_object(context, s->properties["UDPsocket_bind"])->functions.push_front(SystemFunction{ UDPsocket_bind_args, UDPsocket_bind });
-            get_object(context, s->properties["UDPsocket_open"])->functions.push_front(SystemFunction{ UDPsocket_open_args, UDPsocket_open });
-            get_object(context, s->properties["UDPsocket_receive_from"])->functions.push_front(SystemFunction{ UDPsocket_receive_from_args, UDPsocket_receive_from });
-            get_object(context, s->properties["UDPsocket_send_to"])->functions.push_front(SystemFunction{ UDPsocket_send_to_args, UDPsocket_send_to });
-            get_object(context, s->properties["UDPsocket_get_blocking"])->functions.push_front(SystemFunction{ UDPsocket_get_blocking_args, UDPsocket_get_blocking });
-            get_object(context, s->properties["UDPsocket_set_blocking"])->functions.push_front(SystemFunction{ UDPsocket_set_blocking_args, UDPsocket_set_blocking });
-            get_object(context, s->properties["UDPsocket_close"])->functions.push_front(SystemFunction{ UDPsocket_close_args, UDPsocket_close });
+            get_object(s->properties["UDPsocket_is"])->functions.push_front(SystemFunction{ UDPsocket_is_args, UDPsocket_is });
+            get_object(s->properties["UDPsocket_bind"])->functions.push_front(SystemFunction{ UDPsocket_bind_args, UDPsocket_bind });
+            get_object(s->properties["UDPsocket_open"])->functions.push_front(SystemFunction{ UDPsocket_open_args, UDPsocket_open });
+            get_object(s->properties["UDPsocket_receive_from"])->functions.push_front(SystemFunction{ UDPsocket_receive_from_args, UDPsocket_receive_from });
+            get_object(s->properties["UDPsocket_send_to"])->functions.push_front(SystemFunction{ UDPsocket_send_to_args, UDPsocket_send_to });
+            get_object(s->properties["UDPsocket_get_blocking"])->functions.push_front(SystemFunction{ UDPsocket_get_blocking_args, UDPsocket_get_blocking });
+            get_object(s->properties["UDPsocket_set_blocking"])->functions.push_front(SystemFunction{ UDPsocket_set_blocking_args, UDPsocket_set_blocking });
+            get_object(s->properties["UDPsocket_close"])->functions.push_front(SystemFunction{ UDPsocket_close_args, UDPsocket_close });
 
-            get_object(context, s->properties["time"])->functions.push_front(SystemFunction{ time_args, time });
-            get_object(context, s->properties["clock_system"])->functions.push_front(SystemFunction{ clock_system_args, clock_system });
-            get_object(context, s->properties["clock_steady"])->functions.push_front(SystemFunction{ clock_steady_args, clock_steady });
+            get_object(s->properties["time"])->functions.push_front(SystemFunction{ time_args, time });
+            get_object(s->properties["clock_system"])->functions.push_front(SystemFunction{ clock_system_args, clock_system });
+            get_object(s->properties["clock_steady"])->functions.push_front(SystemFunction{ clock_steady_args, clock_steady });
 
-            get_object(context, s->properties["thread_is"])->functions.push_front(SystemFunction{ thread_is_args, thread_is });
-            get_object(context, s->properties["thread_create"])->functions.push_front(SystemFunction{ thread_create_args, thread_create });
-            get_object(context, s->properties["thread_join"])->functions.push_front(SystemFunction{ thread_join_args, thread_join });
-            get_object(context, s->properties["thread_detach"])->functions.push_front(SystemFunction{ thread_detach_args, thread_detach });
-            get_object(context, s->properties["thread_get_id"])->functions.push_front(SystemFunction{ thread_get_id_args, thread_get_id });
-            get_object(context, s->properties["thread_current_id"])->functions.push_front(SystemFunction{ thread_current_id_args, thread_current_id });
-            get_object(context, s->properties["thread_sleep"])->functions.push_front(SystemFunction{ thread_sleep_args, thread_sleep });
-            get_object(context, s->properties["thread_hardware_concurrency"])->functions.push_front(SystemFunction{ thread_hardware_concurrency_args, thread_hardware_concurrency });
+            get_object(s->properties["thread_is"])->functions.push_front(SystemFunction{ thread_is_args, thread_is });
+            get_object(s->properties["thread_create"])->functions.push_front(SystemFunction{ thread_create_args, thread_create });
+            get_object(s->properties["thread_join"])->functions.push_front(SystemFunction{ thread_join_args, thread_join });
+            get_object(s->properties["thread_detach"])->functions.push_front(SystemFunction{ thread_detach_args, thread_detach });
+            get_object(s->properties["thread_get_id"])->functions.push_front(SystemFunction{ thread_get_id_args, thread_get_id });
+            get_object(s->properties["thread_current_id"])->functions.push_front(SystemFunction{ thread_current_id_args, thread_current_id });
+            get_object(s->properties["thread_sleep"])->functions.push_front(SystemFunction{ thread_sleep_args, thread_sleep });
+            get_object(s->properties["thread_hardware_concurrency"])->functions.push_front(SystemFunction{ thread_hardware_concurrency_args, thread_hardware_concurrency });
 
-            get_object(context, s->properties["mutex_is"])->functions.push_front(SystemFunction{ mutex_is_args, mutex_is });
-            get_object(context, s->properties["mutex_create"])->functions.push_front(SystemFunction{ mutex_create_args, mutex_create });
-            get_object(context, s->properties["mutex_lock"])->functions.push_front(SystemFunction{ mutex_lock_args, mutex_lock });
-            get_object(context, s->properties["mutex_try_lock"])->functions.push_front(SystemFunction{ mutex_try_lock_args, mutex_try_lock });
-            get_object(context, s->properties["mutex_unlock"])->functions.push_front(SystemFunction{ mutex_unlock_args, mutex_unlock });
+            get_object(s->properties["mutex_is"])->functions.push_front(SystemFunction{ mutex_is_args, mutex_is });
+            get_object(s->properties["mutex_create"])->functions.push_front(SystemFunction{ mutex_create_args, mutex_create });
+            get_object(s->properties["mutex_lock"])->functions.push_front(SystemFunction{ mutex_lock_args, mutex_lock });
+            get_object(s->properties["mutex_try_lock"])->functions.push_front(SystemFunction{ mutex_try_lock_args, mutex_try_lock });
+            get_object(s->properties["mutex_unlock"])->functions.push_front(SystemFunction{ mutex_unlock_args, mutex_unlock });
 
-            get_object(context, s->properties["GC_collect"])->functions.push_front(SystemFunction{ GC_collect_args, GC_collect });
+            get_object(s->properties["GC_collect"])->functions.push_front(SystemFunction{ GC_collect_args, GC_collect });
 
-            get_object(context, s->properties["in"])->c_obj.set(std::reference_wrapper<std::ios>(std::cin));
-            get_object(context, s->properties["out"])->c_obj.set(std::reference_wrapper<std::ios>(std::cout));
-            get_object(context, s->properties["err"])->c_obj.set(std::reference_wrapper<std::ios>(std::cerr));
+            get_object(s->properties["in"])->c_obj.set(std::reference_wrapper<std::ios>(std::cin));
+            get_object(s->properties["out"])->c_obj.set(std::reference_wrapper<std::ios>(std::cout));
+            get_object(s->properties["err"])->c_obj.set(std::reference_wrapper<std::ios>(std::cerr));
         }
 
     }

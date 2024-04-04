@@ -3,6 +3,8 @@
 
 #include <any>
 #include <exception>
+#include <functional>
+#include <list>
 #include <typeindex>
 
 #include "../Types.hpp"
@@ -24,13 +26,12 @@ namespace Interpreter {
 
         ObjectPtr(ObjectPtr const& ptr);
         ObjectPtr& operator=(ObjectPtr const& ptr);
-
-        void affect() const;
+        ~ObjectPtr();
 
         Object& operator*() const;
         Object* operator->() const;
         friend bool operator==(ObjectPtr const& a, ObjectPtr const& b);
-        friend bool operator!=(ObjectPtr const& a, ObjectPtr const& b) { return !(a == b); }
+        friend bool operator!=(ObjectPtr const& a, ObjectPtr const& b);
 
     };
 

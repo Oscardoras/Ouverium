@@ -3,31 +3,6 @@
 
 namespace Interpreter {
 
-    ObjectPtr::ObjectPtr(ObjectPtr const& ptr) {
-        ptr.affect();
-        
-        it = ptr.it;
-    }
-
-    ObjectPtr& ObjectPtr::operator=(ObjectPtr const& ptr) {
-        ptr.affect();
-
-        it = ptr.it;
-        return *this;
-    }
-
-    Object& ObjectPtr::operator* () const {
-        return it->first;
-    }
-
-    Object* ObjectPtr::operator->() const {
-        return &it->first;
-    }
-    bool operator==(ObjectPtr const& a, ObjectPtr const& b) {
-        return &(*a) == &(*b);
-    }
-
-
     Data::Comparators Data::comparators = {
         Data::SimpleComparator<ObjectPtr, ObjectPtr>,
         Data::SimpleComparator<char, char>,

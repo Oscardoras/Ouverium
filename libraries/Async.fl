@@ -42,6 +42,7 @@ class AsyncExecutor {
                     it.remove();
                 };
             };
+            !this._functions.empty
         }
     ));
 
@@ -57,6 +58,6 @@ class AsyncExecutor {
     AsyncExecutor.main := AsyncExecutor();
 
     import("system").async : () |-> {
-        AsyncExecutor.main.poll();
+        AsyncExecutor.main.poll()
     };
 };

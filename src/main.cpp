@@ -128,9 +128,11 @@ public:
             }
         }
 
-        auto async = context->system->properties["async"];
+        auto async = context->system.get<Interpreter::ObjectPtr>()->properties["async"];
         try {
-            Interpreter::try_call_function(*context, nullptr, async, std::make_shared<Parser::Tuple>());
+            auto r = Interpreter::try_call_function(*context, nullptr, async, std::make_shared<Parser::Tuple>());
+            if (auto reference = std::get_if<Interpreter::Reference>(&r))
+                reference->to_data(*context).get<bool>();
         } catch (Interpreter::Exception const& ex) {
             ex.print_stack_trace(*context);
         }
@@ -201,7 +203,17 @@ public:
     }
 
     bool on_loop() override {
-        return false;
+        auto async = context->system.get<Interpreter::ObjectPtr>()->properties["async"];
+        try {
+            auto r = Interpreter::try_call_function(*context, nullptr, async, std::make_shared<Parser::Tuple>());
+            if (auto reference = std::get_if<Interpreter::Reference>(&r))
+                return reference->to_data(*context).get<bool>();
+            else
+                return false;
+        } catch (Interpreter::Exception const& ex) {
+            ex.print_stack_trace(*context);
+            return false;
+        }
     }
 
     int on_exit() override {

@@ -2,6 +2,7 @@
 #define __INTERPRETER_INTERPRETER_HPP__
 
 #include "Context.hpp"
+#include "GC.hpp"
 
 
 namespace Interpreter {
@@ -10,8 +11,8 @@ namespace Interpreter {
 
         void init(GlobalContext& context);
 
-        ObjectPtr get_object(GlobalContext& context, IndirectReference const& reference);
-        ObjectPtr get_object(GlobalContext& context, Data& data);
+        ObjectPtr get_object(IndirectReference const& reference);
+        ObjectPtr get_object(Data& data);
 
     }
 

@@ -177,10 +177,10 @@ namespace Interpreter::SystemFunctions {
             try {
                 auto const& functions = context["function"].to_data(context).get<ObjectPtr>()->functions;
 
-                auto object = context.new_object();
-                object->array.reserve(std::min(static_cast<std::size_t>(1), functions.size()));
+                auto object = GC::new_object();
+                object->array.reserve(std::min(static_cast<size_t>(1), functions.size()));
                 for (auto const& f : functions) {
-                    auto obj = context.new_object();
+                    auto obj = GC::new_object();
                     obj->functions.push_front(f);
                     object->array.push_back(Data(obj));
                 }
@@ -205,21 +205,21 @@ namespace Interpreter::SystemFunctions {
         }
 
         void init(GlobalContext& context) {
-            auto array = get_object(context, context["Array"]);
-            get_object(context, array->properties["length"])->functions.push_front(SystemFunction{ length_args, length });
-            get_object(context, array->properties["get_capacity"])->functions.push_front(SystemFunction{ get_capacity_args, get_capacity });
-            get_object(context, array->properties["set_capacity"])->functions.push_front(SystemFunction{ set_capacity_args, set_capacity });
-            get_object(context, array->properties["get"])->functions.push_front(SystemFunction{ get_args, get });
-            get_object(context, array->properties["add"])->functions.push_front(SystemFunction{ add_args, add });
-            get_object(context, array->properties["remove"])->functions.push_front(SystemFunction{ remove_args, remove });
-            get_object(context, array->properties["shift"])->functions.push_front(SystemFunction{ shift_args, shift });
-            get_object(context, array->properties["concat"])->functions.push_front(SystemFunction{ concat_args, concat });
+            auto array = get_object(context["Array"]);
+            get_object(array->properties["length"])->functions.push_front(SystemFunction{ length_args, length });
+            get_object(array->properties["get_capacity"])->functions.push_front(SystemFunction{ get_capacity_args, get_capacity });
+            get_object(array->properties["set_capacity"])->functions.push_front(SystemFunction{ set_capacity_args, set_capacity });
+            get_object(array->properties["get"])->functions.push_front(SystemFunction{ get_args, get });
+            get_object(array->properties["add"])->functions.push_front(SystemFunction{ add_args, add });
+            get_object(array->properties["remove"])->functions.push_front(SystemFunction{ remove_args, remove });
+            get_object(array->properties["shift"])->functions.push_front(SystemFunction{ shift_args, shift });
+            get_object(array->properties["concat"])->functions.push_front(SystemFunction{ concat_args, concat });
 
-            get_object(context, context["foreach"])->functions.push_front(SystemFunction{ foreach_args, foreach });
+            get_object(context["foreach"])->functions.push_front(SystemFunction{ foreach_args, foreach });
 
-            auto function = get_object(context, context["Function"]);
-            get_object(context, function->properties["extract"])->functions.push_front(SystemFunction{ function_extract_args, function_extract });
-            get_object(context, function->properties["clear"])->functions.push_front(SystemFunction{ function_clear_args, function_clear });
+            auto function = get_object(context["Function"]);
+            get_object(function->properties["extract"])->functions.push_front(SystemFunction{ function_extract_args, function_extract });
+            get_object(function->properties["clear"])->functions.push_front(SystemFunction{ function_clear_args, function_clear });
         }
 
     }

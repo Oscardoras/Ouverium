@@ -22,7 +22,7 @@ namespace Interpreter::SystemFunctions {
                 auto frame = new wxFrame(nullptr, wxID_ANY, str);
                 frame->Show(true);
 
-                auto obj = context.new_object();
+                auto obj = GC::new_object();
                 obj->c_obj.set(std::make_unique<wxObject*>(frame));
                 return Data(obj);
             } catch (Data::BadAccess const&) {
@@ -37,7 +37,7 @@ namespace Interpreter::SystemFunctions {
 
                 auto panel = new wxPanel(parent, wxID_ANY);
 
-                auto obj = context.new_object();
+                auto obj = GC::new_object();
                 obj->c_obj.set(std::make_unique<wxObject*>(panel));
                 return Data(obj);
             } catch (Data::BadAccess const&) {
@@ -54,7 +54,7 @@ namespace Interpreter::SystemFunctions {
 
                 auto button = new wxButton(parent, wxID_ANY);
 
-                auto obj = context.new_object();
+                auto obj = GC::new_object();
                 obj->c_obj.set(std::make_unique<wxObject*>(button));
                 return Data(obj);
             } catch (Data::BadAccess const&) {
@@ -144,17 +144,17 @@ namespace Interpreter::SystemFunctions {
 
 
         void init(GlobalContext& context) {
-            auto s = context.get_global().system;
+            auto s = get_object(context.get_global().system);
 
-            get_object(context, s->properties["ui_new_frame"])->functions.push_front(SystemFunction{ ui_new_frame_args, ui_new_frame });
+            get_object(s->properties["ui_new_frame"])->functions.push_front(SystemFunction{ ui_new_frame_args, ui_new_frame });
 
-            get_object(context, s->properties["ui_new_panel"])->functions.push_front(SystemFunction{ ui_new_panel_args, ui_new_panel });
-            get_object(context, s->properties["ui_new_button"])->functions.push_front(SystemFunction{ ui_new_button_args, ui_new_button });
+            get_object(s->properties["ui_new_panel"])->functions.push_front(SystemFunction{ ui_new_panel_args, ui_new_panel });
+            get_object(s->properties["ui_new_button"])->functions.push_front(SystemFunction{ ui_new_button_args, ui_new_button });
 
-            get_object(context, s->properties["ui_add_event"])->functions.push_front(SystemFunction{ ui_add_event_args, EventHandler(wxEVT_BUTTON) });
+            get_object(s->properties["ui_add_event"])->functions.push_front(SystemFunction{ ui_add_event_args, EventHandler(wxEVT_BUTTON) });
 
-            get_object(context, s->properties["ui_set_position"])->functions.push_front(SystemFunction{ ui_set_position_args, ui_set_position });
-            get_object(context, s->properties["ui_set_size"])->functions.push_front(SystemFunction{ ui_set_size_args, ui_set_size });
+            get_object(s->properties["ui_set_position"])->functions.push_front(SystemFunction{ ui_set_position_args, ui_set_position });
+            get_object(s->properties["ui_set_size"])->functions.push_front(SystemFunction{ ui_set_size_args, ui_set_size });
         }
 
     }

@@ -2,12 +2,10 @@
 #define __INTERPRETER_CONTEXT_HPP__
 
 #include <filesystem>
-#include <mutex>
+#include <map>
 #include <set>
 
-#include <boost/asio.hpp>
-
-#include "Object.hpp"
+#include "Reference.hpp"
 
 
 namespace Interpreter {
@@ -26,15 +24,11 @@ namespace Interpreter {
 
         std::shared_ptr<Parser::Expression> caller;
 
-        Context(std::shared_ptr<Parser::Expression> caller) :
-            caller(caller) {}
+        Context(std::shared_ptr<Parser::Expression> caller);
 
         virtual Context& get_parent() = 0;
         virtual GlobalContext& get_global() = 0;
         virtual unsigned get_recurion_level() = 0;
-
-        ObjectPtr new_object(Object const& object = {});
-        Data& new_reference(Data const& data = {});
 
         std::set<std::string> get_symbols() const;
         bool has_symbol(std::string const& symbol) const;
@@ -44,23 +38,15 @@ namespace Interpreter {
         auto begin() const { return symbols.begin(); }
         auto end() const { return symbols.end(); }
 
-        virtual ~Context() = default;
+        virtual ~Context();
 
     };
 
     class GlobalContext : public Context {
 
-    protected:
-
-        std::mutex mutex;
-        std::list<ObjectPtr::type> objects;
-        unsigned long last_size = 1024;
-        std::list<Data> references;
-        std::set<Context*> contexts;
-
     public:
 
-        ObjectPtr system;
+        Data system;
 
         std::map<std::filesystem::path, std::shared_ptr<Parser::Expression>> sources;
         unsigned recursion_limit = 100;
@@ -78,11 +64,6 @@ namespace Interpreter {
         virtual unsigned get_recurion_level() override {
             return 0;
         }
-
-        void GC_collect();
-
-        friend Context;
-        friend FunctionContext;
 
     };
 
@@ -108,8 +89,6 @@ namespace Interpreter {
         virtual unsigned get_recurion_level() override {
             return recursion_level;
         }
-
-        ~FunctionContext();
 
     };
 

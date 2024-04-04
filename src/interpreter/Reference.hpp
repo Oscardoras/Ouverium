@@ -1,7 +1,6 @@
 #ifndef __INTERPRETER_REFERENCE_HPP__
 #define __INTERPRETER_REFERENCE_HPP__
 
-#include <functional>
 #include <vector>
 
 #include "Data.hpp"
@@ -15,7 +14,11 @@ namespace Interpreter {
     class Reference;
 
     using TupleReference = std::vector<Reference>;
-    using SymbolReference = std::reference_wrapper<Data>;
+    struct SymbolReference {
+        using type = std::pair<Data, bool>;
+
+        std::list<type>::iterator it;
+    };
     struct PropertyReference {
         Data parent;
         std::string name;
@@ -48,7 +51,7 @@ namespace Interpreter {
     };
 
     inline auto operator==(SymbolReference const& a, SymbolReference const& b) {
-        return &a.get() == &b.get();
+        return a.it == b.it;
     }
 
     inline auto operator==(PropertyReference const& a, PropertyReference const& b) {
