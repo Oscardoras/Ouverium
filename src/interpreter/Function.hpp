@@ -16,6 +16,10 @@ namespace Interpreter {
     struct SystemFunction {
         std::shared_ptr<Parser::Expression> parameters;
         std::function<Reference(FunctionContext&)> pointer;
+
+        friend bool operator==(SystemFunction const& a, SystemFunction const& b) {
+            return a.parameters == b.parameters && a.pointer.target<Reference(*)(FunctionContext&)>() == b.pointer.target<Reference(*)(FunctionContext&)>();
+        }
     };
 
     struct Function : public std::variant<CustomFunction, SystemFunction> {

@@ -80,23 +80,23 @@ namespace Translator::CStandard {
         return code;
     }
 
-    auto get_size(std::set<std::string> const& properties) {
+    auto get_size(std::set<Name> const& properties) {
         size_t size = properties.size();
 
         std::set<uint32_t> hash_set;
         for (auto p : properties)
-            hash_set.insert(hash_string(p.c_str()) % size);
+            hash_set.insert(hash_string(p.symbol.c_str()) % size);
 
         while (hash_set.size() < properties.size()) {
             ++size;
             hash_set = {};
             for (auto p : properties)
-                hash_set.insert(hash_string(p.c_str()) % size);
+                hash_set.insert(hash_string(p.symbol.c_str()) % size);
         }
 
-        std::vector<std::string> vector(size);
+        std::vector<Name> vector(size);
         for (auto p : properties)
-            vector[hash_string(p.c_str()) % size] = p;
+            vector[hash_string(p.symbol.c_str()) % size] = p;
         return vector;
     }
 
@@ -140,15 +140,15 @@ namespace Translator::CStandard {
                 implementation += "\t.function.offset = offsetof(struct " + structure->name.get() + ", Ov_function),\n";
             else
                 implementation += "\t.function.offset = -1,\n";
-            std::set<std::string> properties;
+            std::set<Name> properties;
             for (auto const& [p, _] : structure->properties)
                 properties.insert(p);
             auto vector = get_size(properties);
             implementation += "\t.table_size = " + std::to_string(vector.size()) + ",\n";
             implementation += "\t.table_tab = {\n";
             for (auto p : vector)
-                if (p != "")
-                    implementation += "\t\t{ .hash = " + std::to_string(hash_string(p.c_str())) + ", .offset = offsetof(struct " + structure->name.get() + ", " + p + ") },\n";
+                if (p.symbol != "")
+                    implementation += "\t\t{ .hash = " + std::to_string(hash_string(p.symbol.c_str())) + ", .offset = offsetof(struct " + structure->name.get() + ", " + p.get() + ") },\n";
                 else
                     implementation += "\t\t{ .hash = 0, .offset = 0 },\n";
             implementation += "\t}\n";
@@ -230,7 +230,7 @@ namespace Translator::CStandard {
         implementation += "\tOv_init();\n";
 
         for (auto const& [var, _] : code.main.global_variables) {
-            if (!symbols.contains(var)) {
+            if (!symbols.contains(var.symbol)) {
                 implementation += "\tOv_UnknownData " + var.get() + "_data = { .vtable = &Ov_VirtualTable_Object, .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object) };\n";
                 implementation += "\tOv_Reference_Owned " + var.get() + " = Ov_Reference_new_symbol(" + var.get() + "_data);\n";
             }
@@ -274,7 +274,7 @@ namespace Translator::CStandard {
     }
 
     std::string Symbol::get_expression_code() const {
-        return name;
+        return name.get();
     }
 
     std::string Value::get_expression_code() const {

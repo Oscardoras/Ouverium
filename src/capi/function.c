@@ -27,7 +27,6 @@ struct Ov_FunctionCapture Ov_GC_reference_to_capture(Ov_GC_Reference* reference)
         case PROPERTY: {
             capture.type = Ov_FUNCTIONCAPTURE_PROPERTY;
             capture.property.parent = reference->property.parent;
-            capture.property.vtable = reference->property.vtable;
             capture.property.hash = reference->property.hash;
             break;
         }
@@ -62,7 +61,7 @@ Ov_Reference_Owned Ov_GC_capture_to_reference(struct Ov_FunctionCapture capture)
             return (Ov_Reference_Owned) reference;
         }
         case Ov_FUNCTIONCAPTURE_PROPERTY:
-            return Ov_Reference_new_property(capture.property.parent, capture.property.vtable, capture.property.hash);
+            return Ov_Reference_new_property(capture.property.parent, capture.property.hash);
         case Ov_FUNCTIONCAPTURE_ARRAY:
             return Ov_Reference_new_array(capture.array.array, capture.array.i);
         default:
@@ -289,6 +288,11 @@ bool Ov_Function_parse(Ov_Reference_Shared captures[], Ov_Reference_Shared* vars
 }
 
 Ov_Reference_Owned Ov_Function_eval(Ov_Function* function, Ov_Expression args) {
+    if (*function == NULL) {
+        assert(false); //throw exception
+        return NULL;
+    }
+
     Ov_FunctionCell* ptr;
     for (ptr = *function; ptr != NULL; ptr = ptr->next) {
         const char* c;

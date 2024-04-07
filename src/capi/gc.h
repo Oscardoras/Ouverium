@@ -16,39 +16,44 @@ extern "C" {
         bool iterated;
     } Ov_GC_Element;
 
-    typedef struct Ov_GC_Reference {
-        enum {
-            NONE = 0,
-            DATA,
-            SYMBOL,
-            PROPERTY,
-            ARRAY,
-            TUPLE
-        } type;
-        union {
-            struct {
-                size_t size;
-                struct Ov_GC_Reference* next;
-            } none;
+    enum Ov_ReferenceType {
+        NONE = 0,
+        DATA,
+        SYMBOL,
+        PROPERTY,
+        ARRAY,
+        TUPLE
+    };
 
-            Ov_UnknownData data;
-            Ov_UnknownData* symbol;
-            struct {
-                Ov_UnknownData parent;
-                Ov_VirtualTable* vtable;
-                unsigned int hash;
-            } property;
-            struct {
-                Ov_UnknownData array;
-                size_t i;
-            } array;
-            struct {
-                Ov_VirtualTable* vtable;
-                struct Ov_GC_Reference* references;
-                size_t size;
-            } tuple;
-        };
-    } Ov_GC_Reference;
+#define Ov_Reference(NAME) \
+    struct NAME { \
+        enum Ov_ReferenceType type; \
+        union { \
+            struct { \
+                size_t size; \
+                struct Ov_GC_Reference* next; \
+            } none; \
+            Ov_UnknownData data; \
+            Ov_UnknownData* symbol; \
+            struct { \
+                Ov_UnknownData parent; \
+                unsigned int hash; \
+            } property; \
+            struct { \
+                Ov_UnknownData array; \
+                size_t i; \
+            } array; \
+            struct { \
+                Ov_VirtualTable* vtable; \
+                struct Ov_GC_Reference* references; \
+                size_t size; \
+            } tuple; \
+        }; \
+    }
+
+    Ov_Reference(Ov_Reference_Owned_t);
+    Ov_Reference(Ov_Reference_Shared_t);
+    typedef Ov_Reference(Ov_GC_Reference) Ov_GC_Reference;
 
     typedef struct Ov_GC_Roots {
         struct Ov_GC_Roots* next;

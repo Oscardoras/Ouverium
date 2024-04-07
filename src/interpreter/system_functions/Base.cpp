@@ -372,7 +372,9 @@ namespace Interpreter::SystemFunctions {
         bool eq(Data a, Data b) {
             if (auto a_object = get_if<ObjectPtr>(&a)) {
                 if (auto b_object = get_if<ObjectPtr>(&b))
-                    return (*a_object)->properties == (*b_object)->properties && (*a_object)->array == (*b_object)->array;
+                    return (*a_object)->properties == (*b_object)->properties
+                    && (*a_object)->functions == (*b_object)->functions
+                    && (*a_object)->array == (*b_object)->array;
                 else return false;
             } else if (auto a_char = get_if<char>(&a)) {
                 if (auto b_char = get_if<char>(&b)) return *a_char == *b_char;

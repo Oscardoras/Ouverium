@@ -17,15 +17,12 @@ namespace Translator::CStandard {
     struct Name {
         std::string symbol;
 
-        Name(std::string const& symbol) :
+        Name(std::string const& symbol = {}) :
             symbol{ symbol } {}
         Name(const char* symbol) :
             symbol{ symbol } {}
 
         std::string get() const;
-        operator std::string() const {
-            return get();
-        }
 
         friend auto operator<=>(Name const& a, Name const& b) {
             return a.symbol <=> b.symbol;
@@ -125,7 +122,7 @@ namespace Translator::CStandard {
                 return std::to_string(v);
             }
             std::string operator()(std::string const& s) {
-                return s;
+                return "\"" + s + "\"";
             }
         };
     };

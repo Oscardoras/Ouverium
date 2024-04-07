@@ -20,8 +20,7 @@ namespace Translator::CStandard {
             create_structures();
 
             for (auto const& symbol : expression->symbols)
-                if (std::holds_alternative<std::nullptr_t>(get_symbol(symbol)))
-                    code.main.global_variables[symbol] = Unknown;
+                code.main.global_variables[symbol] = Unknown;
 
             code.main.return_value = get_expression(expression, code.main.body, code.main.body.end());
         }
@@ -143,8 +142,7 @@ namespace Translator::CStandard {
                     } else {
                         auto lambda = std::make_shared<Lambda>();
                         for (auto const& symbol : expression->symbols)
-                            if (std::holds_alternative<std::nullptr_t>(get_symbol(symbol)))
-                                lambda->captures.push_back({ symbol, Unknown });
+                            lambda->captures.push_back({ symbol, Unknown });
                         lambda->body.return_value = get_expression(expression, lambda->body.body, lambda->body.body.begin());
 
                         if (!lambda->body.return_value->owned) {
@@ -274,6 +272,7 @@ namespace Translator::CStandard {
                         std::make_shared<Value>(function->format),
                         std::make_shared<Symbol>(function->name.get() + "_body"),
                         function->filter.return_value ? std::make_shared<Symbol>(function->name.get() + "_filter") : std::make_shared<Symbol>("NULL"),
+                        std::make_shared<Value>(static_cast<OV_INT>(function->local_variables.size())),
                         captures,
                         std::make_shared<Value>(static_cast<OV_INT>(captures->objects.size()))
                     }
@@ -335,7 +334,7 @@ namespace Translator::CStandard {
                 ));
 
                 return r;
-            } else if (std::holds_alternative<std::string>(v)) {
+            } else if (auto str = std::get_if<std::string>(&v)) {
                 auto r = std::make_shared<Reference>(true);
 
                 instructions.insert(it, std::make_shared<Affectation>(
@@ -343,7 +342,7 @@ namespace Translator::CStandard {
                     std::make_shared<FunctionCall>(FunctionCall(
                         std::make_shared<Symbol>("Ov_Reference_new_string"),
                         {
-                            std::make_shared<Value>(symbol->name),
+                            std::make_shared<Value>(*str),
                             std::make_shared<Referencing>(std::make_shared<Symbol>("Ov_VirtualTable_Object"))
                         }
                     ))

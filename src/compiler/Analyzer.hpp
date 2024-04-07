@@ -15,7 +15,7 @@ namespace Analyzer {
         std::string name;
         virtual ~Type() = default;
     };
-    using Types = std::vector<std::weak_ptr<Type>>;
+    using Types = std::set<std::weak_ptr<Type>>;
 
     inline std::shared_ptr<Type> Bool = std::make_shared<Type>();
     inline std::shared_ptr<Type> Char = std::make_shared<Type>();
@@ -23,8 +23,8 @@ namespace Analyzer {
     inline std::shared_ptr<Type> Float = std::make_shared<Type>();
 
     struct Structure : public Type {
-        std::map<std::string, std::set<std::weak_ptr<Type>>> properties;
-        std::set<std::weak_ptr<Type>> array;
+        std::map<std::string, Types> properties;
+        Types array;
         bool function = false;
     };
 
@@ -36,7 +36,7 @@ namespace Analyzer {
 
     struct MetaData {
         std::set<std::shared_ptr<Structure>> structures;
-        std::map<std::shared_ptr<Parser::Expression>, std::set<std::shared_ptr<Type>>> types;
+        std::map<std::shared_ptr<Parser::Expression>, Types> types;
         std::map<std::shared_ptr<Parser::FunctionCall>, std::set<Function>> calls;
     };
 

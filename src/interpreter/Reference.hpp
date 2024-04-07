@@ -18,14 +18,26 @@ namespace Interpreter {
         using type = std::pair<Data, bool>;
 
         std::list<type>::iterator it;
+
+        friend bool operator==(SymbolReference const& a, SymbolReference const& b) {
+            return a.it == b.it;
+        }
     };
     struct PropertyReference {
         Data parent;
         std::string name;
+
+        friend bool operator==(PropertyReference const& a, PropertyReference const& b) {
+            return a.parent == b.parent && a.name == b.name;
+        }
     };
     struct ArrayReference {
         Data array;
         size_t i;
+
+        friend bool operator==(ArrayReference const& a, ArrayReference const& b) {
+            return a.array == b.array && a.i == b.i;
+        }
     };
 
     class IndirectReference : public std::variant<SymbolReference, PropertyReference, ArrayReference> {
@@ -49,18 +61,6 @@ namespace Interpreter {
         IndirectReference to_indirect_reference(Context& context, std::shared_ptr<Parser::Expression> caller = nullptr) const;
 
     };
-
-    inline auto operator==(SymbolReference const& a, SymbolReference const& b) {
-        return a.it == b.it;
-    }
-
-    inline auto operator==(PropertyReference const& a, PropertyReference const& b) {
-        return a.parent == b.parent && a.name == b.name;
-    }
-
-    inline auto operator==(ArrayReference const& a, ArrayReference const& b) {
-        return a.array == b.array && a.i == b.i;
-    }
 
 }
 

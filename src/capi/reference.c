@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <string.h>
 
 #include <ouverium/include.h>
@@ -19,9 +20,12 @@ static Ov_GC_Reference Ov_Reference_copy_to(Ov_GC_Reference ref) {
 }
 
 Ov_Reference_Owned Ov_Reference_new_uninitialized() {
+    Ov_UnknownData* d = Ov_GC_alloc_object(&Ov_VirtualTable_UnknownData);
+    d->vtable = NULL;
+
     Ov_GC_Reference* reference = Ov_GC_alloc_references(1);
-    reference->type = DATA;
-    reference->data.vtable = NULL;
+    reference->type = SYMBOL;
+    reference->symbol = d;
 
     return (Ov_Reference_Owned) reference;
 }
@@ -45,11 +49,10 @@ Ov_Reference_Owned Ov_Reference_new_symbol(Ov_UnknownData data) {
     return (Ov_Reference_Owned) reference;
 }
 
-Ov_Reference_Owned Ov_Reference_new_property(Ov_UnknownData parent, Ov_VirtualTable* vtable, unsigned int hash) {
+Ov_Reference_Owned Ov_Reference_new_property(Ov_UnknownData parent, unsigned int hash) {
     Ov_GC_Reference* reference = Ov_GC_alloc_references(1);
     reference->type = PROPERTY;
     reference->property.parent = parent;
-    reference->property.vtable = vtable;
     reference->property.hash = hash;
 
     return (Ov_Reference_Owned) reference;
@@ -99,38 +102,22 @@ Ov_Reference_Owned Ov_Reference_new_string(const char* string, Ov_VirtualTable* 
 Ov_UnknownData Ov_Reference_get(Ov_Reference_Shared r) {
     Ov_GC_Reference* reference = (Ov_GC_Reference*) r;
 
-    switch (reference->type) {
-        case DATA:
-            return reference->data;
-        case SYMBOL:
-            return *reference->symbol;
-        case PROPERTY:
-            return Ov_UnknownData_from_ptr(reference->property.vtable, Ov_UnknownData_get_property(reference->property.parent, reference->property.hash));
-        case ARRAY: {
-            Ov_ArrayInfo array = Ov_UnknownData_get_array(reference->array.array);
-            return  Ov_UnknownData_from_ptr(array.vtable, Ov_Array_get(array, reference->array.i));
-        }
-        case TUPLE: {
-            Ov_UnknownData data = {
-                .vtable = reference->tuple.vtable,
-                .data.ptr = Ov_GC_alloc_object(reference->tuple.vtable)
-            };
+    if (r == Ov_Reference_share(getter)) {
+        assert(reference->type == SYMBOL);
+        return *reference->symbol;
+    }
 
-            Ov_ArrayInfo array = Ov_UnknownData_get_array(data);
-            Ov_Array_set_size(array, reference->tuple.size);
-            size_t i;
-            for (i = 0; i < reference->tuple.size; ++i)
-                Ov_UnknownData_set(array.vtable, Ov_Array_get(array, i), Ov_Reference_get((Ov_Reference_Shared) &reference->tuple.references[i]));
-
-            return data;
-        }
-        default: {
-            Ov_UnknownData data = {
-                .vtable = NULL,
-                .data.ptr = NULL
-            };
-            return data;
-        }
+    if (reference->type == DATA && reference->data.vtable != NULL)
+        return reference->data;
+    else {
+        Ov_Expression ex = {
+            .type = Ov_EXPRESSION_REFERENCE,
+            .reference = Ov_Reference_share(reference)
+        };
+        Ov_Reference_Owned ref = Ov_Function_eval(Ov_UnknownData_get_function(Ov_Reference_get(Ov_Reference_share(getter))), ex);
+        Ov_UnknownData data = Ov_Reference_get(Ov_Reference_share(ref));
+        Ov_Reference_free(ref);
+        return data;
     }
 }
 

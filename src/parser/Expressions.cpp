@@ -1,5 +1,7 @@
 #include "Expressions.hpp"
 
+#include "../Types.hpp"
+
 
 namespace Parser {
 
@@ -57,7 +59,7 @@ namespace Parser {
 
         std::set<std::string> used_symbols;
         for (auto const& s : symbols)
-            if (available_symbols.find(s) != available_symbols.end())
+            if (available_symbols.contains(s))
                 used_symbols.insert(s);
 
         captures = used_symbols;
@@ -78,12 +80,17 @@ namespace Parser {
     }
 
     std::set<std::string> Symbol::get_symbols() const {
-        return { name };
+        if (std::holds_alternative<std::nullptr_t>(get_symbol(name)))
+            return { name };
+        else
+            return {};
     }
 
     std::set<std::string> Symbol::compute_symbols(std::set<std::string>& available_symbols) {
-        symbols.insert(name);
-        available_symbols.insert(name);
+        if (std::holds_alternative<std::nullptr_t>(get_symbol(name))) {
+            symbols.insert(name);
+            available_symbols.insert(name);
+        }
 
         return symbols;
     }

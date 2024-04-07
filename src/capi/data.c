@@ -50,14 +50,22 @@ void Ov_UnknownData_set(Ov_VirtualTable* vtable, void* ptr, Ov_UnknownData data)
         *(void**) ptr = data.data.ptr;
 }
 
-void* Ov_UnknownData_get_property(Ov_UnknownData data, unsigned int hash) {
+Ov_PropertyInfo Ov_UnknownData_get_property(Ov_UnknownData data, unsigned int hash) {
     struct Ov_VirtualTable_Element* list = &data.vtable->table_tab[hash % data.vtable->table_size];
     while (true) {
-        if (list->hash == hash)
-            return ((BYTE*) data.data.ptr) + list->offset;
-        else if (list->next == NULL)
-            return NULL;
-        else
+        if (list->hash == hash) {
+            Ov_PropertyInfo property = {
+                .vtable = list->vtable,
+                .ptr = ((BYTE*) data.data.ptr) + list->offset
+            };
+            return property;
+        } else if (list->next == NULL) {
+            Ov_PropertyInfo property = {
+                .vtable = NULL,
+                .ptr = NULL
+            };
+            return property;
+        } else
             list = list->next;
     }
 }

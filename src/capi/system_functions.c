@@ -33,40 +33,62 @@ static bool check_pointers(Ov_UnknownData a, Ov_UnknownData b) {
     }
 }
 
-const char getter_parameters[] = "r";
-Ov_Reference_Owned getter_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
-    (void) (captures);
-    (void) (local_variables);
+static Ov_UnknownData get_raw(Ov_Reference_Shared r) {
+    Ov_GC_Reference* reference = (Ov_GC_Reference*) r;
 
-    Ov_GC_Reference* reference = (Ov_GC_Reference*) args[0];
     switch (reference->type) {
-        case SYMBOL: {
-            reference->symbol->vtable = &Ov_VirtualTable_Object;
-            reference->symbol->data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object);
-            break;
-        }
+        case DATA:
+            return reference->data;
+        case SYMBOL:
+            return *reference->symbol;
         case PROPERTY: {
-            if (reference->property.vtable == &Ov_VirtualTable_UnknownData) {
-                Ov_UnknownData* data = Ov_UnknownData_get_property(reference->property.parent, reference->property.hash);
-                data->vtable = &Ov_VirtualTable_Object;
-                data->data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object);
-            }
-            break;
+            Ov_PropertyInfo property = Ov_UnknownData_get_property(reference->property.parent, reference->property.hash);
+            return Ov_UnknownData_from_ptr(property.vtable, property.ptr);
         }
         case ARRAY: {
             Ov_ArrayInfo array = Ov_UnknownData_get_array(reference->array.array);
-            if (array.vtable == &Ov_VirtualTable_UnknownData) {
-                Ov_UnknownData* data = Ov_Array_get(array, reference->array.i);
-                data->vtable = &Ov_VirtualTable_Object;
-                data->data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object);
-            }
-            break;
+            return  Ov_UnknownData_from_ptr(array.vtable, Ov_Array_get(array, reference->array.i));
         }
-        default:
-            break;
-    }
+        case TUPLE: {
+            Ov_UnknownData data = {
+                .vtable = reference->tuple.vtable,
+                .data.ptr = Ov_GC_alloc_object(reference->tuple.vtable)
+            };
 
-    return Ov_Reference_copy(args[0]);
+            Ov_ArrayInfo array = Ov_UnknownData_get_array(data);
+            Ov_Array_set_size(array, reference->tuple.size);
+            size_t i;
+            for (i = 0; i < reference->tuple.size; ++i)
+                Ov_UnknownData_set(array.vtable, Ov_Array_get(array, i), Ov_Reference_get((Ov_Reference_Shared) &reference->tuple.references[i]));
+
+            return data;
+        }
+        default: {
+            Ov_UnknownData data = {
+                .vtable = NULL,
+                .data.ptr = NULL
+            };
+            return data;
+        }
+    }
+}
+
+const char getter_parameters[] = "r";
+bool getter_filter(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
+    (void) (captures);
+
+    Ov_UnknownData data = get_raw(args[0]);
+    if (data.vtable != NULL) {
+        ((Ov_GC_Reference*) local_variables[0])->data = data;
+        return true;
+    } else
+        return false;
+}
+Ov_Reference_Owned getter_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {
+    (void) (captures);
+    (void) (args);
+
+    return Ov_Reference_new_data(local_variables[0]->data);
 }
 
 const char defined_parameters[] = "r";
@@ -82,9 +104,9 @@ Ov_Reference_Owned defined_body(Ov_Reference_Shared captures[], Ov_Reference_Sha
             break;
         }
         case PROPERTY: {
-            if (reference->property.vtable == &Ov_VirtualTable_UnknownData) {
-                Ov_UnknownData* data = Ov_UnknownData_get_property(reference->property.parent, reference->property.hash);
-                defined = data->vtable != NULL;
+            Ov_PropertyInfo property = Ov_UnknownData_get_property(reference->property.parent, reference->property.hash);
+            if (property.vtable == &Ov_VirtualTable_UnknownData) {
+                defined = Ov_UnknownData_from_ptr(property.vtable, property.ptr).vtable != NULL;
             }
             break;
         }
@@ -118,7 +140,8 @@ static Ov_Reference_Owned assignation_body(Ov_GC_Reference* var, Ov_UnknownData 
             break;
         }
         case PROPERTY: {
-            Ov_UnknownData_set(var->property.vtable, Ov_UnknownData_get_property(var->property.parent, var->property.hash), data);
+            Ov_PropertyInfo property = Ov_UnknownData_get_property(var->property.parent, var->property.hash);
+            Ov_UnknownData_set(property.vtable, property.ptr, data);
             break;
         }
         case ARRAY: {
@@ -315,7 +338,53 @@ static bool equals(Ov_UnknownData a, Ov_UnknownData b) {
         else
             return false;
     } else {
-        // TODO
+        {
+            unsigned a_properties = 0;
+            size_t i;
+            for (i = 0; i < a.vtable->table_size; ++i) {
+                struct Ov_VirtualTable_Element* list;
+                for (list = &a.vtable->table_tab[i]; list != NULL && list->hash != 0; list = list->next) {
+                    ++a_properties;
+
+                    Ov_PropertyInfo a_property = {
+                        .vtable = list->vtable,
+                        .ptr = ((BYTE*) a.data.ptr) + list->offset
+                    };
+                    Ov_PropertyInfo b_property = Ov_UnknownData_get_property(b, list->hash);
+
+                    if (!equals(Ov_UnknownData_from_ptr(a_property.vtable, a_property.ptr), Ov_UnknownData_from_ptr(b_property.vtable, b_property.ptr)))
+                        return false;
+                }
+            }
+            unsigned b_properties = 0;
+            for (i = 0; i < b.vtable->table_size; ++i) {
+                struct Ov_VirtualTable_Element* list;
+                for (list = &b.vtable->table_tab[i]; list != NULL && list->hash != 0; list = list->next) {
+                    ++b_properties;
+                }
+            }
+            if (a_properties != b_properties)
+                return false;
+        }
+
+        {
+            // TODO : compare functions
+        }
+
+        {
+            Ov_ArrayInfo a_array = Ov_UnknownData_get_array(a);
+            Ov_ArrayInfo b_array = Ov_UnknownData_get_array(b);
+
+            if (a_array.array->size != b_array.array->size)
+                return false;
+
+            size_t i;
+            for (i = 0; i < a_array.array->size; ++i)
+                if (!equals(Ov_UnknownData_from_ptr(a_array.vtable, Ov_Array_get(a_array, i)), Ov_UnknownData_from_ptr(b_array.vtable, Ov_Array_get(b_array, i))))
+                    return false;
+        }
+
+        return true;
     }
 }
 
@@ -722,7 +791,7 @@ void Ov_init_functions() {
         .vtable = &Ov_VirtualTable_Function,
         .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
     };
-    Ov_Function_push(Ov_UnknownData_get_function(getter_data), getter_parameters, getter_body, NULL, 0, NULL, 0);
+    Ov_Function_push(Ov_UnknownData_get_function(getter_data), getter_parameters, getter_body, getter_filter, 1, NULL, 0);
     getter = Ov_Reference_new_symbol(getter_data);
 
     Ov_UnknownData defined_data = {
@@ -798,6 +867,13 @@ void Ov_init_functions() {
     };
     Ov_Function_push(Ov_UnknownData_get_function(equals_data), equals_parameters, equals_body, NULL, 0, NULL, 0);
     _x3D_x3D = Ov_Reference_new_symbol(equals_data);
+
+    Ov_UnknownData not_equals_data = {
+        .vtable = &Ov_VirtualTable_Function,
+        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
+    };
+    Ov_Function_push(Ov_UnknownData_get_function(not_equals_data), not_equals_parameters, not_equals_body, NULL, 0, NULL, 0);
+    _x21_x3D = Ov_Reference_new_symbol(not_equals_data);
 
     Ov_UnknownData check_pointers_data = {
         .vtable = &Ov_VirtualTable_Function,

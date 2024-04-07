@@ -32,9 +32,9 @@ extern "C" {
         size_t table_size;
         struct Ov_VirtualTable_Element {
             unsigned int hash;
-            union {
+            struct {
+                struct Ov_VirtualTable* vtable;
                 short offset;
-                void (*ptr)();
             };
             struct Ov_VirtualTable_Element* next;
         } table_tab[];
@@ -56,17 +56,27 @@ extern "C" {
         Ov_Data data;
     } Ov_UnknownData;
 
+    struct Ov_Reference_Owned_t;
     /**
      * References an UnknownData.
      * It belongs to the owner of this object to free the reference with Ov_Reference_free when it is no longer used or to give it to another owner.
     */
-    typedef struct Ov_Reference_Owned_t {}*Ov_Reference_Owned;
+    typedef struct Ov_Reference_Owned_t* Ov_Reference_Owned;
 
+    struct Ov_Reference_Shared_t;
     /**
      * References an UnknownData.
      * It does NOT belong to the owner of this object to free the reference.
     */
-    typedef struct Ov_Reference_Shared_t {}*Ov_Reference_Shared;
+    typedef struct Ov_Reference_Shared_t* Ov_Reference_Shared;
+
+    /**
+     * Represents a property and its virtual table.
+    */
+    typedef struct Ov_PropertyInfo {
+        struct Ov_VirtualTable* vtable;
+        void* ptr;
+    } Ov_PropertyInfo;
 
     /**
      * An array component to add in a type.
@@ -98,7 +108,6 @@ extern "C" {
             Ov_UnknownData* symbol;
             struct {
                 Ov_UnknownData parent;
-                Ov_VirtualTable* vtable;
                 unsigned int hash;
             } property;
             struct {
@@ -234,9 +243,9 @@ extern "C" {
      * Gets a property from an UnknownData.
      * @param data the UnknownData.
      * @param hash the hash of the property.
-     * @return a pointer to the property.
+     * @return a PropertyInfo representing the property.
     */
-    void* Ov_UnknownData_get_property(Ov_UnknownData data, unsigned int hash);
+    Ov_PropertyInfo Ov_UnknownData_get_property(Ov_UnknownData data, unsigned int hash);
 
     /**
      * Gets the array of an UnknownData.
@@ -279,11 +288,10 @@ extern "C" {
     /**
      * Creates a new property reference ie. a reference to the property of an object and that contains a data.
      * @param parent the object in which the property is.
-     * @param vtable a virtual table of the property type.
      * @param hash the hash of the property.
      * @return an owned reference.
     */
-    Ov_Reference_Owned Ov_Reference_new_property(Ov_UnknownData parent, Ov_VirtualTable* vtable, unsigned int hash);
+    Ov_Reference_Owned Ov_Reference_new_property(Ov_UnknownData parent, unsigned int hash);
 
     /**
      * Creates a new array reference ie. a reference to a data inside an array.
