@@ -287,10 +287,13 @@ bool Ov_Function_parse(Ov_Reference_Shared captures[], Ov_Reference_Shared* vars
     return true;
 }
 
-Ov_Reference_Owned Ov_Function_eval(Ov_Function* function, Ov_Expression args) {
+Ov_TryEvalResult Ov_Function_try_eval(Ov_Function* function, Ov_Expression args) {
     if (*function == NULL) {
-        assert(false); //throw exception
-        return NULL;
+        Ov_TryEvalResult result = {
+            .correct = false,
+            .reference = NULL
+        };
+        return result;
     }
 
     Ov_FunctionCell* ptr;
@@ -331,12 +334,30 @@ Ov_Reference_Owned Ov_Function_eval(Ov_Function* function, Ov_Expression args) {
             if (owned[i])
                 Ov_Reference_free((Ov_Reference_Owned) vars[i]);
 
-        if (ref != NULL)
-            return ref;
+        if (ref != NULL) {
+            Ov_TryEvalResult result = {
+                .correct = true,
+                .reference = ref
+            };
+            return result;
+        }
     }
 
-    assert(false); //throw exception
-    return NULL;
+    Ov_TryEvalResult result = {
+        .correct = false,
+        .reference = NULL
+    };
+    return result;
+}
+
+Ov_Reference_Owned Ov_Function_eval(Ov_Function* function, Ov_Expression args) {
+    Ov_TryEvalResult result = Ov_Function_try_eval(function, args);
+    if (result.correct)
+        return result.reference;
+    else {
+        assert(false); //throw exception
+        return NULL;
+    }
 }
 
 void Ov_VirtualTable_Function_gc_iterator(void* ptr) {

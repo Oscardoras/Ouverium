@@ -239,9 +239,10 @@ namespace Translator::CStandard {
         for (auto const& instruction : code.main.body)
             implementation += "\t" + instruction->get_instruction_code() + "\n";
 
-        implementation += "\tint return_value = Ov_Reference_get(Ov_Reference_share(" + code.main.return_value->get_expression_code() + ")).data.i;\n";
+        // implementation += "\tint return_value = Ov_Reference_get(Ov_Reference_share(" + code.main.return_value->get_expression_code() + ")).data.i;\n";
         implementation += "\tOv_end();\n";
-        implementation += "\treturn return_value;\n";
+        // implementation += "\treturn return_value;\n";
+        implementation += "\treturn 0;\n";
         implementation += "}\n";
     }
 

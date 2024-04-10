@@ -402,6 +402,19 @@ extern "C" {
     */
     void Ov_Function_free(Ov_Function* function);
 
+    typedef struct Ov_TryEvalResult {
+        bool correct;
+        Ov_Reference_Owned reference;
+    } Ov_TryEvalResult;
+
+    /**
+     * Tries to evaluate a Function.
+     * @param function a pointer to the function to evaluate.
+     * @param args the arguments to give to the function.
+     * @return the return reference or the reference to an exception.
+    */
+    Ov_TryEvalResult Ov_Function_try_eval(Ov_Function* function, Ov_Expression args);
+
     /**
      * Evaluates a Function.
      * @param function a pointer to the function to evaluate.
