@@ -240,6 +240,14 @@ extern "C" {
     void Ov_UnknownData_set(Ov_VirtualTable* vtable, void* ptr, Ov_UnknownData data);
 
     /**
+     * Checks if two UnknownData are equals.
+     * @param a the first UnknownData.
+     * @param b the second UnknownData.
+     * @returns if a equals b.
+    */
+    bool Ov_UnknownData_equals(Ov_UnknownData a, Ov_UnknownData b);
+
+    /**
      * Gets a property from an UnknownData.
      * @param data the UnknownData.
      * @param hash the hash of the property.
@@ -317,6 +325,13 @@ extern "C" {
      * @return an owned reference.
     */
     Ov_Reference_Owned Ov_Reference_new_string(const char* string, Ov_VirtualTable* vtable);
+
+    /**
+     * Gets the raw UnknownData referenced by a reference, no matter what type of reference.
+     * @param reference the shared reference.
+     * @return the UnknownData stored in reference, NULL if there is no data.
+    */
+    Ov_UnknownData Ov_Reference_raw(Ov_Reference_Shared reference);
 
     /**
      * Gets the UnknownData referenced by a reference, no matter what type of reference.
@@ -432,7 +447,9 @@ extern "C" {
     extern Ov_VirtualTable Ov_VirtualTable_Char;
     extern Ov_VirtualTable Ov_VirtualTable_Bool;
 
+
     extern Ov_Reference_Owned getter;
+    extern Ov_Reference_Owned function_getter;
     extern Ov_Reference_Owned defined;
     extern Ov_Reference_Owned setter;
     extern Ov_Reference_Owned _x3A_x3D;
@@ -449,6 +466,7 @@ extern "C" {
     extern Ov_Reference_Owned _x21_x3D_x3D;
     extern Ov_Reference_Owned string_from;
     extern Ov_Reference_Owned print;
+
     extern Ov_Reference_Owned _x21;
     extern Ov_Reference_Owned _x26;
     extern Ov_Reference_Owned _x7C;

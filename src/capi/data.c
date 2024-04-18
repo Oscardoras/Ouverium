@@ -50,6 +50,32 @@ void Ov_UnknownData_set(Ov_VirtualTable* vtable, void* ptr, Ov_UnknownData data)
         *(void**) ptr = data.data.ptr;
 }
 
+bool Ov_UnknownData_equals(Ov_UnknownData a, Ov_UnknownData b) {
+    if (a.vtable == &Ov_VirtualTable_Char) {
+        if (b.vtable == a.vtable)
+            return a.data.b == b.data.b;
+        else
+            return false;
+    } else if (a.vtable == &Ov_VirtualTable_Float) {
+        if (b.vtable == a.vtable)
+            return a.data.f == b.data.f;
+        else
+            return false;
+    } else if (a.vtable == &Ov_VirtualTable_Int) {
+        if (b.vtable == a.vtable)
+            return a.data.i == b.data.i;
+        else
+            return false;
+    } else if (a.vtable == &Ov_VirtualTable_Bool) {
+        if (b.vtable == a.vtable)
+            return a.data.b == b.data.b;
+        else
+            return false;
+    } else {
+        return a.data.ptr == b.data.ptr;
+    }
+}
+
 Ov_PropertyInfo Ov_UnknownData_get_property(Ov_UnknownData data, unsigned int hash) {
     struct Ov_VirtualTable_Element* list = &data.vtable->table_tab[hash % data.vtable->table_size];
     while (true) {

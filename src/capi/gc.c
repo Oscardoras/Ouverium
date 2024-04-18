@@ -19,9 +19,9 @@ Ov_GC_Roots* Ov_GC_init_roots(size_t c) {
 
     roots->next = NULL;
     roots->capacity = c;
-    roots->free_list = (Ov_GC_Reference*) roots + 1;
+    roots->free_list = (Ov_GC_Reference*) (roots + 1);
 
-    Ov_GC_Reference* tab = (Ov_GC_Reference*) roots + 1;
+    Ov_GC_Reference* tab = (Ov_GC_Reference*) (roots + 1);
     tab[0].type = NONE;
     tab[0].none.size = c;
     tab[0].none.next = NULL;

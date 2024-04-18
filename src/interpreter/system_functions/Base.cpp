@@ -7,29 +7,11 @@ namespace Interpreter::SystemFunctions {
 
     namespace Base {
 
-        Data& get_raw(IndirectReference const& indirect_reference) {
-            static Data empty_data;
-
-            if (auto symbol_reference = std::get_if<SymbolReference>(&indirect_reference)) {
-                return symbol_reference->it->first;
-            } else if (auto property_reference = std::get_if<PropertyReference>(&indirect_reference)) {
-                auto parent = property_reference->parent;
-                if (auto obj = get_if<ObjectPtr>(&parent))
-                    return (*obj)->properties[property_reference->name];
-            } else if (auto array_reference = std::get_if<ArrayReference>(&indirect_reference)) {
-                auto array = array_reference->array;
-                if (auto obj = get_if<ObjectPtr>(&array))
-                    return (*obj)->array[array_reference->i];
-            }
-
-            return empty_data = Data{};
-        }
-
         auto getter_args = std::make_shared<Parser::Symbol>("var");
         Reference getter(FunctionContext& context) {
             auto var = context["var"];
 
-            Data data = get_raw(var);
+            Data data = var.get_data();
             if (data != Data{})
                 return data;
             else
@@ -43,7 +25,7 @@ namespace Interpreter::SystemFunctions {
         Reference defined(FunctionContext& context) {
             auto var = context["var"];
 
-            return Data(get_raw(var) != Data{});
+            return Data(var.get_data() != Data{});
         }
 
         Reference assignation(Context& context, Reference const& var, Data const& d) {
@@ -309,7 +291,7 @@ namespace Interpreter::SystemFunctions {
 
                     return false;
                 } else {
-                    return get_raw(reference.to_indirect_reference(context)) != Data{};
+                    return reference.to_indirect_reference(context).get_data() != Data{};
                 }
             };
 
@@ -330,7 +312,7 @@ namespace Interpreter::SystemFunctions {
                 auto object = context["object"];
                 auto functions = context["functions"].to_data(context).get<ObjectPtr>()->functions;
 
-                auto& data = get_raw(object);
+                auto& data = object.get_data();
                 if (data == Data{})
                     data = GC::new_object();
                 auto obj = object.to_data(context).get<ObjectPtr>();
@@ -355,7 +337,7 @@ namespace Interpreter::SystemFunctions {
                 auto object = context["object"];
                 auto functions = context["functions"].to_data(context).get<ObjectPtr>()->functions;
 
-                auto& data = get_raw(object);
+                auto& data = object.get_data();
                 if (data == Data{})
                     data = GC::new_object();
                 auto obj = object.to_data(context).get<ObjectPtr>();
@@ -461,7 +443,7 @@ namespace Interpreter::SystemFunctions {
             else if (auto i = get_if<OV_INT>(&data))
                 os << *i;
             else if (auto b = get_if<bool>(&data))
-                os << (*b ? "true" : "false");
+                os << std::boolalpha << *b;
 
             return Data(GC::new_object(os.str()));
         }

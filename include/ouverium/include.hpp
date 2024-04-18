@@ -230,6 +230,10 @@ namespace Ov {
         template<typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
         UnknownData(T i) : UnknownData(static_cast<OV_INT>(i)) {}
 
+        friend bool operator==(UnknownData const& a, UnknownData const& b) {
+            return Ov_UnknownData_equals(a, b);
+        }
+
         operator Ov_Data() const {
             return Ov_UnknownData::data;
         }
@@ -283,8 +287,8 @@ namespace Ov {
         static Reference new_symbol(UnknownData const& data) {
             return Ov_Reference_new_symbol(data);
         }
-        Reference(UnknownData const& parent, Ov_VirtualTable* const vtable, unsigned int const hash) :
-            reference{ Ov_Reference_new_property(parent, vtable, hash) } {}
+        Reference(UnknownData const& parent, unsigned int const hash) :
+            reference{ Ov_Reference_new_property(parent, hash) } {}
         Reference(UnknownData const& array, size_t const i) :
             reference{ Ov_Reference_new_array(array, i) } {}
         Reference(std::initializer_list<Reference> const& list, Ov_VirtualTable* const vtable) :
@@ -331,6 +335,10 @@ namespace Ov {
         }
         operator Ov_Reference_Shared() const {
             return (Ov_Reference_Shared) reference;
+        }
+
+        UnknownData raw() const {
+            return Ov_Reference_raw((Ov_Reference_Shared) reference);
         }
 
         operator UnknownData() const {

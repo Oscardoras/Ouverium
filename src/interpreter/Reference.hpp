@@ -46,6 +46,7 @@ namespace Interpreter {
 
         using std::variant<SymbolReference, PropertyReference, ArrayReference>::variant;
 
+        Data& get_data() const;
         Data to_data(Context& context, std::shared_ptr<Parser::Expression> caller = nullptr) const;
 
     };

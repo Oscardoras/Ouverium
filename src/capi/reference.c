@@ -99,6 +99,44 @@ Ov_Reference_Owned Ov_Reference_new_string(const char* string, Ov_VirtualTable* 
     return (Ov_Reference_Owned) reference;
 }
 
+Ov_UnknownData Ov_Reference_raw(Ov_Reference_Shared reference) {
+    switch (reference->type) {
+        case DATA:
+            return reference->data;
+        case SYMBOL:
+            return *reference->symbol;
+        case PROPERTY: {
+            Ov_PropertyInfo property = Ov_UnknownData_get_property(reference->property.parent, reference->property.hash);
+            return Ov_UnknownData_from_ptr(property.vtable, property.ptr);
+        }
+        case ARRAY: {
+            Ov_ArrayInfo array = Ov_UnknownData_get_array(reference->array.array);
+            return  Ov_UnknownData_from_ptr(array.vtable, Ov_Array_get(array, reference->array.i));
+        }
+        case TUPLE: {
+            Ov_UnknownData data = {
+                .vtable = reference->tuple.vtable,
+                .data.ptr = Ov_GC_alloc_object(reference->tuple.vtable)
+            };
+
+            Ov_ArrayInfo array = Ov_UnknownData_get_array(data);
+            Ov_Array_set_size(array, reference->tuple.size);
+            size_t i;
+            for (i = 0; i < reference->tuple.size; ++i)
+                Ov_UnknownData_set(array.vtable, Ov_Array_get(array, i), Ov_Reference_get((Ov_Reference_Shared) &reference->tuple.references[i]));
+
+            return data;
+        }
+        default: {
+            Ov_UnknownData data = {
+                .vtable = NULL,
+                .data.ptr = NULL
+            };
+            return data;
+        }
+    }
+}
+
 Ov_UnknownData Ov_Reference_get(Ov_Reference_Shared r) {
     Ov_GC_Reference* reference = (Ov_GC_Reference*) r;
 
