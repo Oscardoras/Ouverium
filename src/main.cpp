@@ -222,10 +222,10 @@ public:
         else {
             try {
                 return static_cast<int>(r.to_data(*context).get<OV_INT>());
+            } catch (Interpreter::Exception const&) {
+                return EXIT_SUCCESS;
             } catch (Interpreter::Data::BadAccess const&) {
                 return EXIT_SUCCESS;
-            } catch (Interpreter::Exception const&) {
-                return EXIT_FAILURE;
             }
         }
     }

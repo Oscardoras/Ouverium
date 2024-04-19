@@ -5,17 +5,6 @@ namespace Interpreter::SystemFunctions {
 
     namespace Array {
 
-        auto length_args = std::make_shared<Parser::Symbol>("array");
-        Reference length(FunctionContext& context) {
-            try {
-                auto array = context["array"].to_data(context).get<ObjectPtr>();
-
-                return Data((OV_INT) array->array.size());
-            } catch (Data::BadAccess const&) {
-                throw FunctionArgumentsError();
-            }
-        }
-
         auto get_capacity_args = std::make_shared<Parser::Symbol>("array");
         Reference get_capacity(FunctionContext& context) {
             auto array = context["array"].to_data(context).get<ObjectPtr>();
@@ -45,6 +34,35 @@ namespace Interpreter::SystemFunctions {
             }
         }
 
+        auto get_size_args = std::make_shared<Parser::Symbol>("array");
+        Reference get_size(FunctionContext& context) {
+            try {
+                auto array = context["array"].to_data(context).get<ObjectPtr>();
+
+                return Data((OV_INT) array->array.size());
+            } catch (Data::BadAccess const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        auto set_size_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+            {
+                std::make_shared<Parser::Symbol>("array"),
+                std::make_shared<Parser::Symbol>("size")
+            }
+        ));
+        Reference set_size(FunctionContext& context) {
+            try {
+                auto array = context["array"].to_data(context).get<ObjectPtr>();
+                auto size = context["size"].to_data(context).get<OV_INT>();
+
+                array->array.resize(size);
+                return Data();
+            } catch (Data::BadAccess const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
         auto get_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
             {
                 std::make_shared<Parser::Symbol>("array"),
@@ -64,78 +82,39 @@ namespace Interpreter::SystemFunctions {
             }
         }
 
-        auto add_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+        auto copy_data_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
             {
-                std::make_shared<Parser::Symbol>("array"),
-                std::make_shared<Parser::Symbol>("element")
-            }
-        ));
-        Reference add(FunctionContext& context) {
-            try {
-                auto array = context["array"].to_data(context).get<ObjectPtr>();
-                auto element = context["element"].to_data(context);
-
-                array->array.push_back(element);
-                return ArrayReference{ Data(array), array->array.size() - 1 };
-            } catch (Data::BadAccess const&) {
-                throw FunctionArgumentsError();
-            }
-        }
-
-        auto remove_args = std::make_shared<Parser::Symbol>("array");
-        Reference remove(FunctionContext& context) {
-            try {
-                auto array = context["array"].to_data(context).get<ObjectPtr>();
-
-                Data d = array->array.back();
-                array->array.pop_back();
-                return Data(d);
-            } catch (Data::BadAccess const&) {
-                throw FunctionArgumentsError();
-            }
-        }
-
-        auto shift_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
-            {
-                std::make_shared<Parser::Symbol>("array"),
+                std::make_shared<Parser::Symbol>("from_array"),
+                std::make_shared<Parser::Symbol>("from_i"),
+                std::make_shared<Parser::Symbol>("to_array"),
+                std::make_shared<Parser::Symbol>("to_i"),
                 std::make_shared<Parser::Symbol>("n")
             }
         ));
-        Reference shift(FunctionContext& context) {
+        Reference copy_data(FunctionContext& context) {
             try {
-                auto& array = context["array"].to_data(context).get<ObjectPtr>()->array;
+                auto& from_array = context["from_array"].to_data(context).get<ObjectPtr>()->array;
+                auto from_i = context["from_i"].to_data(context).get<OV_INT>();
+                auto& to_array = context["to_array"].to_data(context).get<ObjectPtr>()->array;
+                auto to_i = context["to_i"].to_data(context).get<OV_INT>();
                 auto n = context["n"].to_data(context).get<OV_INT>();
 
-                if (n > 0) {
-                    for (OV_INT i = array.size() - 1; i >= n; --i) {
-                        array[i] = array[i - n];
-                    }
+                if (n < 0)
+                    throw FunctionArgumentsError();
+                else if (n == 0)
+                    return Data{};
+                if (from_i < 0 || from_i + static_cast<size_t>(n) > from_array.size())
+                    throw FunctionArgumentsError();
+                if (to_i < 0 || to_i + static_cast<size_t>(n) > to_array.size())
+                    throw FunctionArgumentsError();
+
+                if (from_i < to_i) {
+                    for (OV_INT i = n - 1; i >= 0; --i)
+                        to_array[to_i + i] = from_array[from_i + i];
                 } else {
-                    for (OV_INT i = 0; i < static_cast<OV_INT>(array.size()) + n; ++i) {
-                        array[i] = array[i - n];
-                    }
+                    for (OV_INT i = 0; i < n; ++i)
+                        to_array[to_i + i] = from_array[from_i + i];
                 }
-
-                return Data{};
-            } catch (Data::BadAccess const&) {
-                throw FunctionArgumentsError();
-            }
-        }
-
-        auto concat_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
-            {
-                std::make_shared<Parser::Symbol>("from"),
-                std::make_shared<Parser::Symbol>("to")
-            }
-        ));
-        Reference concat(FunctionContext& context) {
-            try {
-                auto& from = context["from"].to_data(context).get<ObjectPtr>()->array;
-                auto& to = context["to"].to_data(context).get<ObjectPtr>()->array;
-
-                from.reserve(from.size() + to.size());
-                for (auto const& object : to)
-                    from.push_back(object);
 
                 return Data{};
             } catch (Data::BadAccess const&) {
@@ -206,14 +185,12 @@ namespace Interpreter::SystemFunctions {
 
         void init(GlobalContext& context) {
             auto array = get_object(context["Array"]);
-            get_object(array->properties["length"])->functions.push_front(SystemFunction{ length_args, length });
             get_object(array->properties["get_capacity"])->functions.push_front(SystemFunction{ get_capacity_args, get_capacity });
             get_object(array->properties["set_capacity"])->functions.push_front(SystemFunction{ set_capacity_args, set_capacity });
+            get_object(array->properties["get_size"])->functions.push_front(SystemFunction{ get_size_args, get_size });
+            get_object(array->properties["set_size"])->functions.push_front(SystemFunction{ set_size_args, set_size });
             get_object(array->properties["get"])->functions.push_front(SystemFunction{ get_args, get });
-            get_object(array->properties["add"])->functions.push_front(SystemFunction{ add_args, add });
-            get_object(array->properties["remove"])->functions.push_front(SystemFunction{ remove_args, remove });
-            get_object(array->properties["shift"])->functions.push_front(SystemFunction{ shift_args, shift });
-            get_object(array->properties["concat"])->functions.push_front(SystemFunction{ concat_args, concat });
+            get_object(array->properties["copy_data"])->functions.push_front(SystemFunction{ copy_data_args, copy_data });
 
             get_object(context["foreach"])->functions.push_front(SystemFunction{ foreach_args, foreach });
 

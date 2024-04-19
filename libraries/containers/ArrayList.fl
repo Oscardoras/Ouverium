@@ -21,7 +21,7 @@ extends ArrayList List;
 
     ArrayList::(
         this.size |-> {
-            Array.length(this)
+            Array.get_size(this)
         },
         (this.size, value) |-> {}
     );
@@ -60,54 +60,50 @@ extends ArrayList List;
 
     ArrayList::(this.add_front |-> (
         element |-> {
-            l := this.size;
-            if (l > 0) {
-                Array.add(this, this[l-1]);
-                Array.shift(this, 1);
-                this[0] := element
-            } else {
-                Array.add(this, element)
-            }
+            Array.set_size(this, Array.get_size(this)+1);
+            Array.copy_data(this, 0, this, 1, Array.get_size(this)-1);
+            Array.get(this, 0) := element
         }
     ));
 
     ArrayList::(this.add_back |-> (
         element |-> {
-            Array.add(this, element)
+            Array.set_size(this, Array.get_size(this)+1);
+            Array.get(this, Array.get_size(this)) := element
         }
     ));
 
     ArrayList::(this.remove_front |-> (
         () \ (!this.empty) |-> {
-            l := this.size;
-            value := this[0];
-            Array.shift(this, -1);
-            Array.remove(this);
+            value := Array.get(this, 0);
+            Array.copy_data(this, 1, this, 0, Array.get_size(this)-1);
+            Array.set_size(this, Array.get_size(this)-1);
             value
         }
     ));
 
     ArrayList::(this.remove_back |-> (
         () \ (!this.empty) |-> {
-            Array.remove(this)
+            value := Array.get(this, 0);
+            Array.set_size(this, Array.get_size(this)-1);
+            value
         }
     ));
 
     ArrayList::(this.insert |-> (
         (index, element) \ (index ~ Int & 0 <= index & index < this.size) |-> {
-            l := this.size;
-            Array.add(this, this[l-1]);
-            for i from (l-1) to index step (-1) {
-                this[i] := this[i-1];
-            };
-            this[index] := element
+            Array.set_size(this, Array.get_size(this)+1);
+            Array.copy_data(this, index, this, index+1, Array.get_size(this)-index-1);
+            Array.get(this, index) := element
         }
     ));
 
     ArrayList::(this.remove |-> (
         index \ (index ~ Int & 0 <= index & index < this.size) |-> {
-            l := this.size;
-            tmp := this[index];
+            tmp := Array.get(this, index);
+            if (Array.get_size(this) > 1) {
+                Array.copy_data(this, 1, this, 0, 1);
+            };
             for i from index to (l-1) {
                 this[i] := this[i+1];
             };
@@ -119,13 +115,12 @@ extends ArrayList List;
     ArrayList::(this.resize |-> (
         (size, value) \ (size ~ Int & 0 <= size) |-> {
             if (size < this.size) {
-                for i from 0 to (this.size - size) {
-                    Array.remove(this);
-                };
+                Array.set_size(this, size);
             } else if (size > this.size) {
-                Array.set_capacity(this, size);
-                for i from 0 to (size - this.size) {
-                    Array.add(this, value);
+                s := Array.get_size(this);
+                Array.set_size(this, size);
+                for i from s to size {
+                    Array.get(this, i) := value;
                 };
             };
         } : size \ (size ~ Int & 0 <= size) |-> {

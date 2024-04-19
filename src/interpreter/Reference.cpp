@@ -27,7 +27,8 @@ namespace Interpreter {
         } else if (auto array_reference = std::get_if<ArrayReference>(this)) {
             auto array = array_reference->array;
             if (auto obj = get_if<ObjectPtr>(&array))
-                return (*obj)->array[array_reference->i];
+                if (array_reference->i < (*obj)->array.size())
+                    return (*obj)->array[array_reference->i];
         }
 
         static Data empty_data;

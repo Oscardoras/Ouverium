@@ -7,7 +7,10 @@ default : symbol |-> {
 
 
 (:~) : (object, type) |-> {
-    Array.add(default (object._types), type);
+    default (object._types);
+    s := Array.get_size(object._types);
+    Array.set_size(object._types, s+1);
+    Array.get(object._types, s) := type;
     object
 };
 
@@ -22,7 +25,10 @@ default : symbol |-> {
 
 extends : (type, Tuple parents) |-> {
     foreach(parents, p |-> {
-        Array.add(default (p._children), type);
+        default (p._children);
+        s := Array.get_size(p._children);
+        Array.set_size(p._children, s+1);
+        Array.get(p._children, s) := type;
     });
 
     type
@@ -33,7 +39,10 @@ class : (type, extends, Tuple parents, body()) \ (!defined type) |-> {
     type := ();
 
     foreach(parents, p |-> {
-        Array.add(default (p._children), type);
+        default (p._children);
+        s := Array.get_size(p._children);
+        Array.set_size(p._children, s+1);
+        Array.get(p._children, s) := type;
     });
 
     type : this \ (this ~ type) |-> { this };
@@ -118,7 +127,11 @@ abstract;
         })) {
             type._filter : (a |-> false) : ((this. .) \ (this ~ type) |-> true);
             type._functor_filter : (a |-> false) : (this \ (this ~ type) |-> true);
-            Array.add(types, type);
+
+            default types;
+            s := Array.get_size(types);
+            Array.set_size(types, s+1);
+            default_setter(Array.get(types, s), type);
         };
     };
 

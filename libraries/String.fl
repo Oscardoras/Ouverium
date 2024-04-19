@@ -96,14 +96,17 @@ class String {
 (+) : (String str1, String str2) |-> {
     str := String();
 
-    Array.concat(str, str1);
-    Array.concat(str, str2);
+    Array.set_size(str, str1.size + str2.size);
+    Array.copy_data(str1, 0, str, 0, str1.size);
+    Array.copy_data(str2, 0, str, str1.size, str2.size);
 
     str
 };
 
 (:+) : (String str1, String str2) |-> {
-    Array.concat(str1, str2);
+    s := str1.size;
+    Array.set_size(str1, s + str2.size);
+    Array.copy_data(str2, str2.size, str1, s, str2.size);
 
     str1
 };
