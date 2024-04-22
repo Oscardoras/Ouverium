@@ -202,3 +202,15 @@ void Ov_Reference_free(Ov_Reference_Owned r) {
 
     Ov_GC_free_reference(reference);
 }
+
+Ov_Reference_Owned Ov_set(Ov_Reference_Shared var, Ov_Reference_Shared data) {
+    Ov_Reference_Shared array[] = { var, data };
+    Ov_Reference_Owned tuple = Ov_Reference_new_tuple(array, 2, &Ov_VirtualTable_Object);
+    Ov_Expression expr = {
+        .type = Ov_EXPRESSION_TUPLE,
+        .reference = Ov_Reference_share(tuple)
+    };
+    Ov_Reference_Owned r = Ov_Function_eval(Ov_UnknownData_get_function(Ov_Reference_get(Ov_Reference_share(setter))), expr);
+    Ov_Reference_free(tuple);
+    return r;
+}

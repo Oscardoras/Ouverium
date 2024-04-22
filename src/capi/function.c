@@ -147,13 +147,15 @@ Ov_Reference_Owned Ov_Function_execute(Ov_Expression args) {
             return Ov_Reference_copy(args.reference);
         }
         case Ov_EXPRESSION_LAMBDA: {
-            Ov_Reference_Owned ref = Ov_Reference_new_uninitialized();
             Ov_Expression expr = {
-                .type = Ov_EXPRESSION_REFERENCE,
-                .reference = Ov_Reference_share(ref)
+                .type = Ov_EXPRESSION_TUPLE,
+                .tuple = {
+                    .vtable = &Ov_VirtualTable_Object,
+                    .size = 0,
+                    .tab = NULL
+                }
             };
             Ov_Reference_Owned result = Ov_Function_eval(&args.lambda, expr);
-            Ov_Reference_free(ref);
             Ov_Function_free(&args.lambda);
             return result;
         }

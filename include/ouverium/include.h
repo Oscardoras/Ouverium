@@ -439,6 +439,19 @@ extern "C" {
     Ov_Reference_Owned Ov_Function_eval(Ov_Function* function, Ov_Expression args);
 
 
+    /**
+     * General
+    */
+
+    /**
+     * Sets data into a reference by using the setter.
+     * @param var a reference.
+     * @param data a data reference.
+     * @return a reference to the assigned variable.
+    */
+    Ov_Reference_Owned Ov_set(Ov_Reference_Shared var, Ov_Reference_Shared data);
+
+
     extern Ov_VirtualTable Ov_VirtualTable_UnknownData;
     extern Ov_VirtualTable Ov_VirtualTable_Object;
     extern Ov_VirtualTable Ov_VirtualTable_Function;
@@ -475,6 +488,16 @@ extern "C" {
     extern Ov_Reference_Owned _x2A;
     extern Ov_Reference_Owned _x2F;
     extern Ov_Reference_Owned _x25;
+    extern Ov_Reference_Owned _x3C;
+    extern Ov_Reference_Owned _x3E;
+    extern Ov_Reference_Owned _x3C_x3D;
+    extern Ov_Reference_Owned _x3E_x3D;
+    extern Ov_Reference_Owned _x2B_x2B;
+    extern Ov_Reference_Owned _x2D_x2D;
+    extern Ov_Reference_Owned _x3A_x2B_x3D;
+    extern Ov_Reference_Owned _x3A_x2D_x3D;
+    extern Ov_Reference_Owned _x3A_x2A_x3D;
+    extern Ov_Reference_Owned _x3A_x2F_x3D;
 
 #ifdef __cplusplus
 }

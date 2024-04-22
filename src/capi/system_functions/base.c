@@ -69,7 +69,7 @@ static Ov_Reference_Owned assignation_body(Ov_GC_Reference* var, Ov_UnknownData 
             Ov_ArrayInfo array = Ov_UnknownData_get_array(data);
             size_t i;
             for (i = 0; i < var->tuple.size; ++i)
-                assignation_body(&var->tuple.references[i], Ov_UnknownData_from_ptr(array.vtable, Ov_Array_get(array, i)));
+                Ov_Reference_free(assignation_body(&var->tuple.references[i], Ov_UnknownData_from_ptr(array.vtable, Ov_Array_get(array, i))));
             break;
         }
         default:
