@@ -9,9 +9,6 @@
 
 #include <boost/dll.hpp>
 
-#include "compiler/SimpleAnalyzer.hpp"
-#include "compiler/c/Translator.hpp"
-
 #include "interpreter/Interpreter.hpp"
 
 #include "parser/Standard.hpp"
@@ -232,51 +229,6 @@ public:
 
 };
 
-class CompileMode : public ExecutionMode {
-
-    std::string path;
-    std::ifstream src;
-    std::string out;
-
-public:
-
-    CompileMode(std::string const& path, std::string const& out) :
-        path{ path }, src{ path }, out{ out } {}
-
-    bool on_init() override {
-        if (src) {
-            std::ostringstream oss;
-            oss << src.rdbuf();
-            std::string code = oss.str();
-
-            auto expression = Parser::Standard(code, path).get_tree();
-            std::set<std::string> symbols = Translator::CStandard::Translator::symbols;
-            expression->compute_symbols(symbols);
-
-            auto meta_data = Analyzer::simple_analize(expression);
-            auto translator = Translator::CStandard::Translator(expression, meta_data);
-
-            translator.translate(out);
-            std::string cmd = "gcc -g -Wall -Wextra -Wno-unused-variable -Wno-unused-parameter " + out + "/*.c -o " + out + "/executable -I " + (program_location / "include/ouverium").string() + " -Wl,-rpath," + program_location.string() + "/build build/libcapi.so";
-            system(cmd.c_str());
-        } else {
-            std::cerr << "Error: unable to load the source file " << path << "." << std::endl;
-        }
-
-        return false;
-    }
-
-    bool on_loop() override {
-        return false;
-    }
-
-    int on_exit() override {
-        return src ? EXIT_SUCCESS : EXIT_FAILURE;
-    }
-
-};
-
-
 
 #ifdef OUVERIUM_WXWIDGETS
 
@@ -302,10 +254,8 @@ public:
         } else if (argc == 2) {
             std::ifstream src{ std::string(argv[1]) };
             mode = std::make_unique<FileMode>(std::string(argv[1]), src);
-        } else if (argc == 3) {
-            mode = std::make_unique<CompileMode>(std::string(argv[1]), std::string(argv[2]));
         } else {
-            std::cerr << "Usage: " << argv[0] << " [src] [out]" << std::endl;
+            std::cerr << "Usage: " << argv[0] << " [src]" << std::endl;
             return false;
         }
 
@@ -349,10 +299,8 @@ int main(int argc, char** argv) {
     } else if (argc == 2) {
         std::ifstream src{ argv[1] };
         mode = std::make_unique<FileMode>(argv[1], src);
-    } else if (argc == 3) {
-        mode = std::make_unique<CompileMode>(argv[1], argv[2]);
     } else {
-        std::cerr << "Usage: " << argv[0] << " [src] [out]" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " [src]" << std::endl;
         return EXIT_FAILURE;
     }
 
