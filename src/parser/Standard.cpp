@@ -1,10 +1,12 @@
 #include <algorithm>
-#include <iostream>
+#include <fstream>
 #include <sstream>
 #include <utility>
 
 #include "Standard.hpp"
 
+
+extern std::vector<std::string> include_path;
 
 namespace Parser {
 
@@ -13,6 +15,16 @@ namespace Parser {
 
     Standard::Word::Word(std::string word, Parser::Position position) :
         std::string(std::move(word)), position(std::move(position)) {}
+
+    Standard::Standard(std::filesystem::path const& path) :
+        path(path) {
+        std::ostringstream oss;
+        std::ifstream src(path);
+        if (src) {
+            oss << src.rdbuf();
+            code = oss.str();
+        }
+    }
 
     Standard::Exception::Exception(std::vector<ParsingError> const& errors) {
         std::ostringstream oss;
@@ -412,6 +424,9 @@ namespace Parser {
     }
 
     std::shared_ptr<Expression> Standard::get_tree() const {
+        if (code == "")
+            return nullptr;
+
         std::vector<Standard::ParsingError> errors;
 
         try {
@@ -427,6 +442,33 @@ namespace Parser {
         } catch (std::out_of_range const&) {
             throw Standard::IncompleteCode();
         }
+    }
+
+    std::optional<std::filesystem::path> Standard::get_canonical_path(Position& position, std::filesystem::path const& p) {
+        position = position.substr(sizeof("file ") - 1);
+        position = position.substr(0, position.find(':'));
+
+        if (position.length() > 0) {
+            try {
+                auto path = std::filesystem::path(p);
+
+                if (!path.is_absolute())
+                    path = std::filesystem::path(position).parent_path() / path;
+                return std::filesystem::canonical(path);
+            } catch (std::exception const&) {
+                for (auto const& i : include_path) {
+                    try {
+                        auto path = std::filesystem::path(i) / p;
+
+                        return std::filesystem::canonical(path);
+                    } catch (std::exception const&) {
+                        return p;
+                    }
+                }
+
+                return {};
+            }
+        } else return {};
     }
 
 }

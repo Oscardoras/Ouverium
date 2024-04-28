@@ -65,6 +65,14 @@ endif()
 
 # Creating target
 
+# CAPI
+FILE(GLOB_RECURSE capi_sources
+    src/capi/*
+)
+add_library(capi SHARED ${capi_sources})
+target_include_directories(capi PUBLIC include)
+target_compile_features(capi PRIVATE c_std_99)
+
 # Ouverium
 FILE(GLOB_RECURSE ouverium_sources
     src/main.cpp
@@ -86,6 +94,7 @@ endif()
 target_link_libraries(ouverium PRIVATE Boost::asio Boost::dll)
 target_link_libraries(ouverium PRIVATE ${Readline})
 target_link_libraries(ouverium PRIVATE ${wxWidgets})
+target_link_libraries(ouverium INTERFACE capi)
 
 
 # Testing
@@ -97,6 +106,7 @@ add_test(NAME ouverium_test_string COMMAND $<TARGET_FILE:ouverium> ${CMAKE_SOURC
 
 # Installation
 
+install(TARGETS ouverium capi)
 install(DIRECTORY libraries DESTINATION .)
 install(DIRECTORY include DESTINATION .)
 

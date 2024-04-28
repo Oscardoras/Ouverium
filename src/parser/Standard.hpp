@@ -2,6 +2,8 @@
 #define __PARSER_STANDARD_HPP__
 
 #include <utility>
+#include <filesystem>
+#include <optional>
 
 #include "Expressions.hpp"
 
@@ -13,6 +15,8 @@ namespace Parser {
     public:
 
         Standard(std::string code, std::string path);
+
+        Standard(std::filesystem::path const& path);
 
         struct Word : public std::string {
             std::string position;
@@ -45,6 +49,8 @@ namespace Parser {
         class IncompleteCode : public Exception {};
 
         std::shared_ptr<Expression> get_tree() const;
+
+        static std::optional<std::filesystem::path> get_canonical_path(Position& position, std::filesystem::path const& path);
 
     protected:
 
