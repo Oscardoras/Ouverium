@@ -229,19 +229,22 @@ namespace Interpreter::SystemFunctions {
             }
         }
 
-        Reference file_get_working_directory(FunctionContext&) {
-            return Data(GC::new_object(std::filesystem::current_path().string()));
+        Reference file_get_current_directory(FunctionContext&) {
+            try {
+                return Data(GC::new_object(std::filesystem::current_path().string()));
+            } catch (std::exception const&) {
+                throw FunctionArgumentsError();
+            }
         }
 
-        Reference file_set_working_directory(FunctionContext& context) {
+        Reference file_set_current_directory(FunctionContext& context) {
             try {
                 auto path = context["path"].to_data(context).get<ObjectPtr>()->to_string();
+
                 std::filesystem::current_path(path);
 
-                return Data();
-            } catch (Data::BadAccess const&) {
-                throw FunctionArgumentsError();
-            } catch (std::filesystem::filesystem_error const&) {
+                return Reference();
+            } catch (std::exception const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -249,8 +252,29 @@ namespace Interpreter::SystemFunctions {
         Reference file_exists(FunctionContext& context) {
             try {
                 std::filesystem::path p = context["path"].to_data(context).get<ObjectPtr>()->to_string();
+
                 return Data(std::filesystem::exists(p));
-            } catch (std::filesystem::filesystem_error const&) {
+            } catch (std::exception const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        Reference file_size(FunctionContext& context) {
+            try {
+                std::filesystem::path p = context["path"].to_data(context).get<ObjectPtr>()->to_string();
+
+                return Data(static_cast<OV_INT>(std::filesystem::file_size(p)));
+            } catch (std::exception const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        Reference file_is_empty(FunctionContext& context) {
+            try {
+                std::filesystem::path p = context["path"].to_data(context).get<ObjectPtr>()->to_string();
+
+                return Data(std::filesystem::is_empty(p));
+            } catch (std::exception const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -258,8 +282,9 @@ namespace Interpreter::SystemFunctions {
         Reference file_is_directory(FunctionContext& context) {
             try {
                 std::filesystem::path p = context["path"].to_data(context).get<ObjectPtr>()->to_string();
+
                 return Data(std::filesystem::is_directory(p));
-            } catch (std::filesystem::filesystem_error const&) {
+            } catch (std::exception const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -267,8 +292,9 @@ namespace Interpreter::SystemFunctions {
         Reference file_create_directories(FunctionContext& context) {
             try {
                 std::filesystem::path p = context["path"].to_data(context).get<ObjectPtr>()->to_string();
+
                 return Data(std::filesystem::create_directory(p));
-            } catch (std::filesystem::filesystem_error const&) {
+            } catch (std::exception const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -283,9 +309,23 @@ namespace Interpreter::SystemFunctions {
             try {
                 std::filesystem::path from = context["from"].to_data(context).get<ObjectPtr>()->to_string();
                 std::filesystem::path to = context["to"].to_data(context).get<ObjectPtr>()->to_string();
+
                 std::filesystem::copy(from, to);
+
                 return Reference();
-            } catch (std::filesystem::filesystem_error const&) {
+            } catch (std::exception const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+        Reference file_rename(FunctionContext& context) {
+            try {
+                std::filesystem::path from = context["from"].to_data(context).get<ObjectPtr>()->to_string();
+                std::filesystem::path to = context["to"].to_data(context).get<ObjectPtr>()->to_string();
+
+                std::filesystem::rename(from, to);
+
+                return Reference();
+            } catch (std::exception const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -293,8 +333,88 @@ namespace Interpreter::SystemFunctions {
         Reference file_delete(FunctionContext& context) {
             try {
                 std::filesystem::path p = context["path"].to_data(context).get<ObjectPtr>()->to_string();
+
                 return Data(static_cast<OV_INT>(std::filesystem::remove_all(p)));
-            } catch (std::filesystem::filesystem_error const&) {
+            } catch (std::exception const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        Reference file_children(FunctionContext& context) {
+            try {
+                std::filesystem::path p = context["path"].to_data(context).get<ObjectPtr>()->to_string();
+
+                auto obj = GC::new_object();
+                for (auto child : std::filesystem::directory_iterator(p))
+                    obj->array.push_back(Data(GC::new_object(child.path().string())));
+
+                return Data(obj);
+            } catch (std::exception const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        Reference file_concatenate(FunctionContext& context) {
+            try {
+                std::filesystem::path from = context["from"].to_data(context).get<ObjectPtr>()->to_string();
+                std::filesystem::path to = context["to"].to_data(context).get<ObjectPtr>()->to_string();
+
+                return Data(GC::new_object((from / to).string()));
+            } catch (std::exception const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        Reference file_parent(FunctionContext& context) {
+            try {
+                std::filesystem::path p = context["path"].to_data(context).get<ObjectPtr>()->to_string();
+                return Data(GC::new_object(p.parent_path().string()));
+            } catch (std::exception const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        Reference file_absolute(FunctionContext& context) {
+            try {
+                std::filesystem::path p = context["path"].to_data(context).get<ObjectPtr>()->to_string();
+                return Data(GC::new_object(std::filesystem::weakly_canonical(p).string()));
+            } catch (std::exception const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        Reference file_root(FunctionContext& context) {
+            try {
+                std::filesystem::path p = context["path"].to_data(context).get<ObjectPtr>()->to_string();
+                return Data(GC::new_object(p.root_path().string()));
+            } catch (std::exception const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        Reference file_filename(FunctionContext& context) {
+            try {
+                std::filesystem::path p = context["path"].to_data(context).get<ObjectPtr>()->to_string();
+                return Data(GC::new_object(p.filename().string()));
+            } catch (std::exception const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        Reference file_extension(FunctionContext& context) {
+            try {
+                std::filesystem::path p = context["path"].to_data(context).get<ObjectPtr>()->to_string();
+                return Data(GC::new_object(p.extension().string()));
+            } catch (std::exception const&) {
+                throw FunctionArgumentsError();
+            }
+        }
+
+        Reference file_filename_without_extension(FunctionContext& context) {
+            try {
+                std::filesystem::path p = context["path"].to_data(context).get<ObjectPtr>()->to_string();
+                return Data(GC::new_object(p.stem().string()));
+            } catch (std::exception const&) {
                 throw FunctionArgumentsError();
             }
         }
@@ -992,13 +1112,24 @@ namespace Interpreter::SystemFunctions {
             get_object(s->properties["file_is"])->functions.push_front(SystemFunction{ file_is_args, file_is });
             get_object(s->properties["file_open"])->functions.push_front(SystemFunction{ file_path_args, file_open });
             get_object(s->properties["file_close"])->functions.push_front(SystemFunction{ file_close_args, file_close });
-            get_object(s->properties["file_get_working_directory"])->functions.push_front(SystemFunction{ std::make_shared<Parser::Tuple>(), file_get_working_directory });
-            get_object(s->properties["file_set_working_directory"])->functions.push_front(SystemFunction{ file_path_args, file_set_working_directory });
+            get_object(s->properties["file_get_current_directory"])->functions.push_front(SystemFunction{ std::make_shared<Parser::Tuple>(), file_get_current_directory });
+            get_object(s->properties["file_set_current_directory"])->functions.push_front(SystemFunction{ file_path_args, file_set_current_directory });
             get_object(s->properties["file_exists"])->functions.push_front(SystemFunction{ file_path_args, file_exists });
+            get_object(s->properties["file_size"])->functions.push_front(SystemFunction{ file_path_args, file_size });
+            get_object(s->properties["file_is_empty"])->functions.push_front(SystemFunction{ file_path_args, file_is_empty });
             get_object(s->properties["file_is_directory"])->functions.push_front(SystemFunction{ file_path_args, file_is_directory });
             get_object(s->properties["file_create_directories"])->functions.push_front(SystemFunction{ file_path_args, file_create_directories });
             get_object(s->properties["file_copy"])->functions.push_front(SystemFunction{ file_copy_args, file_copy });
+            get_object(s->properties["file_rename"])->functions.push_front(SystemFunction{ file_copy_args, file_rename });
             get_object(s->properties["file_delete"])->functions.push_front(SystemFunction{ file_path_args, file_delete });
+            get_object(s->properties["file_children"])->functions.push_front(SystemFunction{ file_path_args, file_children });
+            get_object(s->properties["file_concatenate"])->functions.push_front(SystemFunction{ file_copy_args, file_concatenate });
+            get_object(s->properties["file_parent"])->functions.push_front(SystemFunction{ file_path_args, file_parent });
+            get_object(s->properties["file_absolute"])->functions.push_front(SystemFunction{ file_path_args, file_absolute });
+            get_object(s->properties["file_root"])->functions.push_front(SystemFunction{ file_path_args, file_root });
+            get_object(s->properties["file_filename"])->functions.push_front(SystemFunction{ file_path_args, file_filename });
+            get_object(s->properties["file_extension"])->functions.push_front(SystemFunction{ file_path_args, file_extension });
+            get_object(s->properties["file_filename_without_extension"])->functions.push_front(SystemFunction{ file_path_args, file_filename_without_extension });
 
             get_object(s->properties["TCPsocket_is"])->functions.push_front(SystemFunction{ TCPsocket_is_args, TCPsocket_is });
             get_object(s->properties["TCPsocket_connect"])->functions.push_front(SystemFunction{ TCPsocket_connect_args, TCPsocket_connect });

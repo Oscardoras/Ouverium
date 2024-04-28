@@ -69,7 +69,7 @@ extends ArrayList List;
     ArrayList::(this.add_back |-> (
         element |-> {
             Array.set_size(this, Array.get_size(this)+1);
-            Array.get(this, Array.get_size(this)) := element
+            Array.get(this, Array.get_size(this)-1) := element
         }
     ));
 

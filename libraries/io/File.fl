@@ -3,12 +3,66 @@ import "String.fl";
 import "io/Stream.fl";
 
 
+class Path extends String {
+    Path : (String str) |-> {
+        this := $str;
+        this :~ Path;
+        this
+    };
+
+    (/) : (Path path1, Path path2) |-> {
+        Path(import("system").file_concatenate(path1, path2))
+    };
+
+    Path::(
+        this.parent |-> {
+            Path(import("system").file_parent(this))
+        },
+        (this.parent, value) |-> {}
+    );
+
+    Path::(
+        this.absolute |-> {
+            Path(import("system").file_absolute(this))
+        },
+        (this.absolute, value) |-> {}
+    );
+
+    Path::(
+        this.root |-> {
+            Path(import("system").file_root(this))
+        },
+        (this.root, value) |-> {}
+    );
+
+    Path::(
+        this.filename |-> {
+            Path(import("system").file_filename(this))
+        },
+        (this.filename, value) |-> {}
+    );
+
+    Path::(
+        this.extension |-> {
+            Path(import("system").file_extension(this))
+        },
+        (this.extension, value) |-> {}
+    );
+
+    Path::(
+        this.filename_without_extension |-> {
+            Path(import("system").file_filename_without_extension(this))
+        },
+        (this.filename_without_extension, value) |-> {}
+    );
+};
+
 class File {
     (~) : (file, File) |-> {
         import("system").file_is(file)
     };
 
-    File : (String path) |-> {
+    File : (Path path) |-> {
         import("system").file_open(path)
     };
 
@@ -19,32 +73,52 @@ class File {
     ));
 
     static File::(
-        this.working_directory |-> {
-            import("system").file_get_working_directory()
+        this.current_directory |-> {
+            Path(import("system").file_get_current_directory())
         },
-        (this.working_directory, value) |-> {
-            import("system").file_set_working_directory(value);
-            import("system").file_get_working_directory()
+        (this.current_directory, value) |-> {
+            import("system").file_set_current_directory(value);
+            Path(import("system").file_get_current_directory())
         }
     );
 
-    File.exists : path |-> {
+    File.exists : (Path path) |-> {
         import("system").file_exists(path)
     };
 
-    File.is_directory : path |-> {
+    File.get_size : (Path path) |-> {
+        import("system").file_size(path)
+    };
+
+    File.is_empty : (Path path) |-> {
+        import("system").file_is_empty(path)
+    };
+
+    File.is_directory : (Path path) |-> {
         import("system").file_is_directory(path)
     };
 
-    File.create_directories : path |-> {
+    File.create_directories : (Path path) |-> {
         import("system").file_create_directories(path)
     };
 
-    File.copy : (from_path, to_path) |-> {
+    File.copy : (Path from_path, Path to_path) |-> {
         import("system").file_copy(from_path, to_path)
     };
 
-    File.delete : path |-> {
+    File.rename : (Path from_path, Path to_path) |-> {
+        import("system").file_rename(from_path, to_path)
+    };
+
+    File.delete : (Path path) |-> {
         import("system").file_delete(path)
+    };
+
+    File.get_children : (Path path) |-> {
+        children := Array[];
+        foreach(import("system").file_children(path), child |-> {
+            children.add_back(Path(child));
+        });
+        children
     };
 };
