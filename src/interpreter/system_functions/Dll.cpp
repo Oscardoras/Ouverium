@@ -17,38 +17,10 @@ namespace Interpreter::SystemFunctions {
 
     namespace Dll {
 
-        std::filesystem::path get_canonical_path(FunctionContext& context) {
-            try {
-                auto str = context["path"].to_data(context).get<ObjectPtr>()->to_string();
-
-                auto position = context.caller ? context.caller->position.substr(0, context.caller->position.find(':')) : "";
-                if (position.length() > 0) {
-                    try {
-                        auto path = std::filesystem::path(str);
-
-                        if (!path.is_absolute())
-                            path = std::filesystem::path(position) / path;
-                        return std::filesystem::canonical(path);
-                    } catch (std::exception const&) {
-                        for (auto const& i : include_path) {
-                            try {
-                                auto path = std::filesystem::path(i) / str;
-
-                                return std::filesystem::canonical(path);
-                            } catch (std::exception const&) {
-                                return str;
-                            }
-                        }
-
-                        throw Interpreter::FunctionArgumentsError();
-                    }
-                } else throw Interpreter::FunctionArgumentsError();
-            } catch (Data::BadAccess const&) {
-                throw Interpreter::FunctionArgumentsError();
-            }
-        }
-
         auto path_args = std::make_shared<Parser::Symbol>("path");
+
+
+        // Import system
 
         Reference import_system(FunctionContext& context) {
             try {
@@ -65,22 +37,17 @@ namespace Interpreter::SystemFunctions {
         // Import source file
 
         Reference import(FunctionContext & context) {
-            auto path = get_canonical_path(context);
+            auto p = Parser::Standard::get_canonical_path(context.caller->position, context["path"].to_data(context).get<ObjectPtr>()->to_string());
 
-            if (std::set<std::string>{".fl", ".ov", ".ouv"}.contains(path.extension().string())) {
+            if (p.has_value() && std::set<std::string>{".fl", ".ov", ".ouv"}.contains(p->extension().string())) {
+                auto path = *p;
                 auto& global = context.get_global();
                 auto root = context.caller->get_root();
 
                 auto it = global.sources.find(path);
                 if (it == global.sources.end()) {
-                    std::ostringstream oss;
-                    std::ifstream src(path);
-                    if (src) {
-                        oss << src.rdbuf();
-                        std::string code = oss.str();
-
-                        try {
-                            auto expression = Parser::Standard(code, path.string()).get_tree();
+                    try {
+                        if (auto expression = Parser::Standard(path).get_tree()) {
                             global.sources[path] = expression;
 
                             {
@@ -94,14 +61,14 @@ namespace Interpreter::SystemFunctions {
                                 root->compute_symbols(symbols);
                             }
 
-                            return Interpreter::execute(global, expression);
-                        } catch (Parser::Standard::IncompleteCode const&) {
-                            throw Exception(context, context.caller, "incomplete code, you must finish the last expression in file \"" + path.string() + "\".");
-                        } catch (Parser::Standard::Exception const& e) {
-                            throw Exception(context, context.caller, e.what());
+                            Interpreter::execute(global, expression);
+                        } else {
+                            throw Exception(context, context.caller, "Error: unable to load the source file \"" + path.string() + "\".");
                         }
-                    } else {
-                        throw Exception(context, context.caller, "Error: unable to load the source file \"" + path.string() + "\".");
+                    } catch (Parser::Standard::IncompleteCode const&) {
+                        throw Exception(context, context.caller, "incomplete code, you must finish the last expression in file \"" + path.string() + "\".");
+                    } catch (Parser::Standard::Exception const& e) {
+                        throw Exception(context, context.caller, e.what());
                     }
                 } else {
                     auto expression = it->second;
@@ -109,9 +76,9 @@ namespace Interpreter::SystemFunctions {
                     auto symbols = root->symbols;
                     symbols.insert(expression->symbols.begin(), expression->symbols.end());
                     root->compute_symbols(symbols);
-
-                    return Reference();
                 }
+
+                return Reference();
             } else throw Interpreter::FunctionArgumentsError();
         }
 

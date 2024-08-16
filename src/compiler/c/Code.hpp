@@ -67,7 +67,7 @@ namespace Translator::CStandard {
         std::shared_ptr<Expression> condition;
         Instructions body;
         Instructions alternative;
-        If(std::shared_ptr<Expression> condition, Instructions const& body, Instructions const& alternative) :
+        If(std::shared_ptr<Expression> condition, Instructions const& body = {}, Instructions const& alternative = {}) :
             condition{ condition }, body{ body }, alternative{ alternative } {}
 
         std::string get_instruction_code() const override;
@@ -188,15 +188,11 @@ namespace Translator::CStandard {
     };
 
     struct Lambda : public Id {
-        Name name;
         std::vector<std::pair<Name, std::weak_ptr<Type>>> captures;
         struct {
             Instructions body;
             std::shared_ptr<Reference> return_value;
         } body;
-
-        Lambda() :
-            name{ "lambda_" + std::to_string(id) } {}
     };
 
     struct FunctionExpression : public Expression, public Instruction, std::variant<std::vector<std::shared_ptr<FunctionExpression>>, std::shared_ptr<Reference>, std::shared_ptr<Lambda>>, public Id {
@@ -225,6 +221,10 @@ namespace Translator::CStandard {
 
         FunctionDefinition() :
             name{ "function_" + std::to_string(id) } {}
+
+        void set_name(std::string const& str) {
+            name = str + "_" + std::to_string(id);
+        }
     };
 
 

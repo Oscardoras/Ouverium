@@ -32,3 +32,9 @@ void Ov_Array_set_capacity(Ov_ArrayInfo array, size_t capacity) {
 
     array.array->capacity = capacity;
 }
+
+void Ov_VirtualTable_Array_gc_iterator(Ov_ArrayInfo* array) {
+    size_t i;
+    for (i = 0; i < array->array->size; ++i)
+        Ov_GC_iterate(array->vtable->gc_iterator, Ov_Array_get(*array, i));
+}

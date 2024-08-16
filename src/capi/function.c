@@ -178,8 +178,8 @@ bool Ov_Function_parse(Ov_Reference_Shared captures[], Ov_Reference_Shared* vars
             (*params) += 2;
 
             Ov_UnknownData data = {
-                .vtable = &Ov_VirtualTable_Function,
-                .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Function)
+                .vtable = &Ov_VirtualTable_Object,
+                .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object)
             };
             if (args->type == Ov_EXPRESSION_LAMBDA) {
                 *Ov_UnknownData_get_function(data) = args->lambda;
@@ -271,7 +271,9 @@ bool Ov_Function_parse(Ov_Reference_Shared captures[], Ov_Reference_Shared* vars
             return true;
         } else
             return false;
-    } else if ('0' <= **params && **params <= '9') {
+    } else if (**params == 'c') {
+        ++(*params);
+
         size_t n = 0;
         do {
             n *= 10;
@@ -362,9 +364,9 @@ Ov_Reference_Owned Ov_Function_eval(Ov_Function* function, Ov_Expression args) {
     }
 }
 
-void Ov_VirtualTable_Function_gc_iterator(void* ptr) {
+void Ov_VirtualTable_Function_gc_iterator(Ov_Function* ptr) {
     Ov_FunctionCell* f;
-    for (f = *((Ov_Function*) ptr); f != NULL; f = f->next) {
+    for (f = *ptr; f != NULL; f = f->next) {
         size_t i;
         for (i = 0; i < f->captures.size; ++i) {
             Ov_Reference_Owned ref = Ov_GC_capture_to_reference(f->captures.tab[i]);
@@ -374,11 +376,3 @@ void Ov_VirtualTable_Function_gc_iterator(void* ptr) {
         }
     }
 }
-Ov_VirtualTable Ov_VirtualTable_Function = {
-    .size = sizeof(Ov_Function),
-    .gc_iterator = Ov_VirtualTable_Function_gc_iterator,
-    .array.vtable = NULL,
-    .array.offset = -1,
-    .function.offset = 0,
-    .table_size = 0
-};

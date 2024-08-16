@@ -70,6 +70,7 @@ extern "C" {
     Ov_Reference_Owned Ov_Function_execute(Ov_Expression args);
 
     void Ov_init_functions();
+    Ov_UnknownData Ov_get_object(Ov_Reference_Shared reference);
 
 #ifdef __cplusplus
 }

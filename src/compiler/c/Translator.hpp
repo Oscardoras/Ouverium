@@ -48,6 +48,7 @@ namespace Translator::CStandard {
             } main;
             std::set<std::shared_ptr<FunctionDefinition>> functions;
             std::set<std::shared_ptr<Lambda>> lambdas;
+            std::map<std::string, Instructions> imports;
         } code;
 
         void create_structures();
@@ -76,6 +77,10 @@ namespace Translator::CStandard {
             "if",
             "else",
             "while",
+            "for",
+            "from",
+            "to",
+            "step",
             "$",
             "$==",
             ":",
@@ -85,6 +90,7 @@ namespace Translator::CStandard {
             "!==",
             "string_from",
             "print",
+            "scan",
             "!",
             "&",
             "|",

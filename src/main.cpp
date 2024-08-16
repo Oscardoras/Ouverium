@@ -253,7 +253,7 @@ public:
             std::set<std::string> symbols = Translator::CStandard::Translator::symbols;
             expression->compute_symbols(symbols);
 
-            auto meta_data = Analyzer::simple_analize(expression);
+            auto meta_data = Analyzer::SimpleAnalyzer().analize(expression);
             auto translator = Translator::CStandard::Translator(expression, meta_data);
 
             translator.translate(out);

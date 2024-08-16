@@ -29,6 +29,7 @@ extern "C" {
         struct {
             short offset;
         } function;
+        short map_offset;
         size_t table_size;
         struct Ov_VirtualTable_Element {
             unsigned int hash;
@@ -69,6 +70,15 @@ extern "C" {
      * It does NOT belong to the owner of this object to free the reference.
     */
     typedef struct Ov_Reference_Shared_t* Ov_Reference_Shared;
+
+    typedef struct Ov_Map {
+        size_t size;
+        struct Ov_Map_Element {
+            unsigned int hash;
+            Ov_UnknownData data;
+            struct Ov_Map_Element* next;
+        }**tab;
+    } Ov_Map;
 
     /**
      * Represents a property and its virtual table.
@@ -119,7 +129,7 @@ extern "C" {
 
     typedef struct Ov_FunctionCell {
         struct Ov_FunctionCell* next;
-        const char* parameters; // r for reference, number for referencing capture, perenthesis for function calls, point then hash for member call
+        const char* parameters; // r for reference, c then number for referencing capture, perenthesis for function calls, point then hash for member call
         Ov_FunctionFilter filter;
         Ov_FunctionBody body;
         unsigned short local_variables;
@@ -454,12 +464,16 @@ extern "C" {
 
     extern Ov_VirtualTable Ov_VirtualTable_UnknownData;
     extern Ov_VirtualTable Ov_VirtualTable_Object;
-    extern Ov_VirtualTable Ov_VirtualTable_Function;
     extern Ov_VirtualTable Ov_VirtualTable_Int;
     extern Ov_VirtualTable Ov_VirtualTable_Float;
     extern Ov_VirtualTable Ov_VirtualTable_Char;
     extern Ov_VirtualTable Ov_VirtualTable_Bool;
 
+    void Ov_VirtualTable_Function_gc_iterator(Ov_Function*);
+    void Ov_VirtualTable_Array_gc_iterator(Ov_ArrayInfo*);
+    void Ov_VirtualTable_Map_gc_iterator(Ov_Map*);
+
+    extern Ov_Reference_Owned import;
 
     extern Ov_Reference_Owned getter;
     extern Ov_Reference_Owned function_getter;
@@ -470,19 +484,26 @@ extern "C" {
     extern Ov_Reference_Owned if_statement;
     extern Ov_Reference_Owned else_statement;
     extern Ov_Reference_Owned while_statement;
+    extern Ov_Reference_Owned for_statement;
+    extern Ov_Reference_Owned from;
+    extern Ov_Reference_Owned to;
+    extern Ov_Reference_Owned for_step_statement;
+    extern Ov_Reference_Owned step;
     extern Ov_Reference_Owned _x24;
     extern Ov_Reference_Owned _x24_x3D_x3D;
     extern Ov_Reference_Owned _x3A;
+    extern Ov_Reference_Owned _x7C;
+    extern Ov_Reference_Owned _x3D;
     extern Ov_Reference_Owned _x3D_x3D;
     extern Ov_Reference_Owned _x21_x3D;
     extern Ov_Reference_Owned _x3D_x3D_x3D;
     extern Ov_Reference_Owned _x21_x3D_x3D;
     extern Ov_Reference_Owned string_from;
     extern Ov_Reference_Owned print;
+    extern Ov_Reference_Owned scan;
 
     extern Ov_Reference_Owned _x21;
     extern Ov_Reference_Owned _x26;
-    extern Ov_Reference_Owned _x7C;
     extern Ov_Reference_Owned _x2B;
     extern Ov_Reference_Owned _x2D;
     extern Ov_Reference_Owned _x2A;
@@ -498,6 +519,8 @@ extern "C" {
     extern Ov_Reference_Owned _x3A_x2D_x3D;
     extern Ov_Reference_Owned _x3A_x2A_x3D;
     extern Ov_Reference_Owned _x3A_x2F_x3D;
+
+    extern Ov_Reference_Owned Array;
 
 #ifdef __cplusplus
 }

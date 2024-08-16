@@ -34,7 +34,8 @@ namespace Translator::CStandard {
             write_functions(functions_header, main_code);
             write_main(main_code);
 
-            std::filesystem::create_directory(out);
+            if (!std::filesystem::exists(out))
+                std::filesystem::create_directory(out);
             (std::ofstream((out / "structures.h").c_str()) << structures_header).close();
             (std::ofstream((out / "structures.c").c_str()) << structures_code).close();
             (std::ofstream((out / "functions.h").c_str()) << functions_header).close();
@@ -83,6 +84,15 @@ namespace Translator::CStandard {
     std::shared_ptr<FunctionDefinition> Translator::create_function(std::shared_ptr<Parser::FunctionDefinition> function_definition) {
         auto function = std::make_shared<FunctionDefinition>();
 
+        // name
+        if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(function_definition->parent.lock())) {
+            if (tuple->objects.size() == 2) {
+                if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(tuple->objects[0])) {
+                    function->set_name(symbol->name);
+                }
+            }
+        }
+
         // captures
         for (auto const& symbol : function_definition->captures)
             function->captures.push_back({ symbol, Unknown });
@@ -114,7 +124,6 @@ namespace Translator::CStandard {
 
     std::shared_ptr<Reference> Translator::get_expression(std::shared_ptr<Parser::Expression> expression, Instructions& instructions, Instructions::iterator it) {
         if (auto function_call = std::dynamic_pointer_cast<Parser::FunctionCall>(expression)) {
-            /*
             if (meta_data.calls[function_call].size() == 1) {
                 auto const& function = *meta_data.calls[function_call].begin();
 
@@ -122,7 +131,6 @@ namespace Translator::CStandard {
                     return eval_system_function(*system_function, function_call->arguments, instructions, it);
                 }
             }
-            */
 
             auto r = std::make_shared<Reference>(true);
 
@@ -223,7 +231,7 @@ namespace Translator::CStandard {
                 std::make_shared<FunctionCall>(FunctionCall(
                     std::make_shared<Symbol>("Ov_GC_alloc_object"),
                     {
-                        std::make_shared<Referencing>(std::make_shared<Symbol>("Ov_VirtualTable_Function"))
+                        std::make_shared<Referencing>(std::make_shared<Symbol>("Ov_VirtualTable_Object"))
                     }
                 ))
             ));
@@ -236,7 +244,7 @@ namespace Translator::CStandard {
                         std::make_shared<FunctionCall>(FunctionCall(
                             std::make_shared<Symbol>("Ov_UnknownData_from_data"),
                             {
-                                std::make_shared<Referencing>(std::make_shared<Symbol>("Ov_VirtualTable_Function")),
+                                std::make_shared<Referencing>(std::make_shared<Symbol>("Ov_VirtualTable_Object")),
                                 std::make_shared<Symbol>(data_name)
                             }
                         ))

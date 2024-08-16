@@ -1,3 +1,5 @@
+import "hello_world.fl";
+
 print(((a, b) |-> {
     a1 := a;
     b1 := b;
@@ -7,4 +9,8 @@ print(((a, b) |-> {
         b1 := r;
     };
     b1
-}) 45 50)
+}) 45 50);
+
+if (true) {
+    print("test");
+}

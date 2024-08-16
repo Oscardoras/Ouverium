@@ -9,11 +9,25 @@
 
 namespace Translator::CStandard {
 
+    std::string add_indentation(std::string const& instructions) {
+        std::string code;
+
+        std::istringstream iss(instructions);
+        std::string line;
+        while (std::getline(iss, line))
+            code += "\t" + line + "\n";
+
+        return code;
+    }
+
     std::string Name::get() const {
         std::string code;
 
         for (auto c : symbol) {
             switch (c) {
+                case '.':
+                    code += "_x2E";
+                    break;
                 case '!':
                     code += "_x21";
                     break;
@@ -102,6 +116,7 @@ namespace Translator::CStandard {
 
     void Translator::write_structures(std::string& interface, std::string& implementation) {
         interface += "#include <include.h>\n";
+        interface += "\n\n";
 
         implementation += "#include <stddef.h>\n";
         implementation += "#include \"structures.h\"\n";
@@ -162,8 +177,16 @@ namespace Translator::CStandard {
     void Translator::write_functions(std::string& interface, std::string& implementation) {
         interface += "#include <include.h>\n";
         interface += "#include \"structures.h\"\n";
+        interface += "\n\n";
 
         implementation += "#include \"functions.h\"\n";
+        implementation += "\n\n";
+
+        for (auto const& lambda : code.lambdas)
+            implementation += "Ov_Reference_Owned lambda_" + std::to_string(lambda->get_id()) + "_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]);\n";
+        for (auto const& [name, instructions] : code.imports)
+            implementation += "void import_" + name + "_body();\n";
+
         implementation += "\n\n";
 
         for (auto const& lambda : code.lambdas) {
@@ -171,9 +194,16 @@ namespace Translator::CStandard {
             for (size_t i = 0; i < lambda->captures.size(); ++i)
                 implementation += "\tOv_Reference_Shared " + lambda->captures[i].first.get() + " = captures[" + std::to_string(i) + "];\n";
             for (auto const& instruction : lambda->body.body)
-                implementation += "\t" + instruction->get_instruction_code() + "\n";
+                implementation += add_indentation(instruction->get_instruction_code());
             implementation += "\treturn " + lambda->body.return_value->get_expression_code() + ";\n";
-            implementation += "}\n";
+            implementation += "}\n\n";
+        }
+
+        for (auto const& [name, instructions] : code.imports) {
+            implementation += "void import_" + name + "_body() {\n";
+            for (auto const& instruction : instructions)
+                implementation += add_indentation(instruction->get_instruction_code());
+            implementation += "}\n\n";
         }
 
         for (auto const& function : code.functions) {
@@ -194,7 +224,7 @@ namespace Translator::CStandard {
                 }
 
                 for (auto const& instruction : function->filter.body)
-                    implementation += "\t" + instruction->get_instruction_code() + "\n";
+                    implementation += add_indentation(instruction->get_instruction_code());
                 implementation += "\treturn " + function->filter.return_value->get_expression_code() + ";\n";
 
                 implementation += "}\n";
@@ -217,10 +247,11 @@ namespace Translator::CStandard {
                 }
 
                 for (auto const& instruction : function->body.body)
-                    implementation += "\t" + instruction->get_instruction_code() + "\n";
-                implementation += "\treturn " + function->body.return_value->get_expression_code() + ";\n";
+                    implementation += add_indentation(instruction->get_instruction_code());
+                auto return_value = function->body.return_value;
+                implementation += "\treturn " + (return_value->owned ? return_value->get_expression_code() : "Ov_Reference_copy(" + return_value->get_expression_code() + ")") + ";\n";
 
-                implementation += "}\n";
+                implementation += "}\n\n";
             }
         }
     }
@@ -237,7 +268,7 @@ namespace Translator::CStandard {
         }
 
         for (auto const& instruction : code.main.body)
-            implementation += "\t" + instruction->get_instruction_code() + "\n";
+            implementation += add_indentation(instruction->get_instruction_code());
 
         // implementation += "\tint return_value = Ov_Reference_get(Ov_Reference_share(" + code.main.return_value->get_expression_code() + ")).data.i;\n";
         implementation += "\tOv_end();\n";
@@ -280,6 +311,22 @@ namespace Translator::CStandard {
 
     std::string Value::get_expression_code() const {
         return std::visit(Visitor{}, value);
+    }
+
+    std::string If::get_instruction_code() const {
+        std::string code;
+
+        code += "if (" + condition->get_expression_code() + ") {\n";
+        for (auto const& instruction : body)
+            code += add_indentation(instruction->get_instruction_code());
+        if (!alternative.empty()) {
+            code += "} else {\n";
+            for (auto const& instruction : alternative)
+                code += add_indentation(instruction->get_instruction_code());
+        }
+        code += "}\n";
+
+        return code;
     }
 
     std::string FunctionCall::get_expression_code() const {
@@ -325,7 +372,7 @@ namespace Translator::CStandard {
         code += "Ov_Reference_Shared array" + std::to_string(id) + "[] = { ";
         for (auto const& e : objects)
             code += "Ov_Reference_share(" + e->get_expression_code() + "), ";
-        code += "};";
+        code += "};\n";
 
         return code;
     }
@@ -338,26 +385,26 @@ namespace Translator::CStandard {
 
         if (auto tuple = std::get_if<std::vector<std::shared_ptr<FunctionExpression>>>(this)) {
             for (auto const& e : *tuple)
-                code += e->get_instruction_code() + "\n\t";
+                code += e->get_instruction_code() + "\n";
 
             code += "Ov_Expression expression" + std::to_string(id) + "_array[] = { ";
             for (auto const& e : *tuple)
                 code += e->get_expression_code() + ", ";
             code += "};\n";
-            code += "\tOv_Expression expression" + std::to_string(id) + " = { .type = Ov_EXPRESSION_TUPLE, .tuple.size = " + std::to_string(tuple->size()) + ", .tuple.tab = expression" + std::to_string(id) + "_array };";
+            code += "Ov_Expression expression" + std::to_string(id) + " = { .type = Ov_EXPRESSION_TUPLE, .tuple.size = " + std::to_string(tuple->size()) + ", .tuple.tab = expression" + std::to_string(id) + "_array };";
         } else if (auto ref = std::get_if<std::shared_ptr<Reference>>(this)) {
             code += "Ov_Expression expression" + std::to_string(id) + " = { .type = Ov_EXPRESSION_REFERENCE, .reference = Ov_Reference_share(" + (*ref)->get_expression_code() + ") };";
         } else if (auto lambda = std::get_if<std::shared_ptr<Lambda>>(this)) {
             code += "Ov_Expression expression" + std::to_string(id) + " = { .type = Ov_EXPRESSION_LAMBDA, .lambda = NULL };\n";
 
             if (!(*lambda)->captures.empty()) {
-                code += "\tOv_Reference_Shared lambda_" + std::to_string((*lambda)->get_id()) + "_captures[] = { ";
+                code += "Ov_Reference_Shared lambda_" + std::to_string((*lambda)->get_id()) + "_captures[] = { ";
                 for (auto const& capture : (*lambda)->captures)
                     code += "Ov_Reference_share(" + capture.first.get() + "), ";
                 code += "};\n";
             }
 
-            code += "\tOv_Function_push(&expression" + std::to_string(id) + ".lambda, \"\", lambda_" + std::to_string((*lambda)->get_id()) + "_body, NULL, 0, " + ((*lambda)->captures.empty() ? "NULL" : ("lambda_" + std::to_string((*lambda)->get_id()) + "_captures")) + ", " + std::to_string((*lambda)->captures.size()) + ");";
+            code += "Ov_Function_push(&expression" + std::to_string(id) + ".lambda, \"\", lambda_" + std::to_string((*lambda)->get_id()) + "_body, NULL, 0, " + ((*lambda)->captures.empty() ? "NULL" : ("lambda_" + std::to_string((*lambda)->get_id()) + "_captures")) + ", " + std::to_string((*lambda)->captures.size()) + ");";
         }
 
         return code;

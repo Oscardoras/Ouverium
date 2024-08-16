@@ -203,17 +203,14 @@ namespace Interpreter::SystemFunctions {
                 auto s = context["s"].to_data(context).get<OV_INT>();
                 auto block = context["block"];
 
-                if (s > 0) {
-                    for (OV_INT i = begin; i < end; i += s) {
-                        Interpreter::set(context, variable, Data(i));
-                        Interpreter::call_function(parent, nullptr, block, std::make_shared<Parser::Tuple>());
-                    }
-                } else if (s < 0) {
-                    for (OV_INT i = begin; i > end; i += s) {
-                        Interpreter::set(context, variable, Data(i));
-                        Interpreter::call_function(parent, nullptr, block, std::make_shared<Parser::Tuple>());
-                    }
-                } else throw Interpreter::FunctionArgumentsError();
+                if (s == 0)
+                    throw Interpreter::FunctionArgumentsError();
+
+                for (OV_INT i = begin; (s > 0) ? (i < end) : (i > end); i += s) {
+                    Interpreter::set(context, variable, Data(i));
+                    Interpreter::call_function(parent, nullptr, block, std::make_shared<Parser::Tuple>());
+                }
+
                 return Reference(Data(GC::new_object()));
             } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();

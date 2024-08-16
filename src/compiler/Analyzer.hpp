@@ -38,10 +38,19 @@ namespace Analyzer {
         std::set<std::shared_ptr<Structure>> structures;
         std::map<std::shared_ptr<Parser::Expression>, Types> types;
         std::map<std::shared_ptr<Parser::FunctionCall>, std::set<Function>> calls;
+        std::map<std::shared_ptr<Parser::FunctionCall>, std::shared_ptr<Parser::Expression>> sources;
     };
 
     inline bool operator<(std::weak_ptr<Type> a, std::weak_ptr<Type> b) {
         return a.lock() < b.lock();
     }
+
+    class Exception {
+
+    public:
+
+        std::vector<Parser::Position> positions;
+
+    };
 
 }
