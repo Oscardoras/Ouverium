@@ -26,4 +26,12 @@ namespace Interpreter {
         return !(a == b);
     }
 
+    PropertyReference Data::get_property(std::string const& name) {
+        return PropertyReference{ *this, name };
+    }
+
+    ArrayReference Data::get_at(size_t index) {
+        return ArrayReference{ *this, index };
+    }
+
 }

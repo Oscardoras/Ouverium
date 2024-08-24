@@ -13,6 +13,8 @@
 namespace Interpreter {
 
     struct Object;
+    struct PropertyReference;
+    struct ArrayReference;
 
     class ObjectPtr {
 
@@ -107,6 +109,10 @@ namespace Interpreter {
         bool is() const {
             return std::any_cast<T const>(this);
         }
+
+        PropertyReference get_property(std::string const& name);
+
+        ArrayReference get_at(size_t index);
 
     };
 

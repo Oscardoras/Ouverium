@@ -31,18 +31,19 @@ FetchContent_MakeAvailable(Boost)
 
 #WxWidgets
 if(NOT DEFINED OUVERIUM_NO_GUI)
-    find_package(wxWidgets COMPONENTS core base)
+    find_package(wxWidgets COMPONENTS core base webview)
     if(wxWidgets_FOUND)
         include(${wxWidgets_USE_FILE})
         set(wxWidgets ${wxWidgets_LIBRARIES})
     else()
         set(wxBUILD_SHARED OFF)
+        set(wxUSE_WEBVIEW ON)
         FetchContent_Declare(
             wxWidgets
             URL https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.4/wxWidgets-3.2.4.7z
         )
         FetchContent_MakeAvailable(wxWidgets)
-        set(wxWidgets wx::core wx::base)
+        set(wxWidgets wx::core wx::base wx::webview)
     endif()
     add_compile_definitions(OUVERIUM_WXWIDGETS)
 else()

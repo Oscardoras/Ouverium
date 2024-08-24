@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include <limits>
 
-#include "../Interpreter.hpp"
+#include "SystemFunction.hpp"
 
 
 namespace Interpreter::SystemFunctions {
@@ -26,9 +26,9 @@ namespace Interpreter::SystemFunctions {
             }
         ));
 
-        Reference logical_not(FunctionContext& context) {
+        Reference logical_not(bool a) {
             try {
-                return Reference(Data(!context["a"].to_data(context).get<bool>()));
+                return Reference(Data(!a));
             } catch (Data::BadAccess const&) {
                 throw FunctionArgumentsError();
             }
@@ -62,10 +62,7 @@ namespace Interpreter::SystemFunctions {
             }
         }
 
-        Reference addition(FunctionContext& context) {
-            auto a = context["a"].to_data(context);
-            auto b = context["b"].to_data(context);
-
+        Reference addition(Data a, Data b) {
             if (auto a_int = get_if<OV_INT>(&a)) {
                 if (auto b_int = get_if<OV_INT>(&b))
                     return Reference(Data(*a_int + *b_int));
@@ -453,65 +450,65 @@ namespace Interpreter::SystemFunctions {
         }
 
         void init(GlobalContext& context) {
-            get_object(context["!"])->functions.push_front(SystemFunction{ a, logical_not });
-            get_object(context["&"])->functions.push_front(SystemFunction{ a_b, logical_and });
-            get_object(context["|"])->functions.push_front(SystemFunction{ a_b, logical_or });
-            get_object(context["+"])->functions.push_front(SystemFunction{ ab, addition });
-            get_object(context["-"])->functions.push_front(SystemFunction{ a, opposite });
-            get_object(context["-"])->functions.push_front(SystemFunction{ ab, substraction });
-            get_object(context["*"])->functions.push_front(SystemFunction{ ab, multiplication });
-            get_object(context["/"])->functions.push_front(SystemFunction{ ab, division });
-            get_object(context["%"])->functions.push_front(SystemFunction{ ab, modulo });
-            get_object(context["<"])->functions.push_front(SystemFunction{ ab, strictly_inf });
-            get_object(context[">"])->functions.push_front(SystemFunction{ ab, strictly_sup });
-            get_object(context["<="])->functions.push_front(SystemFunction{ ab, inf_equals });
-            get_object(context[">="])->functions.push_front(SystemFunction{ ab, sup_equals });
-            get_object(context["++"])->functions.push_front(SystemFunction{ a, increment });
-            get_object(context["--"])->functions.push_front(SystemFunction{ a, decrement });
-            get_object(context[":+="])->functions.push_front(SystemFunction{ ab, add });
-            get_object(context[":-="])->functions.push_front(SystemFunction{ ab, remove });
-            get_object(context[":*="])->functions.push_front(SystemFunction{ ab, mutiply });
-            get_object(context[":/="])->functions.push_front(SystemFunction{ ab, divide });
+            add_function(context["!"], logical_not);
+            add_function(context["&"], a_b, logical_and);
+            add_function(context["|"], a_b, logical_or);
+            add_function(context["+"], addition);
+            add_function(context["-"], a, opposite);
+            add_function(context["-"], ab, substraction);
+            add_function(context["*"], ab, multiplication);
+            add_function(context["/"], ab, division);
+            add_function(context["%"], ab, modulo);
+            add_function(context["<"], ab, strictly_inf);
+            add_function(context[">"], ab, strictly_sup);
+            add_function(context["<="], ab, inf_equals);
+            add_function(context[">="], ab, sup_equals);
+            add_function(context["++"], a, increment);
+            add_function(context["--"], a, decrement);
+            add_function(context[":+="], ab, add);
+            add_function(context[":-="], ab, remove);
+            add_function(context[":*="], ab, mutiply);
+            add_function(context[":/="], ab, divide);
 
-            get_object(context["forall"])->functions.push_front(SystemFunction{ for_args, forall });
-            get_object(context["exists"])->functions.push_front(SystemFunction{ for_args, exists });
+            add_function(context["forall"], for_args, forall);
+            add_function(context["exists"], for_args, exists);
 
-            get_object(context["random"])->functions.push_front(SystemFunction{ std::make_shared<Parser::Tuple>(), random_0 });
-            get_object(context["random"])->functions.push_front(SystemFunction{ std::make_shared<Parser::Symbol>("b"), random_1 });
-            get_object(context["random"])->functions.push_front(SystemFunction{ ab, random_2 });
+            add_function(context["random"], std::make_shared<Parser::Tuple>(), random_0);
+            add_function(context["random"], std::make_shared<Parser::Symbol>("b"), random_1);
+            add_function(context["random"], ab, random_2);
 
-            get_object(context["cos"])->functions.push_front(SystemFunction{ a, function1<std::cos> });
-            get_object(context["sin"])->functions.push_front(SystemFunction{ a, function1<std::sin> });
-            get_object(context["tan"])->functions.push_front(SystemFunction{ a, function1<std::tan> });
-            get_object(context["acos"])->functions.push_front(SystemFunction{ a, function1<std::acos> });
-            get_object(context["asin"])->functions.push_front(SystemFunction{ a, function1<std::asin> });
-            get_object(context["atan"])->functions.push_front(SystemFunction{ a, function1<std::atan> });
-            get_object(context["atan2"])->functions.push_front(SystemFunction{ ab, function2<std::atan2> });
-            get_object(context["cosh"])->functions.push_front(SystemFunction{ a, function1<std::cosh> });
-            get_object(context["sinh"])->functions.push_front(SystemFunction{ a, function1<std::sinh> });
-            get_object(context["tanh"])->functions.push_front(SystemFunction{ a, function1<std::tanh> });
-            get_object(context["acosh"])->functions.push_front(SystemFunction{ a, function1<std::acosh> });
-            get_object(context["asinh"])->functions.push_front(SystemFunction{ a, function1<std::asinh> });
-            get_object(context["atanh"])->functions.push_front(SystemFunction{ a, function1<std::atanh> });
-            get_object(context["exp"])->functions.push_front(SystemFunction{ a, function1<std::exp> });
-            get_object(context["log"])->functions.push_front(SystemFunction{ a, function1<std::log> });
-            get_object(context["log10"])->functions.push_front(SystemFunction{ a, function1<std::log10> });
-            get_object(context["pow"])->functions.push_front(SystemFunction{ ab, function2<std::pow> });
+            add_function(context["cos"], a, function1<std::cos>);
+            add_function(context["sin"], a, function1<std::sin>);
+            add_function(context["tan"], a, function1<std::tan>);
+            add_function(context["acos"], a, function1<std::acos>);
+            add_function(context["asin"], a, function1<std::asin>);
+            add_function(context["atan"], a, function1<std::atan>);
+            add_function(context["atan2"], ab, function2<std::atan2>);
+            add_function(context["cosh"], a, function1<std::cosh>);
+            add_function(context["sinh"], a, function1<std::sinh>);
+            add_function(context["tanh"], a, function1<std::tanh>);
+            add_function(context["acosh"], a, function1<std::acosh>);
+            add_function(context["asinh"], a, function1<std::asinh>);
+            add_function(context["atanh"], a, function1<std::atanh>);
+            add_function(context["exp"], a, function1<std::exp>);
+            add_function(context["log"], a, function1<std::log>);
+            add_function(context["log10"], a, function1<std::log10>);
+            add_function(context["pow"], ab, function2<std::pow>);
             Interpreter::set(context, context["**"], context["pow"]);
             Interpreter::set(context, context["^"], context["pow"]);
-            get_object(context["**"])->functions.push_front(SystemFunction{ ab, function2<std::pow> });
-            get_object(context["sqrt"])->functions.push_front(SystemFunction{ a, function1<std::sqrt> });
-            get_object(context["cbrt"])->functions.push_front(SystemFunction{ a, function1<std::cbrt> });
-            get_object(context["hypot"])->functions.push_front(SystemFunction{ ab, function2<std::hypot> });
-            get_object(context["ceil"])->functions.push_front(SystemFunction{ a, function1<std::ceil> });
-            get_object(context["floor"])->functions.push_front(SystemFunction{ a, function1<std::floor> });
-            get_object(context["trunc"])->functions.push_front(SystemFunction{ a, function1<std::trunc> });
-            get_object(context["round"])->functions.push_front(SystemFunction{ a, function1<std::round> });
-            get_object(context["abs"])->functions.push_front(SystemFunction{ a, function1<std::abs> });
-            get_object(context["isfinite"])->functions.push_front(SystemFunction{ a, function_bool<std::isfinite> });
-            get_object(context["isinf"])->functions.push_front(SystemFunction{ a, function_bool<std::isinf> });
-            get_object(context["isnan"])->functions.push_front(SystemFunction{ a, function_bool<std::isnan> });
-            get_object(context["isnormal"])->functions.push_front(SystemFunction{ a, function_bool<std::isnormal> });
+            add_function(context["**"], ab, function2<std::pow>);
+            add_function(context["sqrt"], a, function1<std::sqrt>);
+            add_function(context["cbrt"], a, function1<std::cbrt>);
+            add_function(context["hypot"], ab, function2<std::hypot>);
+            add_function(context["ceil"], a, function1<std::ceil>);
+            add_function(context["floor"], a, function1<std::floor>);
+            add_function(context["trunc"], a, function1<std::trunc>);
+            add_function(context["round"], a, function1<std::round>);
+            add_function(context["abs"], a, function1<std::abs>);
+            add_function(context["isfinite"], a, function_bool<std::isfinite>);
+            add_function(context["isinf"], a, function_bool<std::isinf>);
+            add_function(context["isnan"], a, function_bool<std::isnan>);
+            add_function(context["isnormal"], a, function_bool<std::isnormal>);
 
             Interpreter::set(context, context["epsilon"], Data(std::numeric_limits<OV_FLOAT>::epsilon()));
             Interpreter::set(context, context["infinity"], Data(std::numeric_limits<OV_FLOAT>::infinity()));

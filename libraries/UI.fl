@@ -12,24 +12,43 @@ class (UI.Window) {
         }
     ));
 
-    (UI.Window)::(this.set_position |-> (
-        (x, y) |-> {
-            import("system").ui_set_position(this, x, y)
-        }
-    ));
+    (UI.Window)::(
+        this.position |-> (
+            import("system").ui_position_get(this)
+        ),
+        (this.position, (x, y)) |-> (
+            import("system").ui_position_set(this, x, y)
+        )
+    );
 
-    (UI.Window)::(this.set_size |-> (
-        (x, y) |-> {
-            import("system").ui_set_size(this, x, y)
-        }
-    ));
+    (UI.Window)::(
+        this.size |-> (
+            import("system").ui_size_get(this)
+        ),
+        (this.size, (x, y)) |-> (
+            import("system").ui_size_set(this, x, y)
+        )
+    );
 };
 
 
 class (UI.Frame) extends (UI.Window) {
     UI.Frame : (String title) |-> {
-        (import("system").ui_new_frame(title)) :~ (UI.Frame)
+        (import("system").ui_frame_new(title)) :~ (UI.Frame)
     };
+};
+
+
+class (UI.Webview) extends (UI.Window) {
+    UI.Webview : (parent) |-> {
+        (import("system").ui_new_webview(parent)) :~ (UI.Webview)
+    };
+
+    (UI.Webview)::(this.load_url |-> (
+        (String url) |-> {
+            (import("system").ui_webview_load_url(this, url))
+        }
+    ))
 };
 
 

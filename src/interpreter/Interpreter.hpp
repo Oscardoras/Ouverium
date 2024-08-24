@@ -11,9 +11,6 @@ namespace Interpreter {
 
         void init(GlobalContext& context);
 
-        ObjectPtr get_object(IndirectReference const& reference);
-        ObjectPtr get_object(Data& data);
-
     }
 
     class Exception {
