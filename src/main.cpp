@@ -5,6 +5,7 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
+#include <utility>
 #include <vector>
 
 #include <boost/dll.hpp>
@@ -14,7 +15,7 @@
 #include "parser/Standard.hpp"
 
 
-std::filesystem::path program_location = boost::filesystem::canonical(boost::dll::program_location()).parent_path().parent_path().string();
+std::filesystem::path const program_location = boost::filesystem::canonical(boost::dll::program_location()).parent_path().parent_path().string();
 std::vector<std::string> include_path;
 
 #ifdef READLINE
@@ -22,16 +23,16 @@ std::vector<std::string> include_path;
 #include <readline/readline.h>
 #include <readline/history.h>
 bool is_interactive() {
-    return isatty(STDIN_FILENO);
+    return isatty(STDIN_FILENO) != 0;
 }
 bool get_line(std::string& line) {
     char* input = readline("> ");
-    if (input) {
+    if (input != nullptr) {
         add_history(input);
         line = input;
         free(input);
     }
-    return input;
+    return input != nullptr;
 }
 #else
 bool is_interactive() {
@@ -128,7 +129,7 @@ public:
         auto async = context->system.get<Interpreter::ObjectPtr>()->properties["async"];
         try {
             auto r = Interpreter::try_call_function(*context, nullptr, async, std::make_shared<Parser::Tuple>());
-            if (auto reference = std::get_if<Interpreter::Reference>(&r))
+            if (auto* reference = std::get_if<Interpreter::Reference>(&r))
                 reference->to_data(*context).get<bool>();
         } catch (Interpreter::Exception const& ex) {
             ex.print_stack_trace(*context);
@@ -156,8 +157,8 @@ class FileMode : public ExecutionMode {
 
 public:
 
-    FileMode(std::string const& path, std::istream& src) :
-        path{ path }, valid{ src } {
+    FileMode(std::string  path, std::istream& src) :
+        path{ std::move(path) }, valid{ src } {
         if (valid) {
             std::ostringstream oss;
             oss << src.rdbuf();
@@ -203,7 +204,7 @@ public:
         auto async = context->system.get<Interpreter::ObjectPtr>()->properties["async"];
         try {
             auto r = Interpreter::try_call_function(*context, nullptr, async, std::make_shared<Parser::Tuple>());
-            if (auto reference = std::get_if<Interpreter::Reference>(&r))
+            if (auto* reference = std::get_if<Interpreter::Reference>(&r))
                 return reference->to_data(*context).get<bool>();
             else
                 return false;

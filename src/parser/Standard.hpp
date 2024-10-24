@@ -1,6 +1,8 @@
 #ifndef __PARSER_STANDARD_HPP__
 #define __PARSER_STANDARD_HPP__
 
+#include <utility>
+
 #include "Expressions.hpp"
 
 
@@ -10,12 +12,12 @@ namespace Parser {
 
     public:
 
-        Standard(std::string const& code, std::string const& path);
+        Standard(std::string code, std::string path);
 
         struct Word : public std::string {
             std::string position;
 
-            Word(std::string const& word, Parser::Position const& position);
+            Word(std::string word, Parser::Position position);
         };
 
         std::vector<Word> get_words() const;
@@ -24,8 +26,8 @@ namespace Parser {
             std::string message;
             std::string position;
 
-            ParsingError(std::string const& message, Parser::Position const& position) :
-                message(message), position(position) {}
+            ParsingError(std::string message, Parser::Position position) :
+                message(std::move(message)), position(std::move(position)) {}
         };
 
         class Exception : std::exception {
@@ -34,9 +36,9 @@ namespace Parser {
 
         public:
 
-            Exception(std::vector<ParsingError> const& errors = {});
+            explicit Exception(std::vector<ParsingError> const& errors = {});
 
-            const char* what() const noexcept override;
+            [[nodiscard]] const char* what() const noexcept override;
 
         };
 

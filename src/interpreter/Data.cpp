@@ -16,9 +16,9 @@ namespace Interpreter {
             return true;
 
         auto it = Data::comparators.find({ std::type_index(static_cast<std::any const&>(a).type()), std::type_index(static_cast<std::any const&>(b).type()) });
-        if (it != Data::comparators.end()) {
+        if (it != Data::comparators.end())
             return it->second(a, b);
-        } else
+        else
             return false;
     }
 

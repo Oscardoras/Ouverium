@@ -1,4 +1,5 @@
 import "Type.fl";
+import "Event.fl";
 import "String.fl";
 
 
@@ -6,6 +7,18 @@ UI := ();
 
 
 class (UI.Window) {
+    (UI.Window)::(this.create_child |-> (
+        (element) |-> {
+            element.create(this);
+        }
+    ));
+
+    (UI.Window)::(this.create |-> (
+        (UI.Window parent) |-> {
+            import("system").ui_create(this, parent)
+        }
+    ));
+
     (UI.Window)::(this.add_event |-> (
         callback |-> {
             import("system").ui_add_event(this, callback)
@@ -17,7 +30,8 @@ class (UI.Window) {
             import("system").ui_position_get(this)
         ),
         (this.position, (x, y)) |-> (
-            import("system").ui_position_set(this, x, y)
+            import("system").ui_position_set(this, x, y);
+            (x, y)
         )
     );
 
@@ -26,7 +40,8 @@ class (UI.Window) {
             import("system").ui_size_get(this)
         ),
         (this.size, (x, y)) |-> (
-            import("system").ui_size_set(this, x, y)
+            import("system").ui_size_set(this, x, y);
+            (x, y)
         )
     );
 };
@@ -39,28 +54,120 @@ class (UI.Frame) extends (UI.Window) {
 };
 
 
-class (UI.Webview) extends (UI.Window) {
-    UI.Webview : (parent) |-> {
-        (import("system").ui_new_webview(parent)) :~ (UI.Webview)
-    };
-
-    (UI.Webview)::(this.load_url |-> (
-        (String url) |-> {
-            (import("system").ui_webview_load_url(this, url))
-        }
-    ))
-};
-
-
 class (UI.Panel) extends (UI.Window) {
-    UI.Panel : (parent) |-> {
-        (import("system").ui_new_panel(parent)) :~ (UI.Panel)
+    UI.Panel : () |-> {
+        (import("system").ui_panel_new()) :~ (UI.Panel)
     };
 };
 
 
-class (UI.Button) extends (UI.Window,) {
-    UI.Button : (parent) |-> {
-        (import("system").ui_new_button(parent)) :~ (UI.Button)
+class (UI.ActivityIndicator) extends (UI.Window) {
+    UI.ActivityIndicator : () |-> {
+        (import("system").ui_activityindicator_new()) :~ (UI.ActivityIndicator)
     };
+
+    (UI.ActivityIndicator)::(
+        this.running |-> {
+            import("system").ui_activityindicator_running_get(this)
+        },
+        (this.running, Bool value) |-> {
+            import("system").ui_activityindicator_running_set(this, value);
+            value
+        }
+    );
+};
+
+
+class (UI.Button) extends (UI.Window) {
+    UI.Button : () |-> {
+        this := (import("system").ui_button_new()) :~ (UI.Button);
+
+        this.on_value_change := Event();
+        import("system").ui_event_button(this, () |-> {
+            this.on_value_change();
+        });
+
+        this
+    };
+
+    (UI.Button)::(
+        this.label |-> {
+            import("system").ui_button_label_get(this)
+        },
+        (this.label, String value) |-> {
+            import("system").ui_button_label_set(this, value);
+            value
+        }
+    );
+};
+
+
+class (UI.Calendar) extends (UI.Window) {
+    UI.Calendar : () |-> {
+        this := (import("system").ui_calendar_new()) :~ (UI.Calendar)
+
+        this.on_value_change := Event();
+        import("system").ui_event_calendar(this, () |-> {
+            this.on_value_change();
+        });
+
+        this
+    };
+
+    (UI.Calendar)::(
+        this.value |-> {
+            import("system").ui_calendar_date_get(this)
+        },
+        (this.value, Int v) |-> {
+            import("system").ui_calendar_date_set(this, v);
+            v
+        }
+    );
+};
+
+
+class (UI.Checkbox) extends (UI.Window) {
+    UI.Checkbox : () |-> {
+        (import("system").ui_checkbox_new()) :~ (UI.Checkbox)
+    };
+
+    (UI.Checkbox)::(
+        this.value |-> {
+            import("system").ui_checkbox_value_get(this)
+        },
+        (this.value, Bool v) |-> {
+            import("system").ui_checkbox_value_set(this, v);
+            v
+        }
+    );
+};
+
+
+class (UI.Webview) extends (UI.Window) {
+    UI.Webview : () |-> {
+        (import("system").ui_webview_new()) :~ (UI.Webview)
+    };
+
+    (UI.Webview)::(
+        this.title |-> {
+            import("system").ui_webview_title_get(this)
+        },
+        (this.title, value) |-> {}
+    );
+
+    (UI.Webview)::(
+        this.url |-> {
+            import("system").ui_webview_url_get(this)
+        },
+        (this.url, String url) |-> {
+            import("system").ui_webview_url_set(this, url);
+            url
+        }
+    );
+
+    (UI.Webview)::(this.set_page |-> (
+        (String html, String url) |-> {
+            import("system").ui_webview_set_page(this, html, url);
+        }
+    ));
 };

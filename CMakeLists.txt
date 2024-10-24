@@ -9,10 +9,7 @@ include(CPack)
 
 # Configuration
 
-if(CMAKE_BUILD_TYPE MATCHES Debug)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra")
-else()
+if(CMAKE_BUILD_TYPE MATCHES Release)
     check_ipo_supported()
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
@@ -78,6 +75,10 @@ FILE(GLOB_RECURSE ouverium_sources
 add_executable(ouverium ${ouverium_sources})
 target_include_directories(ouverium PRIVATE include)
 target_compile_features(ouverium PRIVATE cxx_std_20)
+if(CMAKE_BUILD_TYPE MATCHES Debug)
+    target_compile_options(ouverium PRIVATE -Wall -Wextra)
+    target_link_libraries(ouverium PRIVATE -fsanitize=address)
+endif()
 if (WIN32)
     target_link_libraries(ouverium PRIVATE -lws2_32)
 endif()

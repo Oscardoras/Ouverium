@@ -15,7 +15,7 @@ namespace Interpreter {
 
     using TupleReference = std::vector<Reference>;
     struct SymbolReference {
-        using type = std::pair<Data, bool>;
+        using type = std::pair<Data, signed char>;
 
         std::list<type>::iterator it;
 
@@ -46,8 +46,8 @@ namespace Interpreter {
 
         using std::variant<SymbolReference, PropertyReference, ArrayReference>::variant;
 
-        Data& get_data() const;
-        Data to_data(Context& context, std::shared_ptr<Parser::Expression> caller = nullptr) const;
+        [[nodiscard]] Data& get_data() const;
+        [[nodiscard]] Data to_data(Context& context, std::shared_ptr<Parser::Expression> const& caller = nullptr) const;
 
     };
 
@@ -58,8 +58,8 @@ namespace Interpreter {
         using std::variant<Data, TupleReference, SymbolReference, PropertyReference, ArrayReference>::variant;
         Reference(IndirectReference const& indirect_reference);
 
-        Data to_data(Context& context, std::shared_ptr<Parser::Expression> caller = nullptr) const;
-        IndirectReference to_indirect_reference(Context& context, std::shared_ptr<Parser::Expression> caller = nullptr) const;
+        [[nodiscard]] Data to_data(Context& context, std::shared_ptr<Parser::Expression> const& caller = nullptr) const;
+        [[nodiscard]] IndirectReference to_indirect_reference(Context& context, std::shared_ptr<Parser::Expression> const& caller = nullptr) const;
 
     };
 

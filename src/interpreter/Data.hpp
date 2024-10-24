@@ -5,6 +5,7 @@
 #include <exception>
 #include <functional>
 #include <list>
+#include <map>
 #include <typeindex>
 
 #include "../Types.hpp"
@@ -20,20 +21,24 @@ namespace Interpreter {
 
     public:
 
-        using type = std::pair<Object, bool>;
+        using type = std::pair<Object, signed char>;
 
         std::list<type>::iterator it;
 
         ObjectPtr(std::list<type>::iterator it) : it{ it } {}
 
         ObjectPtr(ObjectPtr const& ptr);
+        ObjectPtr(ObjectPtr&& ptr) noexcept;
         ObjectPtr& operator=(ObjectPtr const& ptr);
+        ObjectPtr& operator=(ObjectPtr&& ptr) noexcept;
         ~ObjectPtr();
 
         Object& operator*() const;
         Object* operator->() const;
         friend bool operator==(ObjectPtr const& a, ObjectPtr const& b);
         friend bool operator!=(ObjectPtr const& a, ObjectPtr const& b);
+
+        void swap(ObjectPtr& ptr);
 
     };
 
@@ -94,7 +99,7 @@ namespace Interpreter {
         class BadAccess : public std::exception {};
 
         template<typename T>
-        T const& get() const {
+        [[nodiscard]] T const& get() const {
             try {
                 return std::any_cast<T const&>(*this);
             } catch (std::bad_any_cast const&) {
@@ -102,17 +107,17 @@ namespace Interpreter {
             }
         }
         template<typename T>
-        friend T const* get_if(Data const* data) {
+        [[nodiscard]] friend T const* get_if(Data const* data) {
             return std::any_cast<T const>(data);
         }
         template<typename T>
-        bool is() const {
+        [[nodiscard]] bool is() const {
             return std::any_cast<T const>(this);
         }
 
-        PropertyReference get_property(std::string const& name);
+        [[nodiscard]] PropertyReference get_property(std::string const& name);
 
-        ArrayReference get_at(size_t index);
+        [[nodiscard]] ArrayReference get_at(size_t index);
 
     };
 

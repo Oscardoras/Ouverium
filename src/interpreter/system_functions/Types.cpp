@@ -5,7 +5,7 @@ namespace Interpreter::SystemFunctions {
 
     namespace Types {
 
-        auto constructor_args = std::make_shared<Parser::Symbol>("a");
+        auto const constructor_args = std::make_shared<Parser::Symbol>("a");
 
         Reference char_constructor(FunctionContext& context) {
             auto a = context["a"].to_data(context);
@@ -19,7 +19,7 @@ namespace Interpreter::SystemFunctions {
         Reference float_constructor(FunctionContext& context) {
             auto a = context["a"].to_data(context);
 
-            if (auto a_int = get_if<OV_INT>(&a)) {
+            if (auto const* a_int = get_if<OV_INT>(&a)) {
                 return Data((OV_FLOAT) *a_int);
             } else if (a.is<OV_FLOAT>()) {
                 return a;
@@ -32,7 +32,7 @@ namespace Interpreter::SystemFunctions {
 
             if (a.is<OV_INT>()) {
                 return a;
-            } else if (auto a_float = get_if<OV_FLOAT>(&a)) {
+            } else if (auto const* a_float = get_if<OV_FLOAT>(&a)) {
                 return Data((OV_INT) *a_float);
             }
             throw FunctionArgumentsError();
@@ -50,13 +50,13 @@ namespace Interpreter::SystemFunctions {
         Reference array_constructor(FunctionContext& context) {
             auto a = context["a"].to_data(context);
 
-            if (auto obj = get_if<ObjectPtr>(&a); obj && (*obj)->array.capacity() > 0)
+            if (auto const* obj = get_if<ObjectPtr>(&a); obj && (*obj)->array.capacity() > 0)
                 return a;
             else
                 throw FunctionArgumentsError();
         }
 
-        auto tuple_constructor_args = std::make_shared<Parser::FunctionCall>(
+        auto const tuple_constructor_args = std::make_shared<Parser::FunctionCall>(
             std::make_shared<Parser::Symbol>("tuple"),
             std::make_shared<Parser::Tuple>()
         );
@@ -72,7 +72,7 @@ namespace Interpreter::SystemFunctions {
         Reference function_constructor(FunctionContext& context) {
             auto a = context["a"].to_data(context);
 
-            if (auto obj = get_if<ObjectPtr>(&a); obj && !(*obj)->functions.empty())
+            if (auto const* obj = get_if<ObjectPtr>(&a); obj && !(*obj)->functions.empty())
                 return a;
             else
                 throw FunctionArgumentsError();
@@ -100,25 +100,25 @@ namespace Interpreter::SystemFunctions {
         }
 
 
-        bool check_type(Context& context, Data data, Data type) {
+        bool check_type(Context& context, Data const& data, Data const& type) {
             if (type == context["Char"].to_data(context)) return data.is<char>();
             else if (type == context["Float"].to_data(context)) return data.is<OV_FLOAT>();
             else if (type == context["Int"].to_data(context)) return data.is<OV_INT>();
             else if (type == context["Bool"].to_data(context)) return data.is<bool>();
             else if (type == context["Array"].to_data(context)) {
-                if (auto obj = get_if<ObjectPtr>(&data))
+                if (auto const* obj = get_if<ObjectPtr>(&data))
                     return (*obj)->array.capacity() > 0;
                 else
                     return false;
             } else if (type == context["Function"].to_data(context)) {
-                if (auto obj = get_if<ObjectPtr>(&data))
+                if (auto const* obj = get_if<ObjectPtr>(&data))
                     return !(*obj)->functions.empty();
                 else
                     return false;
             } else throw FunctionArgumentsError();
         }
 
-        auto is_type_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+        auto const is_type_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
             {
                 std::make_shared<Parser::Symbol>("data"),
                 std::make_shared<Parser::Symbol>("type")

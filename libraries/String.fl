@@ -3,7 +3,7 @@ import "containers/ArrayList.fl";
 
 
 {
-    Char : this \ (Array.length(this) == 1 & this[0] ~ Char) |-> {
+    Char : this \ (this ~ Array & Array.get_size(this) == 1 & this[0] ~ Char) |-> {
         this[0]
     };
 

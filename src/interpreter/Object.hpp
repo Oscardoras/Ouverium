@@ -34,7 +34,8 @@ namespace Interpreter {
                 return t->get();
             else if (auto* t = std::any_cast<std::shared_ptr<T>>(&object))
                 return **t;
-            else throw Data::BadAccess();
+            else
+                throw Data::BadAccess();
         }
     };
 

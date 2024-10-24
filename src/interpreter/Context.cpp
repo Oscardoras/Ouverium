@@ -1,10 +1,12 @@
-#include "Interpreter.hpp"
+#include <utility>
+
+#include "system_functions/SystemFunction.hpp"
 
 
 namespace Interpreter {
 
     Context::Context(std::shared_ptr<Parser::Expression> caller) :
-        caller(caller) {
+        caller(std::move(caller)) {
         GC::add_context(*this);
     }
 
@@ -41,11 +43,11 @@ namespace Interpreter {
 
 
     GlobalContext::GlobalContext(std::shared_ptr<Parser::Expression> expression) :
-        Context(expression), system(GC::new_object()) {
+        Context(std::move(expression)), system(GC::new_object()) {
         SystemFunctions::init(*this);
     }
 
     FunctionContext::FunctionContext(Context& parent, std::shared_ptr<Parser::Expression> caller) :
-        Context(caller), parent(parent), recursion_level(parent.get_recurion_level() + 1) {}
+        Context(std::move(caller)), parent(parent), recursion_level(parent.get_recurion_level() + 1) {}
 
 }

@@ -4,6 +4,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 
@@ -66,11 +67,11 @@ namespace Parser {
         std::shared_ptr<Expression> arguments;
 
         FunctionCall(std::shared_ptr<Expression> function = nullptr, std::shared_ptr<Expression> arguments = nullptr) :
-            function(function), arguments(arguments) {}
+            function(std::move(function)), arguments(std::move(arguments)) {}
 
         std::set<std::string> get_symbols() const override;
         std::set<std::string> compute_symbols(std::set<std::string>& available_symbols) override;
-        std::string to_string(unsigned int n = 0) const override;
+        std::string to_string(unsigned n = 0) const override;
 
     };
 
@@ -83,7 +84,7 @@ namespace Parser {
         std::shared_ptr<Expression> body;
 
         FunctionDefinition(std::shared_ptr<Expression> parameters = nullptr, std::shared_ptr<Expression> filter = nullptr, std::shared_ptr<Expression> body = nullptr) :
-            parameters(parameters), filter(filter), body(body) {}
+            parameters(std::move(parameters)), filter(std::move(filter)), body(std::move(body)) {}
 
         std::set<std::string> get_symbols() const override;
         std::set<std::string> compute_symbols(std::set<std::string>& available_symbols) override;
@@ -96,8 +97,8 @@ namespace Parser {
         std::shared_ptr<Expression> object;
         std::string name;
 
-        Property(std::shared_ptr<Expression> object = nullptr, std::string const& name = "") :
-            object(object), name(name) {}
+        Property(std::shared_ptr<Expression> object = nullptr, std::string name = "") :
+            object(std::move(object)), name(std::move(name)) {}
 
         std::set<std::string> get_symbols() const override;
         std::set<std::string> compute_symbols(std::set<std::string>& available_symbols) override;

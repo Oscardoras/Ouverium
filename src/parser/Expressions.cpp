@@ -98,7 +98,7 @@ namespace Parser {
     std::set<std::string> Tuple::get_symbols() const {
         std::set<std::string> symbols;
 
-        for (auto& ex : objects)
+        for (auto const& ex : objects)
             merge(ex->get_symbols(), symbols);
 
         return symbols;
@@ -113,13 +113,13 @@ namespace Parser {
         return symbols;
     }
 
-    std::string tabu(int n) {
+    std::string tabu(unsigned n) {
         std::string s;
-        for (int i = 0; i < n; ++i) s += "    ";
+        for (unsigned i = 0; i < n; ++i) s += "    ";
         return s;
     }
 
-    std::string FunctionCall::to_string(unsigned int n) const {
+    std::string FunctionCall::to_string(unsigned n) const {
         std::string s;
         s += "FunctionCall:\n";
         n++;
@@ -128,7 +128,7 @@ namespace Parser {
         return s;
     }
 
-    std::string FunctionDefinition::to_string(unsigned int n) const {
+    std::string FunctionDefinition::to_string(unsigned n) const {
         std::string s;
         s += "FunctionDefinition:\n";
         n++;
@@ -149,7 +149,7 @@ namespace Parser {
         return s;
     }
 
-    std::string Symbol::to_string(unsigned int) const {
+    std::string Symbol::to_string(unsigned int /*n*/) const {
         return "Symbol: " + name + "\n";
     }
 

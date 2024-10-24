@@ -1,0 +1,16 @@
+import "UI.fl";
+
+f := UI.Frame("test");
+f.create_child(p := UI.Panel());
+f.create_child(a := UI.ActivityIndicator());
+a.running := true;
+b1 := UI.Button();
+p.create_child(b1);
+b1.position := (100, 100);
+b1.label := "b1";
+p.create_child(b2 := UI.Button());
+b2.position := (100, 200);
+b2.label := "b2";
+b1.on_value_change :+= args |-> { print("test b1"); };
+print("ok");
+b2.on_value_change :+= () |-> { print("test b2"); };

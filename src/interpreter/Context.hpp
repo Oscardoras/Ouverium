@@ -25,18 +25,23 @@ namespace Interpreter {
         std::shared_ptr<Parser::Expression> caller;
 
         Context(std::shared_ptr<Parser::Expression> caller);
+        Context(Context const&) = delete;
+        Context(Context&&) = delete;
+
+        Context& operator=(Context const&) = delete;
+        Context& operator=(Context&&) = delete;
 
         virtual Context& get_parent() = 0;
         virtual GlobalContext& get_global() = 0;
         virtual unsigned get_recurion_level() = 0;
 
-        std::set<std::string> get_symbols() const;
-        bool has_symbol(std::string const& symbol) const;
+        [[nodiscard]] std::set<std::string> get_symbols() const;
+        [[nodiscard]] bool has_symbol(std::string const& symbol) const;
         void add_symbol(std::string const& symbol, IndirectReference const& indirect_reference);
         void add_symbol(std::string const& symbol, Data const& data);
         IndirectReference operator[](std::string const& symbol);
-        auto begin() const { return symbols.begin(); }
-        auto end() const { return symbols.end(); }
+        [[nodiscard]] auto begin() const { return symbols.begin(); }
+        [[nodiscard]] auto end() const { return symbols.end(); }
 
         virtual ~Context();
 
@@ -53,15 +58,15 @@ namespace Interpreter {
 
         GlobalContext(std::shared_ptr<Parser::Expression> expression);
 
-        virtual GlobalContext& get_global() override {
+        GlobalContext& get_global() override {
             return *this;
         }
 
-        virtual Context& get_parent() override {
+        Context& get_parent() override {
             return *this;
         }
 
-        virtual unsigned get_recurion_level() override {
+        unsigned get_recurion_level() override {
             return 0;
         }
 
@@ -78,15 +83,15 @@ namespace Interpreter {
 
         FunctionContext(Context& parent, std::shared_ptr<Parser::Expression> caller);
 
-        virtual GlobalContext& get_global() override {
+        GlobalContext& get_global() override {
             return parent.get_global();
         }
 
-        virtual Context& get_parent() override {
+        Context& get_parent() override {
             return parent;
         }
 
-        virtual unsigned get_recurion_level() override {
+        unsigned get_recurion_level() override {
             return recursion_level;
         }
 

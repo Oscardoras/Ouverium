@@ -1,3 +1,5 @@
+#include <utility>
+
 #include "Interpreter.hpp"
 
 
@@ -8,27 +10,27 @@ overloaded(Ts...) -> overloaded<Ts...>;
 
 namespace Interpreter {
 
-    Data compute(Context& context, std::shared_ptr<Parser::Expression> caller, Reference const& reference) {
-        if (auto symbol = std::get_if<SymbolReference>(&reference))
+    Data compute(Context& context, std::shared_ptr<Parser::Expression> const& caller, Reference const& reference) {
+        if (auto const* symbol = std::get_if<SymbolReference>(&reference))
             if (*symbol == std::get<SymbolReference>(context.get_global()["getter"]))
                 return symbol->it->first;
 
-        if (auto d = std::get_if<Data>(&reference); d && *d != Data{})
+        if (auto const* d = std::get_if<Data>(&reference); d && *d != Data{})
             return *d;
         else
             return call_function(context, caller, context.get_global()["getter"], reference).to_data(context, caller);
     }
 
     Data& IndirectReference::get_data() const {
-        if (auto symbol_reference = std::get_if<SymbolReference>(this)) {
+        if (auto const* symbol_reference = std::get_if<SymbolReference>(this)) {
             return symbol_reference->it->first;
-        } else if (auto property_reference = std::get_if<PropertyReference>(this)) {
+        } else if (auto const* property_reference = std::get_if<PropertyReference>(this)) {
             auto parent = property_reference->parent;
-            if (auto obj = get_if<ObjectPtr>(&parent))
+            if (auto const* obj = get_if<ObjectPtr>(&parent))
                 return (*obj)->properties[property_reference->name];
-        } else if (auto array_reference = std::get_if<ArrayReference>(this)) {
+        } else if (auto const* array_reference = std::get_if<ArrayReference>(this)) {
             auto array = array_reference->array;
-            if (auto obj = get_if<ObjectPtr>(&array))
+            if (auto const* obj = get_if<ObjectPtr>(&array))
                 if (array_reference->i < (*obj)->array.size())
                     return (*obj)->array[array_reference->i];
         }
@@ -37,7 +39,7 @@ namespace Interpreter {
         return empty_data = Data{};
     }
 
-    Data IndirectReference::to_data(Context& context, std::shared_ptr<Parser::Expression> caller) const {
+    Data IndirectReference::to_data(Context& context, std::shared_ptr<Parser::Expression> const& caller) const {
         return compute(context, caller, *this);
     }
 
@@ -47,11 +49,11 @@ namespace Interpreter {
         }, indirect_reference);
     }
 
-    Data Reference::to_data(Context& context, std::shared_ptr<Parser::Expression> caller) const {
+    Data Reference::to_data(Context& context, std::shared_ptr<Parser::Expression> const& caller) const {
         return compute(context, caller, *this);
     }
 
-    IndirectReference Reference::to_indirect_reference(Context& context, std::shared_ptr<Parser::Expression> caller) const {
+    IndirectReference Reference::to_indirect_reference(Context& context, std::shared_ptr<Parser::Expression> const& caller) const {
         return std::visit(
             overloaded{
                 [](Data const& data) -> IndirectReference {
@@ -69,7 +71,7 @@ namespace Interpreter {
                 [&context, &caller](TupleReference const& tuple_reference) -> IndirectReference {
                     auto object = GC::new_object();
                     object->array.reserve(tuple_reference.size());
-                    for (auto d : tuple_reference)
+                    for (auto const& d : tuple_reference)
                         object->array.push_back(d.to_data(context, caller));
                     return GC::new_reference(Data(object));
                 }

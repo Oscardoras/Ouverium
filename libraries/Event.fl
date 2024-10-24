@@ -8,12 +8,14 @@ class Event {
         this := ();
         this :~ Event;
 
+        this._callbacks := Set[];
+
         this
     };
 
-    Event::(this |-> (
+    Event:::(this |-> (
         args |-> {
-            foreach(this._callbacks, callback |-> {
+            this._callbacks.foreach(callback |-> {
                 callback(args);
             });
         }
@@ -47,19 +49,13 @@ class Event {
 
 
 (:+=) : (event, callback) \ (event ~ Event & callback ~ Function) |-> {
-    if (!defined(event._callbacks)) {
-        event._callbacks := Set[];
-    };
-
     event._callbacks.insert(callback);
 
     event
 };
 
 (:-=) : (event, callback) \ (event ~ Event & callback ~ Function) |-> {
-    if (defined(event._callbacks)) {
-        event._callbacks.remove(callback);
-    };
+    event._callbacks.remove(callback);
 
     event
 };

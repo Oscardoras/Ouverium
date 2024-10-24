@@ -1,8 +1,9 @@
 import "Test.fl";
 import "String.fl";
 
-
-concat := "abc" + "def";
+for i from 0 to 100 {
+    concat := "abc" + "def";
+};
 
 
 ASSERT_EQ(concat, "abcdef");
