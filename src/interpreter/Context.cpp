@@ -6,9 +6,7 @@
 namespace Interpreter {
 
     Context::Context(std::shared_ptr<Parser::Expression> caller) :
-        caller(std::move(caller)) {
-        GC::add_context(*this);
-    }
+        caller(std::move(caller)) {}
 
     std::set<std::string> Context::get_symbols() const {
         std::set<std::string> symbols;
@@ -35,10 +33,6 @@ namespace Interpreter {
             return symbols.emplace(symbol, GC::new_reference()).first->second;
         else
             return it->second;
-    }
-
-    Context::~Context() {
-        GC::remove_context(*this);
     }
 
 

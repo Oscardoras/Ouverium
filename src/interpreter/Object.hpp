@@ -1,8 +1,9 @@
 #ifndef __INTERPRETER_OBJECT_HPP__
 #define __INTERPRETER_OBJECT_HPP__
 
-#include "Function.hpp"
+#include <list>
 
+#include "Function.hpp"
 
 namespace Interpreter {
 
@@ -24,7 +25,7 @@ namespace Interpreter {
             object = std::shared_ptr<T>(std::move(t));
         }
 
-        bool has_value() const {
+        [[nodiscard]] bool has_value() const {
             return object.has_value();
         }
 
@@ -49,7 +50,7 @@ namespace Interpreter {
         Object() = default;
         Object(std::string const& str);
 
-        std::string to_string() const;
+        [[nodiscard]] std::string to_string() const;
 
     };
 

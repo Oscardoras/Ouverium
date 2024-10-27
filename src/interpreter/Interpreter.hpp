@@ -30,7 +30,7 @@ namespace Interpreter {
     Reference execute(Context& context, std::shared_ptr<Parser::Expression> const& expression);
 
     Reference set(Context& context, Reference const& var, Reference const& data);
-    std::string string_from(Context& context, Reference const& data);
+    [[nodiscard]] std::string string_from(Context& context, Reference const& data);
 
 }
 

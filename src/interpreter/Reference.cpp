@@ -1,5 +1,3 @@
-#include <utility>
-
 #include "Interpreter.hpp"
 
 
@@ -13,7 +11,7 @@ namespace Interpreter {
     Data compute(Context& context, std::shared_ptr<Parser::Expression> const& caller, Reference const& reference) {
         if (auto const* symbol = std::get_if<SymbolReference>(&reference))
             if (*symbol == std::get<SymbolReference>(context.get_global()["getter"]))
-                return symbol->it->first;
+                return **symbol;
 
         if (auto const* d = std::get_if<Data>(&reference); d && *d != Data{})
             return *d;
@@ -23,7 +21,7 @@ namespace Interpreter {
 
     Data& IndirectReference::get_data() const {
         if (auto const* symbol_reference = std::get_if<SymbolReference>(this)) {
-            return symbol_reference->it->first;
+            return **symbol_reference;
         } else if (auto const* property_reference = std::get_if<PropertyReference>(this)) {
             auto parent = property_reference->parent;
             if (auto const* obj = get_if<ObjectPtr>(&parent))

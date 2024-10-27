@@ -6,9 +6,6 @@
 
 namespace Interpreter::GC {
 
-    void add_context(Context& context);
-    void remove_context(Context& context);
-
     ObjectPtr new_object(Object const& object = {});
     SymbolReference new_reference(Data const& data = {});
 

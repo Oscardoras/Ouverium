@@ -43,7 +43,7 @@ namespace Interpreter {
         [[nodiscard]] auto begin() const { return symbols.begin(); }
         [[nodiscard]] auto end() const { return symbols.end(); }
 
-        virtual ~Context();
+        virtual ~Context() = default;
 
     };
 
@@ -58,15 +58,15 @@ namespace Interpreter {
 
         GlobalContext(std::shared_ptr<Parser::Expression> expression);
 
-        GlobalContext& get_global() override {
+        [[nodiscard]] GlobalContext& get_global() override {
             return *this;
         }
 
-        Context& get_parent() override {
+        [[nodiscard]] Context& get_parent() override {
             return *this;
         }
 
-        unsigned get_recurion_level() override {
+        [[nodiscard]] unsigned get_recurion_level() override {
             return 0;
         }
 
@@ -83,15 +83,15 @@ namespace Interpreter {
 
         FunctionContext(Context& parent, std::shared_ptr<Parser::Expression> caller);
 
-        GlobalContext& get_global() override {
+        [[nodiscard]] GlobalContext& get_global() override {
             return parent.get_global();
         }
 
-        Context& get_parent() override {
+        [[nodiscard]] Context& get_parent() override {
             return parent;
         }
 
-        unsigned get_recurion_level() override {
+        [[nodiscard]] unsigned get_recurion_level() override {
             return recursion_level;
         }
 

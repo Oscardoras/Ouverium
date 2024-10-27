@@ -46,7 +46,7 @@ namespace Interpreter::SystemFunctions {
         return std::visit(
             overloaded{
                 [](SymbolReference const& symbol_reference) {
-                    auto& data = symbol_reference.it->first;
+                    auto& data = *symbol_reference;
                     if (data == Data{})
                         data = GC::new_object();
                     return data.get<ObjectPtr>();

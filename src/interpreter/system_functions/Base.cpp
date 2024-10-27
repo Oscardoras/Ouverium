@@ -29,7 +29,7 @@ namespace Interpreter::SystemFunctions::Base {
 
     Reference assignation(Context& context, Reference const& var, Data const& d) {
         if (std::get_if<Data>(&var)) return d;
-        else if (auto const* symbol_reference = std::get_if<SymbolReference>(&var)) symbol_reference->it->first = d;
+        else if (auto const* symbol_reference = std::get_if<SymbolReference>(&var)) **symbol_reference = d;
         else if (auto const* property_reference = std::get_if<PropertyReference>(&var)) {
             auto parent = property_reference->parent;
             if (auto const* obj = get_if<ObjectPtr>(&parent))

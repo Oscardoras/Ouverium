@@ -130,7 +130,7 @@ public:
         try {
             auto r = Interpreter::try_call_function(*context, nullptr, async, std::make_shared<Parser::Tuple>());
             if (auto* reference = std::get_if<Interpreter::Reference>(&r))
-                reference->to_data(*context).get<bool>();
+                return reference->to_data(*context).get<bool>();
         } catch (Interpreter::Exception const& ex) {
             ex.print_stack_trace(*context);
         }

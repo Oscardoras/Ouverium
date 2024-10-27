@@ -1,6 +1,8 @@
 #ifndef __INTERPRETER_REFERENCE_HPP__
 #define __INTERPRETER_REFERENCE_HPP__
 
+#include <cstddef>
+#include <memory>
 #include <vector>
 
 #include "Data.hpp"
@@ -14,15 +16,7 @@ namespace Interpreter {
     class Reference;
 
     using TupleReference = std::vector<Reference>;
-    struct SymbolReference {
-        using type = std::pair<Data, signed char>;
-
-        std::list<type>::iterator it;
-
-        friend bool operator==(SymbolReference const& a, SymbolReference const& b) {
-            return a.it == b.it;
-        }
-    };
+    using SymbolReference = std::shared_ptr<Data>;
     struct PropertyReference {
         Data parent;
         std::string name;

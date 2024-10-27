@@ -4,8 +4,8 @@
 #include <any>
 #include <exception>
 #include <functional>
-#include <list>
 #include <map>
+#include <memory>
 #include <typeindex>
 
 #include "../Types.hpp"
@@ -17,30 +17,7 @@ namespace Interpreter {
     struct PropertyReference;
     struct ArrayReference;
 
-    class ObjectPtr {
-
-    public:
-
-        using type = std::pair<Object, signed char>;
-
-        std::list<type>::iterator it;
-
-        ObjectPtr(std::list<type>::iterator it) : it{ it } {}
-
-        ObjectPtr(ObjectPtr const& ptr);
-        ObjectPtr(ObjectPtr&& ptr) noexcept;
-        ObjectPtr& operator=(ObjectPtr const& ptr);
-        ObjectPtr& operator=(ObjectPtr&& ptr) noexcept;
-        ~ObjectPtr();
-
-        Object& operator*() const;
-        Object* operator->() const;
-        friend bool operator==(ObjectPtr const& a, ObjectPtr const& b);
-        friend bool operator!=(ObjectPtr const& a, ObjectPtr const& b);
-
-        void swap(ObjectPtr& ptr);
-
-    };
+    using ObjectPtr = std::shared_ptr<Object>;
 
     class Data : protected std::any {
 
