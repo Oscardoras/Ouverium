@@ -2,7 +2,7 @@ import "UI.fl";
 
 f := UI.Frame("test");
 f.create_child(p := UI.Panel());
-f.create_child(a := UI.ActivityIndicator());
+p.create_child(a := UI.ActivityIndicator());
 a.running := true;
 b1 := UI.Button();
 p.create_child(b1);

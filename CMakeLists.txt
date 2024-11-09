@@ -23,6 +23,7 @@ set(BOOST_ENABLE_CMAKE ON)
 FetchContent_Declare(
     Boost
     URL https://github.com/boostorg/boost/releases/download/boost-1.84.0/boost-1.84.0.7z
+    DOWNLOAD_EXTRACT_TIMESTAMP OFF
 )
 FetchContent_MakeAvailable(Boost)
 
@@ -38,6 +39,7 @@ if(NOT DEFINED OUVERIUM_NO_GUI)
         FetchContent_Declare(
             wxWidgets
             URL https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.4/wxWidgets-3.2.4.7z
+            DOWNLOAD_EXTRACT_TIMESTAMP OFF
         )
         FetchContent_MakeAvailable(wxWidgets)
         set(wxWidgets wx::core wx::base wx::webview)
