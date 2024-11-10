@@ -29,7 +29,9 @@ extern "C" {
         struct {
             short offset;
         } function;
-        short map_offset;
+        struct {
+            short offset;
+        } map;
         size_t table_size;
         struct Ov_VirtualTable_Element {
             unsigned int hash;

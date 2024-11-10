@@ -83,7 +83,7 @@ bool Ov_UnknownData_equals(Ov_UnknownData a, Ov_UnknownData b) {
 }
 
 static Ov_PropertyInfo Ov_UnknownData_get_property_from_map(Ov_UnknownData data, unsigned int hash) {
-    if (data.vtable->map_offset < 0) {
+    if (data.vtable->map.offset < 0) {
         Ov_PropertyInfo property = {
             .vtable = NULL,
             .ptr = NULL
@@ -91,7 +91,7 @@ static Ov_PropertyInfo Ov_UnknownData_get_property_from_map(Ov_UnknownData data,
         return property;
     }
 
-    Ov_Map** map = (Ov_Map**) (((BYTE*) data.data.ptr) + data.vtable->map_offset);
+    Ov_Map** map = (Ov_Map**) (((BYTE*) data.data.ptr) + data.vtable->map.offset);
     if (*map == NULL)
         *map = calloc(HASHMAP_SIZE, sizeof(struct Ov_Map_Element*));
 
@@ -192,7 +192,7 @@ Ov_VirtualTable Ov_VirtualTable_Object = {
     .array.vtable = &Ov_VirtualTable_UnknownData,
     .array.offset = offsetof(struct Object, Ov_array),
     .function.offset = offsetof(struct Object, Ov_function),
-    .map_offset = offsetof(struct Object, Ov_map),
+    .map.offset = offsetof(struct Object, Ov_map),
     .table_size = 0
 };
 Ov_VirtualTable* Ov_VirtualTable_string_from_tuple = &Ov_VirtualTable_Object;
