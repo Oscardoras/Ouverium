@@ -183,7 +183,7 @@ Ov_Reference_Owned foreach_body(Ov_Reference_Shared captures[], Ov_Reference_Sha
                 .type = Ov_EXPRESSION_REFERENCE,
                 .reference = Ov_Reference_share(&array->tuple.references[i])
             };
-            Ov_Reference_Owned r = Ov_Function_eval(Ov_UnknownData_get_function(Ov_Reference_get(args[0])), expr);
+            Ov_Reference_Owned r = Ov_Function_eval(Ov_UnknownData_get_function(Ov_Reference_get(args[1])), expr);
             Ov_Reference_free(r);
         }
     } else {
@@ -196,7 +196,7 @@ Ov_Reference_Owned foreach_body(Ov_Reference_Shared captures[], Ov_Reference_Sha
                 .type = Ov_EXPRESSION_REFERENCE,
                 .reference = Ov_Reference_share(array_param)
             };
-            Ov_Reference_Owned r = Ov_Function_eval(Ov_UnknownData_get_function(Ov_Reference_get(args[0])), expr);
+            Ov_Reference_Owned r = Ov_Function_eval(Ov_UnknownData_get_function(Ov_Reference_get(args[1])), expr);
             Ov_Reference_free(r);
             Ov_Reference_free(array_param);
         }
@@ -207,38 +207,35 @@ Ov_Reference_Owned foreach_body(Ov_Reference_Shared captures[], Ov_Reference_Sha
 }
 
 
-Ov_Reference_Owned Array;
-
-
 void Ov_init_functions_array() {
-    Array = Ov_Reference_new_uninitialized();
     Ov_UnknownData Array_data = Ov_get_object(Ov_Reference_share(Array));
 
     Ov_Reference_Owned get_capacity = Ov_Reference_new_property(Array_data, hash_string("get_capacity"));
-    Ov_Function_push(Ov_UnknownData_get_function(Ov_get_object(Ov_Reference_share(get_capacity))), get_capacity_parameters, get_capacity_body, get_capacity_filter, 0, NULL, 0);
+    Ov_Function_push(Ov_get_function(Ov_Reference_share(get_capacity)), get_capacity_parameters, get_capacity_body, get_capacity_filter, 0, NULL, 0);
     Ov_Reference_free(get_capacity);
 
     Ov_Reference_Owned set_capacity = Ov_Reference_new_property(Array_data, hash_string("set_capacity"));
-    Ov_Function_push(Ov_UnknownData_get_function(Ov_get_object(Ov_Reference_share(set_capacity))), set_capacity_parameters, set_capacity_body, set_capacity_filter, 0, NULL, 0);
+    Ov_Function_push(Ov_get_function(Ov_Reference_share(set_capacity)), set_capacity_parameters, set_capacity_body, set_capacity_filter, 0, NULL, 0);
     Ov_Reference_free(set_capacity);
 
     Ov_Reference_Owned get_size = Ov_Reference_new_property(Array_data, hash_string("get_size"));
-    Ov_Function_push(Ov_UnknownData_get_function(Ov_get_object(Ov_Reference_share(get_size))), get_size_parameters, get_size_body, get_size_filter, 0, NULL, 0);
+    Ov_Function_push(Ov_get_function(Ov_Reference_share(get_size)), get_size_parameters, get_size_body, get_size_filter, 0, NULL, 0);
     Ov_Reference_free(get_size);
 
     Ov_Reference_Owned set_size = Ov_Reference_new_property(Array_data, hash_string("set_size"));
-    Ov_Function_push(Ov_UnknownData_get_function(Ov_get_object(Ov_Reference_share(set_size))), set_size_parameters, set_size_body, set_size_filter, 0, NULL, 0);
+    Ov_Function_push(Ov_get_function(Ov_Reference_share(set_size)), set_size_parameters, set_size_body, set_size_filter, 0, NULL, 0);
     Ov_Reference_free(set_size);
 
     Ov_Reference_Owned get = Ov_Reference_new_property(Array_data, hash_string("get"));
-    Ov_Function_push(Ov_UnknownData_get_function(Ov_get_object(Ov_Reference_share(get))), get_parameters, get_body, get_filter, 0, NULL, 0);
+    Ov_Function_push(Ov_get_function(Ov_Reference_share(get)), get_parameters, get_body, get_filter, 0, NULL, 0);
     Ov_Reference_free(get);
 
     Ov_Reference_Owned copy_data = Ov_Reference_new_property(Array_data, hash_string("copy_data"));
-    Ov_Function_push(Ov_UnknownData_get_function(Ov_get_object(Ov_Reference_share(copy_data))), copy_data_parameters, copy_data_body, copy_data_filter, 0, NULL, 0);
+    Ov_Function_push(Ov_get_function(Ov_Reference_share(copy_data)), copy_data_parameters, copy_data_body, copy_data_filter, 0, NULL, 0);
     Ov_Reference_free(copy_data);
 
-    Ov_Reference_Owned foreach = Ov_Reference_new_property(Array_data, hash_string("foreach"));
-    Ov_Function_push(Ov_UnknownData_get_function(Ov_get_object(Ov_Reference_share(foreach))), foreach_parameters, foreach_body, foreach_filter, 0, NULL, 0);
-    Ov_Reference_free(foreach);
+    Ov_Function_push(Ov_get_function(Ov_Reference_share(foreach)), foreach_parameters, foreach_body, foreach_filter, 0, NULL, 0);
+
+    // TODO : Function.extract
+    // TODO : Function.clear
 }

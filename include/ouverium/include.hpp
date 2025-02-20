@@ -1,13 +1,19 @@
 #ifndef __INCLUDE_HPP__
 #define __INCLUDE_HPP__
 
+#include <array>
+#include <cstdlib>
 #include <cstring>
 #include <functional>
+#include <initializer_list>
 #include <string>
+#include <tuple>
+#include <utility>
 #include <vector>
 
 #include "hash_string.h"
 #include "include.h"
+#include "types.h"
 
 
 namespace Ov {
@@ -23,11 +29,8 @@ namespace Ov {
 
     public:
 
-        Array(size_t capacity = 0, size_t size = 0) {
-            Ov_Array::capacity = capacity;
-            Ov_Array::size = size;
-            tab = calloc(capacity, vtable->size);
-        }
+        Array(size_t capacity = 0, size_t size = 0) :
+            Ov_Array{ capacity , size, calloc(capacity, vtable->size) } {}
 
         operator Ov_ArrayInfo() const {
             return Ov_ArrayInfo{
@@ -36,7 +39,7 @@ namespace Ov {
             };
         }
 
-        size_t size() const {
+        [[nodiscard]] size_t size() const {
             return size;
         }
 
@@ -44,7 +47,7 @@ namespace Ov {
             return Ov_Array_set_size(*this, size);
         }
 
-        size_t capacity() const {
+        [[nodiscard]] size_t capacity() const {
             return capacity;
         }
 
@@ -52,7 +55,7 @@ namespace Ov {
             return Ov_Array_set_capacity(*this, size);
         }
 
-        bool empty() const {
+        [[nodiscard]] bool empty() const {
             return size() == 0;
         }
 
@@ -117,29 +120,29 @@ namespace Ov {
         ArrayInfo(Ov_ArrayInfo array) :
             Ov_ArrayInfo{ array } {}
 
-        size_t size() const {
+        [[nodiscard]] size_t size() const {
             return array->size;
         }
 
         void set_size(size_t const size) {
-            return Ov_Array_set_size(*this, size);
+            Ov_Array_set_size(*this, size);
         }
 
-        size_t capacity() const {
+        [[nodiscard]] size_t capacity() const {
             return array->capacity;
         }
 
         void set_capacity(size_t const size) {
-            return Ov_Array_set_capacity(*this, size);
+            Ov_Array_set_capacity(*this, size);
         }
 
-        bool empty() const {
+        [[nodiscard]] bool empty() const {
             return size() == 0;
         }
 
         template<typename T>
-        T& operator[](size_t const i) const {
-            return *Ov_Array_get(*this, i);
+        [[nodiscard]] T& operator[](size_t const i) const {
+            return *static_cast<T const*>(Ov_Array_get(*this, i));
         }
 
         class iterator {
@@ -206,29 +209,19 @@ namespace Ov {
         UnknownData(Ov_VirtualTable* vtable, void* ptr) :
             Ov_UnknownData{ Ov_UnknownData_from_ptr(vtable, ptr) } {}
 
-        UnknownData(OV_INT i) {
-            vtable = &Ov_VirtualTable_Int;
-            data.i = i;
-        }
-        UnknownData(OV_FLOAT f) {
-            vtable = &Ov_VirtualTable_Float;
-            data.f = f;
-        }
-        UnknownData(char c) {
-            vtable = &Ov_VirtualTable_Char;
-            data.c = c;
-        }
-        UnknownData(bool b) {
-            vtable = &Ov_VirtualTable_Bool;
-            data.b = b;
-        }
+        UnknownData(OV_INT i) :
+            Ov_UnknownData{ .vtable = &Ov_VirtualTable_Int , .data {.i = i} } {}
+        UnknownData(OV_FLOAT f) :
+            Ov_UnknownData{ .vtable = &Ov_VirtualTable_Float , .data {.f = f} } {}
+        UnknownData(char c) :
+            Ov_UnknownData{ .vtable = &Ov_VirtualTable_Char , .data {.c = c} } {}
+        UnknownData(bool b) :
+            Ov_UnknownData{ .vtable = &Ov_VirtualTable_Bool , .data {.b = b} } {}
         template<class T>
-        UnknownData(T* ptr) {
-            vtable = &T::vtable;
-            data.b = ptr;
-        }
-        template<typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
-        UnknownData(T i) : UnknownData(static_cast<OV_INT>(i)) {}
+        UnknownData(T* ptr) requires requires() { T::vtable; } :
+            Ov_UnknownData{ .vtable = &T::vtable , .data {.ptr = ptr} } {}
+        template<typename T>
+        UnknownData(T i) requires std::is_integral_v<T> : UnknownData(static_cast<OV_INT>(i)) {}
 
         friend bool operator==(UnknownData const& a, UnknownData const& b) {
             return Ov_UnknownData_equals(a, b);
@@ -253,15 +246,14 @@ namespace Ov {
         operator void* () const {
             return data.ptr;
         }
-        template<typename T, typename = std::enable_if_t<std::is_integral<T>::value>>
-        operator T() const {
+        template<typename T>
+        operator T() const requires std::is_integral_v<T> {
             return static_cast<T>(data.i);
         }
 
         template<typename T>
         T& get_property(const char* name) {
-            constexpr auto h = hash_string(name);
-            return *static_cast<T*>(Ov_UnknownData_get_property(*this, h));
+            return *static_cast<T*>(Ov_UnknownData_get_property(*this, hash_string(name)));
         }
 
         ArrayInfo get_array() {
@@ -276,7 +268,7 @@ namespace Ov {
 
     protected:
 
-        void* reference;
+        void* reference{};
 
     public:
 
@@ -294,26 +286,26 @@ namespace Ov {
         Reference(std::initializer_list<Reference> const& list, Ov_VirtualTable* const vtable) :
             reference{ Ov_Reference_new_tuple((Ov_Reference_Shared*) std::data(list), list.size(), vtable) } {}
 
-        Reference(Ov_Reference_Owned const reference) :
+        Reference(Ov_Reference_Owned reference) :
             reference{ reference } {}
-        Reference(Ov_Reference_Shared const reference) :
+        Reference(Ov_Reference_Shared reference) :
             reference{ Ov_Reference_copy(reference) } {}
 
         Reference(Reference const& reference) :
             reference{ Ov_Reference_copy(reference) } {}
-        Reference(Reference&& reference) :
+        Reference(Reference&& reference) noexcept :
             reference{ reference.reference } {
             reference.reference = nullptr;
         }
 
         ~Reference() {
             if (reference != nullptr)
-                Ov_Reference_free((Ov_Reference_Owned) reference);
+                Ov_Reference_free(static_cast<Ov_Reference_Owned>(reference));
         }
 
         Reference& operator=(Reference const& reference) {
             if (Reference::reference != reference.reference) {
-                Ov_Reference_free((Ov_Reference_Owned) Reference::reference);
+                Ov_Reference_free(static_cast<Ov_Reference_Owned>(Reference::reference));
                 Reference::reference = Ov_Reference_copy((Ov_Reference_Shared) reference.reference);
             }
 
@@ -489,7 +481,7 @@ namespace Ov {
             }
 
             template<typename U, size_t... I>
-            static U eval(std::function<U(Parameters...)>& f, [[maybe_unused]] Ov_Reference_Shared args[], std::index_sequence<I...>) {
+            static U eval(std::function<U(Parameters...)>& f, [[maybe_unused]] Ov_Reference_Shared args[], std::index_sequence<I...> /*unused*/) {
                 return f(get_arg<Pair<I>>(args)...);
             }
 
@@ -577,7 +569,7 @@ namespace Ov {
         }
 
         template<typename... T, size_t... I>
-        std::array<Ov_Expression, sizeof...(I)> get_expression(Tuple<T...>& tuple, std::index_sequence<sizeof...(I)>) const {
+        std::array<Ov_Expression, sizeof...(I)> get_expression(Tuple<T...>& tuple, std::index_sequence<sizeof...(I)> /*unused*/) const {
             return { get_expression(std::get<I>(tuple))... };
         }
 
@@ -598,12 +590,12 @@ namespace Ov {
 
         template<typename... Args>
         Reference operator()(Args&&... args) const {
-            return Reference(Ov_Function_eval(function, get_expression(Tuple<Args...>{args...})));
+            return Reference(Ov_Function_eval(function, get_expression(Tuple<Args...>{std::forward<Args>(args)...})));
         }
 
         template<typename Arg>
         Reference operator()(Arg&& arg) const {
-            return Reference(Ov_Function_eval(function, get_expression(arg)));
+            return Reference(Ov_Function_eval(function, get_expression(std::forward<Arg>(arg))));
         }
 
     };
@@ -623,7 +615,7 @@ namespace Ov {
         .table_tab = {}
     };
 
-    Function UnknownData::get_function() {
+    inline Function UnknownData::get_function() {
         return *Ov_UnknownData_get_function(*this);
     }
 

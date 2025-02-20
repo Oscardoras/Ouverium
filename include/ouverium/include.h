@@ -450,6 +450,9 @@ extern "C" {
     */
     Ov_Reference_Owned Ov_Function_eval(Ov_Function* function, Ov_Expression args);
 
+    void Ov_push_stack(char* position);
+    void Ov_pop_stack();
+
 
     /**
      * General
@@ -483,13 +486,12 @@ extern "C" {
     extern Ov_Reference_Owned setter;
     extern Ov_Reference_Owned _x3A_x3D;
     extern Ov_Reference_Owned _x3B;
-    extern Ov_Reference_Owned if_statement;
-    extern Ov_Reference_Owned else_statement;
-    extern Ov_Reference_Owned while_statement;
-    extern Ov_Reference_Owned for_statement;
+    extern Ov_Reference_Owned if_keyword;
+    extern Ov_Reference_Owned else_keyword;
+    extern Ov_Reference_Owned while_keyword;
+    extern Ov_Reference_Owned for_keyword;
     extern Ov_Reference_Owned from;
     extern Ov_Reference_Owned to;
-    extern Ov_Reference_Owned for_step_statement;
     extern Ov_Reference_Owned step;
     extern Ov_Reference_Owned _x24;
     extern Ov_Reference_Owned _x24_x3D_x3D;
@@ -521,8 +523,16 @@ extern "C" {
     extern Ov_Reference_Owned _x3A_x2D_x3D;
     extern Ov_Reference_Owned _x3A_x2A_x3D;
     extern Ov_Reference_Owned _x3A_x2F_x3D;
+    extern Ov_Reference_Owned foreach;
 
+    extern Ov_Reference_Owned Char;
+    extern Ov_Reference_Owned Float;
+    extern Ov_Reference_Owned Int;
+    extern Ov_Reference_Owned Bool;
     extern Ov_Reference_Owned Array;
+    extern Ov_Reference_Owned Tuple;
+    extern Ov_Reference_Owned Function;
+    extern Ov_Reference_Owned _x7E;
 
 #ifdef __cplusplus
 }

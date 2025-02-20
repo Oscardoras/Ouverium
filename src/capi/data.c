@@ -91,25 +91,27 @@ static Ov_PropertyInfo Ov_UnknownData_get_property_from_map(Ov_UnknownData data,
         return property;
     }
 
-    Ov_Map** map = (Ov_Map**) (((BYTE*) data.data.ptr) + data.vtable->map.offset);
-    if (*map == NULL)
-        *map = calloc(HASHMAP_SIZE, sizeof(struct Ov_Map_Element*));
+    Ov_Map* map = (Ov_Map*) (((BYTE*) data.data.ptr) + data.vtable->map.offset);
+    if (map->tab == NULL) {
+        map->tab = calloc(HASHMAP_SIZE, sizeof(struct Ov_Map_Element*));
+        map->size = HASHMAP_SIZE;
+    }
 
-    struct Ov_Map_Element** map_ptr = &(*map)->tab[hash % (*map)->size];
+    struct Ov_Map_Element** map_ptr = &map->tab[hash % map->size];
     while (true) {
-        if ((*map_ptr)->hash == hash) {
-            Ov_PropertyInfo property = {
-                .vtable = &Ov_VirtualTable_UnknownData,
-                .ptr = &(*map_ptr)->data
-            };
-            return property;
-        } else if ((*map_ptr)->next == NULL) {
+        if (*map_ptr == NULL) {
             struct Ov_Map_Element* map_element = malloc(sizeof(struct Ov_Map_Element));
             map_element->hash = hash;
             map_element->data.vtable = NULL;
             map_element->data.data.ptr = NULL;
             *map_ptr = map_element;
 
+            Ov_PropertyInfo property = {
+                .vtable = &Ov_VirtualTable_UnknownData,
+                .ptr = &(*map_ptr)->data
+            };
+            return property;
+        } else  if ((*map_ptr)->hash == hash) {
             Ov_PropertyInfo property = {
                 .vtable = &Ov_VirtualTable_UnknownData,
                 .ptr = &(*map_ptr)->data
@@ -193,7 +195,10 @@ Ov_VirtualTable Ov_VirtualTable_Object = {
     .array.offset = offsetof(struct Object, Ov_array),
     .function.offset = offsetof(struct Object, Ov_function),
     .map.offset = offsetof(struct Object, Ov_map),
-    .table_size = 0
+    .table_size = 1,
+    .table_tab = {
+        0
+    }
 };
 Ov_VirtualTable* Ov_VirtualTable_string_from_tuple = &Ov_VirtualTable_Object;
 

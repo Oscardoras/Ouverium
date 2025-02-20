@@ -71,6 +71,7 @@ extern "C" {
 
     void Ov_init_functions();
     Ov_UnknownData Ov_get_object(Ov_Reference_Shared reference);
+    Ov_Function* Ov_get_function(Ov_Reference_Shared reference);
 
 #ifdef __cplusplus
 }

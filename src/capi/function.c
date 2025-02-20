@@ -1,10 +1,15 @@
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 
 #include <ouverium/hash_string.h>
 #include <ouverium/include.h>
 
 #include "gc.h"
+
+
+static char* debug_stack[100];
+static size_t debug_stack_len = 0;
 
 
 struct Ov_FunctionCapture Ov_GC_reference_to_capture(Ov_GC_Reference* reference) {
@@ -84,6 +89,7 @@ Ov_Function Ov_Function_copy(Ov_Function function) {
         f->parameters = cell->parameters;
         f->filter = cell->filter;
         f->body = cell->body;
+        f->local_variables = cell->local_variables;
         f->captures.size = cell->captures.size;
 
         size_t i;
@@ -359,7 +365,12 @@ Ov_Reference_Owned Ov_Function_eval(Ov_Function* function, Ov_Expression args) {
     if (result.correct)
         return result.reference;
     else {
+        fprintf(stderr, "Error: \n");
+        size_t i;
+        for (i = 0; i < debug_stack_len; ++i)
+            fprintf(stderr, "%s\n", debug_stack[debug_stack_len - 1 - i]);
         assert(false); //throw exception
+
         return NULL;
     }
 }
@@ -375,4 +386,17 @@ void Ov_VirtualTable_Function_gc_iterator(Ov_Function* ptr) {
             Ov_Reference_free(ref);
         }
     }
+}
+
+
+
+void Ov_push_stack(char* position) {
+    assert(debug_stack_len < sizeof(debug_stack));
+    debug_stack[debug_stack_len] = position;
+    ++debug_stack_len;
+}
+
+void Ov_pop_stack() {
+    assert(debug_stack_len > 0);
+    --debug_stack_len;
 }

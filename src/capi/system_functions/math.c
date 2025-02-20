@@ -661,149 +661,49 @@ Ov_Reference_Owned divide_body(Ov_Reference_Shared captures[], Ov_Reference_Shar
 // }
 
 
-Ov_Reference_Owned _x21;
-Ov_Reference_Owned _x26;
-Ov_Reference_Owned _x2B;
-Ov_Reference_Owned _x2D;
-Ov_Reference_Owned _x2A;
-Ov_Reference_Owned _x2F;
-Ov_Reference_Owned _x25;
-Ov_Reference_Owned _x3C;
-Ov_Reference_Owned _x3E;
-Ov_Reference_Owned _x3C_x3D;
-Ov_Reference_Owned _x3E_x3D;
-Ov_Reference_Owned _x2B_x2B;
-Ov_Reference_Owned _x2D_x2D;
-Ov_Reference_Owned _x3A_x2B_x3D;
-Ov_Reference_Owned _x3A_x2D_x3D;
-Ov_Reference_Owned _x3A_x2A_x3D;
-Ov_Reference_Owned _x3A_x2F_x3D;
-
 void Ov_init_functions_math() {
-    Ov_UnknownData logical_not_data = {
-        .vtable = &Ov_VirtualTable_Object,
-        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object)
-    };
-    Ov_Function_push(Ov_UnknownData_get_function(logical_not_data), a_parameters, logical_not_body, logical_not_filter, 0, NULL, 0);
-    _x21 = Ov_Reference_new_symbol(logical_not_data);
+    Ov_Function_push(Ov_get_function(Ov_Reference_share(_x21)), a_parameters, logical_not_body, logical_not_filter, 0, NULL, 0);
 
-    Ov_UnknownData logical_and_data = {
-        .vtable = &Ov_VirtualTable_Object,
-        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object)
-    };
-    Ov_Function_push(Ov_UnknownData_get_function(logical_and_data), a_b_parameters, logical_and_body, logical_and_filter, 1, NULL, 0);
-    _x26 = Ov_Reference_new_symbol(logical_and_data);
+    Ov_Function_push(Ov_get_function(Ov_Reference_share(_x26)), a_b_parameters, logical_and_body, logical_and_filter, 1, NULL, 0);
 
-    Ov_UnknownData logical_or_data = {
-        .vtable = &Ov_VirtualTable_Object,
-        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object)
-    };
-    Ov_Function_push(Ov_UnknownData_get_function(logical_or_data), a_b_parameters, logical_or_body, logical_or_filter, 1, NULL, 0);
-    _x7C = Ov_Reference_new_symbol(logical_or_data);
+    Ov_Function_push(Ov_get_function(Ov_Reference_share(_x7C)), a_b_parameters, logical_or_body, logical_or_filter, 1, NULL, 0);
 
-    Ov_UnknownData addition_data = {
-        .vtable = &Ov_VirtualTable_Object,
-        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object)
-    };
-    Ov_Function_push(Ov_UnknownData_get_function(addition_data), ab_parameters, addition_body, addition_filter, 0, NULL, 0);
-    _x2B = Ov_Reference_new_symbol(addition_data);
+    Ov_Function_push(Ov_get_function(Ov_Reference_share(_x2B)), ab_parameters, addition_body, addition_filter, 0, NULL, 0);
 
-    Ov_UnknownData minus_data = {
-        .vtable = &Ov_VirtualTable_Object,
-        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object)
-    };
-    Ov_Function_push(Ov_UnknownData_get_function(minus_data), ab_parameters, opposite_body, opposite_filter, 0, NULL, 0);
-    Ov_Function_push(Ov_UnknownData_get_function(minus_data), ab_parameters, substraction_body, substraction_filter, 0, NULL, 0);
-    _x2D = Ov_Reference_new_symbol(minus_data);
+    Ov_Function_push(Ov_get_function(Ov_Reference_share(_x2D)), ab_parameters, opposite_body, opposite_filter, 0, NULL, 0);
+    Ov_Function_push(Ov_get_function(Ov_Reference_share(_x2D)), ab_parameters, substraction_body, substraction_filter, 0, NULL, 0);
 
-    Ov_UnknownData multiplication_data = {
-        .vtable = &Ov_VirtualTable_Object,
-        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object)
-    };
-    Ov_Function_push(Ov_UnknownData_get_function(multiplication_data), ab_parameters, multiplication_body, multiplication_filter, 0, NULL, 0);
-    _x2A = Ov_Reference_new_symbol(multiplication_data);
+    Ov_Function_push(Ov_get_function(Ov_Reference_share(_x2A)), ab_parameters, multiplication_body, multiplication_filter, 0, NULL, 0);
 
-    Ov_UnknownData division_data = {
-        .vtable = &Ov_VirtualTable_Object,
-        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object)
-    };
-    Ov_Function_push(Ov_UnknownData_get_function(division_data), ab_parameters, division_body, division_filter, 0, NULL, 0);
-    _x2F = Ov_Reference_new_symbol(division_data);
+    Ov_Function_push(Ov_get_function(Ov_Reference_share(_x2F)), ab_parameters, division_body, division_filter, 0, NULL, 0);
 
-    Ov_UnknownData modulo_data = {
-        .vtable = &Ov_VirtualTable_Object,
-        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object)
-    };
-    Ov_Function_push(Ov_UnknownData_get_function(modulo_data), ab_parameters, modulo_body, modulo_filter, 0, NULL, 0);
-    _x25 = Ov_Reference_new_symbol(modulo_data);
+    Ov_Function_push(Ov_get_function(Ov_Reference_share(_x25)), ab_parameters, modulo_body, modulo_filter, 0, NULL, 0);
 
-    Ov_UnknownData strictly_inf_data = {
-        .vtable = &Ov_VirtualTable_Object,
-        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object)
-    };
-    Ov_Function_push(Ov_UnknownData_get_function(strictly_inf_data), ab_parameters, strictly_inf_body, strictly_inf_filter, 0, NULL, 0);
-    _x3C = Ov_Reference_new_symbol(strictly_inf_data);
+    Ov_Function_push(Ov_get_function(Ov_Reference_share(_x3C)), ab_parameters, strictly_inf_body, strictly_inf_filter, 0, NULL, 0);
 
-    Ov_UnknownData strictly_sup_data = {
-        .vtable = &Ov_VirtualTable_Object,
-        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object)
-    };
-    Ov_Function_push(Ov_UnknownData_get_function(strictly_sup_data), ab_parameters, strictly_sup_body, strictly_sup_filter, 0, NULL, 0);
-    _x3E = Ov_Reference_new_symbol(strictly_sup_data);
+    Ov_Function_push(Ov_get_function(Ov_Reference_share(_x3E)), ab_parameters, strictly_sup_body, strictly_sup_filter, 0, NULL, 0);
 
-    Ov_UnknownData inf_equals_data = {
-        .vtable = &Ov_VirtualTable_Object,
-        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object)
-    };
-    Ov_Function_push(Ov_UnknownData_get_function(inf_equals_data), ab_parameters, inf_equals_body, inf_equals_filter, 0, NULL, 0);
-    _x3C_x3D = Ov_Reference_new_symbol(inf_equals_data);
+    Ov_Function_push(Ov_get_function(Ov_Reference_share(_x3C_x3D)), ab_parameters, inf_equals_body, inf_equals_filter, 0, NULL, 0);
 
-    Ov_UnknownData sup_equals_data = {
-        .vtable = &Ov_VirtualTable_Object,
-        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object)
-    };
-    Ov_Function_push(Ov_UnknownData_get_function(sup_equals_data), ab_parameters, sup_equals_body, sup_equals_filter, 0, NULL, 0);
-    _x3E_x3D = Ov_Reference_new_symbol(sup_equals_data);
+    Ov_Function_push(Ov_get_function(Ov_Reference_share(_x3E_x3D)), ab_parameters, sup_equals_body, sup_equals_filter, 0, NULL, 0);
 
-    Ov_UnknownData increment_data = {
-        .vtable = &Ov_VirtualTable_Object,
-        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object)
-    };
-    Ov_Function_push(Ov_UnknownData_get_function(increment_data), a_parameters, increment_body, increment_filter, 0, NULL, 0);
-    _x2B_x2B = Ov_Reference_new_symbol(increment_data);
+    Ov_Function_push(Ov_get_function(Ov_Reference_share(_x2B_x2B)), a_parameters, increment_body, increment_filter, 0, NULL, 0);
 
-    Ov_UnknownData decrement_data = {
-        .vtable = &Ov_VirtualTable_Object,
-        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object)
-    };
-    Ov_Function_push(Ov_UnknownData_get_function(decrement_data), a_parameters, decrement_body, decrement_filter, 0, NULL, 0);
-    _x2D_x2D = Ov_Reference_new_symbol(decrement_data);
+    Ov_Function_push(Ov_get_function(Ov_Reference_share(_x2D_x2D)), a_parameters, decrement_body, decrement_filter, 0, NULL, 0);
 
-    Ov_UnknownData add_data = {
-        .vtable = &Ov_VirtualTable_Object,
-        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object)
-    };
-    Ov_Function_push(Ov_UnknownData_get_function(add_data), ab_parameters, add_body, add_filter, 0, NULL, 0);
-    _x3A_x2B_x3D = Ov_Reference_new_symbol(add_data);
+    Ov_Function_push(Ov_get_function(Ov_Reference_share(_x3A_x2B_x3D)), ab_parameters, add_body, add_filter, 0, NULL, 0);
 
-    Ov_UnknownData remove_data = {
-        .vtable = &Ov_VirtualTable_Object,
-        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object)
-    };
-    Ov_Function_push(Ov_UnknownData_get_function(remove_data), ab_parameters, remove_body, remove_filter, 0, NULL, 0);
-    _x3A_x2D_x3D = Ov_Reference_new_symbol(remove_data);
+    Ov_Function_push(Ov_get_function(Ov_Reference_share(_x3A_x2D_x3D)), ab_parameters, remove_body, remove_filter, 0, NULL, 0);
 
-    Ov_UnknownData multiply_data = {
-        .vtable = &Ov_VirtualTable_Object,
-        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object)
-    };
-    Ov_Function_push(Ov_UnknownData_get_function(multiply_data), ab_parameters, multiply_body, multiply_filter, 0, NULL, 0);
-    _x3A_x2A_x3D = Ov_Reference_new_symbol(multiply_data);
+    Ov_Function_push(Ov_get_function(Ov_Reference_share(_x3A_x2A_x3D)), ab_parameters, multiply_body, multiply_filter, 0, NULL, 0);
 
-    Ov_UnknownData divide_data = {
-        .vtable = &Ov_VirtualTable_Object,
-        .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object)
-    };
-    Ov_Function_push(Ov_UnknownData_get_function(divide_data), ab_parameters, divide_body, divide_filter, 0, NULL, 0);
-    _x3A_x2F_x3D = Ov_Reference_new_symbol(divide_data);
+    Ov_Function_push(Ov_get_function(Ov_Reference_share(_x3A_x2F_x3D)), ab_parameters, divide_body, divide_filter, 0, NULL, 0);
+
+    // TODO : forall
+    // TODO : exists
+
+    // TODO : random
+
+    // TODO : math functions
+    // TODO : math constants
 }
