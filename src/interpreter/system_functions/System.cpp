@@ -1,11 +1,27 @@
+#include <any>
+#include <chrono>
 #include <ctime>
+#include <exception>
+#include <filesystem>
 #include <fstream>
+#include <functional>
 #include <iostream>
+#include <memory>
+#include <mutex>
+#include <string>
 #include <thread>
+#include <utility>
+#include <vector>
 
 #include <boost/asio.hpp>
 
+#include <ouverium/types.h>
+
 #include "SystemFunction.hpp"
+
+#include "../Interpreter.hpp"
+
+#include "../../parser/Expressions.hpp"
 
 
 namespace Interpreter::SystemFunctions::System {
@@ -883,49 +899,10 @@ namespace Interpreter::SystemFunctions::System {
         return Data(static_cast<OV_FLOAT>(d.count()));
     }
 
-
-    class Thread : protected std::thread {
-
-    protected:
-
-        bool joined_detached = false;
-
-    public:
-        using std::thread::thread;
-
-        void join() {
-            if (!joined_detached) {
-                std::thread::join();
-                joined_detached = true;
-            } else {
-                throw FunctionArgumentsError();
-            }
-        }
-
-        void detach() {
-            if (!joined_detached) {
-                std::thread::detach();
-                joined_detached = true;
-            } else {
-                throw FunctionArgumentsError();
-            }
-        }
-
-        [[nodiscard]] OV_INT get_id() const {
-            return static_cast<OV_INT>(std::hash<std::thread::id>{}(std::thread::get_id()));
-        }
-
-        ~Thread() {
-            if (!joined_detached) {
-                std::thread::detach();
-            }
-        }
-    };
-
     auto const thread_is_args = std::make_shared<Parser::Symbol>("thread");
     Reference thread_is(FunctionContext& context) {
         try {
-            context["thread"].to_data(context).get<ObjectPtr>()->c_obj.get<Thread>();
+            context["thread"].to_data(context).get<ObjectPtr>()->c_obj.get<std::jthread>();
 
             return Data(true);
         } catch (std::bad_any_cast const&) {
@@ -944,7 +921,7 @@ namespace Interpreter::SystemFunctions::System {
             auto caller = context.caller;
 
             auto obj = GC::new_object();
-            obj->c_obj.set(std::make_unique<Thread>([&global, caller, function]() {
+            obj->c_obj.set(std::make_unique<std::jthread>([&global, caller, function]() {
                 try {
                     Interpreter::call_function(global, caller, Data(function), std::make_shared<Parser::Tuple>());
                 } catch (Interpreter::Exception const& ex) {
@@ -960,7 +937,7 @@ namespace Interpreter::SystemFunctions::System {
     auto const thread_join_args = std::make_shared<Parser::Symbol>("thread");
     Reference thread_join(FunctionContext& context) {
         try {
-            auto& thread = context["thread"].to_data(context).get<ObjectPtr>()->c_obj.get<Thread>();
+            auto& thread = context["thread"].to_data(context).get<ObjectPtr>()->c_obj.get<std::jthread>();
             thread.join();
 
             return {};
@@ -974,7 +951,7 @@ namespace Interpreter::SystemFunctions::System {
     auto const thread_detach_args = std::make_shared<Parser::Symbol>("thread");
     Reference thread_detach(FunctionContext& context) {
         try {
-            auto& thread = context["thread"].to_data(context).get<ObjectPtr>()->c_obj.get<Thread>();
+            auto& thread = context["thread"].to_data(context).get<ObjectPtr>()->c_obj.get<std::jthread>();
             thread.detach();
 
             return {};
@@ -988,9 +965,9 @@ namespace Interpreter::SystemFunctions::System {
     auto const thread_get_id_args = std::make_shared<Parser::Symbol>("thread");
     Reference thread_get_id(FunctionContext& context) {
         try {
-            auto& thread = context["thread"].to_data(context).get<ObjectPtr>()->c_obj.get<Thread>();
+            auto& thread = context["thread"].to_data(context).get<ObjectPtr>()->c_obj.get<std::jthread>();
 
-            return Data(static_cast<OV_INT>(thread.get_id()));
+            return Data(static_cast<OV_INT>(std::hash<std::thread::id>{}(thread.get_id())));
         } catch (std::bad_any_cast const&) {
             throw FunctionArgumentsError();
         } catch (Data::BadAccess const&) {
@@ -999,7 +976,7 @@ namespace Interpreter::SystemFunctions::System {
     }
 
     auto const thread_current_id_args = std::make_shared<Parser::Tuple>();
-    Reference thread_current_id(FunctionContext&) {
+    Reference thread_current_id(FunctionContext& /*unused*/) {
         return Data(static_cast<OV_INT>(std::hash<std::thread::id>{}(std::this_thread::get_id())));
     }
 
@@ -1021,7 +998,7 @@ namespace Interpreter::SystemFunctions::System {
     }
 
     auto const thread_hardware_concurrency_args = std::make_shared<Parser::Tuple>();
-    Reference thread_hardware_concurrency(FunctionContext&) {
+    Reference thread_hardware_concurrency(FunctionContext& /*unused*/) {
         return Data(static_cast<OV_INT>(std::thread::hardware_concurrency()));
     }
 

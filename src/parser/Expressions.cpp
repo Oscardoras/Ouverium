@@ -2,19 +2,35 @@
 
 #include "../Types.hpp"
 
+#include <cstddef>
+#include <memory>
+#include <set>
+#include <string>
+#include <variant>
+
 
 namespace Parser {
+
+    namespace {
+
+        template<typename T>
+        void merge(T const& from, T& to) {
+            to.insert(from.begin(), from.end());
+        }
+
+        std::string tabu(unsigned n) {
+            std::string s;
+            for (unsigned i = 0; i < n; ++i) s += "    ";
+            return s;
+        }
+
+    }
 
     std::shared_ptr<Expression> Expression::get_root() {
         auto root = shared_from_this();
         while (root->parent.lock() != nullptr)
             root = root->parent.lock();
         return root;
-    }
-
-    template<typename T>
-    void merge(T const& from, T& to) {
-        to.insert(from.begin(), from.end());
     }
 
     std::set<std::string> FunctionCall::get_symbols() const {
@@ -111,12 +127,6 @@ namespace Parser {
         }
 
         return symbols;
-    }
-
-    std::string tabu(unsigned n) {
-        std::string s;
-        for (unsigned i = 0; i < n; ++i) s += "    ";
-        return s;
     }
 
     std::string FunctionCall::to_string(unsigned n) const {

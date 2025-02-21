@@ -1,9 +1,19 @@
+#include <exception>
+#include <filesystem>
 #include <fstream>
+#include <memory>
+#include <set>
+#include <sstream>
+#include <string>
+#include <vector>
 
 #include <boost/dll.hpp>
 
 #include "SystemFunction.hpp"
 
+#include "../Interpreter.hpp"
+
+#include "../../parser/Expressions.hpp"
 #include "../../parser/Standard.hpp"
 
 
@@ -105,7 +115,7 @@ namespace Interpreter::SystemFunctions::Dll {
                 symbols.insert(expression->symbols.begin(), expression->symbols.end());
                 root->compute_symbols(symbols);
 
-                return Reference();
+                return {};
             }
         } else throw Interpreter::FunctionArgumentsError();
     }

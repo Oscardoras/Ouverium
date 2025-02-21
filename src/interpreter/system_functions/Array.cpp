@@ -1,4 +1,15 @@
+#include <algorithm>
+#include <cstddef>
+#include <memory>
+#include <variant>
+
+#include <ouverium/types.h>
+
 #include "SystemFunction.hpp"
+
+#include "../Interpreter.hpp"
+
+#include "../../parser/Expressions.hpp"
 
 
 namespace Interpreter::SystemFunctions::Array {

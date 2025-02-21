@@ -1,8 +1,12 @@
 #ifndef __INTERPRETER_REFERENCE_HPP__
 #define __INTERPRETER_REFERENCE_HPP__
 
+// IWYU pragma: private; include "Interpreter.hpp"
+
 #include <cstddef>
 #include <memory>
+#include <string>
+#include <variant>
 #include <vector>
 
 #include "Data.hpp"

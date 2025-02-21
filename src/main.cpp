@@ -1,17 +1,25 @@
+#include <chrono>
 #include <cstdlib>
+#include <ctime>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <future>
 #include <iostream>
 #include <memory>
+#include <ostream>
+#include <set>
 #include <sstream>
+#include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include <boost/dll.hpp>
 
 #include "interpreter/Interpreter.hpp"
 
+#include "parser/Expressions.hpp"
 #include "parser/Standard.hpp"
 
 
@@ -289,7 +297,6 @@ wxIMPLEMENT_APP(App);
 int main(int argc, char** argv) {
     std::unique_ptr<ExecutionMode> mode;
 
-    std::srand(std::time(nullptr));
     include_path.push_back((program_location / "libraries").string());
 
     if (argc == 1) {

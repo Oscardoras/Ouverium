@@ -1,7 +1,20 @@
+#include <cstddef>
 #include <iostream>
+#include <list>
+#include <map>
+#include <memory>
+#include <sstream>
+#include <string>
 #include <utility>
+#include <variant>
+
+#include <ouverium/types.h>
 
 #include "Interpreter.hpp"
+
+#include "../parser/Expressions.hpp"
+
+#include "../Types.hpp"
 
 
 namespace Interpreter {

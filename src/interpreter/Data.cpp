@@ -1,3 +1,11 @@
+
+#include <any>
+#include <cstddef>
+#include <string>
+#include <typeindex>
+
+#include <ouverium/types.h>
+
 #include "Interpreter.hpp"
 
 
@@ -22,16 +30,12 @@ namespace Interpreter {
             return false;
     }
 
-    bool operator!=(Data const& a, Data const& b) {
-        return !(a == b);
-    }
-
     PropertyReference Data::get_property(std::string const& name) {
-        return PropertyReference{ *this, name };
+        return PropertyReference{ .parent = *this, .name = name };
     }
 
     ArrayReference Data::get_at(size_t index) {
-        return ArrayReference{ *this, index };
+        return ArrayReference{ .array = *this, .i = index };
     }
 
 }

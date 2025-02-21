@@ -1,8 +1,12 @@
 #include <charconv>
-#include <iostream>
+#include <cstddef>
+#include <string>
+#include <system_error>
+#include <variant>
+
+#include <ouverium/types.h>
 
 #include "Types.hpp"
-#include "ouverium/types.h"
 
 
 std::variant<std::nullptr_t, bool, OV_INT, OV_FLOAT, std::string> get_symbol(std::string const& name) {
@@ -39,13 +43,11 @@ std::variant<std::nullptr_t, bool, OV_INT, OV_FLOAT, std::string> get_symbol(std
 
     OV_INT i{};
     if (std::from_chars(name.data(), name.data() + name.size(), i).ec == std::errc())
-        return static_cast<OV_INT>(i);
+        return i;
 
     OV_FLOAT f{};
     if (std::from_chars(name.data(), name.data() + name.size(), f).ec == std::errc())
-        return static_cast<OV_FLOAT>(f);
-
-    // std::cerr << name << std::endl;
+        return f;
 
     return nullptr;
 }

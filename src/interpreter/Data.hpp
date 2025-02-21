@@ -1,14 +1,19 @@
 #ifndef __INTERPRETER_DATA_HPP__
 #define __INTERPRETER_DATA_HPP__
 
+// IWYU pragma: private; include "Interpreter.hpp"
+
 #include <any>
+#include <cstddef>
 #include <exception>
 #include <functional>
 #include <map>
 #include <memory>
+#include <string>
 #include <typeindex>
+#include <utility>
 
-#include "../Types.hpp"
+#include <ouverium/types.h>
 
 
 namespace Interpreter {
@@ -71,7 +76,6 @@ namespace Interpreter {
         }
 
         friend bool operator==(Data const& a, Data const& b);
-        friend bool operator!=(Data const& a, Data const& b);
 
         class BadAccess : public std::exception {};
 

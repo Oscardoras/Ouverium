@@ -1,6 +1,7 @@
 #ifndef __PARSER_EXPRESSIONS_HPP__
 #define __PARSER_EXPRESSIONS_HPP__
 
+#include <initializer_list>
 #include <memory>
 #include <set>
 #include <string>
@@ -26,7 +27,7 @@ namespace Parser {
          * Gets the root expression.
          * @return the root expression.
         */
-        std::shared_ptr<Expression> get_root();
+        [[nodiscard]] std::shared_ptr<Expression> get_root();
 
         /**
          * The position of the expression in the source.
@@ -42,7 +43,7 @@ namespace Parser {
          * Gets all the symbols present in this expression.
          * @return the symbols present in this expression.
         */
-        virtual std::set<std::string> get_symbols() const = 0;
+        [[nodiscard]] virtual std::set<std::string> get_symbols() const = 0;
 
         /**
          * Determine the symbols of this expressions tree.
@@ -55,7 +56,7 @@ namespace Parser {
          * Gets a string of the expression to print it as a tree.
          * @return the expression as a string.
         */
-        virtual std::string to_string(unsigned n = 0) const = 0;
+        [[nodiscard]] virtual std::string to_string(unsigned n = 0) const = 0;
 
         virtual ~Expression() = default;
 
@@ -110,8 +111,8 @@ namespace Parser {
 
         std::string name;
 
-        Symbol(std::string const& name = "") :
-            name(name) {}
+        Symbol(std::string name = "") :
+            name(std::move(name)) {}
 
         std::set<std::string> get_symbols() const override;
         std::set<std::string> compute_symbols(std::set<std::string>& available_symbols) override;

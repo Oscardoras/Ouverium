@@ -1,7 +1,20 @@
 #include <algorithm>
+#include <cstddef>
+#include <functional>
 #include <iostream>
+#include <memory>
+#include <ranges>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <variant>
+
+#include <ouverium/types.h>
 
 #include "SystemFunction.hpp"
+
+#include "../Interpreter.hpp"
+#include "../../parser/Expressions.hpp"
 
 
 namespace Interpreter::SystemFunctions::Base {
@@ -76,7 +89,7 @@ namespace Interpreter::SystemFunctions::Base {
         }
     ));
     Reference separator(FunctionContext& context) {
-        return Reference(context["b"]);
+        return context["b"];
     }
 
     auto const if_statement_args = std::make_shared<Parser::FunctionCall>(
@@ -171,7 +184,7 @@ namespace Interpreter::SystemFunctions::Base {
                 Interpreter::set(context, variable, Data(i));
                 Interpreter::call_function(context.get_parent(), nullptr, block, std::make_shared<Parser::Tuple>());
             }
-            return Reference();
+            return {};
         } catch (Data::BadAccess const&) {
             throw FunctionArgumentsError();
         }
@@ -316,8 +329,8 @@ namespace Interpreter::SystemFunctions::Base {
                 data = GC::new_object();
             auto obj = object.to_data(context).get<ObjectPtr>();
 
-            for (auto it = functions.rbegin(); it != functions.rend(); it++)
-                obj->functions.push_front(*it);
+            for (auto const& function : std::ranges::reverse_view(functions))
+                obj->functions.push_front(function);
 
             return object;
         } catch (Data::BadAccess const&) {
@@ -486,7 +499,7 @@ namespace Interpreter::SystemFunctions::Base {
 
         get_object(context["if"]);
         get_object(context["else"]);
-        Function if_s = SystemFunction{ if_statement_args, if_statement };
+        Function if_s = SystemFunction{ .parameters = if_statement_args, .pointer = if_statement };
         if_s.extern_symbols.emplace("if", context["if"]);
         if_s.extern_symbols.emplace("else", context["else"]);
         get_object(context["if"])->functions.push_front(if_s);
@@ -495,20 +508,20 @@ namespace Interpreter::SystemFunctions::Base {
 
         get_object(context["from"]);
         get_object(context["to"]);
-        Function for_s = SystemFunction{ for_statement_args, for_statement };
+        Function for_s = SystemFunction{ .parameters = for_statement_args, .pointer = for_statement };
         for_s.extern_symbols.emplace("from", context["from"]);
         for_s.extern_symbols.emplace("to", context["to"]);
         get_object(context["for"])->functions.push_front(for_s);
 
         get_object(context["step"]);
-        Function for_step_s = SystemFunction{ for_step_statement_args, for_step_statement };
+        Function for_step_s = SystemFunction{ .parameters = for_step_statement_args, .pointer = for_step_statement };
         for_step_s.extern_symbols.emplace("from", context["from"]);
         for_step_s.extern_symbols.emplace("to", context["to"]);
         for_step_s.extern_symbols.emplace("step", context["step"]);
         get_object(context["for"])->functions.push_front(for_step_s);
 
         get_object(context["catch"]);
-        Function try_s = SystemFunction{ try_statement_args, try_statement };
+        Function try_s = SystemFunction{ .parameters = try_statement_args, .pointer = try_statement };
         try_s.extern_symbols.emplace("catch", context["catch"]);
         get_object(context["try"])->functions.push_front(try_s);
         add_function(context["throw"], throw_statement_args, throw_statement);

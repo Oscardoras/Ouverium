@@ -1,10 +1,17 @@
 #ifndef __INTERPRETER_FUNCTION_HPP__
 #define __INTERPRETER_FUNCTION_HPP__
 
+// IWYU pragma: private; include "Interpreter.hpp"
+
 #include <functional>
 #include <map>
+#include <memory>
+#include <string>
+#include <variant>
 
 #include "Reference.hpp"
+
+#include "../parser/Expressions.hpp"
 
 
 namespace Interpreter {
@@ -17,7 +24,7 @@ namespace Interpreter {
         std::shared_ptr<Parser::Expression> parameters;
         std::function<Reference(FunctionContext&)> pointer;
 
-        friend bool operator==(SystemFunction const& a, SystemFunction const& b) {
+        [[nodiscard]] friend bool operator==(SystemFunction const& a, SystemFunction const& b) {
             return a.parameters == b.parameters && a.pointer.target<Reference(*)(FunctionContext&)>() == b.pointer.target<Reference(*)(FunctionContext&)>();
         }
     };

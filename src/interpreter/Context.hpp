@@ -1,11 +1,18 @@
 #ifndef __INTERPRETER_CONTEXT_HPP__
 #define __INTERPRETER_CONTEXT_HPP__
 
+// IWYU pragma: private; include "Interpreter.hpp"
+
 #include <filesystem>
 #include <map>
+#include <memory>
 #include <set>
+#include <string>
 
+#include "Data.hpp"
 #include "Reference.hpp"
+
+#include "../parser/Expressions.hpp"
 
 
 namespace Interpreter {
@@ -31,9 +38,9 @@ namespace Interpreter {
         Context& operator=(Context const&) = delete;
         Context& operator=(Context&&) = delete;
 
-        virtual Context& get_parent() = 0;
-        virtual GlobalContext& get_global() = 0;
-        virtual unsigned get_recurion_level() = 0;
+        [[nodiscard]] virtual Context& get_parent() = 0;
+        [[nodiscard]] virtual GlobalContext& get_global() = 0;
+        [[nodiscard]] virtual unsigned get_recurion_level() = 0;
 
         [[nodiscard]] std::set<std::string> get_symbols() const;
         [[nodiscard]] bool has_symbol(std::string const& symbol) const;

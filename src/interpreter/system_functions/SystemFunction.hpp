@@ -1,9 +1,18 @@
 #ifndef __INTERPRETER_SYSTEMFUNCTION_HPP__
 #define __INTERPRETER_SYSTEMFUNCTION_HPP__
 
+#include <any>
+#include <cstddef>
+#include <memory>
+#include <string>
+#include <type_traits>
 #include <utility>
 
+#include <ouverium/types.h>
+
 #include "../Interpreter.hpp"
+
+#include "../../parser/Expressions.hpp"
 
 
 namespace Interpreter::SystemFunctions {
@@ -84,7 +93,7 @@ namespace Interpreter::SystemFunctions {
     }
 
     inline void add_function(IndirectReference const& reference, std::shared_ptr<Parser::Expression> parameters, Reference(*function)(FunctionContext&)) {
-        get_object(reference)->functions.emplace_front(SystemFunction{ std::move(parameters), function });
+        get_object(reference)->functions.emplace_front(SystemFunction{ .parameters = std::move(parameters), .pointer = function });
     }
 
 }

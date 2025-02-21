@@ -1,10 +1,18 @@
+#include <variant>
+
 #include "SystemFunction.hpp"
 
+#include "../Interpreter.hpp"
 
-template<class... Ts>
-struct overloaded : Ts... { using Ts::operator()...; };
-template<class... Ts>
-overloaded(Ts...) -> overloaded<Ts...>;
+
+namespace {
+
+    template<class... Ts>
+    struct overloaded : Ts... { using Ts::operator()...; };
+    template<class... Ts>
+    overloaded(Ts...) -> overloaded<Ts...>;
+
+}
 
 namespace Interpreter::SystemFunctions {
 
@@ -63,14 +71,9 @@ namespace Interpreter::SystemFunctions {
                         data = GC::new_object();
                     return data.get<ObjectPtr>();
                 }
-            }
-        , reference);
-    }
-
-    ObjectPtr get_object(Data& data) {
-        if (data == Data{})
-            data = GC::new_object();
-        return data.get<ObjectPtr>();
+            },
+            reference
+        );
     }
 
 }

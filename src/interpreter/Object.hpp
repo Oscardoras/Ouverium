@@ -1,13 +1,20 @@
 #ifndef __INTERPRETER_OBJECT_HPP__
 #define __INTERPRETER_OBJECT_HPP__
 
-#include <list>
+// IWYU pragma: private; include "Interpreter.hpp"
 
+#include <any>
+#include <functional>
+#include <list>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
+
+#include "Data.hpp"
 #include "Function.hpp"
 
 namespace Interpreter {
-
-    class Context;
 
     class CObj {
 

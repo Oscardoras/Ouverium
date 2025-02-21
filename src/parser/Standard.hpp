@@ -1,9 +1,13 @@
 #ifndef __PARSER_STANDARD_HPP__
 #define __PARSER_STANDARD_HPP__
 
-#include <utility>
-
 #include "Expressions.hpp"
+
+#include <exception>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 
 namespace Parser {
@@ -20,7 +24,7 @@ namespace Parser {
             Word(std::string word, Parser::Position position);
         };
 
-        std::vector<Word> get_words() const;
+        [[nodiscard]] std::vector<Word> get_words() const;
 
         struct ParsingError {
             std::string message;
@@ -44,7 +48,7 @@ namespace Parser {
 
         class IncompleteCode : public Exception {};
 
-        std::shared_ptr<Expression> get_tree() const;
+        [[nodiscard]] std::shared_ptr<Expression> get_tree() const;
 
     protected:
 

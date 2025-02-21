@@ -1,22 +1,32 @@
+
+#include <memory>
+#include <variant>
+
 #include "Interpreter.hpp"
 
+#include "../parser/Expressions.hpp"
 
-template<class... Ts>
-struct overloaded : Ts... { using Ts::operator()...; };
-template<class... Ts>
-overloaded(Ts...) -> overloaded<Ts...>;
 
 namespace Interpreter {
 
-    Data compute(Context& context, std::shared_ptr<Parser::Expression> const& caller, Reference const& reference) {
-        if (auto const* symbol = std::get_if<SymbolReference>(&reference))
-            if (*symbol == std::get<SymbolReference>(context.get_global()["getter"]))
-                return **symbol;
+    namespace {
+        
+        template<class... Ts>
+        struct overloaded : Ts... { using Ts::operator()...; };
+        template<class... Ts>
+        overloaded(Ts...) -> overloaded<Ts...>;
 
-        if (auto const* d = std::get_if<Data>(&reference); d && *d != Data{})
-            return *d;
-        else
-            return call_function(context, caller, context.get_global()["getter"], reference).to_data(context, caller);
+        Data compute(Context& context, std::shared_ptr<Parser::Expression> const& caller, Reference const& reference) {
+            if (auto const* symbol = std::get_if<SymbolReference>(&reference))
+                if (*symbol == std::get<SymbolReference>(context.get_global()["getter"]))
+                    return **symbol;
+
+            if (auto const* d = std::get_if<Data>(&reference); d && *d != Data{})
+                return *d;
+            else
+                return call_function(context, caller, context.get_global()["getter"], reference).to_data(context, caller);
+        }
+
     }
 
     Data& IndirectReference::get_data() const {

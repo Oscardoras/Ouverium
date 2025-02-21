@@ -1,4 +1,4 @@
-#include "SystemFunction.hpp"
+#include "../Interpreter.hpp"
 
 
 #ifdef OUVERIUM_WXWIDGETS
@@ -434,7 +434,7 @@ namespace Interpreter::SystemFunctions {
 
     namespace UI {
 
-        void init(GlobalContext&) {}
+        void init(GlobalContext& /*unused*/) {}
 
     }
 

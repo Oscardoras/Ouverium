@@ -1,8 +1,17 @@
 #include <algorithm>
+#include <cctype>
+#include <cstddef>
 #include <iostream>
+#include <memory>
+#include <ostream>
+#include <set>
 #include <sstream>
+#include <stdexcept>
+#include <string>
 #include <utility>
+#include <vector>
 
+#include "Expressions.hpp"
 #include "Standard.hpp"
 
 
@@ -42,22 +51,22 @@ namespace Parser {
     }
 
     bool is_operator(std::string const& str) {
-        return std::all_of(
-            str.begin(), str.end(),
+        return std::ranges::all_of(
+            str,
             [](char c) { return is_operator(c); }
         );
     }
 
     bool is_number(std::string const& str) {
-        return std::all_of(
-            str.begin(), str.end(),
+        return std::ranges::all_of(
+            str,
             [](char c) { return is_number(c); }
         );
     }
 
     bool is_alnum(std::string const& str) {
-        return std::all_of(
-            str.begin(), str.end(),
+        return std::ranges::all_of(
+            str,
             [](char c) { return is_alphanum(c); }
         );
     }
@@ -185,7 +194,7 @@ namespace Parser {
                 std::vector<std::vector<std::string>> operators;
                 for (auto const& expr : expressions) {
                     if (auto symbol = std::dynamic_pointer_cast<Symbol>(expr)) {
-                        if (is_operator(symbol->name) && std::find(escaped.begin(), escaped.end(), symbol) == escaped.end()) {
+                        if (is_operator(symbol->name) && std::ranges::find(escaped, symbol) == escaped.end()) {
                             bool put = false;
                             for (auto& op : operators) {
                                 if (compare_operators(symbol->name, op[0]) == 0) {
@@ -203,14 +212,14 @@ namespace Parser {
                     }
                 }
 
-                std::sort(operators.begin(), operators.end(), [](auto const& a, auto const& b) {
+                std::ranges::sort(operators, [](auto const& a, auto const& b) {
                     return compare_operators(a[0], b[0]) >= 0;
                 });
 
                 for (auto const& op : operators) {
                     for (auto it = expressions.begin(); it != expressions.end();) {
                         if (auto symbol = std::dynamic_pointer_cast<Symbol>(*it)) {
-                            if (std::find(op.begin(), op.end(), symbol->name) != op.end() && std::find(escaped.begin(), escaped.end(), symbol) == escaped.end()) {
+                            if (std::ranges::find(op, symbol->name) != op.end() && std::ranges::find(escaped, symbol) == escaped.end()) {
                                 if (expressions.begin() <= it - 1 && it + 1 < expressions.end()) {
                                     auto function_call = std::make_shared<FunctionCall>();
                                     function_call->position = symbol->position;
@@ -365,7 +374,7 @@ namespace Parser {
                 } else break;
             }
             if (auto symbol = std::dynamic_pointer_cast<Symbol>(expression)) {
-                if (is_operator(symbol->name) && std::find(escaped.begin(), escaped.end(), symbol) == escaped.end()) {
+                if (is_operator(symbol->name) && std::ranges::find(escaped, symbol) == escaped.end()) {
                     auto function_call = std::make_shared<FunctionCall>();
                     function_call->position = symbol->position;
 

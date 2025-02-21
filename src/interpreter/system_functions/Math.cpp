@@ -1,9 +1,17 @@
 #include <cmath>
 #include <cstdlib>
 #include <limits>
+#include <memory>
+#include <random>
+#include <variant>
+
+#include <ouverium/types.h>
 
 #include "SystemFunction.hpp"
-#include "ouverium/types.h"
+
+#include "../Interpreter.hpp"
+
+#include "../../parser/Expressions.hpp"
 
 
 namespace Interpreter::SystemFunctions::Math {
@@ -188,7 +196,7 @@ namespace Interpreter::SystemFunctions::Math {
         }
         if (auto const* a_char = get_if<char>(&a))
             if (auto const* b_char = get_if<char>(&b))
-                return Reference(Data(*a_char > *b_char));
+                return Data(*a_char > *b_char);
         throw FunctionArgumentsError();
     }
 
@@ -393,17 +401,23 @@ namespace Interpreter::SystemFunctions::Math {
         }
     }
 
+    thread_local std::mt19937 randgen(std::random_device{}());
+
     Reference random_0(FunctionContext& /*context*/) {
-        return Data(static_cast<OV_INT>(std::rand() / (OV_FLOAT) (RAND_MAX + 1U)));
+        std::uniform_real_distribution<OV_FLOAT> dis(0., 1.);
+        return Data(dis(randgen));
     }
 
     Reference random_1(FunctionContext& context) {
         auto b = context["b"].to_data(context);
 
-        if (auto const* b_int = get_if<OV_INT>(&b))
-            return Data(static_cast<OV_INT>(std::rand() / ((RAND_MAX + 1U) / *b_int)));
-        else if (auto const* b_float = get_if<OV_FLOAT>(&b))
-            return Data(static_cast<OV_INT>(std::rand() / ((RAND_MAX + 1U) / *b_float)));
+        if (auto const* b_int = get_if<OV_INT>(&b)) {
+            std::uniform_int_distribution<OV_INT> dis(0, *b_int);
+            return Data(dis(randgen));
+        } else if (auto const* b_float = get_if<OV_FLOAT>(&b)) {
+            std::uniform_real_distribution<OV_FLOAT> dis(0, *b_float);
+            return Data(dis(randgen));
+        }
         throw FunctionArgumentsError();
     }
 
@@ -412,15 +426,21 @@ namespace Interpreter::SystemFunctions::Math {
         auto b = context["b"].to_data(context);
 
         if (auto const* a_int = get_if<OV_INT>(&a)) {
-            if (auto const* b_int = get_if<OV_INT>(&b))
-                return Data(static_cast<OV_INT>(std::rand() / ((RAND_MAX + 1U) / (*b_int - *a_int)) + *a_int));
-            else if (auto const* b_float = get_if<OV_FLOAT>(&b))
-                return Data(static_cast<OV_INT>(std::rand() / ((RAND_MAX + 1U) / (*b_float - static_cast<OV_FLOAT>(*a_int))) + static_cast<OV_FLOAT>(*a_int)));
+            if (auto const* b_int = get_if<OV_INT>(&b)) {
+                std::uniform_int_distribution<OV_INT> dis(*a_int, *b_int);
+                return Data(dis(randgen));
+            } else if (auto const* b_float = get_if<OV_FLOAT>(&b)) {
+                std::uniform_real_distribution<OV_FLOAT> dis(*a_int, *b_float);
+                return Data(dis(randgen));
+            }
         } else if (auto const* a_float = get_if<OV_FLOAT>(&a)) {
-            if (auto const* b_int = get_if<OV_INT>(&b))
-                return Data(static_cast<OV_INT>(std::rand() / ((RAND_MAX + 1U) / (*b_int - *a_int)) + *a_int));
-            else if (auto const* b_float = get_if<OV_FLOAT>(&b))
-                return Data(static_cast<OV_INT>(std::rand() / ((RAND_MAX + 1U) / (*b_float - *a_float)) + *a_float));
+            if (auto const* b_int = get_if<OV_INT>(&b)) {
+                std::uniform_real_distribution<OV_FLOAT> dis(*a_float, *b_int);
+                return Data(dis(randgen));
+            } else if (auto const* b_float = get_if<OV_FLOAT>(&b)) {
+                std::uniform_real_distribution<OV_FLOAT> dis(*a_float, *b_float);
+                return Data(dis(randgen));
+            }
         }
         throw FunctionArgumentsError();
     }

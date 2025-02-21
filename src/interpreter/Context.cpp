@@ -1,6 +1,13 @@
+#include <memory>
+#include <set>
+#include <string>
 #include <utility>
 
 #include "system_functions/SystemFunction.hpp"
+
+#include "Interpreter.hpp"
+
+#include "../parser/Expressions.hpp"
 
 
 namespace Interpreter {

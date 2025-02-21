@@ -1,4 +1,14 @@
+#include <memory>
+#include <string>
+#include <variant>
+
+#include <ouverium/types.h>
+
 #include "SystemFunction.hpp"
+
+#include "../Interpreter.hpp"
+
+#include "../../parser/Expressions.hpp"
 
 
 namespace Interpreter::SystemFunctions::Types {
@@ -141,7 +151,7 @@ namespace Interpreter::SystemFunctions::Types {
         add_function(Data(get_object(context["Float"])).get_property("parse"), constructor_args, float_parse);
         add_function(Data(get_object(context["Int"])).get_property("parse"), constructor_args, int_parse);
 
-        Function f = SystemFunction{ is_type_args, is_type };
+        Function f = SystemFunction{ .parameters = is_type_args, .pointer = is_type };
         f.extern_symbols.emplace("Char", context["Char"]);
         f.extern_symbols.emplace("Float", context["Float"]);
         f.extern_symbols.emplace("Int", context["Int"]);

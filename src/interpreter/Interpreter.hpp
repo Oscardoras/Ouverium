@@ -1,8 +1,19 @@
 #ifndef __INTERPRETER_INTERPRETER_HPP__
 #define __INTERPRETER_INTERPRETER_HPP__
 
-#include "Context.hpp"
-#include "GC.hpp"
+#include <memory>
+#include <string>
+#include <variant>
+#include <vector>
+
+#include "Context.hpp" // IWYU pragma: export
+#include "Data.hpp" // IWYU pragma: export
+#include "Function.hpp" // IWYU pragma: export
+#include "GC.hpp" // IWYU pragma: export
+#include "Object.hpp" // IWYU pragma: export
+#include "Reference.hpp" // IWYU pragma: export
+
+#include "../parser/Expressions.hpp"
 
 
 namespace Interpreter {
