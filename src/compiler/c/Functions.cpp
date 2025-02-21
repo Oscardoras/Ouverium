@@ -1,8 +1,18 @@
+#include <cstddef>
+#include <exception>
 #include <map>
+#include <memory>
+#include <string>
 
+#include "Code.hpp"
 #include "Translator.hpp"
 
+#include "../Analyzer.hpp"
+
+#include "../../parser/Expressions.hpp"
 #include "../../parser/Standard.hpp"
+
+#include "../../Types.hpp"
 
 
 namespace Translator::CStandard {
@@ -14,8 +24,14 @@ namespace Translator::CStandard {
             std::string name = Name(canonical_path.string()).get();
 
             if (!code.imports.contains(name)) {
-                Instructions& import_instructions = code.imports[name];
-                auto r = get_expression(meta_data.sources[std::static_pointer_cast<Parser::FunctionCall>(arguments->parent.lock())], import_instructions, import_instructions.end());
+                auto expression = meta_data.sources[std::static_pointer_cast<Parser::FunctionCall>(arguments->parent.lock())];
+                auto& main = code.imports[name];
+
+                auto& import_global_variables = code.global_variables;
+                for (auto const& symbol : expression->symbols)
+                    import_global_variables[symbol] = Unknown;
+                Instructions& import_instructions = main.body;
+                auto r = get_expression(expression, import_instructions, import_instructions.end());
                 if (r->owned) {
                     import_instructions.push_back(std::make_shared<FunctionCall>(FunctionCall(
                         std::make_shared<Symbol>("Ov_Reference_free"),
@@ -27,7 +43,7 @@ namespace Translator::CStandard {
 
                 instructions.push_back(std::make_shared<FunctionCall>(FunctionCall(
                     std::make_shared<Symbol>("import_" + name + "_body"),
-                    { }
+                    {}
                 )));
             }
         } else if (function == ";") {
@@ -50,6 +66,11 @@ namespace Translator::CStandard {
             return last;
         } else if (function == "if") {
             auto r = std::make_shared<Reference>(true);
+
+            instructions.push_back(std::make_shared<Affectation>(
+                r,
+                std::make_shared<Value>(nullptr)
+            ));
 
             auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(arguments);
             if (tuple->objects.size() >= 2) {
@@ -82,14 +103,15 @@ namespace Translator::CStandard {
                 // TODO: copy reference
                 if_structure->body.push_back(std::make_shared<Affectation>(
                     r,
-                    get_expression(tuple->objects[i++], if_structure->body, if_structure->body.end())
+                    get_expression(tuple->objects[i++], if_structure->body, if_structure->body.end()),
+                    false
                 ));
 
-                auto olf_if_structure = if_structure;
+                auto old_if_structure = if_structure;
                 while (i + 2 < tuple->objects.size()) {
                     i++;
 
-                    auto condition = get_expression(tuple->objects[i++], olf_if_structure->alternative, olf_if_structure->alternative.end());
+                    auto condition = get_expression(tuple->objects[i++], old_if_structure->alternative, old_if_structure->alternative.end());
 
                     auto new_if_structure = std::make_shared<If>(
                         std::make_shared<Property>(
@@ -115,13 +137,14 @@ namespace Translator::CStandard {
 
                     new_if_structure->body.push_back(std::make_shared<Affectation>(
                         r,
-                        get_expression(tuple->objects[i++], new_if_structure->body, new_if_structure->body.end())
+                        get_expression(tuple->objects[i++], new_if_structure->body, new_if_structure->body.end()),
+                        false
                     ));
 
-                    olf_if_structure->alternative.push_back(new_if_structure);
+                    old_if_structure->alternative.push_back(new_if_structure);
 
                     if (condition->owned) {
-                        olf_if_structure->alternative.push_back(std::make_shared<FunctionCall>(FunctionCall(
+                        old_if_structure->alternative.push_back(std::make_shared<FunctionCall>(FunctionCall(
                             std::make_shared<Symbol>("Ov_Reference_free"),
                             {
                                 condition
@@ -129,22 +152,24 @@ namespace Translator::CStandard {
                         )));
                     }
 
-                    olf_if_structure = new_if_structure;
+                    old_if_structure = new_if_structure;
                 };
 
                 if (i + 1 < tuple->objects.size()) {
                     i++;
-                    olf_if_structure->alternative.push_back(std::make_shared<Affectation>(
+                    old_if_structure->alternative.push_back(std::make_shared<Affectation>(
                         r,
-                        get_expression(tuple->objects[i++], olf_if_structure->alternative, olf_if_structure->alternative.end())
+                        get_expression(tuple->objects[i++], old_if_structure->alternative, old_if_structure->alternative.end()),
+                        false
                     ));
                 } else {
-                    olf_if_structure->alternative.push_back(std::make_shared<Affectation>(
+                    old_if_structure->alternative.push_back(std::make_shared<Affectation>(
                         r,
                         std::make_shared<FunctionCall>(FunctionCall(
                             std::make_shared<Symbol>("Ov_Reference_new_uninitialized"),
                             {}
-                        ))
+                        )),
+                        false
                     ));
                 }
 

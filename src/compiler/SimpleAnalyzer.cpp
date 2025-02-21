@@ -1,14 +1,29 @@
+#include <filesystem>
+#include <memory>
+#include <set>
+#include <string>
+#include <utility>
+#include <variant>
+
 #include "c/Translator.hpp"
 
+#include "Analyzer.hpp"
 #include "SimpleAnalyzer.hpp"
+
+#include "../parser/Expressions.hpp"
+#include "../parser/Standard.hpp"
+
+#include "../Types.hpp"
 
 
 namespace Analyzer {
 
-    std::filesystem::path SimpleAnalyzer::import_file(std::shared_ptr<Parser::Expression> expression, std::string const& p) {
-        if (auto path = Parser::Standard::get_canonical_path(expression->position, p)) {
+    std::filesystem::path SimpleAnalyzer::import_file(std::shared_ptr<Parser::Expression> caller, std::string const& p) {
+        if (auto path = Parser::Standard::get_canonical_path(caller->position, p)) {
+            auto root = caller->get_root();
 
-            if (!sources.contains(path.value())) {
+            auto it = sources.find(path.value());
+            if (it == sources.end()) {
                 if (auto expression = Parser::Standard(path.value()).get_tree()) {
                     sources[path.value()] = expression;
 
@@ -20,15 +35,21 @@ namespace Analyzer {
                     {
                         auto symbols = expression->get_root()->symbols;
                         symbols.insert(expression->symbols.begin(), expression->symbols.end());
-                        expression->get_root()->compute_symbols(symbols);
+                        root->compute_symbols(symbols);
                     }
 
                     iterate(expression);
-                } else throw Exception();
+                } else throw Exception({ caller->position });
+            } else {
+                auto expression = it->second;
+
+                auto symbols = root->symbols;
+                symbols.insert(expression->symbols.begin(), expression->symbols.end());
+                root->compute_symbols(symbols);
             }
 
             return path.value();
-        } else throw Exception();
+        } else throw Exception({ caller->position });
     }
 
     void SimpleAnalyzer::iterate(std::shared_ptr<Parser::Expression> expression) {
@@ -51,6 +72,8 @@ namespace Analyzer {
                     calls[function_call].insert(";");
                 } else if (function_symbol->name == "if") {
                     calls[function_call].insert("if");
+                } else {
+                    trivial_calls.calls[function_call] = function_symbol->name;
                 }
             }
         } else if (auto function_definition = std::dynamic_pointer_cast<Parser::FunctionDefinition>(expression)) {
@@ -58,6 +81,12 @@ namespace Analyzer {
             iterate(function_definition->body);
             if (function_definition->filter)
                 iterate(function_definition->filter);
+
+            if (auto call = std::dynamic_pointer_cast<Parser::FunctionCall>(function_definition->parent.lock())) {
+                if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(call->function)) {
+                    trivial_calls.functions[symbol->name].insert(function_definition);
+                }
+            }
         } else if (auto property = std::dynamic_pointer_cast<Parser::Property>(expression)) {
             iterate(property->object);
             properties.insert(property->name);
@@ -90,10 +119,18 @@ namespace Analyzer {
         }
 
         MetaData meta_data;
-        meta_data.structures.insert(structure);
+
+        // meta_data.structures.insert(structure);
+
         meta_data.calls = std::move(calls);
+        for (auto const& [function_call, name] : trivial_calls.calls) {
+            auto const& functions = trivial_calls.functions[name];
+            meta_data.calls[function_call].insert(functions.begin(), functions.end());
+        }
+
         for (auto const& [function_call, path] : imports)
             meta_data.sources[function_call] = sources[path];
+
         return meta_data;
     }
 

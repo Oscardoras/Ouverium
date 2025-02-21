@@ -3,10 +3,17 @@
 
 #include <filesystem>
 #include <list>
+#include <map>
+#include <memory>
+#include <set>
+#include <string>
+#include <utility>
 
 #include "Code.hpp"
 
 #include "../Analyzer.hpp"
+
+#include "../../parser/Expressions.hpp"
 
 
 namespace Translator::CStandard {
@@ -40,14 +47,14 @@ namespace Translator::CStandard {
 
         struct {
             std::set<std::shared_ptr<Structure>> structures;
-            struct {
-                Declarations global_variables;
+            Declarations global_variables;
+            struct Main {
                 Instructions body;
                 std::shared_ptr<Reference> return_value;
             } main;
             std::set<std::shared_ptr<FunctionDefinition>> functions;
             std::set<std::shared_ptr<Lambda>> lambdas;
-            std::map<std::string, Instructions> imports;
+            std::map<std::string, Main> imports;
         } code;
 
         void create_structures();
@@ -57,13 +64,14 @@ namespace Translator::CStandard {
         std::shared_ptr<Reference> get_expression(std::shared_ptr<Parser::Expression> expression, Instructions& instructions, Instructions::iterator it);
 
         void write_structures(std::string& interface, std::string& implementation);
+        void write_global_variables(std::string& interface, std::string& implementation);
         void write_functions(std::string& interface, std::string& implementation);
         void write_main(std::string& implementation);
 
     public:
 
-        Translator(std::shared_ptr<Parser::Expression> expression, Analyzer::MetaData const& meta_data) :
-            expression{ expression }, meta_data{ meta_data } {}
+        Translator(std::shared_ptr<Parser::Expression> expression, Analyzer::MetaData meta_data) :
+            expression{ expression }, meta_data{ std::move(meta_data) } {}
 
         void translate(std::filesystem::path const& out);
 
@@ -90,6 +98,14 @@ namespace Translator::CStandard {
             "string_from",
             "print",
             "scan",
+            "Char",
+            "Float",
+            "Int",
+            "Bool",
+            "Array",
+            "Function",
+            "foreach",
+            "~",
             "!",
             "&",
             "|",

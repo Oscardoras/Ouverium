@@ -1,11 +1,23 @@
+#include <cstddef>
+#include <filesystem>
 #include <fstream>
 #include <functional>
 #include <map>
+#include <memory>
 #include <set>
+#include <string>
+#include <variant>
+#include <vector>
 
 #include <ouverium/hash_string.h>
+#include <ouverium/types.h>
 
+#include "Code.hpp"
 #include "Translator.hpp"
+
+#include "../Analyzer.hpp"
+
+#include "../../parser/Expressions.hpp"
 
 #include "../../Types.hpp"
 
@@ -17,7 +29,7 @@ namespace Translator::CStandard {
             create_structures();
 
             for (auto const& symbol : expression->symbols)
-                code.main.global_variables[symbol] = Unknown;
+                code.global_variables[symbol] = Unknown;
 
             code.main.return_value = get_expression(expression, code.main.body, code.main.body.end());
         }
@@ -28,11 +40,13 @@ namespace Translator::CStandard {
             std::string functions_header;
             std::string main_code;
             write_structures(structures_header, structures_code);
+            write_global_variables(structures_header, structures_code);
             write_functions(functions_header, main_code);
             write_main(main_code);
 
             if (!std::filesystem::exists(out))
                 std::filesystem::create_directory(out);
+
             (std::ofstream((out / "structures.h").c_str()) << structures_header).close();
             (std::ofstream((out / "structures.c").c_str()) << structures_code).close();
             (std::ofstream((out / "functions.h").c_str()) << functions_header).close();
@@ -73,6 +87,8 @@ namespace Translator::CStandard {
             for (auto e : tuple->objects)
                 parse_parameters(e, function);
             function->format += ']';
+        } else if (auto function_call = std::dynamic_pointer_cast<Parser::FunctionCall>(parameters)) {
+            // function_call->
         } else {
             // TODO
         }
@@ -176,6 +192,13 @@ namespace Translator::CStandard {
 
             instructions.insert(it, args);
 
+            instructions.insert(it, std::make_shared<FunctionCall>(FunctionCall(
+                std::make_shared<Symbol>("Ov_push_stack"),
+                {
+                    std::make_shared<Value>(expression->position)
+                }
+            ))
+            );
             instructions.insert(it, std::make_shared<Affectation>(
                 r,
                 std::make_shared<FunctionCall>(FunctionCall(
@@ -201,6 +224,11 @@ namespace Translator::CStandard {
                     }
                 ))
             ));
+            instructions.insert(it, std::make_shared<FunctionCall>(FunctionCall(
+                std::make_shared<Symbol>("Ov_pop_stack"),
+                {}
+            ))
+            );
 
             if (f->owned) {
                 instructions.insert(it, std::make_shared<FunctionCall>(FunctionCall(
@@ -306,7 +334,6 @@ namespace Translator::CStandard {
                                 ))
                             }
                         )),
-                        std::make_shared<Referencing>(std::make_shared<Symbol>("Ov_VirtualTable_UnknownData")),
                         std::make_shared<Value>(static_cast<OV_INT>(hash_string(property->name.c_str())))
                     }
                 ))
@@ -326,19 +353,7 @@ namespace Translator::CStandard {
             auto v = get_symbol(symbol->name);
 
             if (std::holds_alternative<std::nullptr_t>(v)) {
-                auto r = std::make_shared<Reference>(false);
-
-                instructions.insert(it, std::make_shared<Affectation>(
-                    r,
-                    std::make_shared<FunctionCall>(FunctionCall(
-                        std::make_shared<Symbol>("Ov_Reference_share"),
-                        {
-                            std::make_shared<Symbol>(symbol->name)
-                        }
-                    ))
-                ));
-
-                return r;
+                return std::make_shared<Reference>(false, symbol->name);
             } else if (auto const* str = std::get_if<std::string>(&v)) {
                 auto r = std::make_shared<Reference>(true);
 
@@ -357,7 +372,7 @@ namespace Translator::CStandard {
             } else {
                 auto r = std::make_shared<Reference>(true);
 
-                std::shared_ptr<Expression> value = nullptr;
+                std::shared_ptr<Value> value = nullptr;
                 std::shared_ptr<Type> type = nullptr;
                 if (auto* b = std::get_if<bool>(&v)) {
                     value = std::make_shared<Value>(*b);
@@ -370,17 +385,6 @@ namespace Translator::CStandard {
                     type = Float;
                 }
 
-                std::string data_name = "data_" + value->get_expression_code();
-                instructions.insert(it, std::make_shared<Declaration>("Ov_Data", std::make_shared<Symbol>(data_name)));
-                instructions.insert(it, std::make_shared<Affectation>(
-                    std::make_shared<Property>(
-                        std::make_shared<Symbol>(data_name),
-                        type == Bool ? "b" : type == Int ? "i" : type == Float ? "f" : "ptr",
-                        false
-                    ),
-                    value
-                ));
-
                 instructions.insert(it, std::make_shared<Affectation>(
                     r,
                     std::make_shared<FunctionCall>(FunctionCall(
@@ -390,7 +394,7 @@ namespace Translator::CStandard {
                                 std::make_shared<Symbol>("Ov_UnknownData_from_data"),
                                 {
                                     std::make_shared<Referencing>(std::make_shared<Symbol>("Ov_VirtualTable_" + type->name.get())),
-                                    std::make_shared<Symbol>(data_name)
+                                    std::make_shared<RawData>(value)
                                 }
                             ))
                         }

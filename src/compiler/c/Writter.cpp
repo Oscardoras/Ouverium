@@ -1,7 +1,18 @@
+#include <algorithm>
+#include <cassert>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
 #include <set>
+#include <sstream>
+#include <string>
+#include <variant>
+#include <vector>
 
 #include <ouverium/hash_string.h>
+#include <ouverium/types.h>
 
+#include "Code.hpp"
 #include "Translator.hpp"
 
 
@@ -86,8 +97,8 @@ namespace Translator::CStandard {
             }
         }
 
-        if (std::set<std::string>{"if", "else", "while"}.contains(code))
-            code += "_statement";
+        if (std::set<std::string>{"if", "else", "while", "for", "default", "static"}.contains(code))
+            code += "_keyword";
 
         return code;
     }
@@ -172,6 +183,16 @@ namespace Translator::CStandard {
         implementation += "Ov_VirtualTable* Ov_VirtualTable_string_from_tuple = &Ov_VirtualTable_Object;";
     }
 
+    void Translator::write_global_variables(std::string& interface, std::string& implementation) {
+        for (auto const& [name, type] : code.global_variables) {
+            interface += "extern Ov_Reference_Owned " + name.get() + ";\n";
+            implementation += "Ov_Reference_Owned " + name.get() + ";\n";
+        }
+
+        interface += "\n\n";
+        implementation += "\n\n";
+    }
+
     void Translator::write_functions(std::string& interface, std::string& implementation) {
         interface += "#include <include.h>\n";
         interface += "#include \"structures.h\"\n";
@@ -197,9 +218,9 @@ namespace Translator::CStandard {
             implementation += "}\n\n";
         }
 
-        for (auto const& [name, instructions] : code.imports) {
+        for (auto const& [name, main] : code.imports) {
             implementation += "void import_" + name + "_body() {\n";
-            for (auto const& instruction : instructions)
+            for (auto const& instruction : main.body)
                 implementation += add_indentation(instruction->get_instruction_code());
             implementation += "}\n\n";
         }
@@ -210,7 +231,12 @@ namespace Translator::CStandard {
 
                 implementation += "bool " + function->name.get() + "_filter(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {\n";
                 for (size_t i = 0; i < function->captures.size(); ++i) {
-                    implementation += "\tOv_Reference_Shared " + function->captures[i].first.get() + " = captures[" + std::to_string(i) + "];\n";
+                    auto const& name = function->captures[i].first;
+                    auto check = [&name](decltype(function->captures)::value_type const& tuple) -> bool {
+                        return tuple.first == name;
+                    };
+                    if (std::find_if(function->parameters.begin(), function->parameters.end(), check) == function->parameters.end())
+                        implementation += "\tOv_Reference_Shared " + function->captures[i].first.get() + " = captures[" + std::to_string(i) + "];\n";
                 }
                 for (size_t i = 0; i < function->parameters.size(); ++i) {
                     implementation += "\tOv_Reference_Shared " + function->parameters[i].first.get() + " = args[" + std::to_string(i) + "];\n";
@@ -233,7 +259,12 @@ namespace Translator::CStandard {
 
                 implementation += "Ov_Reference_Owned " + function->name.get() + "_body(Ov_Reference_Shared captures[], Ov_Reference_Shared args[], Ov_Reference_Shared local_variables[]) {\n";
                 for (size_t i = 0; i < function->captures.size(); ++i) {
-                    implementation += "\tOv_Reference_Shared " + function->captures[i].first.get() + " = captures[" + std::to_string(i) + "];\n";
+                    auto const& name = function->captures[i].first;
+                    auto check = [&name](decltype(function->captures)::value_type const& tuple) -> bool {
+                        return tuple.first == name;
+                    };
+                    if (std::find_if(function->parameters.begin(), function->parameters.end(), check) == function->parameters.end())
+                        implementation += "\tOv_Reference_Shared " + function->captures[i].first.get() + " = captures[" + std::to_string(i) + "];\n";
                 }
                 for (size_t i = 0; i < function->parameters.size(); ++i) {
                     implementation += "\tOv_Reference_Shared " + function->parameters[i].first.get() + " = args[" + std::to_string(i) + "];\n";
@@ -258,10 +289,10 @@ namespace Translator::CStandard {
         implementation += "int main(int, char**) {\n";
         implementation += "\tOv_init();\n";
 
-        for (auto const& [var, _] : code.main.global_variables) {
+        for (auto const& [var, _] : code.global_variables) {
             if (!symbols.contains(var.symbol)) {
                 implementation += "\tOv_UnknownData " + var.get() + "_data = { .vtable = &Ov_VirtualTable_Object, .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object) };\n";
-                implementation += "\tOv_Reference_Owned " + var.get() + " = Ov_Reference_new_symbol(" + var.get() + "_data);\n";
+                implementation += "\t" + var.get() + " = Ov_Reference_new_symbol(" + var.get() + "_data);\n";
             }
         }
 
@@ -280,20 +311,31 @@ namespace Translator::CStandard {
     }
 
     std::string Reference::get_expression_code() const {
-        return "reference" + std::to_string(id);
+        return name;
     }
-    std::string Reference::get_instruction_code() const {
-        return std::string() + "Ov_Reference_" + (owned ? "Owned" : "Shared") + " reference" + std::to_string(id) + ";";
+
+    std::string RawData::get_expression_code() const {
+        if (std::holds_alternative<bool>(value->value))
+            return "(Ov_Data){ .b = " + value->get_expression_code() + " }";
+        if (std::holds_alternative<OV_INT>(value->value))
+            return "(Ov_Data){ .i = " + value->get_expression_code() + " }";
+        if (std::holds_alternative<OV_FLOAT>(value->value))
+            return "(Ov_Data){ .f = " + value->get_expression_code() + " }";
+
+        assert(false);
+        return "(Ov_Data){ .ptr = NULL }";
     }
 
     std::string Affectation::get_expression_code() const {
         std::string code;
 
         if (auto ref = std::dynamic_pointer_cast<Reference>(lvalue)) {
-            if (ref->owned)
-                code += "Ov_Reference_Owned ";
-            else
-                code += "Ov_Reference_Shared ";
+            if (declare) {
+                if (ref->owned)
+                    code += "Ov_Reference_Owned ";
+                else
+                    code += "Ov_Reference_Shared ";
+            }
         }
         code += lvalue->get_expression_code() + " = " + value->get_expression_code();
 
@@ -367,10 +409,12 @@ namespace Translator::CStandard {
     std::string List::get_instruction_code() const {
         std::string code;
 
-        code += "Ov_Reference_Shared array" + std::to_string(id) + "[] = { ";
-        for (auto const& e : objects)
-            code += "Ov_Reference_share(" + e->get_expression_code() + "), ";
-        code += "};\n";
+        if (!objects.empty()) {
+            code += "Ov_Reference_Shared array" + std::to_string(id) + "[] = { ";
+            for (auto const& e : objects)
+                code += "Ov_Reference_share(" + e->get_expression_code() + "), ";
+            code += "};\n";
+        }
 
         return code;
     }
@@ -390,9 +434,9 @@ namespace Translator::CStandard {
                 code += e->get_expression_code() + ", ";
             code += "};\n";
             code += "Ov_Expression expression" + std::to_string(id) + " = { .type = Ov_EXPRESSION_TUPLE, .tuple.size = " + std::to_string(tuple->size()) + ", .tuple.tab = expression" + std::to_string(id) + "_array };";
-        } else if (auto ref = std::get_if<std::shared_ptr<Reference>>(this)) {
+        } else if (auto const* ref = std::get_if<std::shared_ptr<Reference>>(this)) {
             code += "Ov_Expression expression" + std::to_string(id) + " = { .type = Ov_EXPRESSION_REFERENCE, .reference = Ov_Reference_share(" + (*ref)->get_expression_code() + ") };";
-        } else if (auto lambda = std::get_if<std::shared_ptr<Lambda>>(this)) {
+        } else if (auto const* lambda = std::get_if<std::shared_ptr<Lambda>>(this)) {
             code += "Ov_Expression expression" + std::to_string(id) + " = { .type = Ov_EXPRESSION_LAMBDA, .lambda = NULL };\n";
 
             if (!(*lambda)->captures.empty()) {

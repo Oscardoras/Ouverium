@@ -1,16 +1,17 @@
 #ifndef __COMPILER_C_CODE_HPP__
 #define __COMPILER_C_CODE_HPP__
 
+#include <cstddef>
 #include <list>
+#include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <utility>
 #include <variant>
 #include <vector>
 
-#include "../Analyzer.hpp"
-
-#include "../../Types.hpp"
+#include <ouverium/types.h>
 
 
 namespace Translator::CStandard {
@@ -25,20 +26,22 @@ namespace Translator::CStandard {
 
         [[nodiscard]] std::string get() const;
 
+        friend auto operator==(Name const& a, Name const& b) {
+            return a.symbol == b.symbol;
+        }
+
         friend auto operator<=>(Name const& a, Name const& b) {
             return a.symbol <=> b.symbol;
         }
     };
 
     struct Type {
-
         Name name;
 
         Type(Name name) :
             name{ std::move(name) } {}
 
         virtual ~Type() = default;
-
     };
     using Declarations = std::map<Name, std::weak_ptr<Type>>;
     struct Structure : public Type {
@@ -70,15 +73,17 @@ namespace Translator::CStandard {
         std::shared_ptr<Expression> condition;
         Instructions body;
         Instructions alternative;
+
         If(std::shared_ptr<Expression> condition, Instructions body = {}, Instructions alternative = {}) :
             condition{ condition }, body{ std::move(body) }, alternative{ std::move(alternative) } {}
 
-        std::string get_instruction_code() const override;
+        [[nodiscard]] std::string get_instruction_code() const override;
     };
 
     struct While : public Instruction {
         std::shared_ptr<Expression> condition;
         Instructions body;
+
         While(std::shared_ptr<Expression> condition, Instructions body) :
             condition{ condition }, body{ std::move(body) } {}
 
@@ -87,6 +92,7 @@ namespace Translator::CStandard {
 
     struct Symbol : public LValue {
         Name name;
+
         Symbol(Name name) :
             name{ std::move(name) } {}
 
@@ -96,31 +102,26 @@ namespace Translator::CStandard {
     struct Declaration : public Instruction {
         std::string type;
         std::shared_ptr<Symbol> symbol;
+
         Declaration(std::string type, std::shared_ptr<Symbol> symbol) :
             type{ std::move(type) }, symbol{ symbol } {}
 
-        [[nodiscard]] virtual std::string get_instruction_code() const;
-    };
-
-    struct Affectation : public Expression, public Instruction {
-        std::shared_ptr<LValue> lvalue;
-        std::shared_ptr<Expression> value;
-        Affectation(std::shared_ptr<LValue> lvalue, std::shared_ptr<Expression> value) :
-            lvalue{ lvalue }, value{ value } {}
-
-        [[nodiscard]] std::string get_expression_code() const override;
         [[nodiscard]] std::string get_instruction_code() const override;
     };
 
     struct Value : public Expression {
-        std::variant<char, bool, OV_INT, OV_FLOAT, std::string> value;
-        Value(std::variant<char, bool, OV_INT, OV_FLOAT, std::string> const& value) :
+        std::variant<std::nullptr_t, char, bool, OV_INT, OV_FLOAT, std::string> value;
+
+        Value(std::variant<std::nullptr_t, char, bool, OV_INT, OV_FLOAT, std::string> const& value) :
             value{ value } {}
 
         [[nodiscard]] std::string get_expression_code() const override;
 
     private:
         struct Visitor {
+            std::string operator()(std::nullptr_t /*v*/) {
+                return "NULL";
+            }
             std::string operator()(auto v) {
                 return std::to_string(v);
             }
@@ -133,6 +134,7 @@ namespace Translator::CStandard {
     struct FunctionCall : public Expression, public Instruction {
         std::shared_ptr<Expression> function;
         std::vector<std::shared_ptr<Expression>> parameters;
+
         FunctionCall(std::shared_ptr<Expression> function, std::vector<std::shared_ptr<Expression>> parameters) :
             function{ function }, parameters{ std::move(parameters) } {}
 
@@ -142,18 +144,20 @@ namespace Translator::CStandard {
 
     struct Referencing : public Expression {
         std::shared_ptr<Expression> expression;
+
         Referencing(std::shared_ptr<Expression> expression) :
             expression{ expression } {}
 
-        std::string get_expression_code() const override;
+        [[nodiscard]] std::string get_expression_code() const override;
     };
 
     struct Property : public LValue {
         std::shared_ptr<Expression> object;
         Name name;
         bool pointer;
-        Property(std::shared_ptr<Expression> object, Name const& name, bool pointer) :
-            object{ object }, name{ name }, pointer{ pointer } {}
+
+        Property(std::shared_ptr<Expression> object, Name name, bool pointer) :
+            object{ object }, name{ std::move(name) }, pointer{ pointer } {}
 
         [[nodiscard]] std::string get_expression_code() const override;
     };
@@ -170,20 +174,47 @@ namespace Translator::CStandard {
         }
     };
 
-    struct Reference : public LValue, public Instruction, public Id {
+    struct Reference : public LValue, public Id {
         bool owned;
         std::weak_ptr<Type> type;
+        std::string name;
+
         Reference(bool owned) :
-            owned{ owned } {}
+            owned{ owned } {
+            name = "reference" + std::to_string(id);
+        }
+        Reference(bool owned, Name const& name) :
+            owned{ owned }, name{ name.get() } {}
+
+        [[nodiscard]] std::string get_expression_code() const override;
+    };
+
+    struct RawData : public Expression {
+        std::shared_ptr<Value> value;
+
+        RawData(std::shared_ptr<Value> value) :
+            value{ value } {}
+
+        [[nodiscard]] std::string get_expression_code() const override;
+    };
+
+    struct List : public Expression, public Instruction, public Id {
+        std::vector<std::shared_ptr<Expression>> objects;
+
+        List(std::vector<std::shared_ptr<Expression>> const& objects = {}) :
+            objects{ objects } {}
 
         [[nodiscard]] std::string get_expression_code() const override;
         [[nodiscard]] std::string get_instruction_code() const override;
     };
 
-    struct List : public Expression, public Instruction, public Id {
-        std::vector<std::shared_ptr<Expression>> objects;
-        List(std::vector<std::shared_ptr<Expression>> const& objects = {}) :
-            objects{ objects } {}
+    struct Affectation : public Expression, public Instruction {
+        bool declare;
+        std::shared_ptr<LValue> lvalue;
+        std::shared_ptr<Expression> value;
+
+        Affectation(std::shared_ptr<LValue> lvalue, std::shared_ptr<Expression> value, bool declare = true) :
+            declare{ declare }, lvalue{ lvalue }, value{ value } {}
 
         [[nodiscard]] std::string get_expression_code() const override;
         [[nodiscard]] std::string get_instruction_code() const override;

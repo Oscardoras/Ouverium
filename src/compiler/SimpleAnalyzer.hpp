@@ -1,13 +1,23 @@
 #pragma once
 
+#include <filesystem>
+#include <map>
+#include <memory>
+#include <set>
+#include <string>
+
 #include "Analyzer.hpp"
 
-#include "../parser/Standard.hpp"
+#include "../parser/Expressions.hpp"
 
 
 namespace Analyzer {
 
     struct SimpleAnalyzer {
+        struct {
+            std::map<std::string, std::set<Function>> functions;
+            std::map<std::shared_ptr<Parser::FunctionCall>, std::string> calls;
+        } trivial_calls;
         std::map<std::shared_ptr<Parser::FunctionCall>, std::set<Function>> calls;
         std::set<std::string> properties;
 
