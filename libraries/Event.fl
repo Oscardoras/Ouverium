@@ -15,7 +15,7 @@ class Event {
 
     Event:::(this |-> (
         args |-> {
-            this._callbacks.foreach(callback |-> {
+            foreach(this._callbacks._array, callback |-> {
                 callback(args);
             });
         }

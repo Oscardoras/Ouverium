@@ -55,9 +55,9 @@ namespace Interpreter::SystemFunctions {
     }
 
     template<size_t I, typename Arg>
-    [[nodiscard]] std::remove_cv_t<std::remove_reference_t<Arg>> get_arg(FunctionContext& context) {
+    [[nodiscard]] std::remove_cvref_t<Arg> get_arg(FunctionContext& context) {
         try {
-            return get_arg<std::remove_cv_t<std::remove_reference_t<Arg>>>(context, context["arg" + std::to_string(I)].to_data(context));
+            return get_arg<std::remove_cvref_t<Arg>>(context, context["arg" + std::to_string(I)].to_data(context));
         } catch (Data::BadAccess const&) {
             throw FunctionArgumentsError();
         } catch (std::bad_any_cast const&) {

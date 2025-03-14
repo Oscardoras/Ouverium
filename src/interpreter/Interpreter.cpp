@@ -120,7 +120,7 @@ namespace Interpreter {
                 } else {
                     try {
                         auto object = reference->to_data(function_context, parameters).get<ObjectPtr>();
-                        if (object->array.capacity() > 0 && object->array.size() == p_tuple->objects.size()) {
+                        if (object->array.size() == p_tuple->objects.size()) {
                             for (size_t i = 0; i < p_tuple->objects.size(); ++i)
                                 set_arguments(context, function_context, computed, p_tuple->objects[i], Data(object).get_at(i));
                         } else

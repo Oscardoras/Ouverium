@@ -9,6 +9,8 @@ include(CPack)
 
 # Configuration
 
+option(OUVERIUM_GUI "GUI library support (using wxWidgets)" ON)
+
 if(CMAKE_BUILD_TYPE MATCHES Release)
     check_ipo_supported()
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
@@ -28,7 +30,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Boost)
 
 #WxWidgets
-if(NOT DEFINED OUVERIUM_NO_GUI)
+if(OUVERIUM_GUI)
     find_package(wxWidgets COMPONENTS core base webview)
     if(wxWidgets_FOUND)
         include(${wxWidgets_USE_FILE})
