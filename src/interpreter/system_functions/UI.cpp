@@ -48,10 +48,10 @@ namespace Interpreter::SystemFunctions::UI {
         bool expand = false;
         bool keep_ratio = false;
         struct {
-            int top;
-            int bottom;
-            int left;
-            int right;
+            int top{};
+            int bottom{};
+            int left{};
+            int right{};
         } border;
     };
 
@@ -203,7 +203,7 @@ namespace Interpreter::SystemFunctions::UI {
         Reference ui_position_get(wxWindow* window) {
             auto point = window->GetPosition();
 
-            return TupleReference{ Data(static_cast<OV_INT>(point.x)), Data(static_cast<OV_INT>(point.y)) };
+            return Data(GC::new_object({ Data(static_cast<OV_INT>(point.x)), Data(static_cast<OV_INT>(point.y)) }));
         }
         Reference ui_position_set(wxWindow* window, OV_INT x, OV_INT y) {
             window->SetPosition(wxPoint(static_cast<int>(x), static_cast<int>(y)));
@@ -214,7 +214,7 @@ namespace Interpreter::SystemFunctions::UI {
         Reference ui_size_get(wxWindow* window) {
             auto point = window->GetSize();
 
-            return TupleReference{ Data(static_cast<OV_INT>(point.x)), Data(static_cast<OV_INT>(point.y)) };
+            return Data(GC::new_object({ Data(static_cast<OV_INT>(point.x)), Data(static_cast<OV_INT>(point.y)) }));
         }
         Reference ui_size_set(wxWindow* window, OV_INT x, OV_INT y) {
             window->SetSize(wxSize(static_cast<int>(x), static_cast<int>(y)));

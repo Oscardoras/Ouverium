@@ -7,7 +7,6 @@
 #include <memory>
 #include <string>
 #include <variant>
-#include <vector>
 
 #include "Data.hpp"
 
@@ -19,7 +18,6 @@ namespace Interpreter {
     class Context;
     class Reference;
 
-    using TupleReference = std::vector<Reference>;
     using SymbolReference = std::shared_ptr<Data>;
     struct PropertyReference {
         Data parent;
@@ -43,22 +41,22 @@ namespace Interpreter {
     public:
 
         using std::variant<SymbolReference, PropertyReference, ArrayReference>::variant;
+        IndirectReference(Reference const& reference);
 
         [[nodiscard]] Data& get_data() const;
         [[nodiscard]] Data to_data(Context& context, std::shared_ptr<Parser::Expression> const& caller = nullptr) const;
 
     };
 
-    class Reference : public std::variant<Data, TupleReference, SymbolReference, PropertyReference, ArrayReference> {
+    class Reference : public std::variant<Data, SymbolReference, PropertyReference, ArrayReference> {
 
     public:
 
-        using std::variant<Data, TupleReference, SymbolReference, PropertyReference, ArrayReference>::variant;
+        using std::variant<Data, SymbolReference, PropertyReference, ArrayReference>::variant;
         Reference(IndirectReference const& indirect_reference);
 
+        [[nodiscard]] Data const& get_data() const;
         [[nodiscard]] Data to_data(Context& context, std::shared_ptr<Parser::Expression> const& caller = nullptr) const;
-        [[nodiscard]] IndirectReference to_indirect_reference(Context& context, std::shared_ptr<Parser::Expression> const& caller = nullptr) const;
-
     };
 
 }

@@ -33,7 +33,9 @@ namespace Interpreter {
     };
     class FunctionArgumentsError {};
 
-    using Arguments = std::variant<std::shared_ptr<Parser::Expression>, Reference>;
+    class Arguments : public std::variant<std::shared_ptr<Parser::Expression>, Reference, std::vector<Arguments>> {
+        using std::variant<std::shared_ptr<Parser::Expression>, Reference, std::vector<Arguments>>::variant;
+    };
 
     std::variant<Reference, Exception> try_call_function(Context& context, std::shared_ptr<Parser::Expression> const& caller, Reference const& func, Arguments const& arguments);
     Reference call_function(Context& context, std::shared_ptr<Parser::Expression> const& caller, Reference const& func, Arguments const& arguments);

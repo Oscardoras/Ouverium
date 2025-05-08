@@ -1,17 +1,18 @@
 #include <cassert>
 #include <memory>
+#include <utility>
 
 #include "Interpreter.hpp"
 
 
 namespace Interpreter::GC {
 
-    ObjectPtr new_object(Object const& object) {
-        return std::make_shared<Object>(object);
+    ObjectPtr new_object(Object object) {
+        return std::make_shared<Object>(std::move(object));
     }
 
-    SymbolReference new_reference(Data const& data) {
-        return { std::make_shared<Data>(data) };
+    SymbolReference new_reference(Data data) {
+        return { std::make_shared<Data>(std::move(data)) };
     }
 
     void collect() {

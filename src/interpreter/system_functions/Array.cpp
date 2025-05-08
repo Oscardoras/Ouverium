@@ -1,7 +1,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <memory>
-#include <variant>
 
 #include <ouverium/types.h>
 
@@ -83,15 +82,10 @@ namespace Interpreter::SystemFunctions::Array {
         try {
             auto array = Interpreter::call_function(context.get_parent(), nullptr, context["array"], std::make_shared<Parser::Tuple>());
 
-            if (auto* tuple = std::get_if<TupleReference>(&array)) {
-                for (auto const& r : *tuple)
-                    Interpreter::call_function(context.get_parent(), nullptr, context["function"], r);
-            } else {
-                auto obj = array.to_data(context).get<ObjectPtr>();
-                size_t size = obj->array.size();
-                for (size_t i = 0; i < size; ++i)
-                    Interpreter::call_function(context.get_parent(), nullptr, context["function"], Data(obj).get_at(i));
-            }
+            auto obj = array.to_data(context).get<ObjectPtr>();
+            size_t size = obj->array.size();
+            for (size_t i = 0; i < size; ++i)
+                Interpreter::call_function(context.get_parent(), nullptr, context["function"], Data(obj).get_at(i));
 
             return Data{};
         } catch (Data::BadAccess const&) {

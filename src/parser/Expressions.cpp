@@ -84,15 +84,21 @@ namespace Parser {
     }
 
     std::set<std::string> Property::get_symbols() const {
-        return object->get_symbols();
+        if (auto const* ptr = std::get_if<std::shared_ptr<Expression>>(&object))
+            return (*ptr)->get_symbols();
+        else
+            return {};
     }
 
     std::set<std::string> Property::compute_symbols(std::set<std::string>& available_symbols) {
-        object->parent = shared_from_this();
+        if (auto const* ptr = std::get_if<std::shared_ptr<Expression>>(&object)) {
+            (*ptr)->parent = shared_from_this();
 
-        merge(object->compute_symbols(available_symbols), symbols);
+            merge((*ptr)->compute_symbols(available_symbols), symbols);
 
-        return symbols;
+            return symbols;
+        } else
+            return {};
     }
 
     std::set<std::string> Symbol::get_symbols() const {
@@ -153,8 +159,8 @@ namespace Parser {
         std::string s;
         s += "Property:\n";
         n++;
-        if (object != nullptr)
-            s += tabu(n) + "object: " + object->to_string(n);
+        if (const auto* ptr = std::get_if<std::shared_ptr<Expression>>(&object); ptr && *ptr)
+            s += tabu(n) + "object: " + (*ptr)->to_string(n);
         s += tabu(n) + "name: " + name + "\n";
         return s;
     }

@@ -6,6 +6,7 @@
 #include <set>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
 
@@ -95,7 +96,7 @@ namespace Parser {
 
     struct Property : public Expression {
 
-        std::shared_ptr<Expression> object;
+        std::variant<std::shared_ptr<Expression>, std::weak_ptr<Expression>> object;
         std::string name;
 
         Property(std::shared_ptr<Expression> object = nullptr, std::string name = "") :

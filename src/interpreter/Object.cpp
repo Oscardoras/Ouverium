@@ -1,9 +1,14 @@
+#include <initializer_list>
 #include <string>
+#include <vector>
 
 #include "Interpreter.hpp"
 
 
 namespace Interpreter {
+
+    Object::Object(std::initializer_list<Data> const& array) :
+        array{ array } {}
 
     Object::Object(std::string const& str) {
         array.reserve(str.size());

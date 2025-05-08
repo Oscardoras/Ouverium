@@ -1,6 +1,4 @@
-#include <algorithm>
 #include <cstddef>
-#include <functional>
 #include <iostream>
 #include <memory>
 #include <ranges>
@@ -10,6 +8,7 @@
 #include <variant>
 
 #include <ouverium/types.h>
+#include <vector>
 
 #include "SystemFunction.hpp"
 
@@ -24,9 +23,16 @@ namespace Interpreter::SystemFunctions::Base {
         auto var = context["var"];
 
         Data data = var.get_data();
-        if (data != Data{})
+        if (data != Data{}) {
+            if (auto const* obj = get_if<ObjectPtr>(&data)) {
+                auto it = (*obj)->properties.find("#get_reference");
+                if (it != (*obj)->properties.end()) {
+                    return call_function(context.get_parent(), nullptr, it->second, std::make_shared<Parser::Tuple>());
+                }
+            }
+
             return data;
-        else
+        } else
             throw FunctionArgumentsError();
     }
     auto const function_getter_args = std::make_shared<Parser::Symbol>("function");
@@ -37,48 +43,65 @@ namespace Interpreter::SystemFunctions::Base {
     Reference defined(FunctionContext& context) {
         auto var = context["var"];
 
-        return Data(var.get_data() != Data{});
-    }
-
-    Reference assignation(Context& context, Reference const& var, Data const& d) {
-        if (std::get_if<Data>(&var)) return d;
-        else if (auto const* symbol_reference = std::get_if<SymbolReference>(&var)) **symbol_reference = d;
-        else if (auto const* property_reference = std::get_if<PropertyReference>(&var)) {
-            auto parent = property_reference->parent;
-            if (auto const* obj = get_if<ObjectPtr>(&parent))
-                (*obj)->properties[property_reference->name] = d;
-        } else if (auto const* array_reference = std::get_if<ArrayReference>(&var)) {
-            auto array = array_reference->array;
-            if (auto const* obj = get_if<ObjectPtr>(&array))
-                (*obj)->array[array_reference->i] = d;
-        } else if (auto const* tuple_reference = std::get_if<TupleReference>(&var)) {
-            try {
-                auto const& object = d.get<ObjectPtr>();
-                if (tuple_reference->size() == object->array.size()) {
-                    for (size_t i = 0; i < tuple_reference->size(); ++i)
-                        assignation(context, (*tuple_reference)[i], object->array[i]);
-                } else throw Interpreter::FunctionArgumentsError();
-            } catch (Data::BadAccess const&) {
-                throw Interpreter::FunctionArgumentsError();
+        Data const& data = var.get_data();
+        if (data != Data{}) {
+            if (auto const* obj = get_if<ObjectPtr>(&data)) {
+                auto it = (*obj)->properties.find("#get_reference");
+                if (it != (*obj)->properties.end()) {
+                    return call_function(context.get_parent(), nullptr, context.get_global()["defined"], call_function(context.get_parent(), nullptr, it->second, std::make_shared<Parser::Tuple>()));
+                }
             }
         }
-        return var;
+
+        return Data(data != Data{});
     }
 
     auto const setter_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
         {
-            std::make_shared<Parser::FunctionCall>(
-                std::make_shared<Parser::Symbol>("var"),
-                std::make_shared<Parser::Tuple>()
-            ),
+            std::make_shared<Parser::Symbol>("var"),
             std::make_shared<Parser::Symbol>("data")
         }
     ));
     Reference setter(FunctionContext& context) {
-        auto var = Interpreter::call_function(context.get_parent(), nullptr, context["var"], std::make_shared<Parser::Tuple>());
+        auto var = context["var"];
         auto data = context["data"].to_data(context);
 
-        return assignation(context, var, data);
+        Data const& var_data = var.get_data();
+        if (var_data != Data{}) {
+            if (auto const* var_object = get_if<ObjectPtr>(&var_data)) {
+                auto it = (*var_object)->properties.find("#get_reference");
+                if (it != (*var_object)->properties.end()) {
+                    return Interpreter::set(context, call_function(context.get_parent(), nullptr, it->second, std::make_shared<Parser::Tuple>()), data);
+                }
+
+                if ((*var_object)->properties.contains("#reference_wrapper")) {
+                    if (auto const* object = get_if<ObjectPtr>(&data)) {
+                        if ((*var_object)->array.size() == (*object)->array.size()) {
+                            for (size_t i = 0; i < (*var_object)->array.size(); ++i)
+                                Interpreter::set(context, (*var_object)->array[i], (*object)->array[i]);
+                        } else throw Interpreter::FunctionArgumentsError();
+
+                        for (auto const& [name, d] : (*object)->properties)
+                            Interpreter::set(context, data.get_property(name), d);
+
+                        return var;
+                    } else
+                        throw Interpreter::FunctionArgumentsError();
+                }
+            }
+        }
+
+        if (auto const* symbol_reference = std::get_if<SymbolReference>(&var)) **symbol_reference = data;
+        else if (auto const* property_reference = std::get_if<PropertyReference>(&var)) {
+            auto parent = property_reference->parent;
+            if (auto const* obj = get_if<ObjectPtr>(&parent))
+                (*obj)->properties[property_reference->name] = data;
+        } else if (auto const* array_reference = std::get_if<ArrayReference>(&var)) {
+            auto array = array_reference->array;
+            if (auto const* obj = get_if<ObjectPtr>(&array))
+                (*obj)->array[array_reference->i] = data;
+        }
+        return var;
     }
 
 
@@ -110,9 +133,9 @@ namespace Interpreter::SystemFunctions::Base {
                         size_t i = 2;
                         while (i < tuple->objects.size()) {
                             auto else_s = Interpreter::execute(parent, tuple->objects[i]);
-                            if (else_s.to_indirect_reference(context) == context["else"] && i + 1 < tuple->objects.size()) {
+                            if (IndirectReference(else_s) == context["else"] && i + 1 < tuple->objects.size()) {
                                 auto s = Interpreter::execute(parent, tuple->objects[i + 1]);
-                                if (s.to_indirect_reference(context) == context["if"] && i + 3 < tuple->objects.size()) {
+                                if (IndirectReference(s) == context["if"] && i + 3 < tuple->objects.size()) {
                                     if (Interpreter::execute(parent, tuple->objects[i + 2]).to_data(context).get<bool>())
                                         return Interpreter::execute(parent, tuple->objects[i + 3]);
                                     else i += 4;
@@ -285,29 +308,25 @@ namespace Interpreter::SystemFunctions::Base {
 
     auto const define_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
         {
-            std::make_shared<Parser::FunctionCall>(
-                std::make_shared<Parser::Symbol>("var"),
-                std::make_shared<Parser::Tuple>()
-            ),
+            std::make_shared<Parser::Symbol>("var"),
             std::make_shared<Parser::Symbol>("data")
         }
     ));
     Reference define(FunctionContext& context) {
-        auto var = Interpreter::call_function(context.get_parent(), nullptr, context["var"], std::make_shared<Parser::Tuple>());
+        auto var = context["var"];
         auto data = context["data"].to_data(context);
 
-        std::function<bool(Reference const&)> iterate = [&iterate, &context](Reference const& reference) -> bool {
-            if (auto const* tuple = std::get_if<TupleReference>(&reference)) {
-                return std::any_of(
-                    tuple->begin(), tuple->end(),
-                    [&iterate](auto const& r) { return iterate(r); }
-                );
-            } else {
-                return reference.to_indirect_reference(context).get_data() != Data{};
+        Data const& var_data = var.get_data();
+        if (var_data != Data{}) {
+            if (auto const* var_object = get_if<ObjectPtr>(&var_data)) {
+                auto it = (*var_object)->properties.find("#get_reference");
+                if (it != (*var_object)->properties.end()) {
+                    return call_function(context.get_parent(), nullptr, context.get_global()["define"], std::vector<Arguments>{call_function(context.get_parent(), nullptr, it->second, std::make_shared<Parser::Tuple>()), data});
+                }
             }
-        };
+        }
 
-        if (!iterate(var))
+        if (var_data == Data{})
             return Interpreter::set(context, var, data);
         else
             throw FunctionArgumentsError();
@@ -427,7 +446,7 @@ namespace Interpreter::SystemFunctions::Base {
 
         if (auto const* object = get_if<ObjectPtr>(&data)) {
             try {
-                if ((*object)->array.capacity() > 0)
+                if ((*object)->array.capacity() > 0 && (*object)->properties.empty())
                     os << (*object)->to_string();
                 else
                     throw Data::BadAccess();

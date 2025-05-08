@@ -783,10 +783,18 @@ namespace Interpreter::SystemFunctions::System {
                 object->array.reserve(received);
                 for (size_t i = 0; i < received; ++i)
                     object->array.emplace_back(buffer[i]);
-                return TupleReference{
-                    TupleReference{Data(GC::new_object(Object(endpoint.address().to_string()))), Data(static_cast<OV_INT>(endpoint.port()))},
-                    Data(object)
-                };
+
+                return Data(GC::new_object(
+                    {
+                        Data(GC::new_object(
+                            {
+                                Data(GC::new_object(Object(endpoint.address().to_string()))),
+                                Data(static_cast<OV_INT>(endpoint.port()))
+                            }
+                        )),
+                        Data(object)
+                    }
+                ));
             } else
                 return Data(static_cast<OV_INT>(ec.value()));
         } catch (std::exception const&) {

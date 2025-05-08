@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "Expressions.hpp"
@@ -244,8 +245,28 @@ namespace Parser {
         }
     }
 
+    void init_tuples(std::shared_ptr<Expression> expression, std::weak_ptr<Expression> grand_parent) {
+        if (auto function_call = std::dynamic_pointer_cast<FunctionCall>(expression)) {
+            init_tuples(function_call->function, grand_parent);
+            init_tuples(function_call->arguments, grand_parent);
+        } else if (auto tuple = std::dynamic_pointer_cast<Tuple>(expression)) {
+            for (const auto& o : tuple->objects)
+                init_tuples(o, grand_parent);
+        } else if (auto property = std::dynamic_pointer_cast<Property>(expression)) {
+            if (const auto& shared = std::get_if<std::shared_ptr<Expression>>(&property->object))
+                init_tuples(*shared, grand_parent);
+            else if (const auto& weak = std::get_if<std::weak_ptr<Expression>>(&property->object)) {
+                if (weak->lock() == nullptr) {
+                    property->object = grand_parent;
+                }
+            }
+        }
+    }
+
     std::shared_ptr<Expression> get_expression(std::vector<Standard::ParsingError>& errors, std::vector<Standard::Word> const& words, size_t& i, std::vector<std::shared_ptr<Expression>>& escaped, bool in_tuple, bool in_function, bool in_operator, bool priority) {
         std::shared_ptr<Expression> expression = nullptr;
+
+        bool need_tuple = false;
 
         if (words.at(i) == "(") {
             ++i;
@@ -289,6 +310,17 @@ namespace Parser {
             }
             escaped.push_back(expression);
             expression->position = words[i - 1].position;
+        } else if (words.at(i) == ".") {
+            need_tuple = true;
+            auto property = std::make_shared<Property>();
+            property->position = words.at(i).position;
+            property->object = std::weak_ptr<Expression>();
+            ++i;
+            property->name = words.at(i);
+            if (is_system(words.at(i)) && words.at(i) != ".")
+                errors.emplace_back(words.at(i) + " is reserved", words.at(i).position);
+            expression = property;
+            ++i;
         } else {
             auto symbol = std::make_shared<Symbol>();
             symbol->position = words.at(i).position;
@@ -331,13 +363,16 @@ namespace Parser {
                     auto tuple = std::make_shared<Tuple>();
                     tuple->position = words.at(i).position;
                     tuple->objects.push_back(expressions_to_expression(errors, expressions, expression, is_function, escaped));
+                    init_tuples(tuple->objects.back(), tuple);
                     while (words.at(i) == ",") {
                         ++i;
                         auto const& w = words.at(i);
                         if (w == ")" || w == "]" || w == "}")
                             break;
-                        else
+                        else {
                             tuple->objects.push_back(get_expression(errors, words, i, escaped, true, false, false, true));
+                            init_tuples(tuple->objects.back(), tuple);
+                        }
                     }
                     return tuple;
                 } else break;
@@ -417,7 +452,14 @@ namespace Parser {
 
         }
 
-        return expressions_to_expression(errors, expressions, expression, is_function, escaped);
+        if (need_tuple && !in_tuple) {
+            auto tuple = std::make_shared<Tuple>();
+            tuple->position = words.at(i).position;
+            tuple->objects.push_back(expressions_to_expression(errors, expressions, expression, is_function, escaped));
+            init_tuples(tuple->objects.back(), tuple);
+            return tuple;
+        } else
+            return expressions_to_expression(errors, expressions, expression, is_function, escaped);
     }
 
     std::shared_ptr<Expression> Standard::get_tree() const {

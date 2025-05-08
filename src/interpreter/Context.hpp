@@ -31,6 +31,8 @@ namespace Interpreter {
 
         std::shared_ptr<Parser::Expression> caller;
 
+        std::map<std::shared_ptr<Parser::Expression>, Data> tuples;
+
         Context(std::shared_ptr<Parser::Expression> caller);
         Context(Context const&) = delete;
         Context(Context&&) = delete;

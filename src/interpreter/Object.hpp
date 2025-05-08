@@ -5,6 +5,7 @@
 
 #include <any>
 #include <functional>
+#include <initializer_list>
 #include <list>
 #include <map>
 #include <memory>
@@ -55,6 +56,7 @@ namespace Interpreter {
         CObj c_obj;
 
         Object() = default;
+        Object(std::initializer_list<Data> const& array);
         Object(std::string const& str);
 
         [[nodiscard]] std::string to_string() const;

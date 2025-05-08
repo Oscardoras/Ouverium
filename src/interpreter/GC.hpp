@@ -10,8 +10,8 @@
 
 namespace Interpreter::GC {
 
-    [[nodiscard]] ObjectPtr new_object(Object const& object = {});
-    [[nodiscard]] SymbolReference new_reference(Data const& data = {});
+    [[nodiscard]] ObjectPtr new_object(Object object = {});
+    [[nodiscard]] SymbolReference new_reference(Data data = {});
 
     void collect();
 

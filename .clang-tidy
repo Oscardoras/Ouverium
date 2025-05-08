@@ -38,7 +38,7 @@ Checks: >
     -misc-use-internal-linkage
 CheckOptions:
     - key: performance-unnecessary-value-param.AllowedTypes
-      value: 'std::shared_ptr;std::stop_token'
+      value: 'std::shared_ptr;std::weak_ptr;std::stop_token'
     - key: bugprone-narrowing-conversions.WarnOnIntegerNarrowingConversion
       value: false
     - key: cppcoreguidelines-narrowing-conversions.WarnOnIntegerNarrowingConversion

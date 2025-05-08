@@ -3,7 +3,6 @@
 #include <limits>
 #include <memory>
 #include <random>
-#include <variant>
 
 #include <ouverium/types.h>
 
@@ -336,33 +335,21 @@ namespace Interpreter::SystemFunctions::Math {
 
     auto const for_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
         {
-            std::make_shared<Parser::FunctionCall>(
-                std::make_shared<Parser::Symbol>("array"),
-                std::make_shared<Parser::Tuple>()
-            ),
+            std::make_shared<Parser::Symbol>("array"),
             std::make_shared<Parser::Symbol>("function")
         }
     ));
     Reference forall(FunctionContext& context) {
         try {
-            auto array = Interpreter::call_function(context.get_parent(), nullptr, context["array"], std::make_shared<Parser::Tuple>());
+            auto array = context["array"];
             auto functions = context["function"];
 
             bool value = true;
 
-            if (auto* tuple = std::get_if<TupleReference>(&array)) {
-                for (auto const& r : *tuple) {
-                    if (!Interpreter::call_function(context.get_parent(), nullptr, functions, r).to_data(context).get<bool>()) {
-                        value = false;
-                        break;
-                    }
-                }
-            } else {
-                for (auto const& d : array.to_data(context).get<ObjectPtr>()->array) {
-                    if (!Interpreter::call_function(context.get_parent(), nullptr, functions, d).to_data(context).get<bool>()) {
-                        value = false;
-                        break;
-                    }
+            for (auto const& d : array.to_data(context).get<ObjectPtr>()->array) {
+                if (!Interpreter::call_function(context.get_parent(), nullptr, functions, d).to_data(context).get<bool>()) {
+                    value = false;
+                    break;
                 }
             }
 
@@ -374,24 +361,15 @@ namespace Interpreter::SystemFunctions::Math {
 
     Reference exists(FunctionContext& context) {
         try {
-            auto array = Interpreter::call_function(context.get_parent(), nullptr, context["array"], std::make_shared<Parser::Tuple>());
+            auto array = context["array"];
             auto functions = context["function"];
 
             bool value = false;
 
-            if (auto* tuple = std::get_if<TupleReference>(&array)) {
-                for (auto const& r : *tuple) {
-                    if (Interpreter::call_function(context.get_parent(), nullptr, functions, r).to_data(context).get<bool>()) {
-                        value = true;
-                        break;
-                    }
-                }
-            } else {
-                for (auto const& d : array.to_data(context).get<ObjectPtr>()->array) {
-                    if (Interpreter::call_function(context.get_parent(), nullptr, functions, d).to_data(context).get<bool>()) {
-                        value = true;
-                        break;
-                    }
+            for (auto const& d : array.to_data(context).get<ObjectPtr>()->array) {
+                if (Interpreter::call_function(context.get_parent(), nullptr, functions, d).to_data(context).get<bool>()) {
+                    value = true;
+                    break;
                 }
             }
 

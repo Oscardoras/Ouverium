@@ -1,6 +1,5 @@
 #include <memory>
 #include <string>
-#include <variant>
 
 #include <ouverium/types.h>
 
@@ -65,16 +64,24 @@ namespace Interpreter::SystemFunctions::Types {
     }
 
     auto const tuple_constructor_args = std::make_shared<Parser::FunctionCall>(
-        std::make_shared<Parser::Symbol>("tuple"),
+        std::make_shared<Parser::Symbol>("function"),
         std::make_shared<Parser::Tuple>()
     );
     Reference tuple_constructor(FunctionContext& context) {
-        auto tuple = Interpreter::call_function(context.get_parent(), nullptr, context["tuple"], std::make_shared<Parser::Tuple>());
+        try {
+            auto function = std::get<CustomFunction>(context["function"].to_data(context).get<ObjectPtr>()->functions.front())->body;
 
-        if (std::holds_alternative<TupleReference>(tuple))
-            return tuple;
-        else
-            return TupleReference{ tuple };
+            if (std::dynamic_pointer_cast<Parser::Tuple>(function)) {
+                return Interpreter::call_function(context.get_parent(), nullptr, context["function"], std::make_shared<Parser::Tuple>());
+            } else {
+                auto ptr = GC::new_object();
+                auto reference = Interpreter::call_function(context.get_parent(), nullptr, context["function"], std::make_shared<Parser::Tuple>());
+                ptr->array.push_back(reference.to_data(context.get_parent()));
+                return Data(ptr);
+            }
+        } catch (Data::BadAccess const&) {
+            throw FunctionArgumentsError();
+        }
     }
 
     Reference function_constructor(FunctionContext& context) {
@@ -84,6 +91,47 @@ namespace Interpreter::SystemFunctions::Types {
             return a;
         else
             throw FunctionArgumentsError();
+    }
+
+    auto const reference_constructor_args = std::make_shared<Parser::FunctionCall>(
+        std::make_shared<Parser::Symbol>("function"),
+        std::make_shared<Parser::Tuple>()
+    );
+    Reference reference_constructor(FunctionContext& context) {
+        try {
+            auto function = std::get<CustomFunction>(context["function"].to_data(context).get<ObjectPtr>()->functions.front())->body;
+            auto& parent = context.get_parent();
+
+            auto wrap = [&context](Reference const& reference) {
+                ObjectPtr object = GC::new_object();
+                auto function_definition = std::make_shared<Parser::FunctionDefinition>();
+                function_definition->parameters = std::make_shared<Parser::Tuple>();
+                function_definition->body = std::make_shared<Parser::Symbol>("#cached");
+                object->functions.emplace_front(CustomFunction{ function_definition });
+                object->functions.back().extern_symbols.emplace("#cached", reference);
+
+                auto ptr = GC::new_object();
+                ptr->properties["#get_reference"] = Data(object);
+                return Data(ptr);
+            };
+
+            if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(function)) {
+                auto ptr = GC::new_object();
+                ptr->array.reserve(tuple->objects.size());
+
+                for (auto const& e : tuple->objects) {
+                    auto reference = Interpreter::execute(parent, e);
+                    ptr->array.push_back(wrap(reference));
+                }
+
+                return Data(ptr);
+            } else {
+                auto reference = Interpreter::call_function(context.get_parent(), nullptr, context["function"], std::make_shared<Parser::Tuple>());
+                return wrap(reference);
+            }
+        } catch (Data::BadAccess const&) {
+            throw FunctionArgumentsError();
+        }
     }
 
 
@@ -147,6 +195,7 @@ namespace Interpreter::SystemFunctions::Types {
         add_function(context["Array"], constructor_args, array_constructor);
         add_function(context["Tuple"], tuple_constructor_args, tuple_constructor);
         add_function(context["Function"], constructor_args, function_constructor);
+        add_function(context["Reference"], reference_constructor_args, reference_constructor);
 
         add_function(Data(get_object(context["Float"])).get_property("parse"), constructor_args, float_parse);
         add_function(Data(get_object(context["Int"])).get_property("parse"), constructor_args, int_parse);
