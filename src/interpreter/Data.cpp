@@ -1,4 +1,3 @@
-
 #include <any>
 #include <cstddef>
 #include <string>
@@ -20,12 +19,12 @@ namespace Interpreter {
     };
 
     bool operator==(Data const& a, Data const& b) {
-        if (!static_cast<std::any const&>(a).has_value() && !static_cast<std::any const&>(b).has_value())
+        if (!a.value.has_value() && !b.value.has_value())
             return true;
 
-        auto it = Data::comparators.find({ std::type_index(static_cast<std::any const&>(a).type()), std::type_index(static_cast<std::any const&>(b).type()) });
+        auto it = Data::comparators.find({ std::type_index(a.value.type()), std::type_index(b.value.type()) });
         if (it != Data::comparators.end())
-            return it->second(a, b);
+            return it->second(a.value, b.value);
         else
             return false;
     }

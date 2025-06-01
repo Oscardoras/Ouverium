@@ -24,7 +24,7 @@ namespace Interpreter {
 
     using ObjectPtr = std::shared_ptr<Object>;
 
-    class Data : protected std::any {
+    class Data {
 
     public:
 
@@ -41,37 +41,36 @@ namespace Interpreter {
             }
         };
 
-
         Data() = default;
-        explicit Data(ObjectPtr object) : std::any(object) {}
-        explicit Data(char c) : std::any(c) {}
-        explicit Data(OV_FLOAT f) : std::any(f) {}
-        explicit Data(OV_INT i) : std::any(i) {}
-        explicit Data(bool b) : std::any(b) {}
-        explicit Data(std::any const& any) : std::any(any) {}
+        explicit Data(ObjectPtr object) : value(object) {}
+        explicit Data(char c) : value(c) {}
+        explicit Data(OV_FLOAT f) : value(f) {}
+        explicit Data(OV_INT i) : value(i) {}
+        explicit Data(bool b) : value(b) {}
+        explicit Data(std::any any) : value(std::move(any)) {}
 
         Data& operator=(ObjectPtr object) {
-            static_cast<std::any&>(*this) = object;
+            value = object;
             return *this;
         }
         Data& operator=(char c) {
-            static_cast<std::any&>(*this) = c;
+            value = c;
             return *this;
         }
         Data& operator=(OV_FLOAT f) {
-            static_cast<std::any&>(*this) = f;
+            value = f;
             return *this;
         }
         Data& operator=(OV_INT i) {
-            static_cast<std::any&>(*this) = i;
+            value = i;
             return *this;
         }
         Data& operator=(bool b) {
-            static_cast<std::any&>(*this) = b;
+            value = b;
             return *this;
         }
         Data& operator=(std::any const& any) {
-            static_cast<std::any&>(*this) = any;
+            value = any;
             return *this;
         }
 
@@ -82,27 +81,31 @@ namespace Interpreter {
         template<typename T>
         [[nodiscard]] T const& get() const {
             try {
-                return std::any_cast<T const&>(*this);
+                return std::any_cast<T const&>(value);
             } catch (std::bad_any_cast const&) {
                 throw BadAccess();
             }
         }
         template<typename T>
         [[nodiscard]] friend T const* get_if(Data const* data) {
-            return std::any_cast<T const>(data);
+            if (!data) return nullptr;
+            return std::any_cast<T const>(&data->value);
         }
         template<typename T>
         [[nodiscard]] bool is() const {
-            return std::any_cast<T const>(this);
+            return value.type() == typeid(T);
         }
 
         [[nodiscard]] PropertyReference get_property(std::string const& name);
 
         [[nodiscard]] ArrayReference get_at(size_t index);
 
+    private:
+
+        std::any value;
+
     };
 
 }
-
 
 #endif
