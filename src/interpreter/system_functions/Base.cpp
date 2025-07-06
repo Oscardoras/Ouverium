@@ -43,6 +43,29 @@ namespace Interpreter::SystemFunctions::Base {
     Reference defined(FunctionContext& context) {
         auto var = context["var"];
 
+        auto has_data = [&var]() -> bool {
+            if (auto const* symbol_reference = std::get_if<SymbolReference>(&var)) {
+                return **symbol_reference != Data{};
+            } else if (auto const* property_reference = std::get_if<PropertyReference>(&var)) {
+                auto parent = property_reference->parent;
+                if (auto const* obj = get_if<ObjectPtr>(&parent)) {
+                    auto it = (*obj)->properties.find(property_reference->name);
+                    return it != (*obj)->properties.end() && it->second != Data{};
+                }
+            } else if (auto const* array_reference = std::get_if<ArrayReference>(&var)) {
+                auto array = array_reference->array;
+                if (auto const* obj = get_if<ObjectPtr>(&array))
+                    if (array_reference->i < (*obj)->array.size())
+                        return (*obj)->array[array_reference->i] != Data{};
+            }
+
+            return {};
+        };
+
+        if (!has_data()) {
+            return Data(false);
+        }
+
         Data const& data = var.get_data();
         if (data != Data{}) {
             if (auto const* obj = get_if<ObjectPtr>(&data)) {
@@ -332,6 +355,26 @@ namespace Interpreter::SystemFunctions::Base {
             throw FunctionArgumentsError();
     }
 
+    auto const inject_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
+        {
+            std::make_shared<Parser::Symbol>("var"),
+            std::make_shared<Parser::Symbol>("data")
+        }
+    ));
+    Reference inject(FunctionContext& context) {
+        auto var = context["var"];
+        auto data = context["data"].to_data(context);
+        auto var_data = var.to_data(context);
+
+        if (auto const* object = get_if<ObjectPtr>(&data)) {
+            for (auto const& [name, d] : (*object)->properties) {
+                Interpreter::set(context, PropertyReference{.parent=var_data, .name=name}, d);
+            }
+        }
+
+        return {};
+    }
+
     auto const function_definition_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
         {
             std::make_shared<Parser::Symbol>("object"),
@@ -549,6 +592,7 @@ namespace Interpreter::SystemFunctions::Base {
         add_function(context["$=="], copy_args, copy_pointer);
 
         add_function(context["="], define_args, define);
+        add_function(context[":<-"], inject_args, inject);
         add_function(context[":"], function_definition_args, function_definition);
         add_function(context["|"], function_add_args, function_add);
 

@@ -1,33 +1,20 @@
 import "UI.fl";
 
-f := UI.Frame("test") {
-    p := UI.Panel {
-        a := UI.ActivityIndicator(),
-        b1 := UI.Button(),
-        b2 := UI.Button(),
+f := UI.Frame( .title := "test", .size := [1000, 400] ) {
+    UI.Panel ( .layout := UI.Layout.HorizontalWrap ) {
+        UI.ActivityIndicator( .value := true ),
+        UI.Button( .label := "b1", .proportion := 1, .expand := true, .on_value_change := args |-> { print("test b1"); r.value :+= 1; } ),
+        UI.Button( .label := "b2", .align := UI.Alignment.End, .on_value_change := args |-> { print("test b2"); r.value :-= 1 } ),
         c := UI.Calendar(),
-        cp := UI.ColorPicker(),
-        d := UI.DatePicker(),
-        r := UI.Gauge(),
+        cp := UI.ColorPicker( .label := "Color Picker", .on_value_change := args |-> { print(cp.value); } ),
+        UI.DatePicker(),
+        r := UI.Gauge( .align := UI.Alignment.Center, .range := 10, .value := 5 ),
+        UI.FilePicker( .align := UI.Alignment.Center ),
     },
 };
-f.size := [1000, 400];
-a.running := true;
-b1.label := "b1";
-b1.on_value_change :+= args |-> { print("test b1"); r.value :+= 1; };
-b1.proportion := 1;
-b1.expand := true;
-b2.label := "b2";
 print("ok");
-b2.on_value_change :+= () |-> { print("test b2"); r.value :-= 1; };
-b2.align := UI.Alignment.End;
-cp.on_value_change :+= () |-> { print(cp.value); };
-cp.label := "Color Picker";
-p.layout := UI.Layout.HorizontalWrap;
-r.range := 10;
-r.value := 5;
-r.align := UI.Alignment.Center;
 
-f2 := UI.Frame("test webview") {};
-f2.create_child(wb := UI.Webview());
+f2 := UI.Frame( .title := "test webview" ) {};
+wb := UI.Webview();
+wb.create(f2);
 wb.url := "https://google.fr/";

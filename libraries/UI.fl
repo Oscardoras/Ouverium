@@ -43,21 +43,15 @@ class (UI.Alignment) {
 };
 
 class (UI.Widget) {
-    (UI.Widget)::(this.create_child |-> (
-        (element) |-> {
-            element.create(this);
-
-            if (defined(element.children)) {
-                foreach(element.children, child |-> {
-                    element.create_child(child);
+    (UI.Widget)::(this.create_widget |-> (
+        () |-> {
+            if (defined(this.children)) {
+                foreach(this.children, child |-> {
+                    child.create(this);
                 });
             };
-        }
-    ));
 
-    (UI.Widget)::(this.add_event |-> (
-        callback |-> {
-            import("system").ui_add_event(this, callback)
+            this :<- this._args;
         }
     ));
 
@@ -134,13 +128,15 @@ class (UI.Widget) {
 
 
 class (UI.Frame) extends (UI.Widget) {
-    UI.Frame : (String title, Array children) |-> {
-        this := import("system").ui_frame_new(title);
+    UI.Frame : (args, Array children) |-> {
+        this := import("system").ui_frame_new(if (defined (args.title)) { args.title } else "");
         this :~ (UI.Frame);
 
-        foreach(children, child |-> {
-            this.create_child(child);
-        });
+        this.children := children;
+        this._args := args;
+
+        UI.Widget(this);
+        this.create_widget();
 
         this
     };
@@ -148,24 +144,39 @@ class (UI.Frame) extends (UI.Widget) {
 
 
 class (UI.Panel) extends (UI.Widget) {
-    UI.Panel : (Array children) |-> {
+    UI.Panel : (args, Array children) |-> {
         this := import("system").ui_panel_new();
         this :~ (UI.Panel);
 
         this.children := children;
+        this._args := args;
 
-        this
+        UI.Widget(this)
     };
 
     (UI.Panel)::(this.create |-> (
         (UI.Widget parent) |-> {
-            import("system").ui_panel_create(this, parent)
+            import("system").ui_panel_create(this, parent);
+
+            this.create_widget();
         }
     ));
 };
 
 
 class (UI.Control) extends (UI.Widget) {
+    UI.Control : this |-> {
+        UI.Widget(this);
+
+        this.on_value_change := Event();
+
+        if (defined (this._args.on_value_change)) {
+            this.on_value_change :+= this._args.on_value_change;
+        };
+
+        this
+    };
+
     (UI.Control)::(
         this.label |-> {
             import("system").ui_ctrl_label_get(this)
@@ -179,63 +190,75 @@ class (UI.Control) extends (UI.Widget) {
 
 
 class (UI.ActivityIndicator) extends (UI.Control) {
-    UI.ActivityIndicator : () |-> {
-        (import("system").ui_activityindicator_new()) :~ (UI.ActivityIndicator)
+    UI.ActivityIndicator : args |-> {
+        this := (import("system").ui_activityindicator_new()) :~ (UI.ActivityIndicator);
+
+        this._args := args;
+
+        UI.Control(this)
     };
 
     (UI.ActivityIndicator)::(this.create |-> (
         (UI.Widget parent) |-> {
-            import("system").ui_activityindicator_create(this, parent)
+            import("system").ui_activityindicator_create(this, parent);
+
+            this.create_widget();
         }
     ));
 
     (UI.ActivityIndicator)::(
-        this.running |-> {
+        this.value |-> {
             import("system").ui_activityindicator_running_get(this)
         },
-        (this.running, Bool value) |-> {
-            import("system").ui_activityindicator_running_set(this, value);
-            value
+        (this.value, Bool v) |-> {
+            import("system").ui_activityindicator_running_set(this, v);
+            v
         }
     );
 };
 
 
 class (UI.Button) extends (UI.Control) {
-    UI.Button : () |-> {
+    UI.Button : args |-> {
         this := (import("system").ui_button_new()) :~ (UI.Button);
 
-        this.on_value_change := Event();
-        import("system").ui_button_event(this, () |-> {
-            this.on_value_change();
-        });
+        this._args := args;
 
-        this
+        UI.Control(this)
     };
 
     (UI.Button)::(this.create |-> (
         (UI.Widget parent) |-> {
-            import("system").ui_button_create(this, parent)
+            import("system").ui_button_create(this, parent);
+
+            import("system").ui_button_event(this, () |-> {
+                this.on_value_change();
+            });
+
+            this.create_widget();
         }
     ));
 };
 
 
 class (UI.Calendar) extends (UI.Control) {
-    UI.Calendar : () |-> {
+    UI.Calendar : args |-> {
         this := (import("system").ui_calendar_new()) :~ (UI.Calendar);
 
-        this.on_value_change := Event();
-        import("system").ui_calendar_value_event(this, () |-> {
-            this.on_value_change();
-        });
+        this._args := args;
 
-        this
+        UI.Control(this)
     };
 
     (UI.Calendar)::(this.create |-> (
         (UI.Widget parent) |-> {
-            import("system").ui_calendar_create(this, parent)
+            import("system").ui_calendar_create(this, parent);
+
+            import("system").ui_calendar_value_event(this, () |-> {
+                this.on_value_change();
+            });
+
+            this.create_widget();
         }
     ));
 
@@ -252,20 +275,23 @@ class (UI.Calendar) extends (UI.Control) {
 
 
 class (UI.Checkbox) extends (UI.Control) {
-    UI.Checkbox : () |-> {
+    UI.Checkbox : args |-> {
         this := (import("system").ui_checkbox_new()) :~ (UI.Checkbox);
 
-        this.on_value_change := Event();
-        import("system").ui_checkbox_value_event(this, () |-> {
-            this.on_value_change();
-        });
+        this._args := args;
 
-        this
+        UI.Control(this)
     };
 
     (UI.Checkbox)::(this.create |-> (
         (UI.Widget parent) |-> {
-            import("system").ui_checkbox_create(this, parent)
+            import("system").ui_checkbox_create(this, parent);
+
+            import("system").ui_checkbox_value_event(this, () |-> {
+                this.on_value_change();
+            });
+
+            this.create_widget();
         }
     ));
 
@@ -281,20 +307,23 @@ class (UI.Checkbox) extends (UI.Control) {
 };
 
 class (UI.Choice) extends (UI.Control) {
-    UI.Choice : () |-> {
+    UI.Choice : args |-> {
         this := (import("system").ui_choice_new()) :~ (UI.Choice);
 
-        this.on_value_change := Event();
-        import("system").ui_choice_value_event(this, () |-> {
-            this.on_value_change();
-        });
+        this._args := args;
 
-        this
+        UI.Control(this)
     };
 
     (UI.Choice)::(this.create |-> (
         (UI.Widget parent) |-> {
-            import("system").ui_choice_create(this, parent)
+            import("system").ui_choice_create(this, parent);
+
+            import("system").ui_choice_value_event(this, () |-> {
+                this.on_value_change();
+            });
+
+            this.create_widget();
         }
     ));
 
@@ -332,20 +361,23 @@ class (UI.Choice) extends (UI.Control) {
 
 
 class (UI.ColorPicker) extends (UI.Control) {
-    UI.ColorPicker : () |-> {
+    UI.ColorPicker : args |-> {
         this := (import("system").ui_colorpicker_new()) :~ (UI.ColorPicker);
 
-        this.on_value_change := Event();
-        import("system").ui_colorpicker_value_event(this, () |-> {
-            this.on_value_change();
-        });
+        this._args := args;
 
-        this
+        UI.Control(this)
     };
 
     (UI.ColorPicker)::(this.create |-> (
         (UI.Widget parent) |-> {
-            import("system").ui_colorpicker_create(this, parent)
+            import("system").ui_colorpicker_create(this, parent);
+
+            import("system").ui_colorpicker_value_event(this, () |-> {
+                this.on_value_change();
+            });
+
+            this.create_widget();
         }
     ));
 
@@ -361,20 +393,23 @@ class (UI.ColorPicker) extends (UI.Control) {
 };
 
 class (UI.DatePicker) extends (UI.Control) {
-    UI.DatePicker : () |-> {
+    UI.DatePicker : args |-> {
         this := (import("system").ui_datepicker_new()) :~ (UI.DatePicker);
 
-        this.on_value_change := Event();
-        import("system").ui_datepicker_value_event(this, () |-> {
-            this.on_value_change();
-        });
+        this._args := args;
 
-        this
+        UI.Control(this)
     };
 
     (UI.DatePicker)::(this.create |-> (
         (UI.Widget parent) |-> {
-            import("system").ui_datepicker_create(this, parent)
+            import("system").ui_datepicker_create(this, parent);
+
+            import("system").ui_datepicker_value_event(this, () |-> {
+                this.on_value_change();
+            });
+
+            this.create_widget();
         }
     ));
 
@@ -390,13 +425,19 @@ class (UI.DatePicker) extends (UI.Control) {
 };
 
 class (UI.Gauge) extends (UI.Control) {
-    UI.Gauge : () |-> {
-        (import("system").ui_gauge_new()) :~ (UI.Gauge)
+    UI.Gauge : args |-> {
+        this := (import("system").ui_gauge_new()) :~ (UI.Gauge);
+
+        this._args := args;
+
+        UI.Control(this)
     };
 
     (UI.Gauge)::(this.create |-> (
         (UI.Widget parent) |-> {
-            import("system").ui_gauge_create(this, parent)
+            import("system").ui_gauge_create(this, parent);
+
+            this.create_widget();
         }
     ));
 
@@ -421,15 +462,53 @@ class (UI.Gauge) extends (UI.Control) {
     );
 };
 
+class (UI.FilePicker) extends (UI.Control) {
+    UI.FilePicker : args |-> {
+        this := (import("system").ui_filepicker_new()) :~ (UI.FilePicker);
+
+        this._args := args;
+
+        UI.Control(this)
+    };
+
+    (UI.FilePicker)::(this.create |-> (
+        (UI.Widget parent) |-> {
+            import("system").ui_filepicker_create(this, parent);
+
+            import("system").ui_filepicker_value_event(this, () |-> {
+                this.on_value_change();
+            });
+
+            this.create_widget();
+        }
+    ));
+
+    (UI.FilePicker)::(
+        this.value |-> {
+            import("system").ui_filepicker_value_get(this)
+        },
+        (this.value, String v) |-> {
+            import("system").ui_filepicker_value_set(this, v);
+            v
+        }
+    );
+};
+
 
 class (UI.Webview) extends (UI.Control) {
-    UI.Webview : () |-> {
-        (import("system").ui_webview_new()) :~ (UI.Webview)
+    UI.Webview : args |-> {
+        this := (import("system").ui_webview_new()) :~ (UI.Webview);
+
+        this._args := args;
+
+        UI.Control(this)
     };
 
     (UI.Webview)::(this.create |-> (
         (UI.Widget parent) |-> {
-            import("system").ui_webview_create(this, parent)
+            import("system").ui_webview_create(this, parent);
+
+            this.create_widget();
         }
     ));
 

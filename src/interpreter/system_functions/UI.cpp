@@ -22,6 +22,7 @@
 #include <wx/clrpicker.h>
 #include <wx/datectrl.h>
 #include <wx/dialog.h>
+#include <wx/filepicker.h>
 #include <wx/gauge.h>
 #include <wx/hyperlink.h>
 #include <wx/radiobox.h>
@@ -559,7 +560,14 @@ namespace Interpreter::SystemFunctions::UI {
                 Reference ui_colorpicker_value_get(wxWindow* window) {
                     auto* colour_picker = dynamic_cast<wxColourPickerCtrl*>(window);
 
-                    return Data(Object(std::string(colour_picker->GetColour().GetAsString())));
+                    auto color = colour_picker->GetColour();
+
+                    return Data(GC::new_object({
+                        Data(static_cast<OV_INT>(color.Red())),
+                        Data(static_cast<OV_INT>(color.Green())),
+                        Data(static_cast<OV_INT>(color.Blue())),
+                        Data(static_cast<OV_INT>(color.Alpha()))
+                    }));
                 }
 
                 Reference ui_colorpicker_value_set(wxWindow* window, std::string const& color) {
@@ -802,6 +810,30 @@ namespace Interpreter::SystemFunctions::UI {
 
             }
 
+            namespace FilePicker {
+
+                Reference ui_filepicker_create(wxWindow* window, wxWindow* parent) {
+                    dynamic_cast<wxFilePickerCtrl*>(window)->Create(parent, wxID_ANY);
+
+                    return Data{};
+                }
+
+                Reference ui_filepicker_value_get(wxWindow* window) {
+                    auto* text = dynamic_cast<wxFilePickerCtrl*>(window);
+
+                    return Data(Object(std::string(text->GetPath())));
+                }
+
+                Reference ui_filepicker_value_set(wxWindow* window, std::string const& value) {
+                    auto* text = dynamic_cast<wxFilePickerCtrl*>(window);
+
+                    text->SetPath(value);
+
+                    return Data{};
+                }
+
+            }
+
             namespace Webview {
 
                 Reference ui_webview_new() {
@@ -967,6 +999,12 @@ namespace Interpreter::SystemFunctions::UI {
         add_function(s.get_property("ui_slider_min_set"), Window::Control::Slider::ui_slider_min_set);
         add_function(s.get_property("ui_slider_max_get"), Window::Control::Slider::ui_slider_max_get);
         add_function(s.get_property("ui_slider_max_set"), Window::Control::Slider::ui_slider_max_set);
+
+        add_function(s.get_property("ui_filepicker_new"), Window::ui_new<wxFilePickerCtrl>);
+        add_function(s.get_property("ui_filepicker_create"), Window::Control::FilePicker::ui_filepicker_create);
+        add_function(s.get_property("ui_filepicker_value_get"), Window::Control::FilePicker::ui_filepicker_value_get);
+        add_function(s.get_property("ui_filepicker_value_set"), Window::Control::FilePicker::ui_filepicker_value_set);
+        add_event(s.get_property("ui_filepicker_value_event"), wxEVT_FILEPICKER_CHANGED);
 
         add_function(s.get_property("ui_webview_new"), Window::Control::Webview::ui_webview_new);
         add_function(s.get_property("ui_webview_create"), Window::Control::Webview::ui_webview_create);
