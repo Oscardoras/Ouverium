@@ -128,7 +128,6 @@ abstract;
             type._filter : (a |-> false) : ((this. .) \ (this ~ type) |-> true);
             type._functor_filter : (a |-> false) : (this \ (this ~ type) |-> true);
 
-            default types;
             s := Array.get_size(types);
             Array.set_size(types, s+1);
             default_setter(Array.get(types, s), type);

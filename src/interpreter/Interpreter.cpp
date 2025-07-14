@@ -395,7 +395,6 @@ namespace Interpreter {
             }
         } else if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(expression)) {
             auto object = GC::new_object();
-            object->array.reserve(tuple->objects.size());
 
             auto& t = context.tuples[tuple];
             t = Data(object);

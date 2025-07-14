@@ -1,20 +1,43 @@
 import "UI.fl";
 
 f := UI.Frame( .title := "test", .size := [1000, 400] ) {
-    UI.Panel ( .layout := UI.Layout.HorizontalWrap ) {
+    UI.Panel( .layout := UI.Layout.HorizontalWrap ) {
         UI.ActivityIndicator( .value := true ),
         UI.Button( .label := "b1", .proportion := 1, .expand := true, .on_value_change := args |-> { print("test b1"); r.value :+= 1; } ),
         UI.Button( .label := "b2", .align := UI.Alignment.End, .on_value_change := args |-> { print("test b2"); r.value :-= 1 } ),
         c := UI.Calendar(),
         cp := UI.ColorPicker( .label := "Color Picker", .on_value_change := args |-> { print(cp.value); } ),
-        UI.DatePicker(),
         r := UI.Gauge( .align := UI.Alignment.Center, .range := 10, .value := 5 ),
         UI.FilePicker( .align := UI.Alignment.Center ),
+        di := UI.Dialog( .title := "Same buttons", .layout := UI.Layout.Vertical ) {
+            UI.Label( .label := "Select a button" ),
+            UI.Panel( .layout := UI.Layout.Horizontal ) {
+                UI.Button( .label := "b1", .proportion := 1, .expand := true, .on_value_change := args |-> { print("test b1"); r.value :+= 1; } ),
+                UI.Button( .label := "b2", .align := UI.Alignment.End, .on_value_change := args |-> { print("test b2"); r.value :-= 1 } ),
+            }
+        },
+        UI.Button( .label := "Open Dialog", .on_value_change := args |-> { di.visible := true; } ),
+        UI.Hyperlink( .label := "Link to Google", .value := "www.google.fr" ),
+        UI.Search( .label := "Search", .value := "john doe", .min_size := [200, 50] ),
+        t := UI.Text( .label := "Write", .value := "michel", .min_size := [200, 50], .on_value_change := args |-> { print(t.value); } ),
+        UI.MultilineText( .label := "Write", .value := "", .min_size := [300, 100] ),
+        UI.Password( .label := "Password", .value := "pass", .min_size := [100, 50] )
     },
 };
+f.create();
+f.open();
 print("ok");
 
-f2 := UI.Frame( .title := "test webview" ) {};
-wb := UI.Webview();
-wb.create(f2);
-wb.url := "https://google.fr/";
+f2 := UI.Frame( .title := "test webview", .min_size := [600, 400] ) {
+    UI.Panel( .layout := UI.Layout.Vertical, .proportion := 1, .expand := true ) {
+        UI.Panel( .layout := UI.Layout.Horizontal, .expand := true ) {
+            urlBar := UI.Text( .min_size := [200, 50], .proportion := 1 ),
+            UI.Button( .label := "Browse", .on_value_change := args |-> { val := urlBar.value; wb.url := val; } ),
+        },
+        wb := UI.Webview( .url := "https://google.com/", .proportion := 1, .expand := true, .on_url_change := args |-> {
+            val := wb.url; urlBar.set_silent(val);
+        } ),
+    },
+};
+f2.create();
+f2.open();

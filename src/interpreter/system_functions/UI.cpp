@@ -33,7 +33,12 @@
 namespace Interpreter::SystemFunctions {
     template<>
     inline wxWindow* get_arg<wxWindow*>(FunctionContext& /*context*/, Data const& data) {
-        return data.get<ObjectPtr>()->c_obj.get<wxWeakRef<wxWindow>>().get();
+        auto const& ptr = data.get<ObjectPtr>();
+        if (ptr->c_obj.has_value()) {
+            return ptr->c_obj.get<wxWeakRef<wxWindow>>().get();
+        } else {
+            return nullptr;
+        }
     }
 }
 
@@ -60,7 +65,7 @@ namespace Interpreter::SystemFunctions::UI {
         ItemStyle item_style;
     };
 
-    template<typename Args>
+    template<bool Skip = false, typename Args>
     void add_event(IndirectReference const& reference, wxEventTypeTag<Args> const& type) {
         struct EventHandler {
             wxEventTypeTag<Args> const& type;
@@ -76,11 +81,15 @@ namespace Interpreter::SystemFunctions::UI {
                     auto function_context = std::make_shared<FunctionContext>(global, nullptr);
                     function_context->add_symbol("callback", callback);
 
-                    window->Bind(type, [function_context](Args&) {
+                    window->Bind(type, [function_context](Args& ev) {
                         try {
                             Interpreter::try_call_function(*function_context, nullptr, (*function_context)["callback"], std::make_shared<Parser::Tuple>());
                         } catch (Interpreter::Exception const& ex) {
                             ex.print_stack_trace(*function_context);
+                        }
+
+                        if constexpr (Skip) {
+                            ev.Skip();
                         }
                     });
 
@@ -188,6 +197,7 @@ namespace Interpreter::SystemFunctions::UI {
 
                     parent_sizer->Detach(window);
                     parent_sizer->Insert(i, window, get_flags(parent_sizer, item_style));
+                    parent->Fit();
                 }
             }
         }
@@ -199,6 +209,17 @@ namespace Interpreter::SystemFunctions::UI {
             auto obj = GC::new_object();
             obj->c_obj.set(std::make_unique<wxWeakRef<wxWindow>>(window));
             return Data(obj);
+        }
+
+        Reference ui_visible_get(wxWindow* window) {
+            auto visible = window->IsShown();
+
+            return Data(visible);
+        }
+        Reference ui_visible_set(wxWindow* window, bool visible) {
+            window->Show(visible);
+
+            return Data{};
         }
 
         Reference ui_position_get(wxWindow* window) {
@@ -219,6 +240,28 @@ namespace Interpreter::SystemFunctions::UI {
         }
         Reference ui_size_set(wxWindow* window, OV_INT x, OV_INT y) {
             window->SetSize(wxSize(static_cast<int>(x), static_cast<int>(y)));
+
+            return Data{};
+        }
+
+        Reference ui_min_size_get(wxWindow* window) {
+            auto point = window->GetMinSize();
+
+            return Data(GC::new_object({ Data(static_cast<OV_INT>(point.x)), Data(static_cast<OV_INT>(point.y)) }));
+        }
+        Reference ui_min_size_set(wxWindow* window, OV_INT x, OV_INT y) {
+            window->SetMinSize(wxSize(static_cast<int>(x), static_cast<int>(y)));
+
+            return Data{};
+        }
+
+        Reference ui_max_size_get(wxWindow* window) {
+            auto point = window->GetMaxSize();
+
+            return Data(GC::new_object({ Data(static_cast<OV_INT>(point.x)), Data(static_cast<OV_INT>(point.y)) }));
+        }
+        Reference ui_max_size_set(wxWindow* window, OV_INT x, OV_INT y) {
+            window->SetMaxSize(wxSize(static_cast<int>(x), static_cast<int>(y)));
 
             return Data{};
         }
@@ -354,30 +397,42 @@ namespace Interpreter::SystemFunctions::UI {
             return Data();
         }
 
-        namespace Frame {
+        namespace Window {
 
-            Reference ui_frame_new(std::string const& title) {
-                auto* frame = new wxFrame(nullptr, wxID_ANY, title);
-                frame->Show(true);
+            Reference ui_window_title_get(wxWindow* window) {
+                auto* control = dynamic_cast<wxTopLevelWindow*>(window);
 
-                auto obj = GC::new_object();
-                obj->c_obj.set(std::make_unique<wxWeakRef<wxWindow>>(frame));
-                return Data(obj);
+                return Data(GC::new_object(control->GetTitle().ToStdString()));
             }
 
-        }
+            Reference ui_window_title_set(wxWindow* window, std::string const& title) {
+                auto* control = dynamic_cast<wxTopLevelWindow*>(window);
 
-        namespace Dialog {
+                control->SetTitle(title);
 
-            Reference ui_dialog_new(std::string const& title) {
-                auto* dialog = new wxDialog(nullptr, wxID_ANY, title);
-                dialog->Show(true);
-
-                auto obj = GC::new_object();
-                obj->c_obj.set(std::make_unique<wxWeakRef<wxWindow>>(dialog));
-                return Data(obj);
+                return Data{};
             }
 
+            namespace Frame {
+
+                Reference ui_frame_create(wxWindow* window, wxWindow* parent) {
+                    dynamic_cast<wxFrame*>(window)->Create(parent, wxID_ANY, "");
+                    
+                    return Data{};
+                }
+
+            }
+
+            namespace Dialog {
+
+                Reference ui_dialog_create(wxWindow* window, wxWindow* parent) {
+                    dynamic_cast<wxDialog*>(window)->Create(parent, wxID_ANY, "");
+
+                    return Data{};
+                }
+
+            }
+        
         }
 
         namespace Panel {
@@ -465,6 +520,14 @@ namespace Interpreter::SystemFunctions::UI {
                     return Data{};
                 }
 
+                Reference ui_calendar_value_set_silent(wxWindow* window, OV_INT time) {
+                    auto* calendar = dynamic_cast<wxCalendarCtrl*>(window);
+
+                    calendar->SetDate(wxDateTime(static_cast<time_t>(time)));
+
+                    return Data{};
+                }
+
             }
 
             namespace Checkbox {
@@ -519,7 +582,7 @@ namespace Interpreter::SystemFunctions::UI {
                     if (i < 0 || i >= choice->GetCount())
                         throw FunctionArgumentsError();
 
-                    return Data(Object(std::string(choice->GetString(i))));
+                    return Data(GC::new_object(Object(std::string(choice->GetString(i)))));
                 }
 
                 Reference ui_choice_string_set(wxWindow* window, OV_INT i, std::string const& string) {
@@ -653,7 +716,7 @@ namespace Interpreter::SystemFunctions::UI {
                 Reference ui_hyperlink_url_get(wxWindow* window) {
                     auto* hyperlink = dynamic_cast<wxHyperlinkCtrl*>(window);
 
-                    return Data(Object(std::string(hyperlink->GetURL())));
+                    return Data(GC::new_object(Object(std::string(hyperlink->GetURL()))));
                 }
 
                 Reference ui_hyperlink_url_set(wxWindow* window, std::string const& url) {
@@ -700,30 +763,6 @@ namespace Interpreter::SystemFunctions::UI {
 
             }
 
-            namespace Search {
-
-                Reference ui_search_create(wxWindow* window, wxWindow* parent) {
-                    dynamic_cast<wxSearchCtrl*>(window)->Create(parent, wxID_ANY);
-
-                    return Data{};
-                }
-
-                Reference ui_search_value_get(wxWindow* window) {
-                    auto* search = dynamic_cast<wxSearchCtrl*>(window);
-
-                    return Data(Object(std::string(search->GetValue())));
-                }
-
-                Reference ui_search_value_set(wxWindow* window, std::string const& value) {
-                    auto* search = dynamic_cast<wxSearchCtrl*>(window);
-
-                    search->SetValue(value);
-
-                    return Data{};
-                }
-
-            }
-
             namespace Text {
 
                 Reference ui_text_create(wxWindow* window, wxWindow* parent) {
@@ -733,17 +772,69 @@ namespace Interpreter::SystemFunctions::UI {
                 }
 
                 Reference ui_text_value_get(wxWindow* window) {
-                    auto* text = dynamic_cast<wxTextCtrl*>(window);
+                    auto* text = dynamic_cast<wxTextEntry*>(window);
 
-                    return Data(Object(std::string(text->GetValue())));
+                    return Data(GC::new_object(Object(std::string(text->GetValue()))));
                 }
 
                 Reference ui_text_value_set(wxWindow* window, std::string const& value) {
-                    auto* text = dynamic_cast<wxTextCtrl*>(window);
+                    auto* text = dynamic_cast<wxTextEntry*>(window);
 
                     text->SetValue(value);
 
                     return Data{};
+                }
+
+                Reference ui_text_value_set_silent(wxWindow* window, std::string const& value) {
+                    auto* text = dynamic_cast<wxTextEntry*>(window);
+
+                    text->ChangeValue(value);
+
+                    return Data{};
+                }
+
+                Reference ui_text_editable_get(wxWindow* window) {
+                    auto* text = dynamic_cast<wxTextEntry*>(window);
+
+                    return Data(text->IsEditable());
+                }
+
+                Reference ui_text_editable_set(wxWindow* window, bool value) {
+                    auto* text = dynamic_cast<wxTextEntry*>(window);
+
+                    text->SetEditable(value);
+
+                    return Data{};
+                }
+
+                namespace MultilineText {
+
+                    Reference ui_multilinetext_create(wxWindow* window, wxWindow* parent) {
+                        dynamic_cast<wxTextCtrl*>(window)->Create(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE);
+
+                        return Data{};
+                    }
+
+                }
+
+                namespace Search {
+
+                    Reference ui_search_create(wxWindow* window, wxWindow* parent) {
+                        dynamic_cast<wxSearchCtrl*>(window)->Create(parent, wxID_ANY);
+
+                        return Data{};
+                    }
+
+                }
+
+                namespace Password {
+
+                    Reference ui_password_create(wxWindow* window, wxWindow* parent) {
+                        dynamic_cast<wxTextCtrl*>(window)->Create(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PASSWORD);
+
+                        return Data{};
+                    }
+
                 }
 
             }
@@ -821,7 +912,7 @@ namespace Interpreter::SystemFunctions::UI {
                 Reference ui_filepicker_value_get(wxWindow* window) {
                     auto* text = dynamic_cast<wxFilePickerCtrl*>(window);
 
-                    return Data(Object(std::string(text->GetPath())));
+                    return Data(GC::new_object(Object(std::string(text->GetPath()))));
                 }
 
                 Reference ui_filepicker_value_set(wxWindow* window, std::string const& value) {
@@ -888,10 +979,16 @@ namespace Interpreter::SystemFunctions::UI {
     void init(GlobalContext& context) {
         auto& s = context.get_global().system;
 
+        add_function(s.get_property("ui_visible_get"), Window::ui_visible_get);
+        add_function(s.get_property("ui_visible_set"), Window::ui_visible_set);
         add_function(s.get_property("ui_position_set"), Window::ui_position_get);
         add_function(s.get_property("ui_position_set"), Window::ui_position_set);
         add_function(s.get_property("ui_size_get"), Window::ui_size_get);
         add_function(s.get_property("ui_size_set"), Window::ui_size_set);
+        add_function(s.get_property("ui_min_size_get"), Window::ui_min_size_get);
+        add_function(s.get_property("ui_min_size_set"), Window::ui_min_size_set);
+        add_function(s.get_property("ui_max_size_get"), Window::ui_max_size_get);
+        add_function(s.get_property("ui_max_size_set"), Window::ui_max_size_set);
         add_function(s.get_property("ui_layout_get"), Window::ui_layout_get);
         add_function(s.get_property("ui_layout_set"), Window::ui_layout_set);
         add_function(s.get_property("ui_proportion_get"), Window::ui_proportion_get);
@@ -903,7 +1000,15 @@ namespace Interpreter::SystemFunctions::UI {
         add_function(s.get_property("ui_keep_ratio_get"), Window::ui_keep_ratio_get);
         add_function(s.get_property("ui_keep_ratio_set"), Window::ui_keep_ratio_set);
 
-        add_function(s.get_property("ui_frame_new"), Window::Frame::ui_frame_new);
+        add_function(s.get_property("ui_window_title_get"), Window::Window::ui_window_title_get);
+        add_function(s.get_property("ui_window_title_set"), Window::Window::ui_window_title_set);
+        add_event<true>(s.get_property("ui_window_closed"), wxEVT_CLOSE_WINDOW);
+
+        add_function(s.get_property("ui_frame_new"), Window::ui_new<wxFrame>);
+        add_function(s.get_property("ui_frame_create"), Window::Window::Frame::ui_frame_create);
+
+        add_function(s.get_property("ui_dialog_new"), Window::ui_new<wxDialog>);
+        add_function(s.get_property("ui_dialog_create"), Window::Window::Dialog::ui_dialog_create);
 
         add_function(s.get_property("ui_panel_new"), Window::ui_new<wxPanel>);
         add_function(s.get_property("ui_panel_create"), Window::Panel::ui_panel_create);
@@ -975,17 +1080,24 @@ namespace Interpreter::SystemFunctions::UI {
         add_function(s.get_property("ui_radiobutton_value_set"), Window::Control::RadioButton::ui_radiobutton_value_set);
         add_event(s.get_property("ui_radiobutton_value_event"), wxEVT_RADIOBUTTON);
 
-        add_function(s.get_property("ui_search_new"), Window::ui_new<wxSearchCtrl>);
-        add_function(s.get_property("ui_search_create"), Window::Control::Search::ui_search_create);
-        add_function(s.get_property("ui_search_value_get"), Window::Control::Search::ui_search_value_get);
-        add_function(s.get_property("ui_search_value_set"), Window::Control::Search::ui_search_value_set);
-        add_event(s.get_property("ui_search_value_event"), wxEVT_SEARCH);
-        add_event(s.get_property("ui_search_cancel_event"), wxEVT_SEARCH_CANCEL);
-
         add_function(s.get_property("ui_text_new"), Window::ui_new<wxTextCtrl>);
         add_function(s.get_property("ui_text_create"), Window::Control::Text::ui_text_create);
         add_function(s.get_property("ui_text_value_get"), Window::Control::Text::ui_text_value_get);
         add_function(s.get_property("ui_text_value_set"), Window::Control::Text::ui_text_value_set);
+        add_event(s.get_property("ui_text_value_event"), wxEVT_TEXT);
+        add_function(s.get_property("ui_text_editable_get"), Window::Control::Text::ui_text_editable_get);
+        add_function(s.get_property("ui_text_editable_set"), Window::Control::Text::ui_text_editable_set);
+        add_function(s.get_property("ui_text_value_set_silent"), Window::Control::Text::ui_text_value_set_silent);
+
+        add_function(s.get_property("ui_multilinetext_new"), Window::ui_new<wxTextCtrl>);
+        add_function(s.get_property("ui_multilinetext_create"), Window::Control::Text::MultilineText::ui_multilinetext_create);
+
+        add_function(s.get_property("ui_search_new"), Window::ui_new<wxSearchCtrl>);
+        add_function(s.get_property("ui_search_create"), Window::Control::Text::Search::ui_search_create);
+        add_event(s.get_property("ui_search_cancel_event"), wxEVT_SEARCH_CANCEL);
+
+        add_function(s.get_property("ui_password_new"), Window::ui_new<wxTextCtrl>);
+        add_function(s.get_property("ui_password_create"), Window::Control::Text::Password::ui_password_create);
 
         add_function(s.get_property("ui_box_new"), Window::ui_new<wxStaticText>);
         add_function(s.get_property("ui_box_create"), Window::Control::Box::ui_box_create);
@@ -1012,6 +1124,7 @@ namespace Interpreter::SystemFunctions::UI {
         add_function(s.get_property("ui_webview_url_get"), Window::Control::Webview::ui_webview_url_get);
         add_function(s.get_property("ui_webview_url_set"), Window::Control::Webview::ui_webview_url_set);
         add_function(s.get_property("ui_webview_set_page"), Window::Control::Webview::ui_webview_set_page);
+        add_event(s.get_property("ui_webview_url_event"), wxEVT_WEBVIEW_NAVIGATED);
     }
 
 }

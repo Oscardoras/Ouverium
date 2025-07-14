@@ -52,8 +52,19 @@ class (UI.Widget) {
             };
 
             this :<- this._args;
+            this._args := {};
         }
     ));
+
+    (UI.Widget)::(
+        this.visible |-> (
+            import("system").ui_visible_get(this)
+        ),
+        (this.visible, Bool visibility) |-> (
+            import("system").ui_visible_set(this, visibility);
+            visibility
+        )
+    );
 
     (UI.Widget)::(
         this.position |-> (
@@ -71,6 +82,26 @@ class (UI.Widget) {
         ),
         (this.size, (x, y)) |-> (
             import("system").ui_size_set(this, x, y);
+            (x, y)
+        )
+    );
+
+    (UI.Widget)::(
+        this.min_size |-> (
+            import("system").ui_min_size_get(this)
+        ),
+        (this.min_size, (x, y)) |-> (
+            import("system").ui_min_size_set(this, x, y);
+            (x, y)
+        )
+    );
+
+    (UI.Widget)::(
+        this.max_size |-> (
+            import("system").ui_max_size_get(this)
+        ),
+        (this.max_size, (x, y)) |-> (
+            import("system").ui_max_size_set(this, x, y);
             (x, y)
         )
     );
@@ -127,19 +158,99 @@ class (UI.Widget) {
 };
 
 
-class (UI.Frame) extends (UI.Widget) {
+class (UI.Window) extends (UI.Widget) {
+    UI.Window : this |-> {
+        UI.Widget(this);
+
+        this.on_close := Event();
+
+        if (defined (this._args.on_close)) {
+            this.on_close :+= this._args.on_close;
+        };
+
+        import("system").ui_window_closed(this, () |-> {
+            this.on_close();
+        });
+
+        this
+    };
+
+    (UI.Window)::(
+        this.title |-> {
+            import("system").ui_window_title_get(this)
+        },
+        (this.title, String value) |-> {
+            import("system").ui_window_title_set(this, value);
+            value
+        }
+    );
+
+    (UI.Window)::(this.open |-> (
+        () |-> {
+            this.visible := true;
+        }
+    ));
+
+    (UI.Window)::(this.close |-> (
+        () |-> {
+            this.visible := false;
+        }
+    ));
+};
+
+
+class (UI.Frame) extends (UI.Window) {
     UI.Frame : (args, Array children) |-> {
-        this := import("system").ui_frame_new(if (defined (args.title)) { args.title } else "");
+        this := import("system").ui_frame_new();
         this :~ (UI.Frame);
 
         this.children := children;
         this._args := args;
 
-        UI.Widget(this);
-        this.create_widget();
-
-        this
+        UI.Window(this)
     };
+
+    (UI.Frame)::(this.create |-> (
+        () |-> {
+            import("system").ui_frame_create(this, {});
+
+            this.create_widget();
+        } :
+        (UI.Widget parent) |-> {
+            import("system").ui_frame_create(this, parent);
+
+            this.create_widget();
+        }
+    ));
+};
+
+
+class (UI.Dialog) extends (UI.Window) {
+    UI.Dialog : (args, Array children) |-> {
+        this := import("system").ui_dialog_new();
+        this :~ (UI.Dialog);
+
+        this.children := children;
+        this._args := args;
+
+        UI.Window(this)
+    };
+
+    (UI.Dialog)::(this.create |-> (
+        () |-> {
+            import("system").ui_dialog_create(this, {});
+
+            this.create_widget();
+        }
+    ));
+
+    (UI.Dialog)::(this.create |-> (
+        (UI.Widget parent) |-> {
+            import("system").ui_dialog_create(this, parent);
+
+            this.create_widget();
+        }
+    ));
 };
 
 
@@ -328,10 +439,10 @@ class (UI.Choice) extends (UI.Control) {
     ));
 
     (UI.Choice)::(
-        this.size |-> {
+        this.length |-> {
             import("system").ui_choice_size_get(this)
         },
-        (this.size, Int size) |-> {
+        (this.length, Int size) |-> {
             import("system").ui_choice_size_set(this, size);
             size
         }
@@ -462,6 +573,177 @@ class (UI.Gauge) extends (UI.Control) {
     );
 };
 
+class (UI.Hyperlink) extends (UI.Control) {
+    UI.Hyperlink : args |-> {
+        this := (import("system").ui_hyperlink_new()) :~ (UI.Hyperlink);
+
+        this._args := args;
+
+        UI.Control(this)
+    };
+
+    (UI.Hyperlink)::(this.create |-> (
+        (UI.Widget parent) |-> {
+            import("system").ui_hyperlink_create(this, parent);
+
+            this.create_widget();
+        }
+    ));
+
+    (UI.Hyperlink)::(
+        this.value |-> {
+            import("system").ui_hyperlink_url_get(this)
+        },
+        (this.value, String v) |-> {
+            import("system").ui_hyperlink_url_set(this, v);
+            v
+        }
+    );
+};
+
+class (UI.Label) extends (UI.Control) {
+    UI.Label : args |-> {
+        this := (import("system").ui_label_new()) :~ (UI.Label);
+
+        this._args := args;
+
+        UI.Control(this)
+    };
+
+    (UI.Label)::(this.create |-> (
+        (UI.Widget parent) |-> {
+            import("system").ui_label_create(this, parent);
+
+            this.create_widget();
+        }
+    ));
+};
+
+class (UI.Text) extends (UI.Control) {
+    UI.Text : args |-> {
+        this := (import("system").ui_text_new()) :~ (UI.Text);
+
+        this._args := args;
+
+        UI.Control(this)
+    };
+
+    (UI.Text)::(this.create |-> (
+        (UI.Widget parent) |-> {
+            import("system").ui_text_create(this, parent);
+
+            import("system").ui_text_value_event(this, () |-> {
+                this.on_value_change();
+            });
+
+            this.create_widget();
+        }
+    ));
+
+    (UI.Text)::(
+        this.value |-> {
+            import("system").ui_text_value_get(this)
+        },
+        (this.value, String v) |-> {
+            import("system").ui_text_value_set(this, v);
+            v
+        }
+    );
+
+    (UI.Text)::(this.set_silent |-> (
+        (String v) |-> {
+            import("system").ui_text_value_set_silent(this, v);
+        }
+    ));
+
+    (UI.Text)::(
+        this.editable |-> {
+            import("system").ui_text_editable_get(this)
+        },
+        (this.editable, Bool v) |-> {
+            import("system").ui_text_editable_set(this, v);
+            v
+        }
+    );
+};
+
+class (UI.MultilineText) extends (UI.Text) {
+    UI.MultilineText : args |-> {
+        this := (import("system").ui_multilinetext_new()) :~ (UI.MultilineText);
+
+        this._args := args;
+
+        UI.Control(this)
+    };
+
+    (UI.MultilineText)::(this.create |-> (
+        (UI.Widget parent) |-> {
+            import("system").ui_multilinetext_create(this, parent);
+
+            import("system").ui_text_value_event(this, () |-> {
+                this.on_value_change();
+            });
+
+            this.create_widget();
+        }
+    ));
+};
+
+class (UI.Search) extends (UI.Text) {
+    UI.Search : args |-> {
+        this := (import("system").ui_search_new()) :~ (UI.Search);
+
+        this._args := args;
+
+        this.on_cancel := Event();
+
+        if (defined (this._args.on_cancel)) {
+            this.on_cancel :+= this._args.on_cancel;
+        };
+
+        UI.Control(this)
+    };
+
+    (UI.Search)::(this.create |-> (
+        (UI.Widget parent) |-> {
+            import("system").ui_search_create(this, parent);
+
+            import("system").ui_text_value_event(this, () |-> {
+                this.on_value_change();
+            });
+
+            import("system").ui_search_cancel_event(this, () |-> {
+                this.on_cancel();
+            });
+
+            this.create_widget();
+        }
+    ));
+};
+
+class (UI.Password) extends (UI.Text) {
+    UI.Password : args |-> {
+        this := (import("system").ui_password_new()) :~ (UI.Password);
+
+        this._args := args;
+
+        UI.Control(this)
+    };
+
+    (UI.Password)::(this.create |-> (
+        (UI.Widget parent) |-> {
+            import("system").ui_password_create(this, parent);
+
+            import("system").ui_text_value_event(this, () |-> {
+                this.on_value_change();
+            });
+
+            this.create_widget();
+        }
+    ));
+};
+
+
 class (UI.FilePicker) extends (UI.Control) {
     UI.FilePicker : args |-> {
         this := (import("system").ui_filepicker_new()) :~ (UI.FilePicker);
@@ -495,18 +777,28 @@ class (UI.FilePicker) extends (UI.Control) {
 };
 
 
-class (UI.Webview) extends (UI.Control) {
+class (UI.Webview) extends (UI.Widget) {
     UI.Webview : args |-> {
         this := (import("system").ui_webview_new()) :~ (UI.Webview);
 
         this._args := args;
 
-        UI.Control(this)
+        this.on_url_change := Event();
+
+        if (defined (this._args.on_url_change)) {
+            this.on_url_change :+= this._args.on_url_change;
+        };
+
+        UI.Widget(this)
     };
 
     (UI.Webview)::(this.create |-> (
         (UI.Widget parent) |-> {
             import("system").ui_webview_create(this, parent);
+
+            import("system").ui_webview_url_event(this, () |-> {
+                this.on_url_change();
+            });
 
             this.create_widget();
         }
