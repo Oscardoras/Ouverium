@@ -23,18 +23,18 @@ namespace Interpreter {
     }
 
     bool Context::has_symbol(std::string const& symbol) const {
-        return symbols.find(symbol) != symbols.end();
+        return symbols.contains(symbol);
     }
 
-    void Context::add_symbol(std::string const& symbol, IndirectReference const& indirect_reference) {
-        symbols.emplace(symbol, indirect_reference);
+    void Context::add_symbol(std::string symbol, IndirectReference indirect_reference) {
+        symbols.emplace(std::move(symbol), std::move(indirect_reference));
     }
 
-    void Context::add_symbol(std::string const& symbol, Data const& data) {
-        symbols.emplace(symbol, GC::new_reference(data));
+    void Context::add_symbol(std::string symbol, Data data) {
+        symbols.emplace(std::move(symbol), GC::new_reference(std::move(data)));
     }
 
-    IndirectReference Context::operator[](std::string const& symbol) {
+    IndirectReference const& Context::operator[](std::string const& symbol) {
         auto it = symbols.find(symbol);
         if (it == symbols.end())
             return symbols.emplace(symbol, GC::new_reference()).first->second;

@@ -29,8 +29,8 @@ namespace Interpreter {
             return false;
     }
 
-    PropertyReference Data::get_property(std::string const& name) {
-        return PropertyReference{ .parent = *this, .name = name };
+    PropertyReference Data::get_property(std::string name) {
+        return PropertyReference{ .parent = *this, .name = std::move(name) };
     }
 
     ArrayReference Data::get_at(size_t index) {

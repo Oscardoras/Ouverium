@@ -20,9 +20,9 @@ namespace Interpreter::SystemFunctions::Base {
 
     auto const getter_args = std::make_shared<Parser::Symbol>("var");
     Reference getter(FunctionContext& context) {
-        auto var = context["var"];
+        auto const& var = context["var"];
 
-        Data data = var.get_data();
+        Data const& data = var.get_data();
         if (data != Data{}) {
             if (auto const* obj = get_if<ObjectPtr>(&data)) {
                 auto it = (*obj)->properties.find("#get_reference");
@@ -41,33 +41,13 @@ namespace Interpreter::SystemFunctions::Base {
     }
 
     Reference defined(FunctionContext& context) {
-        auto var = context["var"];
-
-        auto has_data = [&var]() -> bool {
-            if (auto const* symbol_reference = std::get_if<SymbolReference>(&var)) {
-                return **symbol_reference != Data{};
-            } else if (auto const* property_reference = std::get_if<PropertyReference>(&var)) {
-                auto parent = property_reference->parent;
-                if (auto const* obj = get_if<ObjectPtr>(&parent)) {
-                    auto it = (*obj)->properties.find(property_reference->name);
-                    return it != (*obj)->properties.end() && it->second != Data{};
-                }
-            } else if (auto const* array_reference = std::get_if<ArrayReference>(&var)) {
-                auto array = array_reference->array;
-                if (auto const* obj = get_if<ObjectPtr>(&array))
-                    if (array_reference->i < (*obj)->array.size())
-                        return (*obj)->array[array_reference->i] != Data{};
-            }
-
-            return {};
-        };
-
-        if (!has_data()) {
-            return Data(false);
-        }
+        auto const& var = context["var"];
 
         Data const& data = var.get_data();
-        if (data != Data{}) {
+
+        if (data == Data{}) {
+            return Data(false);
+        } else {
             if (auto const* obj = get_if<ObjectPtr>(&data)) {
                 auto it = (*obj)->properties.find("#get_reference");
                 if (it != (*obj)->properties.end()) {
@@ -114,16 +94,7 @@ namespace Interpreter::SystemFunctions::Base {
             }
         }
 
-        if (auto const* symbol_reference = std::get_if<SymbolReference>(&var)) **symbol_reference = data;
-        else if (auto const* property_reference = std::get_if<PropertyReference>(&var)) {
-            auto parent = property_reference->parent;
-            if (auto const* obj = get_if<ObjectPtr>(&parent))
-                (*obj)->properties[property_reference->name] = data;
-        } else if (auto const* array_reference = std::get_if<ArrayReference>(&var)) {
-            auto array = array_reference->array;
-            if (auto const* obj = get_if<ObjectPtr>(&array))
-                (*obj)->array[array_reference->i] = data;
-        }
+        var.data() = data;
         return var;
     }
 
@@ -221,10 +192,10 @@ namespace Interpreter::SystemFunctions::Base {
     ));
     Reference for_statement(FunctionContext& context) {
         try {
-            auto variable = context["variable"];
+            auto const& variable = context["variable"];
             auto begin = context["begin"].to_data(context).get<OV_INT>();
             auto end = context["end"].to_data(context).get<OV_INT>();
-            auto block = context["block"];
+            auto const& block = context["block"];
 
             for (OV_INT i = begin; i < end; ++i) {
                 Interpreter::set(context, variable, Data(i));
@@ -255,11 +226,11 @@ namespace Interpreter::SystemFunctions::Base {
         try {
             auto& parent = context.get_parent();
 
-            auto variable = context["variable"];
+            auto const& variable = context["variable"];
             auto begin = context["begin"].to_data(context).get<OV_INT>();
             auto end = context["end"].to_data(context).get<OV_INT>();
             auto s = context["s"].to_data(context).get<OV_INT>();
-            auto block = context["block"];
+            auto const& block = context["block"];
 
             if (s > 0) {
                 for (OV_INT i = begin; i < end; i += s) {
@@ -290,8 +261,8 @@ namespace Interpreter::SystemFunctions::Base {
         }
     ));
     Reference try_statement(FunctionContext& context) {
-        auto try_block = context["try_block"];
-        auto catch_function = context["catch_function"];
+        auto const& try_block = context["try_block"];
+        auto const& catch_function = context["catch_function"];
 
         try {
             return Interpreter::call_function(context.get_parent(), nullptr, try_block, std::make_shared<Parser::Tuple>());
@@ -336,7 +307,7 @@ namespace Interpreter::SystemFunctions::Base {
         }
     ));
     Reference define(FunctionContext& context) {
-        auto var = context["var"];
+        auto const& var = context["var"];
         auto data = context["data"].to_data(context);
 
         Data const& var_data = var.get_data();
@@ -362,7 +333,7 @@ namespace Interpreter::SystemFunctions::Base {
         }
     ));
     Reference inject(FunctionContext& context) {
-        auto var = context["var"];
+        auto const& var = context["var"];
         auto data = context["data"].to_data(context);
         auto var_data = var.to_data(context);
 
@@ -386,7 +357,7 @@ namespace Interpreter::SystemFunctions::Base {
             auto object = context["object"];
             auto functions = context["functions"].to_data(context).get<ObjectPtr>()->functions;
 
-            auto& data = object.get_data();
+            auto& data = object.data();
             if (data == Data{})
                 data = GC::new_object();
             auto obj = object.to_data(context).get<ObjectPtr>();
@@ -411,7 +382,7 @@ namespace Interpreter::SystemFunctions::Base {
             auto object = context["object"];
             auto functions = context["functions"].to_data(context).get<ObjectPtr>()->functions;
 
-            auto& data = object.get_data();
+            auto& data = object.data();
             if (data == Data{})
                 data = GC::new_object();
             auto obj = object.to_data(context).get<ObjectPtr>();
@@ -524,7 +495,7 @@ namespace Interpreter::SystemFunctions::Base {
 
     auto const print_args = std::make_shared<Parser::Symbol>("data");
     Reference print(FunctionContext& context) {
-        auto data = context["data"];
+        auto const& data = context["data"];
 
         auto str = Interpreter::string_from(context, data);
         std::cout << str << std::endl;
