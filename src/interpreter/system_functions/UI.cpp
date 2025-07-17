@@ -50,15 +50,10 @@ namespace Interpreter::SystemFunctions::UI {
             Start,
             Center,
             End,
+            Expand,
         } align = Align::Start;
-        bool expand = false;
         bool keep_ratio = false;
-        struct {
-            int top{};
-            int bottom{};
-            int left{};
-            int right{};
-        } border;
+        int border{};
     };
 
     struct UserData : public wxClientData {
@@ -114,9 +109,7 @@ namespace Interpreter::SystemFunctions::UI {
     namespace Window {
 
         wxSizerFlags get_flags(wxSizer* parent_sizer, const ItemStyle& item_style) {
-            wxSizerFlags flags;
-
-            flags = wxSizerFlags(item_style.proportion);
+            wxSizerFlags flags(item_style.proportion);
 
             {
                 int orientation = 0;
@@ -126,58 +119,51 @@ namespace Interpreter::SystemFunctions::UI {
                     orientation = wrap_sizer->GetOrientation();
                 }
 
+                int border = item_style.border;
+                border = border >= 0 ? border : -border * wxSizerFlags::GetDefaultBorder();
+
                 if (orientation == wxVERTICAL) {
                     switch (item_style.align) {
                         case ItemStyle::Align::Start:
-                            flags = flags.Left();
+                            flags.Left();
                             break;
                         case ItemStyle::Align::Center:
-                            flags = flags.CenterHorizontal();
+                            flags.CenterHorizontal();
                             break;
                         case ItemStyle::Align::End:
-                            flags = flags.Right();
+                            flags.Right();
                             break;
                         default:
                             break;
                     }
+
+                    flags.Border(wxLEFT | wxRIGHT, border);
                 }
                 if (orientation == wxHORIZONTAL) {
                     switch (item_style.align) {
                         case ItemStyle::Align::Start:
-                            flags = flags.Top();
+                            flags.Top();
                             break;
                         case ItemStyle::Align::Center:
-                            flags = flags.CenterVertical();
+                            flags.CenterVertical();
                             break;
                         case ItemStyle::Align::End:
-                            flags = flags.Bottom();
+                            flags.Bottom();
                             break;
                         default:
                             break;
                     }
+
+                    flags.Border(wxTOP | wxBOTTOM, border);
                 }
             }
 
-            if (item_style.expand) {
-                flags = flags.Expand();
+            if (item_style.align == ItemStyle::Align::Expand) {
+                flags.Expand();
             }
 
             if (item_style.keep_ratio) {
-                flags = flags.Shaped();
-            }
-
-            {
-                std::map<wxDirection, int> borders{
-                    {wxTOP, item_style.border.top},
-                    {wxBOTTOM, item_style.border.bottom},
-                    {wxLEFT, item_style.border.left},
-                    {wxRIGHT, item_style.border.right}
-                };
-                for (auto const [direction, val] : borders) {
-                    if (val >= 0) {
-                        flags = flags.Border(direction, val);
-                    }
-                }
+                flags.Shaped();
             }
 
             return flags;
@@ -359,25 +345,6 @@ namespace Interpreter::SystemFunctions::UI {
             return Data();
         }
 
-        Reference ui_expand_get(wxWindow* window) {
-            if (auto* user_data = dynamic_cast<UserData*>(window->GetClientObject())) {
-                return Data(user_data->item_style.expand);
-            }
-
-            return Data(false);
-        }
-        Reference ui_expand_set(wxWindow* window, bool expand) {
-            if (window->GetClientObject() == nullptr) {
-                window->SetClientObject(new UserData());
-            }
-            auto* user_data = dynamic_cast<UserData*>(window->GetClientObject());
-
-            user_data->item_style.expand = expand;
-            set_style(window, user_data->item_style);
-
-            return Data();
-        }
-
         Reference ui_keep_ratio_get(wxWindow* window) {
             if (auto* user_data = dynamic_cast<UserData*>(window->GetClientObject())) {
                 return Data(user_data->item_style.keep_ratio);
@@ -395,6 +362,69 @@ namespace Interpreter::SystemFunctions::UI {
             set_style(window, user_data->item_style);
 
             return Data();
+        }
+
+        Reference ui_border_get(wxWindow* window) {
+            if (auto* user_data = dynamic_cast<UserData*>(window->GetClientObject())) {
+                auto const& border = user_data->item_style.border;
+
+                return Data(static_cast<OV_INT>(border));
+            }
+
+            return Data(static_cast<OV_INT>(ItemStyle{}.border));
+        }
+        Reference ui_border_set(wxWindow* window, OV_INT border) {
+            if (window->GetClientObject() == nullptr) {
+                window->SetClientObject(new UserData());
+            }
+            auto* user_data = dynamic_cast<UserData*>(window->GetClientObject());
+
+            user_data->item_style.border = static_cast<int>(border);
+            set_style(window, user_data->item_style);
+
+            return Data();
+        }
+
+        Reference ui_background_color_get(wxWindow* window) {
+            auto color = window->GetBackgroundColour();
+
+            return Data(GC::new_object({
+                Data(static_cast<OV_INT>(color.Red())),
+                Data(static_cast<OV_INT>(color.Green())),
+                Data(static_cast<OV_INT>(color.Blue())),
+                Data(static_cast<OV_INT>(color.Alpha()))
+            }));
+        }
+        Reference ui_background_color_set(wxWindow* window, ObjectPtr const& color) {
+            window->SetBackgroundColour({
+                static_cast<unsigned char>(color->array.at(0).get<OV_INT>()),
+                static_cast<unsigned char>(color->array.at(1).get<OV_INT>()),
+                static_cast<unsigned char>(color->array.at(2).get<OV_INT>()),
+                static_cast<unsigned char>(color->array.at(3).get<OV_INT>())
+            });
+
+            return Data{};
+        }
+
+        Reference ui_foreground_color_get(wxWindow* window) {
+            auto color = window->GetBackgroundColour();
+
+            return Data(GC::new_object({
+                Data(static_cast<OV_INT>(color.Red())),
+                Data(static_cast<OV_INT>(color.Green())),
+                Data(static_cast<OV_INT>(color.Blue())),
+                Data(static_cast<OV_INT>(color.Alpha()))
+            }));
+        }
+        Reference ui_foreground_color_set(wxWindow* window, ObjectPtr const& color) {
+            window->SetForegroundColour({
+                static_cast<unsigned char>(color->array.at(0).get<OV_INT>()),
+                static_cast<unsigned char>(color->array.at(1).get<OV_INT>()),
+                static_cast<unsigned char>(color->array.at(2).get<OV_INT>()),
+                static_cast<unsigned char>(color->array.at(3).get<OV_INT>())
+            });
+
+            return Data{};
         }
 
         namespace Window {
@@ -633,10 +663,15 @@ namespace Interpreter::SystemFunctions::UI {
                     }));
                 }
 
-                Reference ui_colorpicker_value_set(wxWindow* window, std::string const& color) {
+                Reference ui_colorpicker_value_set(wxWindow* window, ObjectPtr const& color) {
                     auto* colour_picker = dynamic_cast<wxColourPickerCtrl*>(window);
 
-                    colour_picker->SetColour(color);
+                    colour_picker->SetColour({
+                        static_cast<unsigned char>(color->array.at(0).get<OV_INT>()),
+                        static_cast<unsigned char>(color->array.at(1).get<OV_INT>()),
+                        static_cast<unsigned char>(color->array.at(2).get<OV_INT>()),
+                        static_cast<unsigned char>(color->array.at(3).get<OV_INT>())
+                    });
 
                     return Data{};
                 }
@@ -995,10 +1030,14 @@ namespace Interpreter::SystemFunctions::UI {
         add_function(s.get_property("ui_proportion_set"), Window::ui_proportion_set);
         add_function(s.get_property("ui_align_get"), Window::ui_align_get);
         add_function(s.get_property("ui_align_set"), Window::ui_align_set);
-        add_function(s.get_property("ui_expand_get"), Window::ui_expand_get);
-        add_function(s.get_property("ui_expand_set"), Window::ui_expand_set);
         add_function(s.get_property("ui_keep_ratio_get"), Window::ui_keep_ratio_get);
         add_function(s.get_property("ui_keep_ratio_set"), Window::ui_keep_ratio_set);
+        add_function(s.get_property("ui_border_get"), Window::ui_border_get);
+        add_function(s.get_property("ui_border_set"), Window::ui_border_set);
+        add_function(s.get_property("ui_background_color_get"), Window::ui_background_color_get);
+        add_function(s.get_property("ui_background_color_set"), Window::ui_background_color_set);
+        add_function(s.get_property("ui_foreground_color_get"), Window::ui_foreground_color_get);
+        add_function(s.get_property("ui_foreground_color_set"), Window::ui_foreground_color_set);
 
         add_function(s.get_property("ui_window_title_get"), Window::Window::ui_window_title_get);
         add_function(s.get_property("ui_window_title_set"), Window::Window::ui_window_title_set);

@@ -40,6 +40,10 @@ class (UI.Alignment) {
     UI.Alignment.End := {};
     UI.Alignment.End :~ UI.Alignment;
     UI.Alignment.End._id := 2;
+
+    UI.Alignment.Stretch := {};
+    UI.Alignment.Stretch :~ UI.Alignment;
+    UI.Alignment.Stretch._id := 3;
 };
 
 class (UI.Widget) {
@@ -137,16 +141,6 @@ class (UI.Widget) {
     );
 
     (UI.Widget)::(
-        this.expand |-> (
-            import("system").ui_expand_get(this)
-        ),
-        (this.expand, Bool expand) |-> (
-            import("system").ui_expand_set(this, expand);
-            expand
-        )
-    );
-
-    (UI.Widget)::(
         this.keep_ratio |-> (
             import("system").ui_keep_ratio_get(this)
         ),
@@ -154,6 +148,36 @@ class (UI.Widget) {
             import("system").ui_keep_ratio_set(this, keep_ratio);
             keep_ratio
         )
+    );
+
+    (UI.Widget)::(
+        this.border |-> (
+            import("system").ui_borders_get(this)
+        ),
+        (this.border, Int border) |-> (
+            import("system").ui_border_set(this, border);
+            border
+        )
+    );
+
+    (UI.Widget)::(
+        this.background_color |-> {
+            import("system").ui_background_color_get(this)
+        },
+        (this.background_color, Array v) |-> {
+            import("system").ui_background_color_set(this, v);
+            v
+        }
+    );
+
+    (UI.Widget)::(
+        this.foreground_color |-> {
+            import("system").ui_foreground_color_get(this)
+        },
+        (this.foreground_color, Array v) |-> {
+            import("system").ui_foreground_color_set(this, v);
+            v
+        }
     );
 };
 
@@ -496,7 +520,7 @@ class (UI.ColorPicker) extends (UI.Control) {
         this.value |-> {
             import("system").ui_colorpicker_value_get(this)
         },
-        (this.value, String v) |-> {
+        (this.value, Array v) |-> {
             import("system").ui_colorpicker_value_set(this, v);
             v
         }
