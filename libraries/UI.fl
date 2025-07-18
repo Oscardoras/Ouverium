@@ -152,11 +152,21 @@ class (UI.Widget) {
 
     (UI.Widget)::(
         this.border |-> (
-            import("system").ui_borders_get(this)
+            import("system").ui_border_get(this)
         ),
         (this.border, Int border) |-> (
             import("system").ui_border_set(this, border);
             border
+        )
+    );
+
+    (UI.Widget)::(
+        this.spacing |-> (
+            import("system").ui_spacing_get(this)
+        ),
+        (this.spacing, Int spacing) |-> (
+            import("system").ui_spacing_set(this, spacing);
+            spacing
         )
     );
 

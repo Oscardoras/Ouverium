@@ -1,7 +1,7 @@
 import "UI.fl";
 
 f := UI.Frame( .title := "test", .size := [1000, 400] ) {
-    UI.Panel( .layout := UI.Layout.HorizontalWrap ) {
+    UI.Panel( .layout := UI.Layout.HorizontalWrap, .spacing := 5 ) {
         UI.ActivityIndicator( .value := true ),
         UI.Button( .label := "b1", .proportion := 1, .align := UI.Alignment.Stretch, .on_value_change := args |-> { print("test b1"); r.value :+= 1; } ),
         UI.Button( .label := "b2", .align := UI.Alignment.End, .on_value_change := args |-> { print("test b2"); r.value :-= 1 } ),
@@ -30,7 +30,7 @@ print("ok");
 
 f2 := UI.Frame( .title := "test webview", .min_size := [600, 400] ) {
     UI.Panel( .layout := UI.Layout.Vertical, .proportion := 1, .align := UI.Alignment.Stretch ) {
-        UI.Panel( .layout := UI.Layout.Horizontal, .align := UI.Alignment.Stretch ) {
+        UI.Panel( .layout := UI.Layout.Horizontal, .align := UI.Alignment.Stretch, .spacing := 5 ) {
             urlBar := UI.Text(
                 .min_size := [200, 50],
                 .proportion := 1,

@@ -1,4 +1,5 @@
 #include <any>
+#include <cstdint>
 #include <ctime>
 #include <memory>
 #include <string>
@@ -46,7 +47,7 @@ namespace Interpreter::SystemFunctions::UI {
 
     struct ItemStyle {
         unsigned proportion = 0;
-        enum class Align {
+        enum class Align: uint8_t {
             Start,
             Center,
             End,
@@ -54,6 +55,7 @@ namespace Interpreter::SystemFunctions::UI {
         } align = Align::Start;
         bool keep_ratio = false;
         int border{};
+        int spacing{};
     };
 
     struct UserData : public wxClientData {
@@ -169,7 +171,30 @@ namespace Interpreter::SystemFunctions::UI {
             return flags;
         }
 
-        void set_style(wxWindow* window, const ItemStyle& item_style) {
+        void set_style(wxWindow* window) {
+            ItemStyle item_style;
+            if (auto* user_data = dynamic_cast<UserData*>(window->GetClientObject()))
+                item_style = user_data->item_style;
+
+            auto* sizer = window->GetSizer();
+            if (sizer) {
+                sizer->Clear();
+                auto const& children = window->GetChildren();
+                for (size_t i = 0; i < children.size(); ++i) {
+                    auto const& child = children[i];
+                    wxSizerFlags flags;
+                    if (auto* user_data = dynamic_cast<UserData*>(child->GetClientObject())) {
+                        flags = get_flags(sizer, user_data->item_style);
+                    }
+                    
+                    if (i != 0 && item_style.spacing > 0) {
+                        sizer->AddSpacer(item_style.spacing);
+                    }
+                    sizer->Add(child, flags);
+                }
+            }
+            window->Fit();
+
             if (auto* parent = window->GetParent()) {
                 if (auto* parent_sizer = parent->GetSizer()) {
                     size_t i = 0;
@@ -203,6 +228,11 @@ namespace Interpreter::SystemFunctions::UI {
             return Data(visible);
         }
         Reference ui_visible_set(wxWindow* window, bool visible) {
+            if (auto* parent = window->GetParent()) {
+                if (auto* parent_sizer = parent->GetSizer()) {
+                    parent_sizer->Show(window, visible);
+                }
+            }
             window->Show(visible);
 
             return Data{};
@@ -293,16 +323,8 @@ namespace Interpreter::SystemFunctions::UI {
                     break;
             }
 
-            if (sizer) {
-                for (auto* child : window->GetChildren()) {
-                    wxSizerFlags flags;
-                    if (auto* user_data = dynamic_cast<UserData*>(child->GetClientObject())) {
-                        flags = get_flags(sizer, user_data->item_style);
-                    }
-                    sizer->Add(child, flags);
-                }
-            }
-            window->SetSizerAndFit(sizer);
+            window->SetSizer(sizer);
+            set_style(window);
 
             return Data();
         }
@@ -321,7 +343,7 @@ namespace Interpreter::SystemFunctions::UI {
             auto* user_data = dynamic_cast<UserData*>(window->GetClientObject());
 
             user_data->item_style.proportion = proportion;
-            set_style(window, user_data->item_style);
+            set_style(window);
 
             return Data();
         }
@@ -340,7 +362,7 @@ namespace Interpreter::SystemFunctions::UI {
             auto* user_data = dynamic_cast<UserData*>(window->GetClientObject());
 
             user_data->item_style.align = static_cast<ItemStyle::Align>(align);
-            set_style(window, user_data->item_style);
+            set_style(window);
 
             return Data();
         }
@@ -359,14 +381,14 @@ namespace Interpreter::SystemFunctions::UI {
             auto* user_data = dynamic_cast<UserData*>(window->GetClientObject());
 
             user_data->item_style.keep_ratio = keep_ratio;
-            set_style(window, user_data->item_style);
+            set_style(window);
 
             return Data();
         }
 
         Reference ui_border_get(wxWindow* window) {
             if (auto* user_data = dynamic_cast<UserData*>(window->GetClientObject())) {
-                auto const& border = user_data->item_style.border;
+                auto border = user_data->item_style.border;
 
                 return Data(static_cast<OV_INT>(border));
             }
@@ -380,7 +402,28 @@ namespace Interpreter::SystemFunctions::UI {
             auto* user_data = dynamic_cast<UserData*>(window->GetClientObject());
 
             user_data->item_style.border = static_cast<int>(border);
-            set_style(window, user_data->item_style);
+            set_style(window);
+
+            return Data();
+        }
+
+        Reference ui_spacing_get(wxWindow* window) {
+            if (auto* user_data = dynamic_cast<UserData*>(window->GetClientObject())) {
+                auto spacing = user_data->item_style.spacing;
+
+                return Data(static_cast<OV_INT>(spacing));
+            }
+
+            return Data(static_cast<OV_INT>(ItemStyle{}.spacing));
+        }
+        Reference ui_spacing_set(wxWindow* window, OV_INT spacing) {
+            if (window->GetClientObject() == nullptr) {
+                window->SetClientObject(new UserData());
+            }
+            auto* user_data = dynamic_cast<UserData*>(window->GetClientObject());
+
+            user_data->item_style.spacing = static_cast<int>(spacing);
+            set_style(window);
 
             return Data();
         }
@@ -1034,6 +1077,8 @@ namespace Interpreter::SystemFunctions::UI {
         add_function(s.get_property("ui_keep_ratio_set"), Window::ui_keep_ratio_set);
         add_function(s.get_property("ui_border_get"), Window::ui_border_get);
         add_function(s.get_property("ui_border_set"), Window::ui_border_set);
+        add_function(s.get_property("ui_spacing_get"), Window::ui_spacing_get);
+        add_function(s.get_property("ui_spacing_set"), Window::ui_spacing_set);
         add_function(s.get_property("ui_background_color_get"), Window::ui_background_color_get);
         add_function(s.get_property("ui_background_color_set"), Window::ui_background_color_set);
         add_function(s.get_property("ui_foreground_color_get"), Window::ui_foreground_color_get);
