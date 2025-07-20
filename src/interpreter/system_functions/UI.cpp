@@ -231,6 +231,7 @@ namespace Interpreter::SystemFunctions::UI {
             if (auto* parent = window->GetParent()) {
                 if (auto* parent_sizer = parent->GetSizer()) {
                     parent_sizer->Show(window, visible);
+                    parent->Fit();
                 }
             }
             window->Show(visible);
@@ -542,13 +543,13 @@ namespace Interpreter::SystemFunctions::UI {
                     return Data{};
                 }
 
-                Reference ui_activityindicator_running_get(wxWindow* window) {
+                Reference ui_activityindicator_value_get(wxWindow* window) {
                     auto* activityIndicator = dynamic_cast<wxActivityIndicator*>(window);
 
                     return Data(activityIndicator->IsRunning());
                 }
 
-                Reference ui_activityindicator_running_set(wxWindow* window, bool state) {
+                Reference ui_activityindicator_value_set(wxWindow* window, bool state) {
                     auto* activityIndicator = dynamic_cast<wxActivityIndicator*>(window);
 
                     if (state)
@@ -635,36 +636,28 @@ namespace Interpreter::SystemFunctions::UI {
                     return Data{};
                 }
 
-                Reference ui_choice_size_get(wxWindow* window) {
+                Reference ui_choice_options_get(wxWindow* window) {
                     auto* choice = dynamic_cast<wxChoice*>(window);
 
-                    return Data(static_cast<OV_INT>(choice->GetColumns()));
+                    auto options = GC::new_object();
+                    options->array.reserve(choice->GetCount());
+                    for (int i = 0; i < choice->GetCount(); ++i) {
+                        options->array.emplace_back(GC::new_object(Object(choice->GetString(i).ToStdString())));
+                    }
+
+                    return Data(options);
                 }
 
-                Reference ui_choice_size_set(wxWindow* window, OV_INT size) {
+                Reference ui_choice_options_set(wxWindow* window, ObjectPtr const& options) {
                     auto* choice = dynamic_cast<wxChoice*>(window);
 
-                    choice->SetColumns(static_cast<int>(size));
+                    std::vector<wxString> v;
+                    v.reserve(options->array.size());
+                    for (auto const& o : options->array) {
+                        v.emplace_back(o.get<ObjectPtr>()->to_string());
+                    }
 
-                    return Data{};
-                }
-
-                Reference ui_choice_string_get(wxWindow* window, OV_INT i) {
-                    auto* choice = dynamic_cast<wxChoice*>(window);
-
-                    if (i < 0 || i >= choice->GetCount())
-                        throw FunctionArgumentsError();
-
-                    return Data(GC::new_object(Object(std::string(choice->GetString(i)))));
-                }
-
-                Reference ui_choice_string_set(wxWindow* window, OV_INT i, std::string const& string) {
-                    auto* choice = dynamic_cast<wxChoice*>(window);
-
-                    if (i < 0 || i >= choice->GetCount())
-                        throw FunctionArgumentsError();
-
-                    choice->SetString(i, string);
+                    choice->Set(v);
 
                     return Data{};
                 }
@@ -1102,8 +1095,8 @@ namespace Interpreter::SystemFunctions::UI {
 
         add_function(s.get_property("ui_activityindicator_new"), Window::ui_new<wxActivityIndicator>);
         add_function(s.get_property("ui_activityindicator_create"), Window::Control::ActivityIndicator::ui_activityindicator_create);
-        add_function(s.get_property("ui_activityindicator_running_get"), Window::Control::ActivityIndicator::ui_activityindicator_running_get);
-        add_function(s.get_property("ui_activityindicator_running_set"), Window::Control::ActivityIndicator::ui_activityindicator_running_set);
+        add_function(s.get_property("ui_activityindicator_value_get"), Window::Control::ActivityIndicator::ui_activityindicator_value_get);
+        add_function(s.get_property("ui_activityindicator_value_set"), Window::Control::ActivityIndicator::ui_activityindicator_value_set);
 
         add_function(s.get_property("ui_button_new"), Window::ui_new<wxButton>);
         add_function(s.get_property("ui_button_create"), Window::Control::Button::ui_button_create);
@@ -1123,10 +1116,8 @@ namespace Interpreter::SystemFunctions::UI {
 
         add_function(s.get_property("ui_choice_new"), Window::ui_new<wxChoice>);
         add_function(s.get_property("ui_choice_create"), Window::Control::Choice::ui_choice_create);
-        add_function(s.get_property("ui_choice_size_get"), Window::Control::Choice::ui_choice_size_get);
-        add_function(s.get_property("ui_choice_size_set"), Window::Control::Choice::ui_choice_size_set);
-        add_function(s.get_property("ui_choice_string_get"), Window::Control::Choice::ui_choice_string_get);
-        add_function(s.get_property("ui_choice_string_set"), Window::Control::Choice::ui_choice_string_set);
+        add_function(s.get_property("ui_choice_options_get"), Window::Control::Choice::ui_choice_options_get);
+        add_function(s.get_property("ui_choice_options_set"), Window::Control::Choice::ui_choice_options_set);
         add_function(s.get_property("ui_choice_value_get"), Window::Control::Choice::ui_choice_value_get);
         add_function(s.get_property("ui_choice_value_set"), Window::Control::Choice::ui_choice_value_set);
         add_event(s.get_property("ui_choice_value_event"), wxEVT_CHOICE);
@@ -1183,7 +1174,7 @@ namespace Interpreter::SystemFunctions::UI {
         add_function(s.get_property("ui_password_new"), Window::ui_new<wxTextCtrl>);
         add_function(s.get_property("ui_password_create"), Window::Control::Text::Password::ui_password_create);
 
-        add_function(s.get_property("ui_box_new"), Window::ui_new<wxStaticText>);
+        add_function(s.get_property("ui_box_new"), Window::ui_new<wxStaticBox>);
         add_function(s.get_property("ui_box_create"), Window::Control::Box::ui_box_create);
 
         add_function(s.get_property("ui_slider_new"), Window::ui_new<wxSlider>);

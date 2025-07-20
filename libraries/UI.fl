@@ -353,10 +353,10 @@ class (UI.ActivityIndicator) extends (UI.Control) {
 
     (UI.ActivityIndicator)::(
         this.value |-> {
-            import("system").ui_activityindicator_running_get(this)
+            import("system").ui_activityindicator_value_get(this)
         },
         (this.value, Bool v) |-> {
-            import("system").ui_activityindicator_running_set(this, v);
+            import("system").ui_activityindicator_value_set(this, v);
             v
         }
     );
@@ -473,25 +473,14 @@ class (UI.Choice) extends (UI.Control) {
     ));
 
     (UI.Choice)::(
-        this.length |-> {
-            import("system").ui_choice_size_get(this)
+        this.options |-> {
+            import("system").ui_choice_options_get(this)
         },
-        (this.length, Int size) |-> {
-            import("system").ui_choice_size_set(this, size);
-            size
+        (this.options, Array options) |-> {
+            import("system").ui_choice_options_set(this, options);
+            options
         }
     );
-
-    (UI.Choice)::(this.ui_choice_string_get |-> (
-        (Int i) |-> {
-            import("system").ui_choice_string_get(this, i)
-        }
-    ));
-    (UI.Choice)::(this.set_string |-> (
-        (Int i, String c) |-> {
-            import("system").ui_choice_string_set(this, i, c);
-        }
-    ));
 
     (UI.Choice)::(
         this.value |-> {
@@ -775,6 +764,79 @@ class (UI.Password) extends (UI.Text) {
             this.create_widget();
         }
     ));
+};
+
+
+class (UI.Box) extends (UI.Control) {
+    UI.Box : (args, Array children) |-> {
+        this := import("system").ui_box_new();
+        this :~ (UI.Box);
+
+        this.children := children;
+        this._args := args;
+
+        UI.Control(this)
+    };
+
+    (UI.Box)::(this.create |-> (
+        (UI.Widget parent) |-> {
+            import("system").ui_box_create(this, parent);
+
+            this.create_widget();
+        }
+    ));
+};
+
+class (UI.Slider) extends (UI.Control) {
+    UI.Slider : args |-> {
+        this := (import("system").ui_slider_new()) :~ (UI.Slider);
+
+        this._args := args;
+
+        UI.Control(this)
+    };
+
+    (UI.Slider)::(this.create |-> (
+        (UI.Widget parent) |-> {
+            import("system").ui_slider_create(this, parent);
+
+            import("system").ui_slider_value_event(this, () |-> {
+                this.on_value_change();
+            });
+
+            this.create_widget();
+        }
+    ));
+
+    (UI.Slider)::(
+        this.min |-> {
+            import("system").ui_slider_min_get(this)
+        },
+        (this.min, Int v) |-> {
+            import("system").ui_slider_min_set(this, v);
+            v
+        }
+    );
+
+    (UI.Slider)::(
+        this.max |-> {
+            import("system").ui_slider_max_get(this)
+        },
+        (this.max, Int v) |-> {
+            import("system").ui_slider_max_set(this, v);
+            v
+        }
+    );
+
+    (UI.Slider)::(
+        this.value |-> {
+            import("system").ui_slider_value_get(this)
+        },
+        (this.value, Int v) |-> {
+            import("system").ui_slider_value_set(this, v);
+            v
+        }
+    );
 };
 
 
