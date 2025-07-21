@@ -1,0 +1,75 @@
+import "Type.fl";
+import "containers/ArrayList.fl";
+
+
+class Tensor {
+    Tensor.of : shape \ ((shape ~ Int & shape > 0) | (shape ~ Array & forall(shape, x |-> {
+        x ~ Int & x > 0
+    }))) |-> {
+        this := ();
+        this :~ Tensor;
+
+        this._shape := if (shape ~ Int) [shape,] else shape;
+
+        n := this._shape.size;
+        this._sizes := Array[];
+        this._sizes.resize(n, 0);
+        for i from 0 to n {
+            product := 1;
+            for j from (i+1) to n {
+                product :*= this._shape[j];
+            };
+            this._sizes[i] := product;
+        };
+
+        product := 1;
+        this._shape.foreach(s |-> {
+            product := product * s;
+        });
+        this._array := Array[];
+        this._array.resize(product, 0.);
+
+        this
+    };
+
+    Tensor::(
+        this.shape |-> {
+            $(this._shape)
+        },
+        (this.shape, value) |-> {}
+    );
+
+    Tensor::(
+        this.dimension |-> {
+            this._shape.size
+        },
+        (this.dimension, value) |-> {}
+    );
+
+    Tensor::(
+        this.size |-> {
+            $(this._array.size)
+        },
+        (this.size, value) |-> {}
+    );
+
+    Tensor::(
+        this.length |-> {
+            $(this._shape[0])
+        },
+        (this.length, value) |-> {}
+    );
+
+    Tensor:::(this |-> (
+        indexes |-> {
+            ind := if (indexes ~ Int) [indexes,] else indexes;
+
+            index := 0;
+            for i from 0 to (ind.size) {
+                index :+= ind[i] * this._sizes[i];
+            };
+
+            this._array[index]
+        }
+    ));
+};
