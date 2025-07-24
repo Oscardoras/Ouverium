@@ -33,13 +33,13 @@
 
 namespace Interpreter::SystemFunctions {
     template<>
-    inline wxWindow* get_arg<wxWindow*>(FunctionContext& /*context*/, Data const& data) {
-        auto const& ptr = data.get<ObjectPtr>();
-        if (ptr->c_obj.has_value()) {
-            return ptr->c_obj.get<wxWeakRef<wxWindow>>().get();
-        } else {
+    inline wxWindow* get_arg<wxWindow*>(Data const& data) {
+        auto const& obj = data.get<ObjectPtr>();
+        auto it = obj->properties.find("_handle");
+        if (it != obj->properties.end())
+            return it->second.get<wxWeakRef<wxWindow>>();
+        else
             return nullptr;
-        }
     }
 }
 
@@ -71,7 +71,7 @@ namespace Interpreter::SystemFunctions::UI {
 
             Reference operator()(FunctionContext& context) {
                 try {
-                    auto* window = context["window"].to_data(context).get<ObjectPtr>()->c_obj.get<wxWeakRef<wxWindow>>().get();
+                    auto* window = get_arg<wxWindow*>(context["window"].to_data(context));
                     auto callback = context["callback"];
 
                     auto& global = context.get_global();
@@ -218,7 +218,7 @@ namespace Interpreter::SystemFunctions::UI {
             T* window = new T;
 
             auto obj = GC::new_object();
-            obj->c_obj.set(std::make_unique<wxWeakRef<wxWindow>>(window));
+            obj->properties["_handle"] = Data(std::any(wxWeakRef<wxWindow>(window)));
             return Data(obj);
         }
 
@@ -1002,7 +1002,7 @@ namespace Interpreter::SystemFunctions::UI {
                     auto* webview = wxWebView::New();
 
                     auto obj = GC::new_object();
-                    obj->c_obj.set(std::make_unique<wxWeakRef<wxWindow>>(webview));
+                    obj->properties["_handle"] = Data(std::any(wxWeakRef<wxWindow>(webview)));
                     return Data(obj);
                 }
 
