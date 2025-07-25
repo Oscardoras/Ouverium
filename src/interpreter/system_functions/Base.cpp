@@ -339,7 +339,7 @@ namespace Interpreter::SystemFunctions::Base {
 
         if (auto const* object = get_if<ObjectPtr>(&data)) {
             for (auto const& [name, d] : (*object)->properties) {
-                Interpreter::set(context, PropertyReference{.parent=var_data, .name=name}, d);
+                Interpreter::set(context, PropertyReference{ .parent = var_data, .name = name }, d);
             }
         }
 

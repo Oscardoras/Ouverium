@@ -3,6 +3,7 @@
 
 #include <any>
 #include <cstddef>
+#include <functional>
 #include <memory>
 #include <string>
 #include <type_traits>
@@ -35,7 +36,7 @@ namespace Interpreter::SystemFunctions {
                 throw Data::BadAccess();
         }
     }
-    
+
     template<>
     [[nodiscard]] inline Data get_arg<Data>(Data const& data) {
         return data;
@@ -49,7 +50,7 @@ namespace Interpreter::SystemFunctions {
     template<size_t I, typename Arg>
     [[nodiscard]] decltype(auto) get_arg(FunctionContext& context) {
         try {
-            using T = std::conditional_t<std::is_reference_v<Arg> && std::is_const_v<std::remove_reference_t<Arg>>, std::remove_cvref_t<Arg>, Arg>;
+            using T = std::conditional_t<std::is_reference_v<Arg>&& std::is_const_v<std::remove_reference_t<Arg>>, std::remove_cvref_t<Arg>, Arg>;
             return get_arg<T>(context["arg" + std::to_string(I)].to_data(context));
         } catch (Data::BadAccess const&) {
             throw FunctionArgumentsError();
@@ -92,7 +93,7 @@ namespace Interpreter::SystemFunctions {
     template<typename T>
     Reference check_type(Data const& data) {
         try {
-            (void)get_arg<T>(data);
+            (void) get_arg<T>(data);
 
             return Data(true);
         } catch (Data::BadAccess const&) {

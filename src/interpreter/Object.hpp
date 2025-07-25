@@ -3,12 +3,9 @@
 
 // IWYU pragma: private; include "Interpreter.hpp"
 
-#include <any>
-#include <functional>
 #include <initializer_list>
 #include <list>
 #include <map>
-#include <memory>
 #include <string>
 #include <vector>
 

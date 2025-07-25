@@ -2,6 +2,7 @@
 #include <cstddef>
 #include <string>
 #include <typeindex>
+#include <utility>
 
 #include <ouverium/types.h>
 

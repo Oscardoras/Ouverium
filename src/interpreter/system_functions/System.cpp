@@ -549,7 +549,7 @@ namespace Interpreter::SystemFunctions::System {
 
     Reference mutex_lock(std::mutex& mutex) {
         mutex.lock();
-        
+
         return {};
     }
 

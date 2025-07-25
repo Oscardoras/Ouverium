@@ -47,7 +47,7 @@ namespace Interpreter::SystemFunctions::UI {
 
     struct ItemStyle {
         unsigned proportion = 0;
-        enum class Align: uint8_t {
+        enum class Align : uint8_t {
             Start,
             Center,
             End,
@@ -186,7 +186,7 @@ namespace Interpreter::SystemFunctions::UI {
                     if (auto* user_data = dynamic_cast<UserData*>(child->GetClientObject())) {
                         flags = get_flags(sizer, user_data->item_style);
                     }
-                    
+
                     if (i != 0 && item_style.spacing > 0) {
                         sizer->AddSpacer(item_style.spacing);
                     }
@@ -437,7 +437,7 @@ namespace Interpreter::SystemFunctions::UI {
                 Data(static_cast<OV_INT>(color.Green())),
                 Data(static_cast<OV_INT>(color.Blue())),
                 Data(static_cast<OV_INT>(color.Alpha()))
-            }));
+                }));
         }
         Reference ui_background_color_set(wxWindow* window, ObjectPtr const& color) {
             window->SetBackgroundColour({
@@ -445,7 +445,7 @@ namespace Interpreter::SystemFunctions::UI {
                 static_cast<unsigned char>(color->array.at(1).get<OV_INT>()),
                 static_cast<unsigned char>(color->array.at(2).get<OV_INT>()),
                 static_cast<unsigned char>(color->array.at(3).get<OV_INT>())
-            });
+                });
 
             return Data{};
         }
@@ -458,7 +458,7 @@ namespace Interpreter::SystemFunctions::UI {
                 Data(static_cast<OV_INT>(color.Green())),
                 Data(static_cast<OV_INT>(color.Blue())),
                 Data(static_cast<OV_INT>(color.Alpha()))
-            }));
+                }));
         }
         Reference ui_foreground_color_set(wxWindow* window, ObjectPtr const& color) {
             window->SetForegroundColour({
@@ -466,7 +466,7 @@ namespace Interpreter::SystemFunctions::UI {
                 static_cast<unsigned char>(color->array.at(1).get<OV_INT>()),
                 static_cast<unsigned char>(color->array.at(2).get<OV_INT>()),
                 static_cast<unsigned char>(color->array.at(3).get<OV_INT>())
-            });
+                });
 
             return Data{};
         }
@@ -491,7 +491,7 @@ namespace Interpreter::SystemFunctions::UI {
 
                 Reference ui_frame_create(wxWindow* window, wxWindow* parent) {
                     dynamic_cast<wxFrame*>(window)->Create(parent, wxID_ANY, "");
-                    
+
                     return Data{};
                 }
 
@@ -506,7 +506,7 @@ namespace Interpreter::SystemFunctions::UI {
                 }
 
             }
-        
+
         }
 
         namespace Panel {
@@ -641,7 +641,7 @@ namespace Interpreter::SystemFunctions::UI {
 
                     auto options = GC::new_object();
                     options->array.reserve(choice->GetCount());
-                    for (int i = 0; i < choice->GetCount(); ++i) {
+                    for (int i = 0; i < (int) choice->GetCount(); ++i) {
                         options->array.emplace_back(GC::new_object(Object(choice->GetString(i).ToStdString())));
                     }
 
@@ -696,7 +696,7 @@ namespace Interpreter::SystemFunctions::UI {
                         Data(static_cast<OV_INT>(color.Green())),
                         Data(static_cast<OV_INT>(color.Blue())),
                         Data(static_cast<OV_INT>(color.Alpha()))
-                    }));
+                        }));
                 }
 
                 Reference ui_colorpicker_value_set(wxWindow* window, ObjectPtr const& color) {
@@ -707,7 +707,7 @@ namespace Interpreter::SystemFunctions::UI {
                         static_cast<unsigned char>(color->array.at(1).get<OV_INT>()),
                         static_cast<unsigned char>(color->array.at(2).get<OV_INT>()),
                         static_cast<unsigned char>(color->array.at(3).get<OV_INT>())
-                    });
+                        });
 
                     return Data{};
                 }
@@ -779,7 +779,7 @@ namespace Interpreter::SystemFunctions::UI {
             namespace Hyperlink {
 
                 Reference ui_hyperlink_create(wxWindow* window, wxWindow* parent) {
-                    dynamic_cast<wxHyperlinkCtrl*>(window)->Create(parent, wxID_ANY, "", "");
+                    dynamic_cast<wxHyperlinkCtrl*>(window)->Create(parent, wxID_ANY, "", "about:blank");
 
                     return Data{};
                 }

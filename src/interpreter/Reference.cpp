@@ -1,5 +1,6 @@
 
 #include <memory>
+#include <utility>
 #include <variant>
 
 #include "Interpreter.hpp"
@@ -16,7 +17,7 @@ namespace Interpreter {
 
         Data compute(Context& context, std::shared_ptr<Parser::Expression> const& caller, Reference const& reference) {
             auto const& getter = context.get_global()["getter"];
-            
+
             if (auto const* symbol = std::get_if<SymbolReference>(&reference))
                 if (*symbol == std::get<SymbolReference>(getter))
                     return **symbol;

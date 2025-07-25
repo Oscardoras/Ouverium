@@ -48,16 +48,14 @@ f2 := UI.Frame( .title := "test webview", .min_size := [600, 400] ) {
                 .background_color := [0, 0, 0, 255],
                 .foreground_color := [255, 0, 0, 255],
                 .align := UI.Alignment.Stretch,
-                .on_value_change := args |-> { val := urlBar.value; wb.url := val; }
+                .on_value_change := args |-> { wb.url := urlBar.value; }
             ),
         },
         wb := UI.Webview(
             .url := "https://google.com/",
             .proportion := 1,
             .align := UI.Alignment.Stretch,
-            .on_url_change := args |-> {
-                val := wb.url; urlBar.set_silent(val);
-            }
+            .on_url_change := args |-> { urlBar.set_silent(wb.url); }
         ),
     },
 };

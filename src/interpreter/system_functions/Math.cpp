@@ -341,12 +341,12 @@ namespace Interpreter::SystemFunctions::Math {
     ));
     Reference forall(FunctionContext& context) {
         try {
-            auto array = context["array"];
+            auto array = context["array"].to_data(context).get<ObjectPtr>();
             auto functions = context["function"];
 
             bool value = true;
 
-            for (auto const& d : array.to_data(context).get<ObjectPtr>()->array) {
+            for (auto const& d : array->array) {
                 if (!Interpreter::call_function(context.get_parent(), nullptr, functions, d).to_data(context).get<bool>()) {
                     value = false;
                     break;
