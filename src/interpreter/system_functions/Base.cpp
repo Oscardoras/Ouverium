@@ -285,10 +285,7 @@ namespace Interpreter::SystemFunctions::Base {
         );
     }
 
-    auto const copy_args = std::make_shared<Parser::Symbol>("data");
-    Reference copy(FunctionContext& context) {
-        auto data = context["data"].to_data(context);
-
+    Reference copy(Data const& data) {
         try {
             return Data(GC::new_object(*data.get<ObjectPtr>()));
         } catch (Data::BadAccess const&) {
@@ -296,8 +293,8 @@ namespace Interpreter::SystemFunctions::Base {
         }
     }
 
-    Reference copy_pointer(FunctionContext& context) {
-        return context["data"].to_data(context);
+    Reference copy_pointer(Data const& data) {
+        return data;
     }
 
     auto const define_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
@@ -326,20 +323,10 @@ namespace Interpreter::SystemFunctions::Base {
             throw FunctionArgumentsError();
     }
 
-    auto const inject_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
-        {
-            std::make_shared<Parser::Symbol>("var"),
-            std::make_shared<Parser::Symbol>("data")
-        }
-    ));
-    Reference inject(FunctionContext& context) {
-        auto const& var = context["var"];
-        auto data = context["data"].to_data(context);
-        auto var_data = var.to_data(context);
-
+    Reference inject(FunctionContext& context, Data const& var, Data const& data) {
         if (auto const* object = get_if<ObjectPtr>(&data)) {
             for (auto const& [name, d] : (*object)->properties) {
-                Interpreter::set(context, PropertyReference{ .parent = var_data, .name = name }, d);
+                Interpreter::set(context, PropertyReference{ .parent = var, .name = name }, d);
             }
         }
 
@@ -418,44 +405,23 @@ namespace Interpreter::SystemFunctions::Base {
         } else throw FunctionArgumentsError();
     }
 
-    auto const equals_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
-        {
-            std::make_shared<Parser::Symbol>("a"),
-            std::make_shared<Parser::Symbol>("b")
-        }
-    ));
-    Reference equals(FunctionContext& context) {
-        auto a = context["a"].to_data(context);
-        auto b = context["b"].to_data(context);
-
+    Reference equals(Data const& a, Data const& b) {
         return Data(eq(a, b));
     }
 
-    Reference not_equals(FunctionContext& context) {
-        auto a = context["a"].to_data(context);
-        auto b = context["b"].to_data(context);
-
+    Reference not_equals(Data const& a, Data const& b) {
         return Data(!eq(a, b));
     }
 
-    Reference check_pointers(FunctionContext& context) {
-        auto a = context["a"].to_data(context);
-        auto b = context["b"].to_data(context);
-
+    Reference check_pointers(Data const& a, Data const& b) {
         return Data(a == b);
     }
 
-    Reference not_check_pointers(FunctionContext& context) {
-        auto a = context["a"].to_data(context);
-        auto b = context["b"].to_data(context);
-
+    Reference not_check_pointers(Data const& a, Data const& b) {
         return Data(a != b);
     }
 
-    auto const string_from_args = std::make_shared<Parser::Symbol>("data");
-    Reference string_from(FunctionContext& context) {
-        auto data = context["data"].to_data(context);
-
+    Reference string_from(FunctionContext& context, Data const& data) {
         std::ostringstream os;
 
         if (auto const* object = get_if<ObjectPtr>(&data)) {
@@ -504,7 +470,7 @@ namespace Interpreter::SystemFunctions::Base {
     }
 
     auto const scan_args = std::make_shared<Parser::Tuple>();
-    Reference scan(FunctionContext& /*context*/) {
+    Reference scan() {
         std::string str;
         getline(std::cin, str);
 
@@ -559,22 +525,22 @@ namespace Interpreter::SystemFunctions::Base {
         get_object(context["try"])->functions.push_front(try_s);
         add_function(context["throw"], throw_statement_args, throw_statement);
 
-        add_function(context["$"], copy_args, copy);
-        add_function(context["$=="], copy_args, copy_pointer);
+        add_function(context["$"], copy);
+        add_function(context["$=="], copy_pointer);
 
         add_function(context["="], define_args, define);
-        add_function(context[":<-"], inject_args, inject);
+        add_function(context[":<-"], inject);
         add_function(context[":"], function_definition_args, function_definition);
         add_function(context["|"], function_add_args, function_add);
 
-        add_function(context["=="], equals_args, equals);
-        add_function(context["!="], equals_args, not_equals);
-        add_function(context["==="], equals_args, check_pointers);
-        add_function(context["!=="], equals_args, not_check_pointers);
+        add_function(context["=="], equals);
+        add_function(context["!="], not_equals);
+        add_function(context["==="], check_pointers);
+        add_function(context["!=="], not_check_pointers);
 
-        add_function(context["string_from"], string_from_args, string_from);
+        add_function(context["string_from"], string_from);
         add_function(context["print"], print_args, print);
-        add_function(context["scan"], scan_args, scan);
+        add_function(context["scan"], scan);
     }
 
 }

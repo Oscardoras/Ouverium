@@ -9,6 +9,7 @@
 #include <istream>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <thread>
 #include <vector>
@@ -37,38 +38,35 @@ namespace Interpreter::SystemFunctions::System {
 
 namespace Interpreter::SystemFunctions {
     template<>
-    inline std::filesystem::path get_arg<std::filesystem::path>(Data const& data) {
-        return std::filesystem::path(get_arg<std::string>(data));
+    inline std::optional<std::filesystem::path> get_arg<std::filesystem::path>(Data const& data) {
+        if (auto opt = get_arg<std::string>(data))
+            return std::filesystem::path(*opt);
+
+        return std::nullopt;
     }
 
     template<>
-    inline std::istream& get_arg<std::istream&>(Data const& data) {
-        return dynamic_cast<std::istream&>(get_arg<std::ios&>(data));
+    inline std::optional<std::reference_wrapper<std::istream>> get_arg<std::istream&>(Data const& data) {
+        if (auto opt = get_arg<std::ios&>(data))
+            return dynamic_cast<std::istream&>(opt->get());
+
+        return std::nullopt;
     }
 
     template<>
-    inline std::ostream& get_arg<std::ostream&>(Data const& data) {
-        return dynamic_cast<std::ostream&>(get_arg<std::ios&>(data));
+    inline std::optional<std::reference_wrapper<std::ostream>> get_arg<std::ostream&>(Data const& data) {
+        if (auto opt = get_arg<std::ios&>(data))
+            return dynamic_cast<std::ostream&>(opt->get());
+
+        return std::nullopt;
     }
 
     template<>
-    inline std::fstream& get_arg<std::fstream&>(Data const& data) {
-        return dynamic_cast<std::fstream&>(get_arg<std::ios&>(data));
-    }
+    inline std::optional<std::reference_wrapper<std::fstream>> get_arg<std::fstream&>(Data const& data) {
+        if (auto opt = get_arg<std::ios&>(data))
+            return dynamic_cast<std::fstream&>(opt->get());
 
-    template<>
-    inline Interpreter::SystemFunctions::System::TCPSocket& get_arg<Interpreter::SystemFunctions::System::TCPSocket&>(Data const& data) {
-        return get_arg<Interpreter::SystemFunctions::System::TCPSocket&>(data);
-    }
-
-    template<>
-    inline Interpreter::SystemFunctions::System::TCPAcceptor& get_arg<Interpreter::SystemFunctions::System::TCPAcceptor&>(Data const& data) {
-        return get_arg<Interpreter::SystemFunctions::System::TCPAcceptor&>(data);
-    }
-
-    template<>
-    inline Interpreter::SystemFunctions::System::UDPSocket& get_arg<Interpreter::SystemFunctions::System::UDPSocket&>(Data const& data) {
-        return get_arg<Interpreter::SystemFunctions::System::UDPSocket&>(data);
+        return std::nullopt;
     }
 }
 
@@ -126,19 +124,10 @@ namespace Interpreter::SystemFunctions::System {
         return {};
     }
 
-    auto const stream_print_args = std::make_shared<Parser::Tuple>(Parser::Tuple(
-        {
-            std::make_shared<Parser::Symbol>("stream"),
-            std::make_shared<Parser::Symbol>("data")
-        }
-    ));
-    Reference stream_print(FunctionContext& context) {
-        auto& stream = Interpreter::SystemFunctions::get_arg<0, std::ostream&>(context);
-        auto data = Interpreter::SystemFunctions::get_arg<1, Data>(context);
-
+    Reference stream_print(FunctionContext& context, std::ostream& stream, Data const& data) {
         stream << Interpreter::string_from(context, data);
 
-        return Reference();
+        return {};
     }
 
 
@@ -335,7 +324,7 @@ namespace Interpreter::SystemFunctions::System {
         acceptor.non_blocking(!value, ec);
 
         if (!ec)
-            return Reference();
+            return {};
         else
             return Data(static_cast<OV_INT>(ec.value()));
     }
@@ -345,7 +334,7 @@ namespace Interpreter::SystemFunctions::System {
         acceptor.close(ec);
 
         if (!ec)
-            return Reference();
+            return {};
         else
             return Data(static_cast<OV_INT>(ec.value()));
     }
@@ -420,10 +409,10 @@ namespace Interpreter::SystemFunctions::System {
     ));
     Reference UDPsocket_send_to(FunctionContext& context) {
         try {
-            auto& socket = get_arg<UDPSocket&>(context["socket"].to_data(context));
-            auto data = get_arg<ObjectPtr>(context["data"].to_data(context));
-            auto address = get_arg<std::string>(context["address"].to_data(context));
-            auto port = get_arg<OV_INT>(context["port"].to_data(context));
+            auto& socket = get_arg<UDPSocket&>(context["socket"].to_data(context)).value().get();
+            auto data = get_arg<ObjectPtr>(context["data"].to_data(context)).value();
+            auto address = get_arg<std::string>(context["address"].to_data(context)).value();
+            auto port = get_arg<OV_INT>(context["port"].to_data(context)).value();
 
             std::vector<char> buffer(data->array.size());
             for (size_t i = 0; i < data->array.size(); ++i)
@@ -481,24 +470,17 @@ namespace Interpreter::SystemFunctions::System {
         return Data(static_cast<OV_FLOAT>(d.count()));
     }
 
-    auto const thread_create_args = std::make_shared<Parser::Symbol>("function");
-    Reference thread_create(FunctionContext& context) {
-        try {
-            auto function = context["function"].to_data(context).get<ObjectPtr>();
+    Reference thread_create(FunctionContext& context, ObjectPtr const& function) {
+        auto& global = context.get_global();
+        auto caller = context.caller;
 
-            auto& global = context.get_global();
-            auto caller = context.caller;
-
-            return Data(std::make_shared<std::jthread>([&global, caller, function]() {
-                try {
-                    Interpreter::call_function(global, caller, Data(function), std::make_shared<Parser::Tuple>());
-                } catch (Interpreter::Exception const& ex) {
-                    ex.print_stack_trace(global);
-                }
-            }));
-        } catch (Data::BadAccess const&) {
-            throw FunctionArgumentsError();
-        }
+        return Data(std::make_shared<std::jthread>([&global, caller, function]() {
+            try {
+                Interpreter::call_function(global, caller, Data(function), std::make_shared<Parser::Tuple>());
+            } catch (Interpreter::Exception const& ex) {
+                ex.print_stack_trace(global);
+            }
+        }));
     }
 
     Reference thread_join(std::jthread& thread) {
@@ -521,10 +503,7 @@ namespace Interpreter::SystemFunctions::System {
         return Data(static_cast<OV_INT>(std::hash<std::thread::id>{}(std::this_thread::get_id())));
     }
 
-    auto const thread_sleep_args = std::make_shared<Parser::Symbol>("time");
-    Reference thread_sleep(FunctionContext& context) {
-        auto time = context["time"].to_data(context);
-
+    Reference thread_sleep(Data const& time) {
         try {
             std::this_thread::sleep_for(std::chrono::duration<double>(time.get<OV_INT>()));
             return {};
@@ -588,7 +567,7 @@ namespace Interpreter::SystemFunctions::System {
         add_function(s.get_property("stream_write"), stream_write1);
         add_function(s.get_property("stream_write"), stream_write2);
         add_function(s.get_property("stream_flush"), stream_flush);
-        add_function(s.get_property("stream_print"), stream_print_args, stream_print);
+        add_function(s.get_property("stream_print"), stream_print);
 
         add_function(s.get_property("file_is"), check_type<std::fstream&>);
         add_function(s.get_property("file_open"), file_open);
@@ -641,12 +620,12 @@ namespace Interpreter::SystemFunctions::System {
         add_function(s.get_property("clock_steady"), clock_steady);
 
         add_function(s.get_property("thread_is"), check_type<std::jthread&>);
-        add_function(s.get_property("thread_create"), thread_create_args, thread_create);
+        add_function(s.get_property("thread_create"), thread_create);
         add_function(s.get_property("thread_join"), thread_join);
         add_function(s.get_property("thread_detach"), thread_detach);
         add_function(s.get_property("thread_get_id"), thread_get_id);
         add_function(s.get_property("thread_current_id"), thread_current_id);
-        add_function(s.get_property("thread_sleep"), thread_sleep_args, thread_sleep);
+        add_function(s.get_property("thread_sleep"), thread_sleep);
         add_function(s.get_property("thread_hardware_concurrency"), thread_hardware_concurrency);
 
         add_function(s.get_property("mutex_is"), check_type<std::mutex&>);

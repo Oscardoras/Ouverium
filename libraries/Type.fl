@@ -14,22 +14,29 @@ default : symbol |-> {
     object
 };
 
-(~) := ((object, type) |-> {
-    (defined (object._types) & exists(object._types, t |-> {
-        t === type
-    })) | (defined(type._children) & exists(type._children, child |-> {
-        object ~ child
-    }))
-} : (~));
+(~) | (object, type) |-> {
+    (defined (object._types)
+    & (
+        exists(object._types, t |-> { t === type })
+        | (defined(type._children) & exists(type._children, child |-> { exists(object._types, t |-> { t === child })}))
+    ))
+};
 
 
 extends : (type, Tuple parents) |-> {
-    foreach(parents, p |-> {
-        default (p._children);
-        s := Array.get_size(p._children);
-        Array.set_size(p._children, s+1);
-        Array.get(p._children, s) := type;
-    });
+    type._parents := parents;
+
+    add_child : pars |-> {
+        foreach(pars, p |-> {
+            default (p._children);
+            s := Array.get_size(p._children);
+            Array.set_size(p._children, s+1);
+            Array.get(p._children, s) := type;
+
+            add_child(p._parents);
+        });
+    };
+    add_child(parents);
 
     type
 };
@@ -38,12 +45,19 @@ class : (type, body()) |-> { class type extends [] (body()) };
 class : (type, extends, Tuple parents, body()) \ (!defined type) |-> {
     type := ();
 
-    foreach(parents, p |-> {
-        default (p._children);
-        s := Array.get_size(p._children);
-        Array.set_size(p._children, s+1);
-        Array.get(p._children, s) := type;
-    });
+    type._parents := parents;
+
+    add_child : pars |-> {
+        foreach(pars, p |-> {
+            default (p._children);
+            s := Array.get_size(p._children);
+            Array.set_size(p._children, s+1);
+            Array.get(p._children, s) := type;
+
+            add_child(p._parents);
+        });
+    };
+    add_child(parents);
 
     type : this \ (this ~ type) |-> { this };
     body();

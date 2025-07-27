@@ -185,7 +185,7 @@ namespace Interpreter {
                                 throw Interpreter::FunctionArgumentsError();
                         } else
                             throw Interpreter::FunctionArgumentsError();
-                    } catch (const Interpreter::FunctionArgumentsError&) {
+                    } catch (Interpreter::FunctionArgumentsError const&) {
                         auto object = reference->to_data(function_context, parameters).get<ObjectPtr>();
                         if (check_tuple(context, function_context, p_tuple, object->array.size())) {
                             for (size_t i = 0; i < p_tuple->objects.size(); ++i) {
@@ -292,14 +292,16 @@ namespace Interpreter {
             throw Exception(context, caller, "recursion limit exceeded");
 
         std::list<Function> functions;
-        try {
-            functions = func.to_data(context, caller).get<ObjectPtr>()->functions;
-        } catch (Data::BadAccess const&) {}
+        auto func_data = func.to_data(context, caller);
+        if (auto const* obj = get_if<ObjectPtr>(&func_data)) {
+            functions = (*obj)->functions;
+        }
 
         if (functions.empty()) {
-            try {
-                functions = call_function(context, caller, context.get_global()["function_getter"], func).to_data(context).get<ObjectPtr>()->functions;
-            } catch (Data::BadAccess const&) {}
+            auto function_getter = call_function(context, caller, context.get_global()["function_getter"], func).to_data(context);
+            if (auto const* obj = get_if<ObjectPtr>(&function_getter)) {
+                functions = (*obj)->functions;
+            }
         }
 
         Computed computed;

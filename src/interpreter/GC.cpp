@@ -15,7 +15,5 @@ namespace Interpreter::GC {
         return { std::make_shared<Data>(std::move(data)) };
     }
 
-    void collect() {
-
-    }
+    void collect() {}
 }

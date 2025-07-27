@@ -22,10 +22,10 @@ namespace Interpreter {
                 if (*symbol == std::get<SymbolReference>(getter))
                     return **symbol;
 
-            if (auto const* d = std::get_if<Data>(&reference); d && *d != Data{})
+            if (auto const* d = std::get_if<Data>(&reference))
                 return *d;
             else
-                return call_function(context, caller, context.get_global()["getter"], reference).to_data(context, caller);
+                return call_function(context, caller, getter, reference).to_data(context, caller);
         }
 
     }

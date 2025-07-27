@@ -1,6 +1,7 @@
 #include <any>
 #include <cstdint>
 #include <ctime>
+#include <exception>
 #include <memory>
 #include <string>
 
@@ -33,7 +34,7 @@
 
 namespace Interpreter::SystemFunctions {
     template<>
-    inline wxWindow* get_arg<wxWindow*>(Data const& data) {
+    inline std::optional<wxWindow*> get_arg<wxWindow*>(Data const& data) {
         auto const& obj = data.get<ObjectPtr>();
         auto it = obj->properties.find("_handle");
         if (it != obj->properties.end())
@@ -71,7 +72,7 @@ namespace Interpreter::SystemFunctions::UI {
 
             Reference operator()(FunctionContext& context) {
                 try {
-                    auto* window = get_arg<wxWindow*>(context["window"].to_data(context));
+                    auto* window = get_arg<wxWindow*>(context["window"].to_data(context)).value();
                     auto callback = context["callback"];
 
                     auto& global = context.get_global();
@@ -91,9 +92,7 @@ namespace Interpreter::SystemFunctions::UI {
                     });
 
                     return Data{};
-                } catch (Data::BadAccess const&) {
-                    throw FunctionArgumentsError();
-                } catch (std::bad_any_cast const&) {
+                } catch (std::exception const&) {
                     throw FunctionArgumentsError();
                 }
             }
