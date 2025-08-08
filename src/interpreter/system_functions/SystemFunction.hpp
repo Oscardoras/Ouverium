@@ -118,9 +118,7 @@ namespace Interpreter::SystemFunctions {
     template<typename T>
     Reference check_type(Data const& data) {
         try {
-            (void) get_arg<T>(data);
-
-            return Data(true);
+            return Data(get_arg<T>(data).has_value());
         } catch (Data::BadAccess const&) {
         } catch (std::bad_any_cast const&) {}
 

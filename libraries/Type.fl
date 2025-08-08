@@ -41,7 +41,7 @@ extends : (type, Tuple parents) |-> {
     type
 };
 
-class : (type, body()) |-> { class type extends [] (body()) };
+class : (type, body()) |-> { class type extends [] { body() } };
 class : (type, extends, Tuple parents, body()) \ (!defined type) |-> {
     type := ();
 

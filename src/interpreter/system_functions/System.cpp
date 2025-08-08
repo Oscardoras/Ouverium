@@ -86,7 +86,7 @@ namespace Interpreter::SystemFunctions::System {
 
         auto object = GC::new_object();
         object->array.reserve(size);
-        for (size_t i = 0; i < size; ++i)
+        for (size_t i = 0; i < static_cast<size_t>(size); ++i)
             object->array.emplace_back(buffer[i]);
 
         return Data(object);

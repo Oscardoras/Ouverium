@@ -4,6 +4,7 @@
 #include <exception>
 #include <memory>
 #include <string>
+#include <typeinfo>
 
 #include "ouverium/types.h"
 
@@ -219,6 +220,19 @@ namespace Interpreter::SystemFunctions::UI {
             auto obj = GC::new_object();
             obj->properties["_handle"] = Data(std::any(wxWeakRef<wxWindow>(window)));
             return Data(obj);
+        }
+
+        template<typename T>
+        Reference ui_is(Data const& data) {
+            try {
+                auto window = get_arg<wxWindow*>(data);
+                if (window.has_value())
+                    if (dynamic_cast<T*>(window.value()))
+                        return Data(true);
+            } catch (Data::BadAccess const&) {
+            } catch (std::bad_cast const&) {}
+
+            return Data(false);
         }
 
         Reference ui_visible_get(wxWindow* window) {
@@ -879,6 +893,18 @@ namespace Interpreter::SystemFunctions::UI {
 
                 namespace MultilineText {
 
+                    Reference ui_multiline_is(Data const& data) {
+                        try {
+                            auto window = get_arg<wxWindow*>(data);
+                            if (window.has_value())
+                                if (auto const* text = dynamic_cast<wxTextCtrl*>(window.value()))
+                                    return Data(text->IsMultiLine());
+                        } catch (Data::BadAccess const&) {
+                        } catch (std::bad_cast const&) {}
+
+                        return Data(false);
+                    }
+
                     Reference ui_multilinetext_create(wxWindow* window, wxWindow* parent) {
                         dynamic_cast<wxTextCtrl*>(window)->Create(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_MULTILINE);
 
@@ -898,6 +924,18 @@ namespace Interpreter::SystemFunctions::UI {
                 }
 
                 namespace Password {
+
+                    Reference ui_password_is(Data const& data) {
+                        try {
+                            auto window = get_arg<wxWindow*>(data);
+                            if (window.has_value())
+                                if (auto const* text = dynamic_cast<wxTextCtrl*>(window.value()))
+                                    return Data(bool(text->GetWindowStyle() & wxTE_PASSWORD));
+                        } catch (Data::BadAccess const&) {
+                        } catch (std::bad_cast const&) {}
+
+                        return Data(false);
+                    }
 
                     Reference ui_password_create(wxWindow* window, wxWindow* parent) {
                         dynamic_cast<wxTextCtrl*>(window)->Create(parent, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PASSWORD);
@@ -1049,6 +1087,7 @@ namespace Interpreter::SystemFunctions::UI {
     void init(GlobalContext& context) {
         auto& s = context.get_global().system;
 
+        add_function(s.get_property("ui_is"), Window::ui_is<wxWindow>);
         add_function(s.get_property("ui_visible_get"), Window::ui_visible_get);
         add_function(s.get_property("ui_visible_set"), Window::ui_visible_set);
         add_function(s.get_property("ui_position_set"), Window::ui_position_get);
@@ -1076,43 +1115,53 @@ namespace Interpreter::SystemFunctions::UI {
         add_function(s.get_property("ui_foreground_color_get"), Window::ui_foreground_color_get);
         add_function(s.get_property("ui_foreground_color_set"), Window::ui_foreground_color_set);
 
+        add_function(s.get_property("ui_window_is"), Window::ui_is<wxTopLevelWindow>);
         add_function(s.get_property("ui_window_title_get"), Window::Window::ui_window_title_get);
         add_function(s.get_property("ui_window_title_set"), Window::Window::ui_window_title_set);
         add_event<true>(s.get_property("ui_window_closed"), wxEVT_CLOSE_WINDOW);
 
+        add_function(s.get_property("ui_frame_is"), Window::ui_is<wxFrame>);
         add_function(s.get_property("ui_frame_new"), Window::ui_new<wxFrame>);
         add_function(s.get_property("ui_frame_create"), Window::Window::Frame::ui_frame_create);
 
+        add_function(s.get_property("ui_dialog_is"), Window::ui_is<wxDialog>);
         add_function(s.get_property("ui_dialog_new"), Window::ui_new<wxDialog>);
         add_function(s.get_property("ui_dialog_create"), Window::Window::Dialog::ui_dialog_create);
 
+        add_function(s.get_property("ui_panel_is"), Window::ui_is<wxPanel>);
         add_function(s.get_property("ui_panel_new"), Window::ui_new<wxPanel>);
         add_function(s.get_property("ui_panel_create"), Window::Panel::ui_panel_create);
 
+        add_function(s.get_property("ui_ctrl_is"), Window::ui_is<wxControl>);
         add_function(s.get_property("ui_ctrl_label_get"), Window::Control::ui_ctrl_label_get);
         add_function(s.get_property("ui_ctrl_label_set"), Window::Control::ui_ctrl_label_set);
 
+        add_function(s.get_property("ui_activityindicator_is"), Window::ui_is<wxActivityIndicator>);
         add_function(s.get_property("ui_activityindicator_new"), Window::ui_new<wxActivityIndicator>);
         add_function(s.get_property("ui_activityindicator_create"), Window::Control::ActivityIndicator::ui_activityindicator_create);
         add_function(s.get_property("ui_activityindicator_value_get"), Window::Control::ActivityIndicator::ui_activityindicator_value_get);
         add_function(s.get_property("ui_activityindicator_value_set"), Window::Control::ActivityIndicator::ui_activityindicator_value_set);
 
+        add_function(s.get_property("ui_button_is"), Window::ui_is<wxButton>);
         add_function(s.get_property("ui_button_new"), Window::ui_new<wxButton>);
         add_function(s.get_property("ui_button_create"), Window::Control::Button::ui_button_create);
         add_event(s.get_property("ui_button_event"), wxEVT_BUTTON);
 
+        add_function(s.get_property("ui_calendar_is"), Window::ui_is<wxCalendarCtrl>);
         add_function(s.get_property("ui_calendar_new"), Window::ui_new<wxCalendarCtrl>);
         add_function(s.get_property("ui_calendar_create"), Window::Control::Calendar::ui_calendar_create);
         add_function(s.get_property("ui_calendar_value_get"), Window::Control::Calendar::ui_calendar_value_get);
         add_function(s.get_property("ui_calendar_value_set"), Window::Control::Calendar::ui_calendar_value_set);
         add_event(s.get_property("ui_calendar_value_event"), wxEVT_CALENDAR_SEL_CHANGED);
 
+        add_function(s.get_property("ui_checkbox_is"), Window::ui_is<wxCheckBox>);
         add_function(s.get_property("ui_checkbox_new"), Window::ui_new<wxCheckBox>);
         add_function(s.get_property("ui_checkbox_create"), Window::Control::Checkbox::ui_checkbox_create);
         add_function(s.get_property("ui_checkbox_value_get"), Window::Control::Checkbox::ui_checkbox_value_get);
         add_function(s.get_property("ui_checkbox_value_set"), Window::Control::Checkbox::ui_checkbox_value_set);
         add_event(s.get_property("ui_checkbox_value_event"), wxEVT_CHECKBOX);
 
+        add_function(s.get_property("ui_choice_is"), Window::ui_is<wxChoice>);
         add_function(s.get_property("ui_choice_new"), Window::ui_new<wxChoice>);
         add_function(s.get_property("ui_choice_create"), Window::Control::Choice::ui_choice_create);
         add_function(s.get_property("ui_choice_options_get"), Window::Control::Choice::ui_choice_options_get);
@@ -1121,18 +1170,21 @@ namespace Interpreter::SystemFunctions::UI {
         add_function(s.get_property("ui_choice_value_set"), Window::Control::Choice::ui_choice_value_set);
         add_event(s.get_property("ui_choice_value_event"), wxEVT_CHOICE);
 
+        add_function(s.get_property("ui_colorpicker_is"), Window::ui_is<wxColourPickerCtrl>);
         add_function(s.get_property("ui_colorpicker_new"), Window::ui_new<wxColourPickerCtrl>);
         add_function(s.get_property("ui_colorpicker_create"), Window::Control::ColorPicker::ui_colorpicker_create);
         add_function(s.get_property("ui_colorpicker_value_get"), Window::Control::ColorPicker::ui_colorpicker_value_get);
         add_function(s.get_property("ui_colorpicker_value_set"), Window::Control::ColorPicker::ui_colorpicker_value_set);
         add_event(s.get_property("ui_colorpicker_value_event"), wxEVT_COLOURPICKER_CHANGED);
 
+        add_function(s.get_property("ui_datepicker_is"), Window::ui_is<wxDatePickerCtrl>);
         add_function(s.get_property("ui_datepicker_new"), Window::ui_new<wxDatePickerCtrl>);
         add_function(s.get_property("ui_datepicker_create"), Window::Control::DatePicker::ui_datepicker_create);
         add_function(s.get_property("ui_datepicker_value_get"), Window::Control::DatePicker::ui_datepicker_value_get);
         add_function(s.get_property("ui_datepicker_value_set"), Window::Control::DatePicker::ui_datepicker_value_set);
         add_event(s.get_property("ui_datepicker_value_event"), wxEVT_DATE_CHANGED);
 
+        add_function(s.get_property("ui_gauge_is"), Window::ui_is<wxGauge>);
         add_function(s.get_property("ui_gauge_new"), Window::ui_new<wxGauge>);
         add_function(s.get_property("ui_gauge_create"), Window::Control::Gauge::ui_gauge_create);
         add_function(s.get_property("ui_gauge_range_get"), Window::Control::Gauge::ui_gauge_range_get);
@@ -1140,20 +1192,24 @@ namespace Interpreter::SystemFunctions::UI {
         add_function(s.get_property("ui_gauge_value_get"), Window::Control::Gauge::ui_gauge_value_get);
         add_function(s.get_property("ui_gauge_value_set"), Window::Control::Gauge::ui_gauge_value_set);
 
+        add_function(s.get_property("ui_hyperlink_is"), Window::ui_is<wxHyperlinkCtrl>);
         add_function(s.get_property("ui_hyperlink_new"), Window::ui_new<wxHyperlinkCtrl>);
         add_function(s.get_property("ui_hyperlink_create"), Window::Control::Hyperlink::ui_hyperlink_create);
         add_function(s.get_property("ui_hyperlink_url_get"), Window::Control::Hyperlink::ui_hyperlink_url_get);
         add_function(s.get_property("ui_hyperlink_url_set"), Window::Control::Hyperlink::ui_hyperlink_url_set);
 
+        add_function(s.get_property("ui_label_is"), Window::ui_is<wxStaticText>);
         add_function(s.get_property("ui_label_new"), Window::ui_new<wxStaticText>);
         add_function(s.get_property("ui_label_create"), Window::Control::Label::ui_label_create);
 
+        add_function(s.get_property("ui_radiobutton_is"), Window::ui_is<wxRadioButton>);
         add_function(s.get_property("ui_radiobutton_new"), Window::ui_new<wxRadioButton>);
         add_function(s.get_property("ui_radiobutton_create"), Window::Control::RadioButton::ui_radiobutton_create);
         add_function(s.get_property("ui_radiobutton_value_get"), Window::Control::RadioButton::ui_radiobutton_value_get);
         add_function(s.get_property("ui_radiobutton_value_set"), Window::Control::RadioButton::ui_radiobutton_value_set);
         add_event(s.get_property("ui_radiobutton_value_event"), wxEVT_RADIOBUTTON);
 
+        add_function(s.get_property("ui_text_is"), Window::ui_is<wxTextEntry>);
         add_function(s.get_property("ui_text_new"), Window::ui_new<wxTextCtrl>);
         add_function(s.get_property("ui_text_create"), Window::Control::Text::ui_text_create);
         add_function(s.get_property("ui_text_value_get"), Window::Control::Text::ui_text_value_get);
@@ -1163,19 +1219,24 @@ namespace Interpreter::SystemFunctions::UI {
         add_function(s.get_property("ui_text_editable_set"), Window::Control::Text::ui_text_editable_set);
         add_function(s.get_property("ui_text_value_set_silent"), Window::Control::Text::ui_text_value_set_silent);
 
+        add_function(s.get_property("ui_multilinetext_is"), Window::Control::Text::MultilineText::ui_multiline_is);
         add_function(s.get_property("ui_multilinetext_new"), Window::ui_new<wxTextCtrl>);
         add_function(s.get_property("ui_multilinetext_create"), Window::Control::Text::MultilineText::ui_multilinetext_create);
 
+        add_function(s.get_property("ui_search_is"), Window::ui_is<wxSearchCtrl>);
         add_function(s.get_property("ui_search_new"), Window::ui_new<wxSearchCtrl>);
         add_function(s.get_property("ui_search_create"), Window::Control::Text::Search::ui_search_create);
         add_event(s.get_property("ui_search_cancel_event"), wxEVT_SEARCH_CANCEL);
 
+        add_function(s.get_property("ui_password_is"), Window::Control::Text::Password::ui_password_is);
         add_function(s.get_property("ui_password_new"), Window::ui_new<wxTextCtrl>);
         add_function(s.get_property("ui_password_create"), Window::Control::Text::Password::ui_password_create);
 
+        add_function(s.get_property("ui_box_is"), Window::ui_is<wxStaticBox>);
         add_function(s.get_property("ui_box_new"), Window::ui_new<wxStaticBox>);
         add_function(s.get_property("ui_box_create"), Window::Control::Box::ui_box_create);
 
+        add_function(s.get_property("ui_slider_is"), Window::ui_is<wxSlider>);
         add_function(s.get_property("ui_slider_new"), Window::ui_new<wxSlider>);
         add_function(s.get_property("ui_slider_create"), Window::Control::Slider::ui_slider_create);
         add_function(s.get_property("ui_slider_value_get"), Window::Control::Slider::ui_slider_value_get);
@@ -1186,12 +1247,14 @@ namespace Interpreter::SystemFunctions::UI {
         add_function(s.get_property("ui_slider_max_get"), Window::Control::Slider::ui_slider_max_get);
         add_function(s.get_property("ui_slider_max_set"), Window::Control::Slider::ui_slider_max_set);
 
+        add_function(s.get_property("ui_filepicker_is"), Window::ui_is<wxFilePickerCtrl>);
         add_function(s.get_property("ui_filepicker_new"), Window::ui_new<wxFilePickerCtrl>);
         add_function(s.get_property("ui_filepicker_create"), Window::Control::FilePicker::ui_filepicker_create);
         add_function(s.get_property("ui_filepicker_value_get"), Window::Control::FilePicker::ui_filepicker_value_get);
         add_function(s.get_property("ui_filepicker_value_set"), Window::Control::FilePicker::ui_filepicker_value_set);
         add_event(s.get_property("ui_filepicker_value_event"), wxEVT_FILEPICKER_CHANGED);
 
+        add_function(s.get_property("ui_webview_is"), Window::ui_is<wxWebView>);
         add_function(s.get_property("ui_webview_new"), Window::Control::Webview::ui_webview_new);
         add_function(s.get_property("ui_webview_create"), Window::Control::Webview::ui_webview_create);
         add_function(s.get_property("ui_webview_title_get"), Window::Control::Webview::ui_webview_title_get);

@@ -47,6 +47,10 @@ class (UI.Alignment) {
 };
 
 class (UI.Widget) {
+    (~) : (widget, UI.Widget) |-> {
+        import("system").ui_is(widget)
+    };
+
     (UI.Widget)::(this.create_widget |-> (
         () |-> {
             if (defined(this.children)) {
@@ -193,6 +197,10 @@ class (UI.Widget) {
 
 
 class (UI.Window) extends (UI.Widget) {
+    (~) : (widget, UI.Window) |-> {
+        import("system").ui_window_is(widget)
+    };
+
     UI.Window : this |-> {
         UI.Widget(this);
 
@@ -234,9 +242,12 @@ class (UI.Window) extends (UI.Widget) {
 
 
 class (UI.Frame) extends (UI.Window) {
+    (~) : (widget, UI.Frame) |-> {
+        import("system").ui_frame_is(widget)
+    };
+
     UI.Frame : (args, Array children) |-> {
         this := import("system").ui_frame_new();
-        this :~ (UI.Frame);
 
         this.children := children;
         this._args := args;
@@ -260,9 +271,12 @@ class (UI.Frame) extends (UI.Window) {
 
 
 class (UI.Dialog) extends (UI.Window) {
+    (~) : (widget, UI.Dialog) |-> {
+        import("system").ui_dialog_is(widget)
+    };
+
     UI.Dialog : (args, Array children) |-> {
         this := import("system").ui_dialog_new();
-        this :~ (UI.Dialog);
 
         this.children := children;
         this._args := args;
@@ -289,9 +303,12 @@ class (UI.Dialog) extends (UI.Window) {
 
 
 class (UI.Panel) extends (UI.Widget) {
+    (~) : (widget, UI.Panel) |-> {
+        import("system").ui_panel_is(widget)
+    };
+
     UI.Panel : (args, Array children) |-> {
         this := import("system").ui_panel_new();
-        this :~ (UI.Panel);
 
         this.children := children;
         this._args := args;
@@ -310,6 +327,10 @@ class (UI.Panel) extends (UI.Widget) {
 
 
 class (UI.Control) extends (UI.Widget) {
+    (~) : (widget, UI.Control) |-> {
+        import("system").ui_ctrl_is(widget)
+    };
+
     UI.Control : this |-> {
         UI.Widget(this);
 
@@ -335,8 +356,12 @@ class (UI.Control) extends (UI.Widget) {
 
 
 class (UI.ActivityIndicator) extends (UI.Control) {
+    (~) : (widget, UI.ActivityIndicator) |-> {
+        import("system").ui_activityindicator_is(widget)
+    };
+
     UI.ActivityIndicator : args |-> {
-        this := (import("system").ui_activityindicator_new()) :~ (UI.ActivityIndicator);
+        this := (import("system").ui_activityindicator_new());
 
         this._args := args;
 
@@ -364,8 +389,12 @@ class (UI.ActivityIndicator) extends (UI.Control) {
 
 
 class (UI.Button) extends (UI.Control) {
+    (~) : (widget, UI.Button) |-> {
+        import("system").ui_button_is(widget)
+    };
+
     UI.Button : args |-> {
-        this := (import("system").ui_button_new()) :~ (UI.Button);
+        this := (import("system").ui_button_new());
 
         this._args := args;
 
@@ -387,8 +416,12 @@ class (UI.Button) extends (UI.Control) {
 
 
 class (UI.Calendar) extends (UI.Control) {
+    (~) : (widget, UI.Calendar) |-> {
+        import("system").ui_calendar_is(widget)
+    };
+
     UI.Calendar : args |-> {
-        this := (import("system").ui_calendar_new()) :~ (UI.Calendar);
+        this := (import("system").ui_calendar_new());
 
         this._args := args;
 
@@ -420,8 +453,12 @@ class (UI.Calendar) extends (UI.Control) {
 
 
 class (UI.Checkbox) extends (UI.Control) {
+    (~) : (widget, UI.Checkbox) |-> {
+        import("system").ui_checkbox_is(widget)
+    };
+
     UI.Checkbox : args |-> {
-        this := (import("system").ui_checkbox_new()) :~ (UI.Checkbox);
+        this := (import("system").ui_checkbox_new());
 
         this._args := args;
 
@@ -452,8 +489,12 @@ class (UI.Checkbox) extends (UI.Control) {
 };
 
 class (UI.Choice) extends (UI.Control) {
+    (~) : (widget, UI.Choice) |-> {
+        import("system").ui_choice_is(widget)
+    };
+
     UI.Choice : args |-> {
-        this := (import("system").ui_choice_new()) :~ (UI.Choice);
+        this := (import("system").ui_choice_new());
 
         this._args := args;
 
@@ -495,8 +536,12 @@ class (UI.Choice) extends (UI.Control) {
 
 
 class (UI.ColorPicker) extends (UI.Control) {
+    (~) : (widget, UI.ColorPicker) |-> {
+        import("system").ui_colorpicker_is(widget)
+    };
+
     UI.ColorPicker : args |-> {
-        this := (import("system").ui_colorpicker_new()) :~ (UI.ColorPicker);
+        this := (import("system").ui_colorpicker_new());
 
         this._args := args;
 
@@ -527,8 +572,12 @@ class (UI.ColorPicker) extends (UI.Control) {
 };
 
 class (UI.DatePicker) extends (UI.Control) {
+    (~) : (widget, UI.DatePicker) |-> {
+        import("system").ui_datepicker_is(widget)
+    };
+
     UI.DatePicker : args |-> {
-        this := (import("system").ui_datepicker_new()) :~ (UI.DatePicker);
+        this := (import("system").ui_datepicker_new());
 
         this._args := args;
 
@@ -559,8 +608,12 @@ class (UI.DatePicker) extends (UI.Control) {
 };
 
 class (UI.Gauge) extends (UI.Control) {
+    (~) : (widget, UI.Gauge) |-> {
+        import("system").ui_gauge_is(widget)
+    };
+
     UI.Gauge : args |-> {
-        this := (import("system").ui_gauge_new()) :~ (UI.Gauge);
+        this := (import("system").ui_gauge_new());
 
         this._args := args;
 
@@ -597,8 +650,12 @@ class (UI.Gauge) extends (UI.Control) {
 };
 
 class (UI.Hyperlink) extends (UI.Control) {
+    (~) : (widget, UI.Hyperlink) |-> {
+        import("system").ui_hyperlink_is(widget)
+    };
+
     UI.Hyperlink : args |-> {
-        this := (import("system").ui_hyperlink_new()) :~ (UI.Hyperlink);
+        this := (import("system").ui_hyperlink_new());
 
         this._args := args;
 
@@ -625,8 +682,12 @@ class (UI.Hyperlink) extends (UI.Control) {
 };
 
 class (UI.Label) extends (UI.Control) {
+    (~) : (widget, UI.Label) |-> {
+        import("system").ui_label_is(widget)
+    };
+
     UI.Label : args |-> {
-        this := (import("system").ui_label_new()) :~ (UI.Label);
+        this := (import("system").ui_label_new());
 
         this._args := args;
 
@@ -643,8 +704,12 @@ class (UI.Label) extends (UI.Control) {
 };
 
 class (UI.Text) extends (UI.Control) {
+    (~) : (widget, UI.Text) |-> {
+        import("system").ui_text_is(widget)
+    };
+
     UI.Text : args |-> {
-        this := (import("system").ui_text_new()) :~ (UI.Text);
+        this := (import("system").ui_text_new());
 
         this._args := args;
 
@@ -691,8 +756,12 @@ class (UI.Text) extends (UI.Control) {
 };
 
 class (UI.MultilineText) extends (UI.Text) {
+    (~) : (widget, UI.MultilineText) |-> {
+        import("system").ui_multilinetext_is(widget)
+    };
+
     UI.MultilineText : args |-> {
-        this := (import("system").ui_multilinetext_new()) :~ (UI.MultilineText);
+        this := (import("system").ui_multilinetext_new());
 
         this._args := args;
 
@@ -713,8 +782,12 @@ class (UI.MultilineText) extends (UI.Text) {
 };
 
 class (UI.Search) extends (UI.Text) {
+    (~) : (widget, UI.Search) |-> {
+        import("system").ui_search_is(widget)
+    };
+
     UI.Search : args |-> {
-        this := (import("system").ui_search_new()) :~ (UI.Search);
+        this := (import("system").ui_search_new());
 
         this._args := args;
 
@@ -745,8 +818,12 @@ class (UI.Search) extends (UI.Text) {
 };
 
 class (UI.Password) extends (UI.Text) {
+    (~) : (widget, UI.Password) |-> {
+        import("system").ui_password_is(widget)
+    };
+
     UI.Password : args |-> {
-        this := (import("system").ui_password_new()) :~ (UI.Password);
+        this := (import("system").ui_password_new());
 
         this._args := args;
 
@@ -768,9 +845,12 @@ class (UI.Password) extends (UI.Text) {
 
 
 class (UI.Box) extends (UI.Control) {
+    (~) : (widget, UI.Box) |-> {
+        import("system").ui_box_is(widget)
+    };
+
     UI.Box : (args, Array children) |-> {
         this := import("system").ui_box_new();
-        this :~ (UI.Box);
 
         this.children := children;
         this._args := args;
@@ -788,8 +868,12 @@ class (UI.Box) extends (UI.Control) {
 };
 
 class (UI.Slider) extends (UI.Control) {
+    (~) : (widget, UI.Slider) |-> {
+        import("system").ui_slider_is(widget)
+    };
+
     UI.Slider : args |-> {
-        this := (import("system").ui_slider_new()) :~ (UI.Slider);
+        this := (import("system").ui_slider_new());
 
         this._args := args;
 
@@ -841,8 +925,12 @@ class (UI.Slider) extends (UI.Control) {
 
 
 class (UI.FilePicker) extends (UI.Control) {
+    (~) : (widget, UI.FilePicker) |-> {
+        import("system").ui_filepicker_is(widget)
+    };
+
     UI.FilePicker : args |-> {
-        this := (import("system").ui_filepicker_new()) :~ (UI.FilePicker);
+        this := (import("system").ui_filepicker_new());
 
         this._args := args;
 
@@ -874,8 +962,12 @@ class (UI.FilePicker) extends (UI.Control) {
 
 
 class (UI.Webview) extends (UI.Widget) {
+    (~) : (widget, UI.Webview) |-> {
+        import("system").ui_webview_is(widget)
+    };
+
     UI.Webview : args |-> {
-        this := (import("system").ui_webview_new()) :~ (UI.Webview);
+        this := (import("system").ui_webview_new());
 
         this._args := args;
 

@@ -139,7 +139,9 @@ namespace Interpreter {
                 auto reference = computed.compute(context, arguments);
 
                 if (function_context.has_symbol(symbol->name)) {
-                    if (reference != Reference(function_context[symbol->name]))
+                    auto* data = get_if<Data>(&reference);
+                    auto const& arg = function_context[symbol->name];
+                    if (!(reference == Reference(arg) || (data && *data == arg.get_data())))
                         throw Interpreter::FunctionArgumentsError();
                 } else {
                     function_context.add_symbol(symbol->name, reference);
