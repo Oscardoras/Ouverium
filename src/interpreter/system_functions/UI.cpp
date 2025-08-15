@@ -29,6 +29,7 @@
 #include <wx/gauge.h>
 #include <wx/hyperlink.h>
 #include <wx/radiobox.h>
+#include <wx/simplebook.h>
 #include <wx/srchctrl.h>
 #include <wx/webview.h>
 #include <wx/wrapsizer.h>
@@ -181,7 +182,11 @@ namespace Interpreter::SystemFunctions::UI {
                 sizer->Clear();
                 auto const& children = window->GetChildren();
                 for (size_t i = 0; i < children.size(); ++i) {
-                    auto const& child = children[i];
+                    auto* child = children[i];
+
+                    if (dynamic_cast<wxDialog*>(child))
+                        continue;
+
                     wxSizerFlags flags;
                     if (auto* user_data = dynamic_cast<UserData*>(child->GetClientObject())) {
                         flags = get_flags(sizer, user_data->item_style);
@@ -199,9 +204,8 @@ namespace Interpreter::SystemFunctions::UI {
                 if (auto* parent_sizer = parent->GetSizer()) {
                     size_t i = 0;
                     for (auto* child : parent_sizer->GetChildren()) {
-                        if (child->GetWindow() == window) {
+                        if (child->GetWindow() == window)
                             break;
-                        }
 
                         ++i;
                     }
@@ -1033,6 +1037,69 @@ namespace Interpreter::SystemFunctions::UI {
 
             }
 
+            namespace Book {
+
+                Reference ui_book_create(wxWindow* window, wxWindow* parent) {
+                    auto* book = dynamic_cast<wxSimplebook*>(window);
+
+                    book->Create(parent, wxID_ANY);
+
+                    return Data{};
+                }
+
+                Reference ui_reload(wxWindow* window) {
+                    auto* book = dynamic_cast<wxBookCtrlBase*>(window);
+
+                    book->DeleteAllPages();
+
+                    for (auto* child : book->GetChildren())
+                        book->AddPage(child, "");
+
+                    return Data{};
+                }
+
+                Reference ui_book_value_get(wxWindow* window) {
+                    auto* book = dynamic_cast<wxBookCtrlBase*>(window);
+
+                    return Data(static_cast<OV_INT>(book->GetSelection()));
+                }
+
+                Reference ui_book_value_set(wxWindow* window, OV_INT value) {
+                    auto* book = dynamic_cast<wxBookCtrlBase*>(window);
+
+                    book->SetSelection(static_cast<int>(value));
+
+                    return Data{};
+                }
+
+                Reference ui_book_get_text(wxWindow* window, OV_INT index) {
+                    auto* book = dynamic_cast<wxBookCtrlBase*>(window);
+
+                    return Data(GC::new_object(book->GetPageText(index).ToStdString()));
+                }
+
+                Reference ui_book_set_text(wxWindow* window, OV_INT index, std::string const& text) {
+                    auto* book = dynamic_cast<wxBookCtrlBase*>(window);
+
+                    book->SetPageText(index, text);
+
+                    return Data{};
+                }
+
+                namespace Notebook {
+
+                    Reference ui_notebook_create(wxWindow* window, wxWindow* parent) {
+                        auto* book = dynamic_cast<wxNotebook*>(window);
+
+                        book->Create(parent, wxID_ANY);
+
+                        return Data{};
+                    }
+
+                }
+
+            }
+
             namespace Webview {
 
                 Reference ui_webview_new() {
@@ -1253,6 +1320,19 @@ namespace Interpreter::SystemFunctions::UI {
         add_function(s.get_property("ui_filepicker_value_get"), Window::Control::FilePicker::ui_filepicker_value_get);
         add_function(s.get_property("ui_filepicker_value_set"), Window::Control::FilePicker::ui_filepicker_value_set);
         add_event(s.get_property("ui_filepicker_value_event"), wxEVT_FILEPICKER_CHANGED);
+
+        add_function(s.get_property("ui_book_is"), Window::ui_is<wxBookCtrlBase>);
+        add_function(s.get_property("ui_book_new"), Window::ui_new<wxSimplebook>);
+        add_function(s.get_property("ui_book_create"), Window::Control::Book::ui_book_create);
+        add_function(s.get_property("ui_book_reload"), Window::Control::Book::ui_reload);
+        add_function(s.get_property("ui_book_value_get"), Window::Control::Book::ui_book_value_get);
+        add_function(s.get_property("ui_book_value_set"), Window::Control::Book::ui_book_value_set);
+        add_function(s.get_property("ui_book_get_text"), Window::Control::Book::ui_book_get_text);
+        add_function(s.get_property("ui_book_set_text"), Window::Control::Book::ui_book_set_text);
+
+        add_function(s.get_property("ui_notebook_is"), Window::ui_is<wxNotebook>);
+        add_function(s.get_property("ui_notebook_new"), Window::ui_new<wxNotebook>);
+        add_function(s.get_property("ui_notebook_create"), Window::Control::Book::Notebook::ui_notebook_create);
 
         add_function(s.get_property("ui_webview_is"), Window::ui_is<wxWebView>);
         add_function(s.get_property("ui_webview_new"), Window::Control::Webview::ui_webview_new);

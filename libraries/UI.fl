@@ -961,6 +961,85 @@ class (UI.FilePicker) extends (UI.Control) {
 };
 
 
+class (UI.Book) extends (UI.Control) {
+    (~) : (widget, UI.Book) |-> {
+        import("system").ui_book_is(widget)
+    };
+
+    UI.Book : (args, Array children) |-> {
+        this := (import("system").ui_book_new());
+
+        this.children := children;
+        this._args := args;
+
+        UI.Control(this)
+    };
+
+    (UI.Book)::(this.create |-> (
+        (UI.Widget parent) |-> {
+            import("system").ui_book_create(this, parent);
+
+            value := if (defined (this._args.value)) { this._args.value } else { 0 };
+
+            this.create_widget();
+
+            this.reload();
+            this.value := value;
+        }
+    ));
+
+    (UI.Book)::(this.reload |-> (
+        () |-> {
+            import("system").ui_book_reload(this);
+
+            i := 0;
+            foreach(this.children, child |-> {
+                import("system").ui_book_set_text(this, i, if (defined (child.page_title)) { child.page_title } else "");
+                ++i;
+            });
+        }
+    ));
+
+    (UI.Book)::(
+        this.value |-> {
+            import("system").ui_book_value_get(this)
+        },
+        (this.value, Int v) |-> {
+            import("system").ui_book_value_set(this, v);
+            v
+        }
+    );
+};
+
+class (UI.Notebook) extends (UI.Book) {
+    (~) : (widget, UI.Notebook) |-> {
+        import("system").ui_notebook_is(widget)
+    };
+
+    UI.Notebook : (args, Array children) |-> {
+        this := (import("system").ui_notebook_new());
+
+        this.children := children;
+        this._args := args;
+
+        UI.Book(this)
+    };
+
+    (UI.Notebook)::(this.create |-> (
+        (UI.Widget parent) |-> {
+            import("system").ui_notebook_create(this, parent);
+
+            value := if (defined (this._args.value)) { this._args.value } else { 0 };
+
+            this.create_widget();
+
+            this.reload();
+            this.value := value;
+        }
+    ));
+};
+
+
 class (UI.Webview) extends (UI.Widget) {
     (~) : (widget, UI.Webview) |-> {
         import("system").ui_webview_is(widget)

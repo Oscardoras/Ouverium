@@ -25,8 +25,13 @@ f := UI.Frame( .title := "test", .size := [1000, 400] ) {
             UI.MultilineText( .label := "Write", .value := "", .min_size := [300, 100] ),
             UI.Password( .label := "Password", .value := "pass", .min_size := [100, 50] ),
         },
-        UI.Choice( .options := ["a", "b", "c"], .value := 1, .min_size := [100, 50] ),
-        slider := UI.Slider( .label := "Slider", .min := 0, .max := 10, .value := 5, .on_value_change := args |-> { print(slider.value); } )
+        choice := UI.Choice( .options := ["a", "b", "c"], .value := 1, .min_size := [100, 50], .on_value_change := args |-> { book.value := choice.value; } ),
+        slider := UI.Slider( .label := "Slider", .min := 0, .max := 10, .value := 5, .on_value_change := args |-> { print(slider.value); } ),
+        book := UI.Notebook( .label := "Books", .value := 1 ) {
+            UI.Search( .page_title := "Search", .value := "john doe", .min_size := [200, 50] ),
+            UI.Text( .page_title := "Write", .value := "michel", .min_size := [200, 50] ),
+            UI.MultilineText( .page_title := "Multiline", .value := "", .min_size := [300, 100] ),
+        },
     },
 };
 f.create();
@@ -45,8 +50,8 @@ f2 := UI.Frame( .title := "test webview", .min_size := [600, 400] ) {
             UI.Button(
                 .label := "Browse",
                 .border := -1,
-                .background_color := [0, 0, 0, 255],
-                .foreground_color := [255, 0, 0, 255],
+                .background_color := [33, 150, 253, 255],
+                .foreground_color := [255, 255, 255, 255],
                 .align := UI.Alignment.Stretch,
                 .on_value_change := args |-> { wb.url := urlBar.value; }
             ),
