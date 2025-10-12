@@ -24,7 +24,7 @@ set(BOOST_INCLUDE_LIBRARIES asio dll)
 set(BOOST_ENABLE_CMAKE ON)
 FetchContent_Declare(
     Boost
-    URL https://github.com/boostorg/boost/releases/download/boost-1.84.0/boost-1.84.0.7z
+    URL https://github.com/boostorg/boost/releases/download/boost-1.85.0/boost-1.85.0-cmake.tar.gz
     DOWNLOAD_EXTRACT_TIMESTAMP OFF
 )
 FetchContent_MakeAvailable(Boost)
@@ -40,7 +40,7 @@ if(OUVERIUM_GUI)
         set(wxUSE_WEBVIEW ON)
         FetchContent_Declare(
             wxWidgets
-            URL https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.4/wxWidgets-3.2.4.7z
+            URL https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.4/wxWidgets-3.2.4.zip
             DOWNLOAD_EXTRACT_TIMESTAMP OFF
         )
         FetchContent_MakeAvailable(wxWidgets)
