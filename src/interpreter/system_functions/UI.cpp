@@ -198,7 +198,6 @@ namespace Interpreter::SystemFunctions::UI {
                     sizer->Add(child, flags);
                 }
             }
-            window->Fit();
 
             if (auto* parent = window->GetParent()) {
                 if (auto* parent_sizer = parent->GetSizer()) {
@@ -212,8 +211,16 @@ namespace Interpreter::SystemFunctions::UI {
 
                     parent_sizer->Detach(window);
                     parent_sizer->Insert(i, window, get_flags(parent_sizer, item_style));
-                    parent->Fit();
                 }
+            }
+
+            while (window->GetParent() && window->GetParent()->GetSizer()) {
+                window = window->GetParent();
+            }
+            if (dynamic_cast<wxFrame*>(window)) {
+                window->Layout();
+            } else {
+                window->Fit();
             }
         }
 
@@ -248,10 +255,10 @@ namespace Interpreter::SystemFunctions::UI {
             if (auto* parent = window->GetParent()) {
                 if (auto* parent_sizer = parent->GetSizer()) {
                     parent_sizer->Show(window, visible);
-                    parent->Fit();
                 }
             }
             window->Show(visible);
+            set_style(window);
 
             return Data{};
         }

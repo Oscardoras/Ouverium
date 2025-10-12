@@ -1,7 +1,7 @@
 import "UI.fl";
 
-f := UI.Frame( .title := "test", .size := [1000, 400] ) {
-    UI.Panel( .layout := UI.Layout.HorizontalWrap, .spacing := 5 ) {
+f := UI.Frame( .title := "test", .size := [1000, 800], .layout := UI.Layout.Vertical ) {
+    UI.Panel( .proportion := 1, .align := UI.Alignment.Stretch, .layout := UI.Layout.HorizontalWrap, .spacing := 5, .background_color := [33, 150, 253, 255] ) {
         UI.ActivityIndicator( .value := true ),
         UI.Button( .label := "b1", .proportion := 1, .align := UI.Alignment.Stretch, .on_value_change := args |-> { print("test b1"); r.value :+= 1; } ),
         UI.Button( .label := "b2", .align := UI.Alignment.End, .on_value_change := args |-> { print("test b2"); r.value :-= 1 } ),
