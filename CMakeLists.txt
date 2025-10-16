@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.25)
 project(Ouverium VERSION 0.2.0 LANGUAGES C CXX)
 
+include(CMakeDependentOption)
 include(CheckIPOSupported)
 include(FetchContent)
 include(CTest)
@@ -11,7 +12,7 @@ include(CPack)
 
 option(OUVERIUM_BUILD_BOOST "Download and build Boost" ON)
 option(OUVERIUM_WITH_WXWIDGET "GUI library support (using wxWidgets)" ON)
-option(OUVERIUM_BUILD_WXWIDGET "Download and build wxWidgets" ON)
+cmake_dependent_option(OUVERIUM_BUILD_WXWIDGET "Download and build wxWidgets" ON OUVERIUM_WITH_WXWIDGET OFF)
 
 
 # Configuration
