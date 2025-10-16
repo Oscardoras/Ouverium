@@ -1,0 +1,2 @@
+add_library(ouverium_types INTERFACE)
+target_include_directories(ouverium_types INTERFACE include)
