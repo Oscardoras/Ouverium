@@ -907,10 +907,21 @@ namespace Interpreter::SystemFunctions::System {
         return Data(static_cast<OV_FLOAT>(d.count()));
     }
 
+
+#if defined(__cpp_lib_jthread)
+    using Thread = std::jthread;
+#else
+    struct Thread : public std::thread {
+        ~Thread() {
+            join();
+        }
+    };
+#endif
+
     auto const thread_is_args = std::make_shared<Parser::Symbol>("thread");
     Reference thread_is(FunctionContext& context) {
         try {
-            context["thread"].to_data(context).get<ObjectPtr>()->c_obj.get<std::jthread>();
+            context["thread"].to_data(context).get<ObjectPtr>()->c_obj.get<Thread>();
 
             return Data(true);
         } catch (std::bad_any_cast const&) {
@@ -929,7 +940,7 @@ namespace Interpreter::SystemFunctions::System {
             auto caller = context.caller;
 
             auto obj = GC::new_object();
-            obj->c_obj.set(std::make_unique<std::jthread>([&global, caller, function]() {
+            obj->c_obj.set(std::make_unique<Thread>([&global, caller, function]() {
                 try {
                     Interpreter::call_function(global, caller, Data(function), std::make_shared<Parser::Tuple>());
                 } catch (Interpreter::Exception const& ex) {
@@ -945,7 +956,7 @@ namespace Interpreter::SystemFunctions::System {
     auto const thread_join_args = std::make_shared<Parser::Symbol>("thread");
     Reference thread_join(FunctionContext& context) {
         try {
-            auto& thread = context["thread"].to_data(context).get<ObjectPtr>()->c_obj.get<std::jthread>();
+            auto& thread = context["thread"].to_data(context).get<ObjectPtr>()->c_obj.get<Thread>();
             thread.join();
 
             return {};
@@ -959,7 +970,7 @@ namespace Interpreter::SystemFunctions::System {
     auto const thread_detach_args = std::make_shared<Parser::Symbol>("thread");
     Reference thread_detach(FunctionContext& context) {
         try {
-            auto& thread = context["thread"].to_data(context).get<ObjectPtr>()->c_obj.get<std::jthread>();
+            auto& thread = context["thread"].to_data(context).get<ObjectPtr>()->c_obj.get<Thread>();
             thread.detach();
 
             return {};
@@ -973,7 +984,7 @@ namespace Interpreter::SystemFunctions::System {
     auto const thread_get_id_args = std::make_shared<Parser::Symbol>("thread");
     Reference thread_get_id(FunctionContext& context) {
         try {
-            auto& thread = context["thread"].to_data(context).get<ObjectPtr>()->c_obj.get<std::jthread>();
+            auto& thread = context["thread"].to_data(context).get<ObjectPtr>()->c_obj.get<Thread>();
 
             return Data(static_cast<OV_INT>(std::hash<std::thread::id>{}(thread.get_id())));
         } catch (std::bad_any_cast const&) {
