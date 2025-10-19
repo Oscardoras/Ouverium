@@ -46,8 +46,15 @@ std::variant<std::nullptr_t, bool, OV_INT, OV_FLOAT, std::string> get_symbol(std
         return i;
 
     OV_FLOAT f{};
+#if defined(__APPLE__)
+    try {
+        f = std::stof(name);
+        return f;
+    } catch (...) {}
+#else
     if (std::from_chars(name.data(), name.data() + name.size(), f).ec == std::errc())
         return f;
+#endif
 
     return nullptr;
 }
