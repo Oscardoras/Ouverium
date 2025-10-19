@@ -908,10 +908,13 @@ namespace Interpreter::SystemFunctions::System {
     }
 
 
-#if defined(__cpp_lib_jthread)
+#if not defined(__cpp_lib_jthread)
     using Thread = std::jthread;
 #else
     struct Thread : public std::thread {
+        using std::thread::thread;
+        using std::thread::operator=;
+
         ~Thread() {
             join();
         }

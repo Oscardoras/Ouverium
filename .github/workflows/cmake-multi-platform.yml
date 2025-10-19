@@ -31,7 +31,7 @@ jobs:
           - os: macos-latest
             generator: Ninja
             build_type: Release
-            compiler: {c: gcc, cxx: g++}
+            compiler: {c: clang, cxx: clang++}
 
     env:
       SRC_PATH: ${{ github.workspace }}
