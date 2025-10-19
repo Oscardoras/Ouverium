@@ -1,0 +1,21 @@
+FILE(GLOB_RECURSE ouverium_sources main.cpp*)
+
+add_executable(ouverium ${ouverium_sources})
+target_compile_features(ouverium PRIVATE cxx_std_20)
+
+target_link_libraries(ouverium PRIVATE ouverium_interpreter)
+target_link_libraries(ouverium PRIVATE Boost::dll)
+if(WIN32)
+    target_link_libraries(ouverium PRIVATE ws2_32 mswsock)
+endif()
+if (UNIX AND READLINE_LIB_FOUND)
+    target_link_libraries(ouverium PRIVATE ${READLINE_LIB})
+    add_compile_definitions(READLINE)
+endif()
+target_link_libraries(ouverium PRIVATE ${Readline})
+if(OUVERIUM_WITH_WXWIDGET)
+    target_link_libraries(ouverium PRIVATE wx::core)
+    target_compile_definitions(ouverium PRIVATE OUVERIUM_WXWIDGETS)
+endif()
+
+install(TARGETS ouverium)
