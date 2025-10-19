@@ -1,12 +1,11 @@
-#include <ouverium/parser/Expressions.hpp>
-
-#include <ouverium/parser/Types.hpp>
-
 #include <cstddef>
 #include <memory>
 #include <set>
 #include <string>
 #include <variant>
+
+#include <ouverium/parser/Expressions.hpp>
+#include <ouverium/parser/Types.hpp>
 
 
 namespace Parser {

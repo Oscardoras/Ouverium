@@ -1,5 +1,4 @@
-#ifndef __INTERPRETER_GC_HPP__
-#define __INTERPRETER_GC_HPP__
+#pragma once
 
 // IWYU pragma: private; include "Interpreter.hpp"
 
@@ -16,6 +15,3 @@ namespace Interpreter::GC {
     void collect();
 
 }
-
-
-#endif

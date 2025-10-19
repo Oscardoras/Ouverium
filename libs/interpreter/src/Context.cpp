@@ -3,11 +3,11 @@
 #include <string>
 #include <utility>
 
-#include "system_functions/SystemFunction.hpp"
-
 #include <ouverium/interpreter/Interpreter.hpp>
 
 #include <ouverium/parser/Expressions.hpp>
+
+#include "system_functions/SystemFunction.hpp"
 
 
 namespace Interpreter {
@@ -23,7 +23,7 @@ namespace Interpreter {
     }
 
     bool Context::has_symbol(std::string const& symbol) const {
-        return symbols.find(symbol) != symbols.end();
+        return symbols.contains(symbol);
     }
 
     void Context::add_symbol(std::string const& symbol, IndirectReference const& indirect_reference) {
