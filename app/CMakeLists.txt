@@ -1,7 +1,7 @@
 FILE(GLOB_RECURSE ouverium_sources main.cpp*)
 
 add_executable(ouverium ${ouverium_sources})
-target_compile_features(ouverium PRIVATE cxx_std_20)
+target_link_libraries(ouverium PRIVATE ouverium_options)
 
 target_link_libraries(ouverium PRIVATE ouverium_interpreter)
 target_link_libraries(ouverium PRIVATE Boost::dll)

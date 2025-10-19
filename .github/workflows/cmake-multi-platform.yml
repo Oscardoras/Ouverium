@@ -10,18 +10,28 @@ on:
 
 jobs:
   build:
+    name: Build & Test (${{ matrix.os }}, ${{ matrix.build_type }}, ${{ matrix.compiler.c }})
     runs-on: ${{ matrix.os }}
 
     strategy:
       fail-fast: false
 
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
         generator: [Ninja]
         build_type: [Release]
         compiler:
           - {c: gcc, cxx: g++}
           - {c: clang, cxx: clang++}
+        include:
+          - os: windows-latest
+            generator: Ninja
+            build_type: Release
+            compiler: {c: gcc, cxx: g++}
+          - os: macos-latest
+            generator: Ninja
+            build_type: Release
+            compiler: {c: clang, cxx: clang++}
 
     env:
       SRC_PATH: ${{ github.workspace }}

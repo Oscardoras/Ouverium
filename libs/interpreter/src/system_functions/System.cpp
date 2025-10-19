@@ -470,11 +470,34 @@ namespace Interpreter::SystemFunctions::System {
         return Data(static_cast<OV_FLOAT>(d.count()));
     }
 
+
+#if defined(__cpp_lib_jthread)
+    using Thread = std::jthread;
+#else
+    struct Thread : public std::thread {
+        using std::thread::thread;
+
+        Thread& operator=(Thread const&) = delete;
+
+        Thread& operator=(Thread&& other)  noexcept {
+            static_cast<std::thread&>(*this) = std::move(static_cast<std::thread&&>(other));
+
+            return *this;
+        }
+
+        ~Thread() {
+            if (joinable()) {
+                join();
+            }
+        }
+    };
+#endif
+
     Reference thread_create(FunctionContext& context, ObjectPtr const& function) {
         auto& global = context.get_global();
         auto caller = context.caller;
 
-        return Data(std::make_shared<std::jthread>([&global, caller, function]() {
+        return Data(std::make_shared<Thread>([&global, caller, function]() {
             try {
                 Interpreter::call_function(global, caller, Data(function), std::make_shared<Parser::Tuple>());
             } catch (Interpreter::Exception const& ex) {
@@ -483,19 +506,19 @@ namespace Interpreter::SystemFunctions::System {
         }));
     }
 
-    Reference thread_join(std::jthread& thread) {
+        Reference thread_join(Thread & thread) {
         thread.join();
 
         return {};
     }
 
-    Reference thread_detach(std::jthread& thread) {
+    Reference thread_detach(Thread& thread) {
         thread.detach();
 
         return {};
     }
 
-    Reference thread_get_id(std::jthread& thread) {
+    Reference thread_get_id(Thread& thread) {
         return Data(static_cast<OV_INT>(std::hash<std::thread::id>{}(thread.get_id())));
     }
 
@@ -619,7 +642,7 @@ namespace Interpreter::SystemFunctions::System {
         add_function(s.get_property("clock_system"), clock_system);
         add_function(s.get_property("clock_steady"), clock_steady);
 
-        add_function(s.get_property("thread_is"), check_type<std::jthread&>);
+        add_function(s.get_property("thread_is"), check_type<Thread&>);
         add_function(s.get_property("thread_create"), thread_create);
         add_function(s.get_property("thread_join"), thread_join);
         add_function(s.get_property("thread_detach"), thread_detach);
