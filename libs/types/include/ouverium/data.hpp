@@ -18,7 +18,7 @@ namespace Ov {
 
         std::any data;
 
-        Data() {}
+        Data() = default;
 
         Data(std::integral auto i) {
             data = static_cast<OV_INT>(i);

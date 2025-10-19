@@ -1,9 +1,6 @@
-#include <exception>
 #include <filesystem>
-#include <fstream>
 #include <memory>
 #include <set>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -11,12 +8,12 @@
 
 #include <ouverium/data.hpp>
 
-#include "SystemFunction.hpp"
-
 #include <ouverium/interpreter/Interpreter.hpp>
 
 #include <ouverium/parser/Expressions.hpp>
 #include <ouverium/parser/Standard.hpp>
+
+#include "SystemFunction.hpp"
 
 
 extern std::filesystem::path const program_location;
@@ -47,7 +44,7 @@ namespace Interpreter::SystemFunctions::Dll {
         auto p = Parser::Standard::get_canonical_path(context.caller->position, context["path"].to_data(context).get<ObjectPtr>()->to_string());
 
         if (p.has_value() && std::set<std::string>{".fl", ".ov", ".ouv"}.contains(p->extension().string())) {
-            auto path = *p;
+            auto const& path = *p;
             auto& global = context.get_global();
             auto root = context.caller->get_root();
 
@@ -87,7 +84,7 @@ namespace Interpreter::SystemFunctions::Dll {
                 return {};
             }
 
-            return Reference();
+            return {};
         } else throw Interpreter::FunctionArgumentsError();
     }
 

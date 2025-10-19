@@ -1,5 +1,4 @@
-#ifndef __INTERPRETER_DATA_HPP__
-#define __INTERPRETER_DATA_HPP__
+#pragma once
 
 // IWYU pragma: private; include "Interpreter.hpp"
 
@@ -107,5 +106,3 @@ namespace Interpreter {
     };
 
 }
-
-#endif

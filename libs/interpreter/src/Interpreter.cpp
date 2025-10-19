@@ -11,12 +11,12 @@
 #include <vector>
 #include <variant>
 
-#include <ouverium/types.h>
-
 #include <ouverium/interpreter/Interpreter.hpp>
 
 #include <ouverium/parser/Expressions.hpp>
 #include <ouverium/parser/Types.hpp>
+
+#include <ouverium/types.h>
 
 
 namespace Interpreter {

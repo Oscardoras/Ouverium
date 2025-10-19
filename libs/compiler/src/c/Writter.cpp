@@ -10,10 +10,11 @@
 #include <vector>
 
 #include <ouverium/hash_string.h>
-#include <ouverium/types.h>
 
 #include <ouverium/compiler/c/Code.hpp>
 #include <ouverium/compiler/c/Translator.hpp>
+
+#include <ouverium/types.h>
 
 
 namespace Translator::CStandard {

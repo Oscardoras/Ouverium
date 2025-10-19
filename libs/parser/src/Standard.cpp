@@ -24,7 +24,7 @@ extern std::vector<std::string> include_path;
 
 namespace Parser {
 
-    Standard::Standard(std::string code, std::string path) :
+    Standard::Standard(std::string code, std::filesystem::path path) :
         code(std::move(code)), path(std::move(path)) {}
 
     Standard::Word::Word(std::string word, Parser::Position position) :
@@ -90,7 +90,7 @@ namespace Parser {
 
     std::set<std::string> const system_chars = { ".", ",", "\\", "|->" };
     bool is_system(std::string const& str) {
-        return system_chars.find(str) != system_chars.end();
+        return system_chars.contains(str);
     }
 
 
@@ -105,7 +105,7 @@ namespace Parser {
 
         size_t line = 1;
         size_t column = 1;
-        std::string position = "file " + path + ":" + std::to_string(line) + ":" + std::to_string(column);
+        std::string position = "file " + path.string() + ":" + std::to_string(line) + ":" + std::to_string(column);
 
         size_t i{};
         for (i = 0; i < code.size(); ++i) {
@@ -157,7 +157,7 @@ namespace Parser {
                 ++line;
                 column = 1;
             } else ++column;
-            position = "file " + path + ":" + std::to_string(line) + ":" + std::to_string(column);
+            position = "file " + path.string() + ":" + std::to_string(line) + ":" + std::to_string(column);
         }
         if (b < i && !is_comment) words.emplace_back(code.substr(b, i - b), position);
 

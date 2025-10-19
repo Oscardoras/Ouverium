@@ -1,5 +1,4 @@
-#ifndef __COMPILER_C_CODE_HPP__
-#define __COMPILER_C_CODE_HPP__
+#pragma once
 
 #include <cstddef>
 #include <list>
@@ -272,6 +271,3 @@ namespace Translator::CStandard {
     };
 
 }
-
-
-#endif

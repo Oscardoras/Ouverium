@@ -11,9 +11,10 @@
 #include <utility>
 #include <vector>
 
-#include <ouverium/hash_string.h>
-#include <ouverium/include.h>
 #include <ouverium/types.h>
+
+#include "include.h"
+#include "hash_string.h"
 
 
 namespace Ov {

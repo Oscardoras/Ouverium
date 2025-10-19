@@ -25,6 +25,8 @@
 #include <ouverium/parser/Expressions.hpp>
 #include <ouverium/parser/Standard.hpp>
 
+#include <ouverium/types.h>
+
 
 std::filesystem::path const program_location = boost::filesystem::canonical(boost::dll::program_location()).parent_path().parent_path().string();
 std::vector<std::string> include_path;
@@ -299,7 +301,6 @@ public:
     std::unique_ptr<ExecutionMode> mode;
 
     bool OnInit() override {
-        std::srand(std::time(nullptr));
         include_path.push_back((program_location / "libraries").string());
 
         if (argc == 1) {

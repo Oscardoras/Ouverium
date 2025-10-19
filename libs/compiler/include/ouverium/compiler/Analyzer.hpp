@@ -5,6 +5,7 @@
 #include <set>
 #include <string>
 #include <variant>
+#include <vector>
 
 #include <ouverium/parser/Expressions.hpp>
 

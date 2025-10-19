@@ -6,13 +6,11 @@
 #include <variant>
 
 #include <ouverium/compiler/c/Translator.hpp>
-
 #include <ouverium/compiler/Analyzer.hpp>
 #include <ouverium/compiler/SimpleAnalyzer.hpp>
 
 #include <ouverium/parser/Expressions.hpp>
 #include <ouverium/parser/Standard.hpp>
-
 #include <ouverium/parser/Types.hpp>
 
 

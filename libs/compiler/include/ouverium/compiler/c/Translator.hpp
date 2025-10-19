@@ -1,5 +1,4 @@
-#ifndef __COMPILER_C_TRANSLATOR_HPP__
-#define __COMPILER_C_TRANSLATOR_HPP__
+#pragma once
 
 #include <filesystem>
 #include <list>
@@ -10,8 +9,6 @@
 #include <utility>
 
 #include <ouverium/compiler/c/Code.hpp>
-
-
 #include <ouverium/compiler/Analyzer.hpp>
 
 #include <ouverium/parser/Expressions.hpp>
@@ -120,6 +117,3 @@ namespace Translator::CStandard {
     };
 
 }
-
-
-#endif
