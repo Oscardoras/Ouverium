@@ -1,6 +1,4 @@
 #include <assert.h>
-#include <stdio.h>
-#include <string.h>
 
 #include <ouverium/include.h>
 
@@ -164,7 +162,7 @@ Ov_Reference_Owned opposite_body(Ov_Reference_Shared captures[], Ov_Reference_Sh
         r.data.i = -a.data.i;
     } else if (a.vtable == &Ov_VirtualTable_Float) {
         r.vtable = &Ov_VirtualTable_Float;
-        r.data.i = -a.data.f;
+        r.data.f = -a.data.f;
     }
     assert(r.vtable != NULL);
 
@@ -661,7 +659,7 @@ Ov_Reference_Owned divide_body(Ov_Reference_Shared captures[], Ov_Reference_Shar
 // }
 
 
-void Ov_init_functions_math() {
+void Ov_init_functions_math(void) {
     Ov_Function_push(Ov_get_function(Ov_Reference_share(_x21)), a_parameters, logical_not_body, logical_not_filter, 0, NULL, 0);
 
     Ov_Function_push(Ov_get_function(Ov_Reference_share(_x26)), a_b_parameters, logical_and_body, logical_and_filter, 1, NULL, 0);

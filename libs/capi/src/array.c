@@ -2,6 +2,8 @@
 
 #include <ouverium/include.h>
 
+#include <ouverium/types.h>
+
 
 void* Ov_Array_get(Ov_ArrayInfo array, size_t i) {
     return ((BYTE*) array.array->tab) + array.vtable->size * i;

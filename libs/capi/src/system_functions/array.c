@@ -5,6 +5,8 @@
 #include <ouverium/hash_string.h>
 #include <ouverium/include.h>
 
+#include <ouverium/types.h>
+
 #include "../gc.h"
 
 
@@ -141,13 +143,13 @@ Ov_Reference_Owned copy_data_body(Ov_Reference_Shared captures[], Ov_Reference_S
             for (OV_INT i = n - 1; i >= 0; --i)
                 Ov_UnknownData_set(
                     to_array.vtable, Ov_Array_get(to_array, (size_t) to_i + i),
-                    Ov_UnknownData_from_ptr(from_array.vtable, from_array.array->tab + (size_t) from_i + i)
+                    Ov_UnknownData_from_ptr(from_array.vtable, (BYTE*) from_array.array->tab + (size_t) (from_i + i))
                 );
         } else {
             for (OV_INT i = 0; i < n; ++i)
                 Ov_UnknownData_set(
                     to_array.vtable, Ov_Array_get(to_array, (size_t) to_i + i),
-                    Ov_UnknownData_from_ptr(from_array.vtable, from_array.array->tab + (size_t) from_i + i)
+                    Ov_UnknownData_from_ptr(from_array.vtable, (BYTE*) from_array.array->tab + (size_t) (from_i + i))
                 );
         }
     }
@@ -207,7 +209,7 @@ Ov_Reference_Owned foreach_body(Ov_Reference_Shared captures[], Ov_Reference_Sha
 }
 
 
-void Ov_init_functions_array() {
+void Ov_init_functions_array(void) {
     Ov_UnknownData Array_data = Ov_get_object(Ov_Reference_share(Array));
 
     Ov_Reference_Owned get_capacity = Ov_Reference_new_property(Array_data, hash_string("get_capacity"));

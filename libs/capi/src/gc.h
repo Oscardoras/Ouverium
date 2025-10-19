@@ -1,6 +1,8 @@
 #ifndef __GC_H__
 #define __GC_H__
 
+#include <stddef.h>
+
 #include <ouverium/include.h>
 
 
@@ -69,7 +71,7 @@ extern "C" {
     Ov_Reference_Owned Ov_GC_capture_to_reference(struct Ov_FunctionCapture capture);
     Ov_Reference_Owned Ov_Function_execute(Ov_Expression args);
 
-    void Ov_init_functions();
+    void Ov_init_functions(void);
     Ov_UnknownData Ov_get_object(Ov_Reference_Shared reference);
     Ov_Function* Ov_get_function(Ov_Reference_Shared reference);
 

@@ -5,6 +5,8 @@
 
 #include <ouverium/include.h>
 
+#include <ouverium/types.h>
+
 #include "../gc.h"
 
 
@@ -348,7 +350,7 @@ Ov_Reference_Owned function_add_body(Ov_Reference_Shared captures[], Ov_Referenc
 static bool equals(Ov_UnknownData a, Ov_UnknownData b) {
     if (a.vtable == &Ov_VirtualTable_Char) {
         if (b.vtable == a.vtable)
-            return a.data.b == b.data.b;
+            return a.data.c == b.data.c;
         else
             return false;
     } else if (a.vtable == &Ov_VirtualTable_Float) {
@@ -643,6 +645,7 @@ void Ov_init_functions_base() {
         .vtable = &Ov_VirtualTable_Object,
         .data.ptr = Ov_GC_alloc_object(&Ov_VirtualTable_Object)
     };
+    for_keyword = Ov_Reference_new_symbol(for_statement_data);
     Ov_Function_push(Ov_get_function(Ov_Reference_share(for_keyword)), for_statement_parameters, for_statement_body, NULL, 0, for_statement_captures, sizeof(for_statement_captures) / sizeof(for_statement_captures[0]));
 
     Ov_UnknownData step_data = {

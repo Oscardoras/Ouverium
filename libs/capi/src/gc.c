@@ -1,6 +1,8 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#include <ouverium/include.h>
+
 #include "gc.h"
 
 

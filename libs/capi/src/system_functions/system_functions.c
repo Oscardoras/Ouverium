@@ -1,20 +1,18 @@
 #include <assert.h>
-#include <stdio.h>
-#include <string.h>
 
 #include <ouverium/include.h>
 
 #include "../gc.h"
 
 
-void Ov_init_functions_symbols();
-void Ov_init_functions_base();
-void Ov_init_functions_dll();
-void Ov_init_functions_math();
-void Ov_init_functions_types();
-void Ov_init_functions_array();
+void Ov_init_functions_symbols(void);
+void Ov_init_functions_base(void);
+void Ov_init_functions_dll(void);
+void Ov_init_functions_math(void);
+void Ov_init_functions_types(void);
+void Ov_init_functions_array(void);
 
-void Ov_init_functions() {
+void Ov_init_functions(void) {
     Ov_init_functions_symbols();
     Ov_init_functions_base();
     Ov_init_functions_dll();

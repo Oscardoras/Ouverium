@@ -1,8 +1,9 @@
+#include <stddef.h>
 #include <stdlib.h>
 
 #include <ouverium/include.h>
 
-#include "gc.h"
+#include <ouverium/types.h>
 
 
 #define HASHMAP_SIZE 16
@@ -59,7 +60,7 @@ void Ov_UnknownData_set(Ov_VirtualTable* vtable, void* ptr, Ov_UnknownData data)
 bool Ov_UnknownData_equals(Ov_UnknownData a, Ov_UnknownData b) {
     if (a.vtable == &Ov_VirtualTable_Char) {
         if (b.vtable == a.vtable)
-            return a.data.b == b.data.b;
+            return a.data.c == b.data.c;
         else
             return false;
     } else if (a.vtable == &Ov_VirtualTable_Float) {

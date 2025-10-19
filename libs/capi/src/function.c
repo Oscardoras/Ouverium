@@ -50,6 +50,7 @@ struct Ov_FunctionCapture Ov_GC_reference_to_capture(Ov_GC_Reference* reference)
             break;
         }
         default:
+            assert(false);
             break;
     }
 
@@ -74,7 +75,7 @@ Ov_Reference_Owned Ov_GC_capture_to_reference(struct Ov_FunctionCapture capture)
     }
 }
 
-Ov_Function Ov_Function_new() {
+Ov_Function Ov_Function_new(void) {
     return NULL;
 }
 
@@ -396,7 +397,7 @@ void Ov_push_stack(char* position) {
     ++debug_stack_len;
 }
 
-void Ov_pop_stack() {
+void Ov_pop_stack(void) {
     assert(debug_stack_len > 0);
     --debug_stack_len;
 }

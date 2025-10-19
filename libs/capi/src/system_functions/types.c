@@ -1,6 +1,4 @@
 #include <assert.h>
-#include <stdio.h>
-#include <string.h>
 
 #include <ouverium/hash_string.h>
 #include <ouverium/include.h>
@@ -106,7 +104,6 @@ Ov_Reference_Owned is_type_body(Ov_Reference_Shared captures[], Ov_Reference_Sha
         Ov_ArrayInfo array = Ov_UnknownData_get_array(a);
         value = array.vtable != NULL && array.array->capacity > 0;
     } else if (type.data.ptr == Ov_Reference_get(Ov_Reference_share(Function)).data.ptr) {
-        Ov_ArrayInfo array = Ov_UnknownData_get_array(a);
         value = a.vtable->function.offset >= 0 && *Ov_UnknownData_get_function(a) != NULL;
     }
 
@@ -118,7 +115,7 @@ Ov_Reference_Owned is_type_body(Ov_Reference_Shared captures[], Ov_Reference_Sha
 }
 
 
-void Ov_init_functions_types() {
+void Ov_init_functions_types(void) {
     Ov_Function_push(Ov_get_function(Ov_Reference_share(Char)), constructor_parameters, constructor_body, char_constructor_filter, 0, NULL, 0);
 
     Ov_Function_push(Ov_get_function(Ov_Reference_share(Float)), constructor_parameters, constructor_body, float_constructor_filter, 0, NULL, 0);
