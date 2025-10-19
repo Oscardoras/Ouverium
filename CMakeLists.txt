@@ -1,10 +1,18 @@
-cmake_minimum_required(VERSION 3.21)
-project(Ouverium VERSION 0.1.0 LANGUAGES C CXX)
+cmake_minimum_required(VERSION 3.25)
+project(Ouverium VERSION 0.2.0 LANGUAGES C CXX)
 
+include(CMakeDependentOption)
 include(CheckIPOSupported)
 include(FetchContent)
 include(CTest)
 include(CPack)
+
+
+# Options
+
+option(OUVERIUM_BUILD_BOOST "Download and build Boost" ON)
+option(OUVERIUM_WITH_WXWIDGET "GUI library support (using wxWidgets)" ON)
+cmake_dependent_option(OUVERIUM_BUILD_WXWIDGET "Download and build wxWidgets" ON OUVERIUM_WITH_WXWIDGET OFF)
 
 
 # Configuration
@@ -14,101 +22,29 @@ if(CMAKE_BUILD_TYPE MATCHES Release)
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-# Dependencies
-
-# Boost
-set(BOOST_INCLUDE_LIBRARIES asio dll)
-set(BOOST_ENABLE_CMAKE ON)
-FetchContent_Declare(
-    Boost
-    URL https://github.com/boostorg/boost/releases/download/boost-1.84.0/boost-1.84.0.7z
-    DOWNLOAD_EXTRACT_TIMESTAMP OFF
-)
-FetchContent_MakeAvailable(Boost)
-
-#WxWidgets
-if(NOT DEFINED OUVERIUM_NO_GUI)
-    find_package(wxWidgets COMPONENTS core base webview)
-    if(wxWidgets_FOUND)
-        include(${wxWidgets_USE_FILE})
-        set(wxWidgets ${wxWidgets_LIBRARIES})
-    else()
-        set(wxBUILD_SHARED OFF)
-        set(wxUSE_WEBVIEW ON)
-        FetchContent_Declare(
-            wxWidgets
-            URL https://github.com/wxWidgets/wxWidgets/releases/download/v3.2.4/wxWidgets-3.2.4.7z
-            DOWNLOAD_EXTRACT_TIMESTAMP OFF
-        )
-        FetchContent_MakeAvailable(wxWidgets)
-        set(wxWidgets wx::core wx::base wx::webview)
-    endif()
-    add_compile_definitions(OUVERIUM_WXWIDGETS)
-else()
-    set(wxWidgets "")
-endif()
-
-# Readline
-if (UNIX)
-    if (EXISTS /usr/include/readline)
-        add_compile_definitions(READLINE)
-        set(Readline "-lreadline")
-    else()
-        message(WARNING "Readline is not installed.")
-        set(Readline "")
-    endif()
-else()
-    set(Readline "")
-endif()
+enable_testing()
 
 
 # Creating target
 
-# CAPI
-FILE(GLOB_RECURSE capi_sources
-    src/capi/*
-)
-add_library(capi SHARED ${capi_sources})
-target_include_directories(capi PUBLIC include)
-target_compile_features(capi PRIVATE c_std_99)
+add_library(ouverium_options INTERFACE)
+target_compile_features(ouverium_options INTERFACE cxx_std_20)
+target_compile_options(ouverium_options INTERFACE $<$<CXX_COMPILER_ID:GNU>:-Wall -Wextra -Wpedantic>)
 
-# Ouverium
-FILE(GLOB_RECURSE ouverium_sources
-    src/main.cpp
-    src/Types.cpp src/Types.hpp
-    src/GUIApp.cpp src/GUIApp.hpp
-    src/parser/*
-    src/interpreter/*
-    src/compiler/*
-)
-add_executable(ouverium ${ouverium_sources})
-target_include_directories(ouverium PRIVATE include)
-target_compile_features(ouverium PRIVATE cxx_std_20)
-if(CMAKE_BUILD_TYPE MATCHES Debug)
-    target_compile_options(ouverium PRIVATE -Wall -Wextra)
-endif()
-if (WIN32)
-    target_link_libraries(ouverium PRIVATE -lws2_32)
-endif()
-target_link_libraries(ouverium PRIVATE Boost::asio Boost::dll)
-target_link_libraries(ouverium PRIVATE ${Readline})
-target_link_libraries(ouverium PRIVATE ${wxWidgets})
-target_link_libraries(ouverium INTERFACE capi)
+add_subdirectory(app)
+add_subdirectory(external)
+add_subdirectory(libs)
+add_subdirectory(tests)
 
-
-# Testing
-
-enable_testing()
-add_test(NAME ouverium_test_hello_world COMMAND $<TARGET_FILE:ouverium> ${CMAKE_SOURCE_DIR}/tests/hello_world.fl)
-add_test(NAME ouverium_test_string COMMAND $<TARGET_FILE:ouverium> ${CMAKE_SOURCE_DIR}/tests/string.fl)
+file(COPY ${CMAKE_SOURCE_DIR}/libraries DESTINATION ${CMAKE_BINARY_DIR})
+install(DIRECTORY libraries DESTINATION .)
 
 
 # Installation
-
-install(TARGETS ouverium capi)
-install(DIRECTORY libraries DESTINATION .)
-install(DIRECTORY include DESTINATION .)
 
 set(CPACK_PACKAGE_NAME "Ouverium")
 set(CPACK_PACKAGE_VENDOR "Oscar Buon")

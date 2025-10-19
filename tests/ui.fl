@@ -1,16 +1,33 @@
 import "UI.fl";
 
-f := UI.Frame("test");
-f.create_child(p := UI.Panel());
-p.create_child(a := UI.ActivityIndicator());
+f := UI.Frame("test") {
+    p := UI.Panel {
+        a := UI.ActivityIndicator(),
+        b1 := UI.Button(),
+        b2 := UI.Button(),
+        c := UI.Calendar(),
+        cp := UI.ColorPicker(),
+        d := UI.DatePicker(),
+        r := UI.Gauge(),
+    },
+};
+f.size := [1000, 400];
 a.running := true;
-b1 := UI.Button();
-p.create_child(b1);
-b1.position := (100, 100);
 b1.label := "b1";
-p.create_child(b2 := UI.Button());
-b2.position := (100, 200);
+b1.on_value_change :+= args |-> { print("test b1"); r.value :+= 1; };
+b1.proportion := 1;
+b1.expand := true;
 b2.label := "b2";
-b1.on_value_change :+= args |-> { print("test b1"); };
 print("ok");
-b2.on_value_change :+= () |-> { print("test b2"); };
+b2.on_value_change :+= () |-> { print("test b2"); r.value :-= 1; };
+b2.align := UI.Alignment.End;
+cp.on_value_change :+= () |-> { print(cp.value); };
+cp.label := "Color Picker";
+p.layout := UI.Layout.HorizontalWrap;
+r.range := 10;
+r.value := 5;
+r.align := UI.Alignment.Center;
+
+f2 := UI.Frame("test webview") {};
+f2.create_child(wb := UI.Webview());
+wb.url := "https://google.fr/";
