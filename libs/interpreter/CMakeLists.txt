@@ -2,6 +2,7 @@ FILE(GLOB_RECURSE interpreter_sources src/*)
 
 add_library(ouverium_interpreter ${interpreter_sources})
 target_include_directories(ouverium_interpreter PUBLIC include)
+target_compile_features(ouverium_interpreter PUBLIC cxx_std_20)
 target_link_libraries(ouverium_interpreter PRIVATE ouverium_options)
 
 target_link_libraries(ouverium_interpreter PUBLIC ouverium_types)
