@@ -28,10 +28,10 @@ jobs:
             generator: Ninja
             build_type: Release
             compiler: {c: gcc, cxx: g++}
-          - os: macos-15
+          - os: macos-latest
             generator: Ninja
             build_type: Release
-            compiler: {c: clang, cxx: clang++}
+            compiler: {c: gcc, cxx: g++}
 
     env:
       SRC_PATH: ${{ github.workspace }}
