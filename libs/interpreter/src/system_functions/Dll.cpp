@@ -55,15 +55,11 @@ namespace Interpreter::SystemFunctions::Dll {
 
     auto const path_args = std::make_shared<Parser::Symbol>("path");
 
-    Reference import_system(FunctionContext& context) {
-        try {
-            if (context["path"].to_data(context).get<ObjectPtr>()->to_string() != "system")
-                throw Interpreter::FunctionArgumentsError();
-
-            return Data(context.get_global().system);
-        } catch (Data::BadAccess const&) {
+    Reference import_system(FunctionContext& context, std::string const& path) {
+        if (path != "system")
             throw Interpreter::FunctionArgumentsError();
-        }
+
+        return context.get_global().system;
     }
 
 
@@ -127,7 +123,7 @@ namespace Interpreter::SystemFunctions::Dll {
         //context.get_function("import").push_front(SystemFunction{ path_args, import_h });
         //context.get_function("getter").push_front(SystemFunction{ getter_args, getter_c });
 
-        add_function(context["import"], path_args, import_system);
+        add_function(context["import"], import_system);
     }
 
 }

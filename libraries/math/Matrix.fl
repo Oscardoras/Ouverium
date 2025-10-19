@@ -1,69 +1,14 @@
 import "Type.fl";
-import "containers/ArrayList.fl";
+import "containers/Tensor.fl";
 
 
 class Matrix {
-    Matrix.of : shape \ ((shape ~ Int & shape > 0) | (shape ~ Array & forall(shape, x |-> {
-        x ~ Int & x > 0
-    }))) |-> {
-        this := ();
+    Matrix.of : shape |-> {
+        this := Tensor.of(shape);
         this :~ Matrix;
-
-        this._shape := if (shape ~ Int) [shape,] else shape;
-
-        this._sizes := Array[];
-        product := if (this._shape.size > 0) 1 else 0;
-        this._shape.foreach(s |-> {
-            this._sizes.add_back(product);
-            product := product * s;
-        });
-
-        this._array := Array[];
-        this._array.resize(product, 0.);
 
         this
     };
-
-    Matrix::(
-        this.shape |-> {
-            $(this._shape)
-        },
-        (this.shape, value) |-> {}
-    );
-
-    Matrix::(
-        this.dimension |-> {
-            this._shape.size
-        },
-        (this.dimension, value) |-> {}
-    );
-
-    Matrix::(
-        this.size |-> {
-            this._array.size
-        },
-        (this.size, value) |-> {}
-    );
-
-    Matrix::(
-        this.length |-> {
-            $(this._shape[0])
-        },
-        (this.length, value) |-> {}
-    );
-
-    Matrix:::(this |-> (
-        indexes |-> {
-            ind := if (indexes ~ Int) [indexes,] else indexes;
-
-            index := 0;
-            for i from 0 to (ind.size) {
-                index :+= ind[i] * this._sizes[i];
-            };
-
-            this._array[index]
-        }
-    ));
 
     Matrix.identity : (Int n) |-> {
         matrix := Matrix.of(n, n);

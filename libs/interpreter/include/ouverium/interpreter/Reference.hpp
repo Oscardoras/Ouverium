@@ -41,9 +41,10 @@ namespace Interpreter {
     public:
 
         using std::variant<SymbolReference, PropertyReference, ArrayReference>::variant;
-        IndirectReference(Reference const& reference);
+        IndirectReference(Reference reference);
 
-        [[nodiscard]] Data& get_data() const;
+        [[nodiscard]] const Data& get_data() const;
+        [[nodiscard]] Data& data();
         [[nodiscard]] Data to_data(Context& context, std::shared_ptr<Parser::Expression> const& caller = nullptr) const;
 
     };
@@ -53,7 +54,7 @@ namespace Interpreter {
     public:
 
         using std::variant<Data, SymbolReference, PropertyReference, ArrayReference>::variant;
-        Reference(IndirectReference const& indirect_reference);
+        Reference(IndirectReference indirect_reference);
 
         [[nodiscard]] Data const& get_data() const;
         [[nodiscard]] Data to_data(Context& context, std::shared_ptr<Parser::Expression> const& caller = nullptr) const;

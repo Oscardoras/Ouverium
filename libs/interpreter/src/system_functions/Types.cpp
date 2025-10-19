@@ -14,18 +14,14 @@ namespace Interpreter::SystemFunctions::Types {
 
     auto const constructor_args = std::make_shared<Parser::Symbol>("a");
 
-    Reference char_constructor(FunctionContext& context) {
-        auto a = context["a"].to_data(context);
-
+    Reference char_constructor(Data const& a) {
         if (a.is<char>())
             return a;
         else
             throw FunctionArgumentsError();
     }
 
-    Reference float_constructor(FunctionContext& context) {
-        auto a = context["a"].to_data(context);
-
+    Reference float_constructor(Data const& a) {
         if (auto const* a_int = get_if<OV_INT>(&a)) {
             return Data((OV_FLOAT) *a_int);
         } else if (a.is<OV_FLOAT>()) {
@@ -34,9 +30,7 @@ namespace Interpreter::SystemFunctions::Types {
         throw FunctionArgumentsError();
     }
 
-    Reference int_constructor(FunctionContext& context) {
-        auto a = context["a"].to_data(context);
-
+    Reference int_constructor(Data const& a) {
         if (a.is<OV_INT>()) {
             return a;
         } else if (auto const* a_float = get_if<OV_FLOAT>(&a)) {
@@ -45,20 +39,16 @@ namespace Interpreter::SystemFunctions::Types {
         throw FunctionArgumentsError();
     }
 
-    Reference bool_constructor(FunctionContext& context) {
-        auto a = context["a"].to_data(context);
-
+    Reference bool_constructor(Data const& a) {
         if (a.is<bool>())
             return a;
         else
             throw FunctionArgumentsError();
     }
 
-    Reference array_constructor(FunctionContext& context) {
-        auto a = context["a"].to_data(context);
-
-        if (auto const* obj = get_if<ObjectPtr>(&a); obj && (*obj)->array.capacity() > 0)
-            return a;
+    Reference array_constructor(ObjectPtr const& obj) {
+        if (obj->array.capacity() > 0)
+            return Data(obj);
         else
             throw FunctionArgumentsError();
     }
@@ -84,11 +74,9 @@ namespace Interpreter::SystemFunctions::Types {
         }
     }
 
-    Reference function_constructor(FunctionContext& context) {
-        auto a = context["a"].to_data(context);
-
-        if (auto const* obj = get_if<ObjectPtr>(&a); obj && !(*obj)->functions.empty())
-            return a;
+    Reference function_constructor(ObjectPtr const& obj) {
+        if (!obj->functions.empty())
+            return Data(obj);
         else
             throw FunctionArgumentsError();
     }
@@ -135,24 +123,12 @@ namespace Interpreter::SystemFunctions::Types {
     }
 
 
-    Reference float_parse(FunctionContext& context) {
-        try {
-            auto a = context["a"].to_data(context).get<ObjectPtr>()->to_string();
-
-            return Data(static_cast<OV_FLOAT>(std::stod(a)));
-        } catch (Data::BadAccess const&) {
-            throw FunctionArgumentsError();
-        }
+    Reference float_parse(std::string const& str) {
+        return Data(static_cast<OV_FLOAT>(std::stod(str)));
     }
 
-    Reference int_parse(FunctionContext& context) {
-        try {
-            auto a = context["a"].to_data(context).get<ObjectPtr>()->to_string();
-
-            return Data(static_cast<OV_INT>(std::stoi(a)));
-        } catch (Data::BadAccess const&) {
-            throw FunctionArgumentsError();
-        }
+    Reference int_parse(std::string const& str) {
+        return Data(static_cast<OV_INT>(std::stoi(str)));
     }
 
 
@@ -188,17 +164,17 @@ namespace Interpreter::SystemFunctions::Types {
     }
 
     void init(GlobalContext& context) {
-        add_function(context["Char"], constructor_args, char_constructor);
-        add_function(context["Float"], constructor_args, float_constructor);
-        add_function(context["Int"], constructor_args, int_constructor);
-        add_function(context["Bool"], constructor_args, bool_constructor);
-        add_function(context["Array"], constructor_args, array_constructor);
+        add_function(context["Char"], char_constructor);
+        add_function(context["Float"], float_constructor);
+        add_function(context["Int"], int_constructor);
+        add_function(context["Bool"], bool_constructor);
+        add_function(context["Array"], array_constructor);
         add_function(context["Tuple"], tuple_constructor_args, tuple_constructor);
-        add_function(context["Function"], constructor_args, function_constructor);
+        add_function(context["Function"], function_constructor);
         add_function(context["Reference"], reference_constructor_args, reference_constructor);
 
-        add_function(Data(get_object(context["Float"])).get_property("parse"), constructor_args, float_parse);
-        add_function(Data(get_object(context["Int"])).get_property("parse"), constructor_args, int_parse);
+        add_function(Data(get_object(context["Float"])).get_property("parse"), float_parse);
+        add_function(Data(get_object(context["Int"])).get_property("parse"), int_parse);
 
         Function f = SystemFunction{ .parameters = is_type_args, .pointer = is_type };
         f.extern_symbols.emplace("Char", context["Char"]);
