@@ -913,10 +913,19 @@ namespace Interpreter::SystemFunctions::System {
 #else
     struct Thread : public std::thread {
         using std::thread::thread;
-        using std::thread::operator=;
+
+        Thread& operator=(Thread const&) = delete;
+
+        Thread& operator=(Thread&& other)  noexcept {
+            static_cast<std::thread&>(*this) = std::move(static_cast<std::thread&&>(other));
+
+            return *this;
+        }
 
         ~Thread() {
-            join();
+            if (joinable()) {
+                join();
+            }
         }
     };
 #endif
