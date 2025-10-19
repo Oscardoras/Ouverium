@@ -28,7 +28,7 @@ jobs:
             generator: Ninja
             build_type: Release
             compiler: {c: gcc, cxx: g++}
-          - os: macos-latest
+          - os: macos-15
             generator: Ninja
             build_type: Release
             compiler: {c: clang, cxx: clang++}
