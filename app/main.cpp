@@ -268,7 +268,7 @@ public:
             auto translator = Translator::CStandard::Translator(expression, meta_data);
 
             translator.translate(out);
-            std::string cmd = "gcc -g -Wall -Wextra -Wno-unused-variable -Wno-unused-parameter " + out + "/*.c -o " + out + "/executable -I " + (program_location / "include/ouverium").string() + " -Wl,-rpath," + program_location.string() + "/build build/libcapi.so";
+            std::string cmd = "gcc -g -Wall -Wextra -Wno-unused-variable -Wno-unused-parameter " + out + "/*.c -o " + out + "/executable -I " + (program_location / "include").string() + " " + (program_location / "lib/libouverium_capi.a").string();
             system(cmd.c_str());
         } else {
             std::cerr << "Error: unable to load the source file " << path << "." << std::endl;

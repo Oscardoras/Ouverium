@@ -86,7 +86,7 @@ namespace Analyzer {
                 }
             }
         } else if (auto property = std::dynamic_pointer_cast<Parser::Property>(expression)) {
-            iterate(property->object);
+            iterate(*std::get_if<std::shared_ptr<Parser::Expression>>(&property->object));
             properties.insert(property->name);
         } else if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(expression)) {
             for (auto const& e : tuple->objects)

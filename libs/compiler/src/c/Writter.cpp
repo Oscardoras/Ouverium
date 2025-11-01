@@ -125,7 +125,7 @@ namespace Translator::CStandard {
     }
 
     void Translator::write_structures(std::string& interface, std::string& implementation) {
-        interface += "#include <include.h>\n";
+        interface += "#include <ouverium/include.h>\n";
         interface += "\n\n";
 
         implementation += "#include <stddef.h>\n";
@@ -181,13 +181,14 @@ namespace Translator::CStandard {
         }
 
         implementation += "\n";
-        implementation += "Ov_VirtualTable* Ov_VirtualTable_string_from_tuple = &Ov_VirtualTable_Object;";
     }
 
     void Translator::write_global_variables(std::string& interface, std::string& implementation) {
         for (auto const& [name, type] : code.global_variables) {
-            interface += "extern Ov_Reference_Owned " + name.get() + ";\n";
-            implementation += "Ov_Reference_Owned " + name.get() + ";\n";
+            if (!symbols.contains(name.symbol)) {
+                interface += "extern Ov_Reference_Owned " + name.get() + ";\n";
+                implementation += "Ov_Reference_Owned " + name.get() + ";\n";
+            }
         }
 
         interface += "\n\n";
@@ -195,7 +196,7 @@ namespace Translator::CStandard {
     }
 
     void Translator::write_functions(std::string& interface, std::string& implementation) {
-        interface += "#include <include.h>\n";
+        interface += "#include <ouverium/include.h>\n";
         interface += "#include \"structures.h\"\n";
         interface += "\n\n";
 

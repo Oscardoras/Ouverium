@@ -77,6 +77,7 @@ namespace Translator::CStandard {
             "getter",
             "defined",
             "setter",
+            "import",
             ":=",
             ";",
             "if",

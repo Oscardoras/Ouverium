@@ -315,7 +315,7 @@ namespace Translator::CStandard {
         } else if (auto property = std::dynamic_pointer_cast<Parser::Property>(expression)) {
             auto r = std::make_shared<Reference>(true);
 
-            auto parent = get_expression(property->object, instructions, it);
+            auto parent = get_expression(*std::get_if<std::shared_ptr<Parser::Expression>>(&property->object), instructions, it);
 
             instructions.insert(it, std::make_shared<Affectation>(
                 r,
