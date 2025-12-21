@@ -93,8 +93,8 @@ namespace Interpreter {
             auto p_function = std::dynamic_pointer_cast<Parser::FunctionCall>(parameters->objects[i]);
             if (!p_function) return false;
 
-            auto r = execute(function_context, p_function->function).to_data(context, p_function);
-            if (r != context["setter"].get_data()) return false;
+            auto r = execute(function_context, p_function->function).get_data();
+            if (r != context.get_global()["setter"].get_data()) return false;
 
             auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(p_function->arguments);
             if (!tuple || tuple->objects.size() != 2) return false;
@@ -113,8 +113,8 @@ namespace Interpreter {
         auto a_symbol = std::dynamic_pointer_cast<Parser::Symbol>(a_function->function);
         if (!a_symbol) return std::nullopt;
 
-        auto r = execute(context, a_symbol).to_data(context, parameters);
-        if (r != context["setter"].get_data()) return std::nullopt;
+        auto r = execute(context, a_symbol).get_data();
+        if (r != context.get_global()["setter"].get_data()) return std::nullopt;
 
         auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(a_function->arguments);
         if (!tuple || tuple->objects.size() != 2) return std::nullopt;
@@ -171,8 +171,8 @@ namespace Interpreter {
                     try {
                         if (p_tuple->objects.size() > 0) {
                             if (auto p_function = std::dynamic_pointer_cast<Parser::FunctionCall>(p_tuple->objects[0])) {
-                                auto r = execute(function_context, p_function->function).to_data(context, p_function);
-                                if (r == context["setter"].get_data()) {
+                                auto r = execute(function_context, p_function->function).get_data();
+                                if (r == context.get_global()["setter"].get_data()) {
                                     if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(p_function->arguments); tuple && tuple->objects.size() == 2)
                                         set_arguments(context, function_context, symbols, computed, p_tuple, std::vector<Arguments>{ *reference });
                                     else
@@ -237,7 +237,7 @@ namespace Interpreter {
             } else {
                 auto r = execute(function_context, p_function->function).to_data(context, parameters);
 
-                if (r == context["setter"].get_data()) {
+                if (r == context.get_global()["setter"].get_data()) {
                     if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(p_function->arguments); tuple && tuple->objects.size() == 2) {
                         if (auto* ptr = std::get_if<std::shared_ptr<Parser::Expression>>(&arguments)) {
                             if (*ptr == nullptr) {
@@ -290,14 +290,16 @@ namespace Interpreter {
             throw Exception(context, caller, "recursion limit exceeded");
 
         std::list<Function> functions;
-        try {
-            functions = func.to_data(context, caller).get<ObjectPtr>()->functions;
-        } catch (Data::BadAccess const&) {}
+        {
+            auto data = func.to_data(context, caller);
+            if (auto const* ptr = get_if<ObjectPtr>(&data))
+                functions = (*ptr)->functions;
+        }
 
         if (functions.empty()) {
-            try {
-                functions = call_function(context, caller, context.get_global()["function_getter"], func).to_data(context).get<ObjectPtr>()->functions;
-            } catch (Data::BadAccess const&) {}
+            auto data = call_function(context, caller, context.get_global()["function_getter"], func).to_data(context);
+            if (auto const* ptr = get_if<ObjectPtr>(&data))
+                functions = (*ptr)->functions;
         }
 
         Computed computed;
