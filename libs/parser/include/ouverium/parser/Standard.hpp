@@ -3,6 +3,7 @@
 #include <exception>
 #include <filesystem>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -17,6 +18,8 @@ namespace Parser {
     public:
 
         Standard(std::string code, std::filesystem::path path);
+
+        Standard(std::filesystem::path const& path);
 
         struct Word : public std::string {
             std::string position;
@@ -49,6 +52,8 @@ namespace Parser {
         class IncompleteCode : public Exception {};
 
         [[nodiscard]] std::shared_ptr<Expression> get_tree() const;
+
+        static std::optional<std::filesystem::path> get_canonical_path(Position& position, std::filesystem::path const& path);
 
     protected:
 
