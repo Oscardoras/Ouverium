@@ -15,14 +15,38 @@ namespace Interpreter {
         struct overloaded : Ts... { using Ts::operator()...; };
 
         Data compute(Context& context, std::shared_ptr<Parser::Expression> const& caller, Reference const& reference) {
+            static bool inGetter = false;
+
+            struct GetterScope {
+                GetterScope() {
+                    inGetter = true;
+                }
+
+                ~GetterScope() {
+                    inGetter = false;
+                }
+            };
+
+            if (auto const* d = std::get_if<Data>(&reference))
+                return *d;
+
+            if (inGetter) {
+                auto const& d = reference.get_data();
+                if (d != Data{})
+                    return d;
+            }
+
+            const auto& getter = context.get_global()["getter"];
+
             if (auto const* symbol = std::get_if<SymbolReference>(&reference))
-                if (*symbol == std::get<SymbolReference>(context.get_global()["getter"]))
+                if (*symbol == std::get<SymbolReference>(getter))
                     return **symbol;
 
-            if (auto const* d = std::get_if<Data>(&reference); d && *d != Data{})
-                return *d;
-            else
-                return call_function(context, caller, context.get_global()["getter"], reference).to_data(context, caller);
+            GetterScope scoped{};
+            auto r = call_function(context, caller, getter, reference);
+            inGetter = false;
+
+            return r.to_data(context, caller);
         }
 
     }
