@@ -1,11 +1,12 @@
 cmake_minimum_required(VERSION 3.25)
 project(Ouverium VERSION 0.2.0 LANGUAGES C CXX)
 
-include(CMakeDependentOption)
 include(CheckIPOSupported)
-include(FetchContent)
-include(CTest)
+include(CMakeDependentOption)
 include(CPack)
+include(CTest)
+include(FetchContent)
+include(GNUInstallDirs)
 
 
 # Options

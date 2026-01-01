@@ -1,0 +1,49 @@
+name: Continuous Deployment
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    name: Build & Upload (${{ matrix.os }}, ${{ matrix.build_type }}, ${{ matrix.compiler.c }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        include:
+          - os: ubuntu-latest
+            generator: TGZ
+            build_type: Release
+            compiler: {c: gcc, cxx: g++}
+
+    env:
+      SRC_PATH: ${{ github.workspace }}
+      BUILD_PATH: ${{ github.workspace }}/build
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Configure CMake
+      run: >
+        cmake -S "${{ env.SRC_PATH }}" -B "${{ env.BUILD_PATH }}"
+        -G "Ninja"
+        -DCMAKE_C_COMPILER=${{ matrix.compiler.c }}
+        -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }}
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -DOUVERIUM_WITH_WXWIDGET=OFF
+
+    - name: Build
+      run: cmake --build ${{ env.BUILD_PATH }} --config ${{ matrix.build_type }}
+
+    - name: CPack
+      working-directory: ${{ env.BUILD_PATH }}
+      run: cpack -G ${{ matrix.generator }} -C ${{ matrix.build_type }}
+
+    - uses: actions/upload-artifact@v4
+      with:
+        if-no-files-found: error
+        path: |
+          build/**.tar.gz
