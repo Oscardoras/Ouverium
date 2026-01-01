@@ -1,12 +1,12 @@
 name: Continuous Deployment
 
 on:
-  push:
-    branches: [ "master" ]
+  release:
+    types: [published]
 
 jobs:
   build:
-    name: Build & Upload (${{ matrix.os }}, ${{ matrix.build_type }}, ${{ matrix.compiler.c }})
+    name: Build & Upload (${{ matrix.os }}, ${{ matrix.generator }})
     runs-on: ${{ matrix.os }}
 
     strategy:
@@ -44,6 +44,14 @@ jobs:
 
     - uses: actions/upload-artifact@v4
       with:
+        name: ouverium-${{ matrix.os }}-${{ matrix.generator }}
         if-no-files-found: error
         path: |
           build/**.tar.gz
+
+    - uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          build/**.tar.gz
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
