@@ -29,6 +29,11 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 enable_testing()
 
 
+# Dependencies
+
+add_subdirectory(external)
+
+
 # Creating target
 
 add_library(ouverium_options INTERFACE)
@@ -36,7 +41,6 @@ target_compile_features(ouverium_options INTERFACE cxx_std_20)
 target_compile_options(ouverium_options INTERFACE $<$<CXX_COMPILER_ID:GNU>:-Wall -Wextra -Wpedantic>)
 
 add_subdirectory(app)
-add_subdirectory(external)
 add_subdirectory(libs)
 add_subdirectory(tests)
 
