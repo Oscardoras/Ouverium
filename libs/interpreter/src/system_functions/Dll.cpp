@@ -9,12 +9,12 @@
 
 #include <boost/dll.hpp>
 
-#include "SystemFunction.hpp"
-
 #include <ouverium/interpreter/Interpreter.hpp>
 
 #include <ouverium/parser/Expressions.hpp>
 #include <ouverium/parser/Standard.hpp>
+
+#include "SystemFunction.hpp"
 
 
 extern std::filesystem::path const program_location;

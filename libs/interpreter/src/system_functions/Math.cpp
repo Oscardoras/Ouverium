@@ -4,13 +4,13 @@
 #include <memory>
 #include <random>
 
-#include <ouverium/types.h>
-
-#include "SystemFunction.hpp"
-
 #include <ouverium/interpreter/Interpreter.hpp>
 
 #include <ouverium/parser/Expressions.hpp>
+
+#include <ouverium/types.h>
+
+#include "SystemFunction.hpp"
 
 
 namespace Interpreter::SystemFunctions::Math {

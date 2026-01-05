@@ -4,9 +4,9 @@
 #include <typeindex>
 #include <utility>
 
-#include <ouverium/types.h>
-
 #include <ouverium/interpreter/Interpreter.hpp>
+
+#include <ouverium/types.h>
 
 
 namespace Interpreter {

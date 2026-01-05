@@ -1,5 +1,4 @@
-#ifndef __INTERPRETER_SYSTEMFUNCTION_HPP__
-#define __INTERPRETER_SYSTEMFUNCTION_HPP__
+#pragma once
 
 #include <any>
 #include <cstddef>
@@ -11,11 +10,11 @@
 #include <type_traits>
 #include <utility>
 
-#include <ouverium/types.h>
-
 #include <ouverium/interpreter/Interpreter.hpp>
 
 #include <ouverium/parser/Expressions.hpp>
+
+#include <ouverium/types.h>
 
 
 namespace Interpreter::SystemFunctions {
@@ -126,5 +125,3 @@ namespace Interpreter::SystemFunctions {
     }
 
 }
-
-#endif

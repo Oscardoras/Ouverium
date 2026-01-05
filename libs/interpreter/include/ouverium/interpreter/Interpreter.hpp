@@ -1,10 +1,11 @@
-#ifndef __INTERPRETER_INTERPRETER_HPP__
-#define __INTERPRETER_INTERPRETER_HPP__
+#pragma once
 
 #include <memory>
 #include <string>
 #include <variant>
 #include <vector>
+
+#include <ouverium/parser/Expressions.hpp>
 
 #include "Context.hpp" // IWYU pragma: export
 #include "Data.hpp" // IWYU pragma: export
@@ -12,8 +13,6 @@
 #include "GC.hpp" // IWYU pragma: export
 #include "Object.hpp" // IWYU pragma: export
 #include "Reference.hpp" // IWYU pragma: export
-
-#include <ouverium/parser/Expressions.hpp>
 
 
 namespace Interpreter {
@@ -46,5 +45,3 @@ namespace Interpreter {
     [[nodiscard]] std::string string_from(Context& context, Reference const& data);
 
 }
-
-#endif

@@ -6,14 +6,15 @@
 #include <string>
 #include <utility>
 #include <variant>
-
-#include <ouverium/types.h>
 #include <vector>
 
-#include "SystemFunction.hpp"
-
 #include <ouverium/interpreter/Interpreter.hpp>
+
 #include <ouverium/parser/Expressions.hpp>
+
+#include <ouverium/types.h>
+
+#include "SystemFunction.hpp"
 
 
 namespace Interpreter::SystemFunctions::Base {
@@ -25,8 +26,9 @@ namespace Interpreter::SystemFunctions::Base {
         Data const& data = var.get_data();
         if (data != Data{}) {
             if (auto const* obj = get_if<ObjectPtr>(&data)) {
-                auto it = (*obj)->properties.find("#get_reference");
-                if (it != (*obj)->properties.end()) {
+                auto const& properties = (*obj)->properties;
+                auto it = properties.find("#get_reference");
+                if (it != properties.end()) {
                     return call_function(context.get_parent(), nullptr, it->second, std::make_shared<Parser::Tuple>());
                 }
             }
@@ -49,8 +51,9 @@ namespace Interpreter::SystemFunctions::Base {
             return Data(false);
         } else {
             if (auto const* obj = get_if<ObjectPtr>(&data)) {
-                auto it = (*obj)->properties.find("#get_reference");
-                if (it != (*obj)->properties.end()) {
+                auto const& properties = (*obj)->properties;
+                auto it = properties.find("#get_reference");
+                if (it != properties.end()) {
                     return call_function(context.get_parent(), nullptr, context.get_global()["defined"], call_function(context.get_parent(), nullptr, it->second, std::make_shared<Parser::Tuple>()));
                 }
             }
@@ -66,18 +69,19 @@ namespace Interpreter::SystemFunctions::Base {
         }
     ));
     Reference setter(FunctionContext& context) {
-        auto var = context["var"];
+        auto const& var = context["var"];
         auto data = context["data"].to_data(context);
 
         Data const& var_data = var.get_data();
         if (var_data != Data{}) {
             if (auto const* var_object = get_if<ObjectPtr>(&var_data)) {
-                auto it = (*var_object)->properties.find("#get_reference");
-                if (it != (*var_object)->properties.end()) {
+                auto const& properties = (*var_object)->properties;
+                auto it = properties.find("#get_reference");
+                if (it != properties.end()) {
                     return Interpreter::set(context, call_function(context.get_parent(), nullptr, it->second, std::make_shared<Parser::Tuple>()), data);
                 }
 
-                if ((*var_object)->properties.contains("#reference_wrapper")) {
+                if (properties.contains("#reference_wrapper")) {
                     if (auto const* object = get_if<ObjectPtr>(&data)) {
                         if ((*var_object)->array.size() == (*object)->array.size()) {
                             for (size_t i = 0; i < (*var_object)->array.size(); ++i)

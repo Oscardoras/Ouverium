@@ -1,5 +1,4 @@
-#ifndef __INTERPRETER_REFERENCE_HPP__
-#define __INTERPRETER_REFERENCE_HPP__
+#pragma once
 
 // IWYU pragma: private; include "Interpreter.hpp"
 
@@ -8,9 +7,9 @@
 #include <string>
 #include <variant>
 
-#include "Data.hpp"
-
 #include <ouverium/parser/Expressions.hpp>
+
+#include "Data.hpp"
 
 
 namespace Interpreter {
@@ -61,6 +60,3 @@ namespace Interpreter {
     };
 
 }
-
-
-#endif

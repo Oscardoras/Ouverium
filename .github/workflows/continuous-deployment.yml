@@ -1,0 +1,57 @@
+name: Continuous Deployment
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    name: Build & Upload (${{ matrix.os }}, ${{ matrix.generator }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        include:
+          - os: ubuntu-latest
+            generator: TGZ
+            build_type: Release
+            compiler: {c: gcc, cxx: g++}
+
+    env:
+      SRC_PATH: ${{ github.workspace }}
+      BUILD_PATH: ${{ github.workspace }}/build
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Configure CMake
+      run: >
+        cmake -S "${{ env.SRC_PATH }}" -B "${{ env.BUILD_PATH }}"
+        -G "Ninja"
+        -DCMAKE_C_COMPILER=${{ matrix.compiler.c }}
+        -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }}
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -DOUVERIUM_WITH_WXWIDGET=OFF
+
+    - name: Build
+      run: cmake --build ${{ env.BUILD_PATH }} --config ${{ matrix.build_type }}
+
+    - name: CPack
+      working-directory: ${{ env.BUILD_PATH }}
+      run: cpack -G ${{ matrix.generator }} -C ${{ matrix.build_type }}
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: ouverium-${{ matrix.os }}-${{ matrix.generator }}
+        if-no-files-found: error
+        path: |
+          build/**.tar.gz
+
+    - uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          build/**.tar.gz
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

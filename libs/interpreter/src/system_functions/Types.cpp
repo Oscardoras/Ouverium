@@ -1,13 +1,13 @@
 #include <memory>
 #include <string>
 
-#include <ouverium/types.h>
-
-#include "SystemFunction.hpp"
-
 #include <ouverium/interpreter/Interpreter.hpp>
 
 #include <ouverium/parser/Expressions.hpp>
+
+#include <ouverium/types.h>
+
+#include "SystemFunction.hpp"
 
 
 namespace Interpreter::SystemFunctions::Types {
@@ -90,7 +90,7 @@ namespace Interpreter::SystemFunctions::Types {
             auto function = std::get<CustomFunction>(context["function"].to_data(context).get<ObjectPtr>()->functions.front())->body;
             auto& parent = context.get_parent();
 
-            auto wrap = [&context](Reference const& reference) {
+            auto wrap = [](Reference const& reference) {
                 ObjectPtr object = GC::new_object();
                 auto function_definition = std::make_shared<Parser::FunctionDefinition>();
                 function_definition->parameters = std::make_shared<Parser::Tuple>();

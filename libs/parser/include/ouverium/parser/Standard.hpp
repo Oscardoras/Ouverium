@@ -1,12 +1,13 @@
 #pragma once
 
-#include "Expressions.hpp"
-
 #include <exception>
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
+
+#include "Expressions.hpp"
 
 
 namespace Parser {
@@ -15,7 +16,7 @@ namespace Parser {
 
     public:
 
-        Standard(std::string code, std::string path);
+        Standard(std::string code, std::filesystem::path path);
 
         struct Word : public std::string {
             std::string position;
@@ -52,7 +53,7 @@ namespace Parser {
     protected:
 
         std::string code;
-        std::string path;
+        std::filesystem::path path;
 
     };
 

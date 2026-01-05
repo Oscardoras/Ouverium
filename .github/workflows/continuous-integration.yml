@@ -1,6 +1,6 @@
 # This starter workflow is for a CMake project running on multiple platforms. There is a different starter workflow if you just want a single platform.
 # See: https://github.com/actions/starter-workflows/blob/main/ci/cmake-single-platform.yml
-name: CMake on multiple platforms
+name: Continuous Integration
 
 on:
   push:
@@ -18,18 +18,15 @@ jobs:
 
       matrix:
         os: [ubuntu-latest]
-        generator: [Ninja]
         build_type: [Release]
         compiler:
           - {c: gcc, cxx: g++}
           - {c: clang, cxx: clang++}
         include:
           - os: windows-latest
-            generator: Ninja
             build_type: Release
             compiler: {c: gcc, cxx: g++}
           - os: macos-latest
-            generator: Ninja
             build_type: Release
             compiler: {c: clang, cxx: clang++}
 
@@ -38,12 +35,12 @@ jobs:
       BUILD_PATH: ${{ github.workspace }}/build
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Configure CMake
       run: >
         cmake -S "${{ env.SRC_PATH }}" -B "${{ env.BUILD_PATH }}"
-        -G ${{ matrix.generator }}
+        -G "Ninja"
         -DCMAKE_C_COMPILER=${{ matrix.compiler.c }}
         -DCMAKE_CXX_COMPILER=${{ matrix.compiler.cxx }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
