@@ -103,7 +103,7 @@ namespace Interpreter {
         return true;
     }
 
-    std::optional<std::pair<std::string, Arguments>> is_explicit(Context& context, std::shared_ptr<Parser::Expression> const& parameters, Arguments const& argument) {
+    std::optional<std::pair<std::string, Arguments>> is_explicit(Context& context, Arguments const& argument) {
         auto const* e = std::get_if<ParserExpression>(&argument);
         if (!e) return std::nullopt;
 
@@ -131,13 +131,15 @@ namespace Interpreter {
         auto arguments = computed.get(argument);
 
         if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(parameters)) {
-            if (auto e = is_explicit(context, parameters, arguments); e && symbols.contains(e->first)) {
+            if (auto e = is_explicit(context, arguments); e && symbols.contains(e->first)) {
                 function_context.add_symbol(e->first, computed.compute(context, e->second));
             } else {
                 auto reference = computed.compute(context, arguments);
 
                 if (function_context.has_symbol(symbol->name)) {
-                    if (reference != Reference(function_context[symbol->name]))
+                    auto* data = get_if<Data>(&reference);
+                    auto const& arg = function_context[symbol->name];
+                    if (!(reference == Reference(arg) || (data && *data == arg.get_data())))
                         throw Interpreter::FunctionArgumentsError();
                 } else {
                     function_context.add_symbol(symbol->name, reference);
@@ -183,7 +185,7 @@ namespace Interpreter {
                                 throw Interpreter::FunctionArgumentsError();
                         } else
                             throw Interpreter::FunctionArgumentsError();
-                    } catch (const Interpreter::FunctionArgumentsError&) {
+                    } catch (Interpreter::FunctionArgumentsError const&) {
                         auto object = reference->to_data(function_context, parameters).get<ObjectPtr>();
                         if (check_tuple(context, function_context, p_tuple, object->array.size())) {
                             for (size_t i = 0; i < p_tuple->objects.size(); ++i) {
@@ -395,7 +397,6 @@ namespace Interpreter {
             }
         } else if (auto tuple = std::dynamic_pointer_cast<Parser::Tuple>(expression)) {
             auto object = GC::new_object();
-            object->array.reserve(tuple->objects.size());
 
             auto& t = context.tuples[tuple];
             t = Data(object);

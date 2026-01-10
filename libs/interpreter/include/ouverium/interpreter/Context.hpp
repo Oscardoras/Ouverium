@@ -41,12 +41,12 @@ namespace Interpreter {
 
         [[nodiscard]] virtual Context& get_parent() = 0;
         [[nodiscard]] virtual GlobalContext& get_global() = 0;
-        [[nodiscard]] virtual unsigned get_recurion_level() = 0;
+        [[nodiscard]] virtual unsigned get_recurion_level() const = 0;
 
         [[nodiscard]] std::set<std::string> get_symbols() const;
         [[nodiscard]] bool has_symbol(std::string const& symbol) const;
-        void add_symbol(std::string const& symbol, IndirectReference const& indirect_reference);
-        void add_symbol(std::string const& symbol, Data const& data);
+        void add_symbol(std::string symbol, IndirectReference indirect_reference);
+        void add_symbol(std::string symbol, Data data);
         IndirectReference operator[](std::string const& symbol);
         [[nodiscard]] auto begin() const { return symbols.begin(); }
         [[nodiscard]] auto end() const { return symbols.end(); }
@@ -74,7 +74,7 @@ namespace Interpreter {
             return *this;
         }
 
-        [[nodiscard]] unsigned get_recurion_level() override {
+        [[nodiscard]] unsigned get_recurion_level() const override {
             return 0;
         }
 
@@ -99,7 +99,7 @@ namespace Interpreter {
             return parent;
         }
 
-        [[nodiscard]] unsigned get_recurion_level() override {
+        [[nodiscard]] unsigned get_recurion_level() const override {
             return recursion_level;
         }
 

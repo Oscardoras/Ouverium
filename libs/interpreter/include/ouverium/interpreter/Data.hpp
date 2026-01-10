@@ -49,7 +49,7 @@ namespace Interpreter {
         explicit Data(std::any any) : value(std::move(any)) {}
 
         Data& operator=(ObjectPtr object) {
-            value = object;
+            value = std::move(object);
             return *this;
         }
         Data& operator=(char c) {
@@ -68,8 +68,8 @@ namespace Interpreter {
             value = b;
             return *this;
         }
-        Data& operator=(std::any const& any) {
-            value = any;
+        Data& operator=(std::any any) {
+            value = std::move(any);
             return *this;
         }
 
@@ -95,7 +95,7 @@ namespace Interpreter {
             return value.type() == typeid(T);
         }
 
-        [[nodiscard]] PropertyReference get_property(std::string const& name);
+        [[nodiscard]] PropertyReference get_property(std::string name);
 
         [[nodiscard]] ArrayReference get_at(size_t index);
 

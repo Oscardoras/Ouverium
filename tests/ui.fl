@@ -1,33 +1,68 @@
 import "UI.fl";
 
-f := UI.Frame("test") {
-    p := UI.Panel {
-        a := UI.ActivityIndicator(),
-        b1 := UI.Button(),
-        b2 := UI.Button(),
+f := UI.Frame( .title := "test", .size := [1000, 800], .layout := UI.Layout.Vertical ) {
+    UI.Panel( .proportion := 1, .align := UI.Alignment.Stretch, .layout := UI.Layout.HorizontalWrap, .spacing := 5, .background_color := [33, 150, 253, 255] ) {
+        UI.ActivityIndicator( .value := true ),
+        UI.Button( .label := "b1", .proportion := 1, .align := UI.Alignment.Stretch, .on_value_change := args |-> { print("test b1"); r.value :+= 1; } ),
+        UI.Button( .label := "b2", .align := UI.Alignment.End, .on_value_change := args |-> { print("test b2"); r.value :-= 1 } ),
         c := UI.Calendar(),
-        cp := UI.ColorPicker(),
-        d := UI.DatePicker(),
-        r := UI.Gauge(),
+        ch := UI.Checkbox( .label := "Hide", .on_value_change := args |-> { val := ch.value; c.visible := !ch.value; } ),
+        cp := UI.ColorPicker( .label := "Color Picker", .on_value_change := args |-> { print(cp.value); } ),
+        r := UI.Gauge( .align := UI.Alignment.Center, .range := 10, .value := 5 ),
+        UI.FilePicker( .align := UI.Alignment.Center ),
+        di := UI.Dialog( .title := "Same buttons", .layout := UI.Layout.Vertical ) {
+            UI.Label( .label := "Select a button" ),
+            UI.Panel( .layout := UI.Layout.Horizontal ) {
+                UI.Button( .label := "b1", .proportion := 1, .align := UI.Alignment.Stretch, .on_value_change := args |-> { print("test b1"); r.value :+= 1; } ),
+                UI.Button( .label := "b2", .align := UI.Alignment.End, .on_value_change := args |-> { print("test b2"); r.value :-= 1 } ),
+            }
+        },
+        UI.Button( .label := "Open Dialog", .on_value_change := args |-> { di.visible := true; } ),
+        UI.Hyperlink( .label := "Link to Google", .value := "www.google.fr" ),
+        UI.Box( .label := "Texts", .layout := UI.Layout.HorizontalWrap, .spacing := 5 ) {
+            UI.Search( .label := "Search", .value := "john doe", .min_size := [200, 50] ),
+            t := UI.Text( .label := "Write", .value := "michel", .min_size := [200, 50], .on_value_change := args |-> { print(t.value); } ),
+            UI.MultilineText( .label := "Write", .value := "", .min_size := [300, 100] ),
+            UI.Password( .label := "Password", .value := "pass", .min_size := [100, 50] ),
+        },
+        choice := UI.Choice( .options := ["a", "b", "c"], .value := 1, .min_size := [100, 50], .on_value_change := args |-> { book.value := choice.value; } ),
+        slider := UI.Slider( .label := "Slider", .min := 0, .max := 10, .value := 5, .on_value_change := args |-> { print(slider.value); } ),
+        book := UI.Notebook( .label := "Books", .value := 1 ) {
+            UI.Search( .page_title := "Search", .value := "john doe", .min_size := [200, 50] ),
+            UI.Text( .page_title := "Write", .value := "michel", .min_size := [200, 50] ),
+            UI.MultilineText( .page_title := "Multiline", .value := "", .min_size := [300, 100] ),
+        },
     },
 };
-f.size := [1000, 400];
-a.running := true;
-b1.label := "b1";
-b1.on_value_change :+= args |-> { print("test b1"); r.value :+= 1; };
-b1.proportion := 1;
-b1.expand := true;
-b2.label := "b2";
+f.create();
+f.open();
 print("ok");
-b2.on_value_change :+= () |-> { print("test b2"); r.value :-= 1; };
-b2.align := UI.Alignment.End;
-cp.on_value_change :+= () |-> { print(cp.value); };
-cp.label := "Color Picker";
-p.layout := UI.Layout.HorizontalWrap;
-r.range := 10;
-r.value := 5;
-r.align := UI.Alignment.Center;
 
-f2 := UI.Frame("test webview") {};
-f2.create_child(wb := UI.Webview());
-wb.url := "https://google.fr/";
+f2 := UI.Frame( .title := "test webview", .min_size := [600, 400] ) {
+    UI.Panel( .layout := UI.Layout.Vertical, .proportion := 1, .align := UI.Alignment.Stretch ) {
+        UI.Panel( .layout := UI.Layout.Horizontal, .align := UI.Alignment.Stretch, .spacing := 5 ) {
+            urlBar := UI.Text(
+                .min_size := [200, 50],
+                .proportion := 1,
+                .align := UI.Alignment.Stretch,
+                .border := -1
+            ),
+            UI.Button(
+                .label := "Browse",
+                .border := -1,
+                .background_color := [33, 150, 253, 255],
+                .foreground_color := [255, 255, 255, 255],
+                .align := UI.Alignment.Stretch,
+                .on_value_change := args |-> { wb.url := urlBar.value; }
+            ),
+        },
+        wb := UI.Webview(
+            .url := "https://google.com/",
+            .proportion := 1,
+            .align := UI.Alignment.Stretch,
+            .on_url_change := args |-> { urlBar.set_silent(wb.url); }
+        ),
+    },
+};
+f2.create();
+f2.open();
