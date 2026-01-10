@@ -1,0 +1,9 @@
+FILE(GLOB_RECURSE compiler_sources src/*)
+
+add_library(ouverium_compiler ${compiler_sources})
+target_include_directories(ouverium_compiler PUBLIC include)
+target_link_libraries(ouverium_compiler PRIVATE ouverium_options)
+
+target_link_libraries(ouverium_compiler PRIVATE ouverium_capi)
+target_link_libraries(ouverium_compiler PUBLIC ouverium_parser)
+target_link_libraries(ouverium_compiler PUBLIC ouverium_types)

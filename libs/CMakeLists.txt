@@ -1,3 +1,5 @@
+add_subdirectory(capi)
+add_subdirectory(compiler)
 add_subdirectory(interpreter)
 add_subdirectory(parser)
 add_subdirectory(types)

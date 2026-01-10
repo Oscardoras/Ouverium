@@ -3,6 +3,7 @@ FILE(GLOB_RECURSE ouverium_sources main.cpp*)
 add_executable(ouverium ${ouverium_sources})
 target_link_libraries(ouverium PRIVATE ouverium_options)
 
+target_link_libraries(ouverium PRIVATE ouverium_compiler)
 target_link_libraries(ouverium PRIVATE ouverium_interpreter)
 find_package(Boost CONFIG REQUIRED COMPONENTS dll)
 target_link_libraries(ouverium PRIVATE Boost::dll)
