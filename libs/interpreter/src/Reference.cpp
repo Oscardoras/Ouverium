@@ -23,6 +23,11 @@ namespace Interpreter {
                     inGetter = true;
                 }
 
+                GetterScope(const GetterScope&) = delete;
+                GetterScope(GetterScope&&) = delete;
+                GetterScope& operator=(const GetterScope&) = delete;
+                GetterScope& operator=(GetterScope&&) = delete;
+
                 ~GetterScope() {
                     inGetter = false;
                 }

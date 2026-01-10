@@ -34,7 +34,7 @@ namespace Interpreter {
         symbols.emplace(std::move(symbol), GC::new_reference(std::move(data)));
     }
 
-    IndirectReference const& Context::operator[](std::string const& symbol) {
+    IndirectReference Context::operator[](std::string const& symbol) {
         auto it = symbols.find(symbol);
         if (it == symbols.end())
             return symbols.emplace(symbol, GC::new_reference()).first->second;

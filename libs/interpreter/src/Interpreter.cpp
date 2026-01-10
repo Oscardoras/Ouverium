@@ -103,7 +103,7 @@ namespace Interpreter {
         return true;
     }
 
-    std::optional<std::pair<std::string, Arguments>> is_explicit(Context& context, std::shared_ptr<Parser::Expression> const& parameters, Arguments const& argument) {
+    std::optional<std::pair<std::string, Arguments>> is_explicit(Context& context, Arguments const& argument) {
         auto const* e = std::get_if<ParserExpression>(&argument);
         if (!e) return std::nullopt;
 
@@ -131,7 +131,7 @@ namespace Interpreter {
         auto arguments = computed.get(argument);
 
         if (auto symbol = std::dynamic_pointer_cast<Parser::Symbol>(parameters)) {
-            if (auto e = is_explicit(context, parameters, arguments); e && symbols.contains(e->first)) {
+            if (auto e = is_explicit(context, arguments); e && symbols.contains(e->first)) {
                 function_context.add_symbol(e->first, computed.compute(context, e->second));
             } else {
                 auto reference = computed.compute(context, arguments);

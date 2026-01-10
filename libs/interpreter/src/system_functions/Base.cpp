@@ -69,7 +69,7 @@ namespace Interpreter::SystemFunctions::Base {
         }
     ));
     Reference setter(FunctionContext& context) {
-        auto const& var = context["var"];
+        auto var = context["var"];
         auto data = context["data"].to_data(context);
 
         Data const& var_data = var.get_data();

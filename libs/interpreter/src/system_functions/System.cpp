@@ -294,7 +294,7 @@ namespace Interpreter::SystemFunctions::System {
     Reference TCPacceptor_bind(std::string const& address, OV_INT port) {
         auto acceptor = std::make_shared<TCPAcceptor>(ioc);
         boost::system::error_code ec;
-        boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::tcp::v4(), port);
+        boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::address::from_string(address), port);
         acceptor->open(endpoint.protocol(), ec);
         acceptor->bind(endpoint, ec);
         acceptor->listen();
@@ -506,7 +506,7 @@ namespace Interpreter::SystemFunctions::System {
         }));
     }
 
-        Reference thread_join(Thread & thread) {
+    Reference thread_join(Thread& thread) {
         thread.join();
 
         return {};

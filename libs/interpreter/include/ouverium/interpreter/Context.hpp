@@ -47,7 +47,7 @@ namespace Interpreter {
         [[nodiscard]] bool has_symbol(std::string const& symbol) const;
         void add_symbol(std::string symbol, IndirectReference indirect_reference);
         void add_symbol(std::string symbol, Data data);
-        IndirectReference const& operator[](std::string const& symbol);
+        IndirectReference operator[](std::string const& symbol);
         [[nodiscard]] auto begin() const { return symbols.begin(); }
         [[nodiscard]] auto end() const { return symbols.end(); }
 
